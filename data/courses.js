@@ -573,15 +573,129 @@ const COURSES = [
       {
         title: '6. Network Hardware',
         body: `
+          <p>Every network is built from a small set of devices, each operating at a specific OSI layer. Exam expects you to identify, configure, and troubleshoot each one.</p>
+
+          <h2>Router — OSI Layer 3</h2>
+          <p><b>What:</b> Network device that forwards packets between different IP networks (subnets) based on a routing table.</p>
+          <p><b>Why:</b> Without a router, hosts can only talk inside their own broadcast domain. Every traversal of a subnet boundary requires routing.</p>
+          <p><b>How used:</b> The default gateway on every PC is a router interface. Enterprise routers run protocols like <b>OSPF</b> (Open Shortest Path First), <b>EIGRP</b> (Enhanced Interior Gateway Routing Protocol), or <b>BGP</b> (Border Gateway Protocol) to share routes dynamically. SOHO routers usually combine router + switch + AP + firewall + DHCP server in one box.</p>
+          <p><b>NAT</b> (Network Address Translation) and <b>PAT</b> (Port Address Translation, aka NAT overload) commonly live on the WAN-facing router to share a single public IP among many private hosts.</p>
+
+          <h2>Switch — OSI Layer 2</h2>
+          <p><b>What:</b> Forwards Ethernet frames between ports based on destination <b>MAC</b> (Media Access Control) address. Learns which MAC sits on which port.</p>
+          <p><b>Why:</b> Replaces hubs — only the intended port receives the frame (vs. flooding everywhere). Full duplex on every port.</p>
+          <p><b>Types:</b></p>
           <ul>
-            <li><b>Router</b> — layer 3, moves traffic between networks.</li>
-            <li><b>Switch</b> — layer 2, MAC-address learning, full duplex.</li>
-            <li><b>Hub</b> — layer 1, repeats to all ports (legacy).</li>
-            <li><b>Access point (WAP)</b> — wireless bridge to wired LAN.</li>
-            <li><b>Firewall</b> — filter traffic by rules; stateful tracks connections.</li>
-            <li><b>Patch panel</b> — termination point for cable runs.</li>
-            <li><b>PoE injector / switch</b> — Power over Ethernet for cameras, APs, phones.</li>
-            <li><b>SDN</b> — software-defined networking; centralized control plane.</li>
+            <li><b>Unmanaged</b> — plug and go. No configuration. Small environments.</li>
+            <li><b>Managed</b> — supports VLANs, STP, QoS, port mirroring, SNMP. Enterprise standard.</li>
+            <li><b>Layer 3 switch</b> — managed switch that ALSO performs routing between configured VLAN <b>SVIs</b> (Switch Virtual Interfaces). Faster than router-on-a-stick for inter-VLAN traffic.</li>
+          </ul>
+          <p><b>Key concepts:</b></p>
+          <ul>
+            <li><b>VLAN</b> (Virtual LAN, 802.1Q) — logical L2 segmentation; multiple broadcast domains on one switch.</li>
+            <li><b>Trunk port</b> — carries multiple tagged VLANs between switches.</li>
+            <li><b>Access port</b> — single untagged VLAN, faces end hosts.</li>
+            <li><b>STP</b> (Spanning Tree Protocol, 802.1D) / <b>RSTP</b> (Rapid STP, 802.1w) / <b>MSTP</b> (Multiple STP) — blocks redundant paths to prevent L2 loops.</li>
+            <li><b>LACP</b> (Link Aggregation Control Protocol, 802.3ad) — bundles multiple physical links into one logical EtherChannel for bandwidth + failover.</li>
+          </ul>
+
+          <h2>Hub — OSI Layer 1 (legacy)</h2>
+          <p><b>What:</b> Dumb electrical repeater. Frame in one port → broadcast out all other ports. Half-duplex shared collision domain.</p>
+          <p><b>Why obsolete:</b> Every device sees every frame (privacy + bandwidth waste). Collisions degrade as users grow.</p>
+          <p><b>Today:</b> Found only in legacy environments or as a packet-capture / lab tool.</p>
+
+          <h2>Wireless Access Point — WAP / AP</h2>
+          <p><b>What:</b> Bridges wireless clients (Wi-Fi) to the wired Ethernet LAN. Operates at L2.</p>
+          <p><b>How used:</b> Independent <b>fat / autonomous APs</b> each configured by hand. <b>Thin / lightweight APs</b> rely on a central <b>WLC</b> (Wireless LAN Controller) — Cisco, Aruba, Meraki, etc. Controllers push SSID config, do roaming, run rogue-AP detection.</p>
+          <p><b>BSS / BSSID / ESSID:</b></p>
+          <ul>
+            <li><b>BSS</b> (Basic Service Set) — coverage area of one AP radio.</li>
+            <li><b>BSSID</b> — the AP radio's MAC address (identifies the BSS).</li>
+            <li><b>SSID / ESSID</b> (Service Set Identifier / Extended) — human-readable network name. Same SSID on many APs = one extended network.</li>
+          </ul>
+
+          <h2>Firewall</h2>
+          <p><b>What:</b> Filters traffic at one or more layers per rule set (5-tuple, app, identity).</p>
+          <p><b>Types:</b></p>
+          <ul>
+            <li><b>Packet filter (stateless)</b> — matches headers only. Old, fast, dumb.</li>
+            <li><b>Stateful firewall</b> — tracks connection state, automatically permits return traffic for established flows.</li>
+            <li><b>NGFW</b> (Next-Generation Firewall) — adds application awareness (Layer 7), <b>IPS</b> (Intrusion Prevention System), TLS inspection, user-identity-based rules, threat intel feeds. Palo Alto, Fortinet, Cisco Firepower.</li>
+            <li><b>UTM</b> (Unified Threat Management) — single appliance bundling firewall + antivirus + content filter + VPN + IDS. Common in SMB.</li>
+            <li><b>Host-based firewall</b> — Windows Defender Firewall, iptables, nftables on the endpoint itself.</li>
+            <li><b>WAF</b> (Web Application Firewall) — Layer 7 firewall specifically protecting HTTP/S apps from OWASP-class attacks (SQLi, XSS).</li>
+          </ul>
+          <p><b>How used:</b> Network firewalls sit at zone boundaries (Internet ↔ DMZ ↔ internal). Rules go top-down, first match wins, implicit deny at end.</p>
+
+          <h2>DMZ — Demilitarized Zone (a.k.a. Screened Subnet)</h2>
+          <p><b>What:</b> Network segment between the Internet and the trusted internal LAN, hosting public-facing services (web servers, mail relay).</p>
+          <p><b>Why:</b> A compromise of a public service doesn't directly expose internal LAN — extra firewall hop required.</p>
+
+          <h2>Patch panel + structured cabling</h2>
+          <p><b>What:</b> Wall-mounted or rack-mounted block where horizontal cable runs (from wall jacks) terminate on the back via punch-down, and short patch cords on the front connect to switch ports.</p>
+          <p><b>Why:</b> Permanent runs aren't repeatedly bent or stressed; changes happen in soft patch cords. Standard 568A/B termination.</p>
+
+          <h2>PoE — Power over Ethernet</h2>
+          <p><b>What:</b> Standard for delivering DC power over the same Ethernet cable as data. Eliminates AC outlets near devices.</p>
+          <p><b>Standards:</b></p>
+          <ul>
+            <li><b>802.3af (PoE / Type 1)</b> — up to 15.4 W from switch port.</li>
+            <li><b>802.3at (PoE+ / Type 2)</b> — up to 30 W.</li>
+            <li><b>802.3bt (PoE++ / Type 3 & 4)</b> — 60 W (Type 3) and 100 W (Type 4).</li>
+          </ul>
+          <p><b>How used:</b> IP phones, wireless APs, IP cameras, badge readers, small switches. Either:</p>
+          <ul>
+            <li><b>PoE switch</b> — every port can deliver power, centrally managed.</li>
+            <li><b>PoE injector</b> — single inline unit adds power to one cable between a non-PoE switch and a PoE device.</li>
+            <li><b>PoE splitter</b> — separates the power and data at the device end if device only has a barrel jack + Ethernet.</li>
+          </ul>
+
+          <h2>Modem (modulator-demodulator)</h2>
+          <p><b>What:</b> Converts the ISP's last-mile signal (DSL, cable RF, fiber light) into Ethernet that the LAN can use.</p>
+          <p><b>Why:</b> Required at every Internet drop. SOHO ISP "gateway" devices combine modem + router + Wi-Fi.</p>
+
+          <h2>Load balancer</h2>
+          <p><b>What:</b> Distributes incoming requests across multiple backend servers. L4 (TCP/UDP, e.g., AWS NLB) or L7 (HTTP-aware, e.g., NGINX, AWS ALB, HAProxy, F5 BIG-IP).</p>
+          <p><b>Why:</b> Horizontal scaling + high availability + health-check-based failover.</p>
+          <p><b>Algorithms:</b> Round-robin, least connections, source-IP hash, weighted, latency-based.</p>
+
+          <h2>Proxy</h2>
+          <ul>
+            <li><b>Forward proxy</b> — sits between clients and the Internet; controls + caches outbound traffic. Squid is the classic.</li>
+            <li><b>Reverse proxy</b> — sits in front of backend servers; clients connect to the proxy. Adds TLS termination, caching, security headers. NGINX, Caddy, Cloudflare.</li>
+          </ul>
+
+          <h2>SDN — Software-Defined Networking</h2>
+          <p><b>What:</b> Architecture that separates the network <b>control plane</b> (decisions) from the <b>data plane</b> (forwarding hardware). A central controller programs flow rules into switches via standards like <b>OpenFlow</b>.</p>
+          <p><b>Why:</b> Lets one team push network policy declaratively across a whole fabric. Used by hyperscalers + modern enterprise (Cisco ACI, VMware NSX, Arista CloudVision).</p>
+          <p><b>SD-WAN</b> applies the same idea to wide-area links — overlay tunnels across broadband / LTE / MPLS with central policy + app-aware steering.</p>
+
+          <h2>NAS vs SAN</h2>
+          <ul>
+            <li><b>NAS</b> (Network Attached Storage) — file-level access over standard LAN. Protocols: <b>NFS</b> (Network File System, Unix), <b>SMB/CIFS</b> (Windows). Appliances: Synology, QNAP, NetApp.</li>
+            <li><b>SAN</b> (Storage Area Network) — block-level access over dedicated high-speed network. Protocols: <b>FC</b> (Fibre Channel) at 8/16/32 Gbps, <b>iSCSI</b> (SCSI over TCP/IP), <b>NVMe-oF</b> (NVMe over Fabrics).</li>
+          </ul>
+
+          <h2>IDS / IPS</h2>
+          <p><b>IDS</b> (Intrusion Detection System) — passive; detects + alerts on suspicious patterns. Out-of-path.<br>
+          <b>IPS</b> (Intrusion Prevention System) — inline; can drop the matching packet. Implemented inside modern NGFW or as standalone (Snort, Suricata).</p>
+
+          <h2>Other components you'll see</h2>
+          <ul>
+            <li><b>VoIP gateway</b> — converts traditional PSTN lines to SIP/VoIP for the LAN.</li>
+            <li><b>Cable certifier</b> — measures attenuation, NEXT, return loss vs TIA-568 standards.</li>
+            <li><b>Network tap</b> — passive copy of all traffic on a link for monitoring or packet capture.</li>
+            <li><b>NIDS / HIDS</b> — Network / Host based IDS, depending on placement.</li>
+            <li><b>Bastion host / jump box</b> — hardened admin entry point into a private network.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Layer + device pairings: hub L1, switch L2, router L3, firewall L3/4 (NGFW up to L7).</li>
+            <li>If a question mentions "central management" of wireless → WLC / lightweight APs.</li>
+            <li>"Power for IP phones / APs over the network cable" → PoE / PoE+ / PoE++ depending on wattage.</li>
+            <li>"Public services without exposing the LAN" → DMZ / screened subnet.</li>
+            <li>NAS = files, SAN = blocks. Different use cases.</li>
           </ul>
         `
       },
