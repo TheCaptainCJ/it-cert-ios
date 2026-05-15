@@ -702,14 +702,113 @@ const COURSES = [
       {
         title: '7. RAM Types',
         body: `
+          <p><b>RAM</b> = Random Access Memory. Volatile working memory — content vanishes when power is removed. Every program running, including the OS kernel, lives in RAM. Insufficient RAM forces paging to disk, causing severe slowdowns.</p>
+
+          <h2>DRAM vs SRAM</h2>
+          <p><b>DRAM</b> (Dynamic RAM) — stores each bit as a charge in a tiny capacitor. Must be refreshed thousands of times per second. Dense, cheap. Used for main system memory.<br>
+          <b>SRAM</b> (Static RAM) — stores bits in flip-flops. No refresh needed. Faster, more expensive, lower density. Used for CPU L1/L2/L3 cache.</p>
+          <p>When the exam says "RAM" without qualification it means DRAM.</p>
+
+          <h2>SDRAM — Synchronous DRAM</h2>
+          <p>RAM that runs in sync with the system bus clock. All modern DRAM is SDRAM. <b>DDR</b> (Double Data Rate) variants transfer data on BOTH rising and falling clock edges → effective speed = 2× clock.</p>
+
+          <h2>DDR generations</h2>
+          <p>Each DDR generation roughly doubles the previous bandwidth, drops voltage (less heat / power), and uses incompatible physical keying so you can't put DDR4 in a DDR5 slot. Always match the motherboard's supported generation EXACTLY.</p>
+
+          <h3>DDR3</h3>
           <ul>
-            <li><b>DDR3</b> — 240-pin DIMM, 204-pin SO-DIMM (laptop). 1.5V.</li>
-            <li><b>DDR4</b> — 288-pin DIMM, 260-pin SO-DIMM. 1.2V.</li>
-            <li><b>DDR5</b> — 288-pin DIMM (new keying), 262-pin SO-DIMM. 1.1V.</li>
-            <li><b>ECC</b> — Error-Correcting Code, used in servers.</li>
-            <li><b>Buffered/Registered</b> — server RAM with register between controller and modules.</li>
+            <li><b>Pins:</b> 240 desktop DIMM, 204 laptop SO-DIMM.</li>
+            <li><b>Voltage:</b> 1.5 V standard, 1.35 V for DDR3L (low voltage).</li>
+            <li><b>Speeds:</b> ~PC3-8500 (1066 MT/s) through PC3-17000 (2133 MT/s).</li>
+            <li><b>Used in:</b> Pre-2015 systems.</li>
           </ul>
-          <p>Always match: type (DDRx), speed (MHz), and capacity. Mismatched modules run at slowest.</p>
+
+          <h3>DDR4</h3>
+          <ul>
+            <li><b>Pins:</b> 288 desktop DIMM, 260 laptop SO-DIMM.</li>
+            <li><b>Voltage:</b> 1.2 V (1.05 V LP).</li>
+            <li><b>Speeds:</b> PC4-17000 (2133 MT/s) through PC4-25600 (3200 MT/s) JEDEC; <b>XMP</b> (Extreme Memory Profile) presets push to 4800+ MT/s.</li>
+            <li><b>Used in:</b> 2015 → ~2022. Still the mainstream baseline today.</li>
+          </ul>
+
+          <h3>DDR5</h3>
+          <ul>
+            <li><b>Pins:</b> 288 desktop DIMM (different keying than DDR4), 262 laptop SO-DIMM.</li>
+            <li><b>Voltage:</b> 1.1 V. On-module <b>PMIC</b> (Power Management IC) handles regulation instead of the motherboard.</li>
+            <li><b>Speeds:</b> 4800 MT/s baseline; consumer modules now hit 6400-8000+ MT/s.</li>
+            <li><b>Other changes:</b> On-die ECC (catches in-cell errors but is not full system ECC). Dual independent 32-bit subchannels per DIMM. Larger capacities (up to 128 GB modules).</li>
+            <li><b>Used in:</b> Intel 12th gen+, AMD AM5, modern laptops.</li>
+          </ul>
+
+          <h2>Form factors</h2>
+          <ul>
+            <li><b>DIMM</b> (Dual Inline Memory Module) — full-size, ~133 mm long. Desktops, servers, workstations.</li>
+            <li><b>SO-DIMM</b> (Small Outline DIMM) — ~67 mm long. Laptops, mini-PCs, NAS appliances, some all-in-ones.</li>
+            <li><b>CAMM2</b> (Compression Attached Memory Module) — emerging laptop module designed by Dell + JEDEC. Lower-profile alternative to SO-DIMM for thin laptops.</li>
+            <li>Soldered LPDDR — found in ultraportables. Cannot upgrade. <b>LPDDR</b> (Low-Power DDR) variants (LPDDR4X, LPDDR5, LPDDR5X) sip power but are non-replaceable.</li>
+          </ul>
+
+          <h2>ECC vs non-ECC</h2>
+          <p><b>ECC</b> (Error-Correcting Code) RAM has an extra DRAM chip used to store parity. Can detect and correct single-bit errors and detect multi-bit errors.</p>
+          <p><b>Why:</b> Required wherever silent corruption is unacceptable: servers, finance, scientific, virtualization. Cosmic ray bit flips are real and rare but compound at scale.</p>
+          <p><b>How:</b> Both the CPU + motherboard must support ECC. Most consumer Intel chips do NOT enable ECC except specific Xeon / W-series and certain AMD Ryzen / EPYC platforms. DDR5 has "on-die ECC" inside chips — not the same as full ECC end-to-end.</p>
+
+          <h2>Buffered / Registered / Load-Reduced</h2>
+          <ul>
+            <li><b>UDIMM</b> (Unbuffered DIMM) — standard desktop/laptop modules. Direct signals to memory controller.</li>
+            <li><b>RDIMM</b> (Registered DIMM) — has a register chip between the controller and DRAM chips. Reduces electrical load → supports more DIMMs per channel. Used in servers.</li>
+            <li><b>LRDIMM</b> (Load-Reduced DIMM) — adds a memory buffer; allows even more / denser DIMMs. High-end servers.</li>
+            <li>Server RAM is almost always RDIMM/LRDIMM + ECC.</li>
+          </ul>
+
+          <h2>Channels — single / dual / quad</h2>
+          <p><b>Memory channel</b> = an independent path between CPU memory controller and a set of DIMM slots.</p>
+          <ul>
+            <li><b>Single channel</b> — one DIMM populated. Bandwidth = module rate.</li>
+            <li><b>Dual channel</b> — populate matched pair in correct slots (often A1+B1 or A2+B2 — check manual). Roughly doubles effective bandwidth.</li>
+            <li><b>Quad channel</b> — high-end / workstation / server CPUs (Threadripper, Xeon W). Multiplies bandwidth proportionally.</li>
+          </ul>
+          <p><b>How to use:</b> Always buy matched kits (same speed, capacity, timings) and install in the slots designated by the motherboard manual for dual/quad-channel operation.</p>
+
+          <h2>Speed ratings, timings, XMP/EXPO</h2>
+          <ul>
+            <li><b>MT/s</b> (Mega-Transfers per second) — DDR speed. e.g., DDR4-3200 transfers 3200 million times per second per pin.</li>
+            <li><b>MHz</b> is half of MT/s (because DDR does 2 transfers per clock).</li>
+            <li><b>CL / CAS Latency</b> — number of clocks the module takes to respond. Lower is better but only matters relative to clock speed.</li>
+            <li><b>XMP</b> (Intel Extreme Memory Profile) and <b>EXPO</b> (AMD EXPanded profile for Overclocking) — preset overclock profiles stored in the module's SPD. Enable in BIOS to run at advertised high speed (modules default to slower JEDEC speeds otherwise).</li>
+          </ul>
+
+          <h2>SPD — Serial Presence Detect</h2>
+          <p><b>What:</b> Small EEPROM chip on every DIMM holding capacity, speed, timing, and XMP/EXPO profiles. Read by BIOS at boot so the platform configures itself.</p>
+
+          <h2>Common troubleshooting symptoms</h2>
+          <ul>
+            <li><b>No POST + beep codes</b> — bad / missing / unseated RAM. Try one stick at a time in slot A2 typically.</li>
+            <li><b>Random BSOD</b> (Windows) or kernel panic (Linux/macOS) — RAM errors. Run <b>MemTest86</b> overnight.</li>
+            <li><b>WHEA_UNCORRECTABLE_ERROR</b> on Windows — hardware fault, often RAM/CPU/PSU.</li>
+            <li><b>Mixed speeds</b> running at slowest module → expected, not a fault. Match for best results.</li>
+            <li><b>Mismatched DDR generations</b> — physically incompatible. Will not seat.</li>
+          </ul>
+
+          <h2>Compatibility checklist</h2>
+          <ol>
+            <li>DDR generation matches motherboard (DDR4 vs DDR5 — physically keyed).</li>
+            <li>Form factor matches socket (DIMM vs SO-DIMM).</li>
+            <li>Speed at or below max supported (faster sticks run at supported speed).</li>
+            <li>Voltage / profile supported (XMP for Intel, EXPO for AMD).</li>
+            <li>ECC support: needs CPU + chipset that enable ECC.</li>
+            <li>Buffered (RDIMM/LRDIMM) vs Unbuffered — must match platform requirements.</li>
+            <li>Check motherboard QVL (Qualified Vendor List) for tested kits, especially at high speeds.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Server RAM with error detection + correction" → ECC.</li>
+            <li>"Compact laptop memory" → SO-DIMM.</li>
+            <li>Mixing kits → runs at slowest module's rated speed.</li>
+            <li>DDR generations are NOT cross-compatible — different keying.</li>
+            <li>Dual-channel needs matched modules in correct slot pairs.</li>
+          </ul>
         `
       },
       {
