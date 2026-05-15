@@ -225,13 +225,22 @@
   function renderQuizTab() {
     const c = state.currentCert;
     const el = document.getElementById('quizTab');
+    const pool = c.quiz.length;
     el.innerHTML = `
       <p style="color:var(--muted);font-size:14px;margin:0 0 12px">
-        ${c.quiz.length} questions. Tap an answer — explanation appears below.
+        Pool: ${pool} questions. Choose session length. Tap an answer — explanation appears.
       </p>
-      <button class="btn primary" id="startQuiz">Start practice quiz</button>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn" id="qStart15">Quick · 15 Q</button>
+        <button class="btn" id="qStart25">Standard · 25 Q</button>
+        <button class="btn primary" id="qStart50">Exam pace · 50 Q</button>
+        <button class="btn" id="qStartAll">Full pool · ${pool} Q</button>
+      </div>
     `;
-    document.getElementById('startQuiz').addEventListener('click', () => startQuiz());
+    document.getElementById('qStart15').addEventListener('click', () => startQuiz(15));
+    document.getElementById('qStart25').addEventListener('click', () => startQuiz(25));
+    document.getElementById('qStart50').addEventListener('click', () => startQuiz(50));
+    document.getElementById('qStartAll').addEventListener('click', () => startQuiz(pool));
   }
 
   // ---------- Flashcards ----------
@@ -385,13 +394,14 @@
   }
 
   // ---------- Quiz ----------
-  function startQuiz() {
+  function startQuiz(count) {
     const c = state.currentCert;
-    const questions = shuffle([...c.quiz]).slice(0, Math.min(15, c.quiz.length));
+    const n = Math.min(count || 15, c.quiz.length);
+    const questions = shuffle([...c.quiz]).slice(0, n);
     let qIdx = 0;
     let correctCount = 0;
 
-    setTitle(`Quiz · ${c.short || c.name}`);
+    setTitle(`Quiz · ${c.short || c.name} · ${n}Q`);
     showView('quizView');
     renderQ();
 
@@ -412,7 +422,7 @@
           </div>
         `;
         document.getElementById('qHome').onclick = () => renderHome();
-        document.getElementById('qAgain').onclick = () => startQuiz();
+        document.getElementById('qAgain').onclick = () => startQuiz(n);
         return;
       }
       const q = questions[qIdx];
