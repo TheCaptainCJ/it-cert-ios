@@ -252,7 +252,7 @@ const COURSES = [
           <p><b>Why:</b> Backbone of email delivery. Port 25 is now blocked by most residential ISPs to limit spam.</p>
 
           <h3>DNS — Domain Name System (53 UDP + 53 TCP)</h3>
-          <p><b>What:</b> Translates human names (`www.example.com`) to IP addresses.</p>
+          <p><b>What:</b> Translates human names (<code>www.example.com</code>) to IP addresses.</p>
           <p><b>Why:</b> No DNS = nothing works. Failure looks like total Internet outage.</p>
           <p><b>How used:</b> UDP for normal queries (fast, small). TCP for large responses (DNSSEC, zone transfers). Newer: <b>DoT</b> (DNS over TLS, 853) and <b>DoH</b> (DNS over HTTPS, 443) encrypt queries.</p>
           <p>Record types: <b>A</b> (IPv4), <b>AAAA</b> (IPv6), <b>CNAME</b> (alias), <b>MX</b> (mail server), <b>TXT</b> (SPF/DKIM/DMARC), <b>NS</b> (nameserver), <b>PTR</b> (reverse).</p>
