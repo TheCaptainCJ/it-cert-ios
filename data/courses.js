@@ -1215,19 +1215,179 @@ const COURSES = [
       {
         title: '11. Virtualization & Cloud',
         body: `
-          <h2>Hypervisors</h2>
+          <p><b>Virtualization</b> = running multiple isolated operating systems on one physical machine by abstracting the hardware. <b>Cloud computing</b> = renting on-demand virtualized compute, storage, and services from a provider over the Internet. Cloud is built on top of virtualization. Exam tests hypervisor types, service models, deployment models, and shared responsibility.</p>
+
+          <h2>Why virtualize?</h2>
           <ul>
-            <li><b>Type 1 (bare-metal)</b> — runs on hardware directly. ESXi, Hyper-V, KVM, Xen.</li>
-            <li><b>Type 2 (hosted)</b> — runs on top of OS. VirtualBox, VMware Workstation.</li>
+            <li><b>Consolidation</b> — pack many VMs onto one host. Better hardware utilization (a bare-metal server typically ran at 5-15%).</li>
+            <li><b>Isolation</b> — a crash in one VM doesn't affect others. Different OSes side by side.</li>
+            <li><b>Snapshots / rollback</b> — capture state, restore in seconds. Safe testing.</li>
+            <li><b>Live migration</b> — move a running VM between physical hosts with no downtime (VMware <b>vMotion</b>, Hyper-V Live Migration).</li>
+            <li><b>Cost</b> — reduces hardware, power, cooling, datacenter space.</li>
+            <li><b>Disaster recovery</b> — replicate VMs to another site for failover.</li>
+            <li><b>Sandboxing / training</b> — safely run untrusted code or build lab environments.</li>
           </ul>
-          <h2>Cloud models</h2>
+
+          <h2>Hypervisor — the layer that runs VMs</h2>
+          <p><b>What:</b> Software (or firmware) that creates and manages virtual machines. Also called a <b>VMM</b> (Virtual Machine Monitor).</p>
+
+          <h3>Type 1 — bare-metal hypervisor</h3>
+          <p><b>What:</b> Runs DIRECTLY on the hardware, no host OS underneath.</p>
+          <p><b>Why:</b> Lower overhead, higher performance, smaller attack surface. Mandatory for production datacenter use.</p>
+          <p><b>Examples:</b></p>
           <ul>
-            <li><b>IaaS</b> — VMs, storage, networks (AWS EC2, Azure VMs).</li>
-            <li><b>PaaS</b> — managed runtime (App Service, Heroku).</li>
-            <li><b>SaaS</b> — finished apps (Microsoft 365, Salesforce).</li>
+            <li><b>VMware ESXi</b> — enterprise standard, managed by vCenter.</li>
+            <li><b>Microsoft Hyper-V</b> (Server role).</li>
+            <li><b>KVM</b> (Kernel-based Virtual Machine) — built into the Linux kernel. Powers most public cloud (AWS Nitro / EC2, Azure, GCP).</li>
+            <li><b>Xen</b> — open-source, was used by AWS pre-Nitro, still used by Citrix.</li>
+            <li><b>Proxmox VE</b> — open-source platform built on KVM + LXC.</li>
+            <li><b>Nutanix AHV</b>, <b>Oracle VM</b>.</li>
           </ul>
-          <h2>Deployment</h2>
-          <p>Public, private, hybrid, community. Key concepts: elasticity, on-demand, metered, shared resources.</p>
+
+          <h3>Type 2 — hosted hypervisor</h3>
+          <p><b>What:</b> Runs as an application on top of a regular OS (Windows, macOS, Linux).</p>
+          <p><b>Why:</b> Easy to install + use for development, testing, training. Performance is lower because the host OS sits in the middle.</p>
+          <p><b>Examples:</b></p>
+          <ul>
+            <li><b>VMware Workstation</b> (Pro / Player) on Windows / Linux.</li>
+            <li><b>VMware Fusion</b> on macOS.</li>
+            <li><b>Oracle VirtualBox</b> — free, cross-platform.</li>
+            <li><b>Parallels Desktop</b> — macOS, especially Apple Silicon.</li>
+            <li><b>QEMU</b> on its own (without KVM) is technically a Type 2 emulator.</li>
+          </ul>
+
+          <h2>VM components</h2>
+          <ul>
+            <li><b>vCPU</b> (Virtual CPU) — slice of host CPU time.</li>
+            <li><b>vRAM</b> — partition of host memory. Some hypervisors support <b>ballooning</b> + <b>page sharing</b> for overcommit.</li>
+            <li><b>vNIC</b> (Virtual NIC) — connects VM to a <b>virtual switch (vSwitch)</b> or bridged/NAT host network.</li>
+            <li><b>Virtual disk</b> — file on host (VMDK = VMware, VHD/VHDX = Hyper-V, QCOW2 = KVM, VDI = VirtualBox).</li>
+            <li><b>Snapshot</b> — point-in-time capture of VM state (RAM + disk). Used for testing rollback; not a replacement for backups.</li>
+            <li><b>Guest additions / VMware Tools</b> — paravirtualized drivers + clipboard / time sync.</li>
+          </ul>
+
+          <h2>Hardware virtualization support</h2>
+          <p>Modern CPUs include extensions used by hypervisors for near-bare-metal speed:</p>
+          <ul>
+            <li><b>Intel VT-x</b> — Virtualization Technology for x86.</li>
+            <li><b>Intel VT-d</b> — IOMMU for direct device passthrough.</li>
+            <li><b>AMD-V / SVM</b> — Secure Virtual Machine, AMD's equivalent of VT-x.</li>
+            <li><b>AMD-Vi</b> — IOMMU on AMD.</li>
+          </ul>
+          <p>Must be enabled in UEFI/BIOS. Without it Hyper-V, WSL2, and many Type-2 hypervisors refuse to start.</p>
+
+          <h2>Containers vs VMs</h2>
+          <p><b>Containers</b> (Docker, Podman, LXC) share the host kernel and isolate at the OS process level using namespaces + cgroups. <b>VMs</b> run an entire OS each, isolated at the hardware level.</p>
+          <ul>
+            <li>Containers: seconds to start, MB-sized images, lower overhead. Used for cloud-native microservices.</li>
+            <li>VMs: minutes to start, GB-sized images, stronger isolation. Used for legacy apps, mixed OSes, regulatory boundaries.</li>
+            <li><b>Kubernetes (K8s)</b> orchestrates containers at scale.</li>
+          </ul>
+
+          <h2>Cloud — the on-demand model</h2>
+          <p><b>NIST</b> (National Institute of Standards and Technology, SP 800-145) defines five essential characteristics of cloud:</p>
+          <ol>
+            <li><b>On-demand self-service</b> — user spins up resources without human ticket.</li>
+            <li><b>Broad network access</b> — reachable over standard protocols (HTTPS / API).</li>
+            <li><b>Resource pooling</b> — provider's resources are shared across tenants.</li>
+            <li><b>Rapid elasticity</b> — scale up and down quickly with demand.</li>
+            <li><b>Measured service</b> — pay-as-you-go metered usage.</li>
+          </ol>
+
+          <h2>Cloud service models</h2>
+
+          <h3>IaaS — Infrastructure as a Service</h3>
+          <p><b>What:</b> Virtual machines, virtual networks, block / object storage rented from a provider.</p>
+          <p><b>Provider responsibility:</b> Datacenter, hypervisor, hardware.<br>
+          <b>You manage:</b> Guest OS, patches, apps, data, identity.</p>
+          <p><b>Examples:</b> AWS EC2 + EBS + VPC; Azure Virtual Machines; GCP Compute Engine.</p>
+
+          <h3>PaaS — Platform as a Service</h3>
+          <p><b>What:</b> Managed runtime / app platform. Push code, provider runs it.</p>
+          <p><b>Provider:</b> OS, runtime, scaling, load balancers, patching.<br>
+          <b>You:</b> App code + data + config.</p>
+          <p><b>Examples:</b> Azure App Service, AWS Elastic Beanstalk, Heroku, Google Cloud Run, Cloud Foundry.</p>
+
+          <h3>SaaS — Software as a Service</h3>
+          <p><b>What:</b> Finished application delivered over the web.</p>
+          <p><b>Provider:</b> Everything except your data + user accounts.<br>
+          <b>You:</b> Data classification, identity / access policy.</p>
+          <p><b>Examples:</b> Microsoft 365, Google Workspace, Salesforce, Dropbox, Slack.</p>
+
+          <h3>FaaS — Function as a Service (Serverless)</h3>
+          <p><b>What:</b> Provider runs short-lived event-driven functions. You write a function; provider auto-scales each invocation.</p>
+          <p><b>Examples:</b> AWS Lambda, Azure Functions, GCP Cloud Functions, Cloudflare Workers.</p>
+
+          <h3>Other "as a Service" terms</h3>
+          <ul>
+            <li><b>DBaaS</b> — Database as a Service (RDS, Cosmos DB, Cloud SQL).</li>
+            <li><b>DaaS</b> — Desktop as a Service (Azure Virtual Desktop, AWS WorkSpaces).</li>
+            <li><b>SECaaS</b> — Security as a Service.</li>
+            <li><b>IDaaS</b> — Identity as a Service (Okta, Auth0, Entra ID).</li>
+          </ul>
+
+          <h2>Cloud deployment models</h2>
+          <ul>
+            <li><b>Public cloud</b> — provider-owned, shared multi-tenant. AWS, Azure, GCP, Oracle Cloud.</li>
+            <li><b>Private cloud</b> — single-org, on-prem or hosted. Provides cloud experience without multi-tenancy. VMware Cloud Foundation, OpenStack.</li>
+            <li><b>Hybrid cloud</b> — public + private together with workload portability. Often using <b>direct connect</b> circuits.</li>
+            <li><b>Community cloud</b> — shared by orgs with common requirements (e.g., government, regulated industries).</li>
+            <li><b>Multi-cloud</b> — using more than one public provider intentionally for resilience or feature mix.</li>
+          </ul>
+
+          <h2>Shared responsibility model</h2>
+          <p>Critical for the exam. Provider secures the cloud, customer secures what's in the cloud — but the split shifts by service model.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">On-prem</th><th align="left" style="padding:4px;border-bottom:1px solid #444">IaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SaaS</th></tr>
+            <tr><td>Data / Identity</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>App</td><td>You</td><td>You</td><td>You</td><td>Provider</td></tr>
+            <tr><td>OS</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Hypervisor / HW / DC</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+          </table>
+
+          <h2>Key cloud concepts</h2>
+          <ul>
+            <li><b>Elasticity</b> — auto-scale resources up and down with demand.</li>
+            <li><b>Scalability</b> — capability to grow (vertical = bigger VM; horizontal = more VMs behind LB).</li>
+            <li><b>High availability</b> — multi-AZ deployments, redundancy.</li>
+            <li><b>Region</b> — geographic group of datacenters.</li>
+            <li><b>Availability Zone (AZ)</b> — independent fault-isolated datacenter within a region. Most regions have 3.</li>
+            <li><b>Metered billing</b> — pay only for what you use.</li>
+            <li><b>Cloud bursting</b> — extend on-prem workload into public cloud during peak.</li>
+          </ul>
+
+          <h2>Common cloud risks</h2>
+          <ul>
+            <li><b>Misconfiguration</b> — open S3 buckets, weak IAM. Top cause of breaches.</li>
+            <li><b>Vendor lock-in</b> — heavy use of proprietary services makes migration costly.</li>
+            <li><b>Cost overrun</b> — auto-scale runaway, forgotten resources. Use budgets + tags + cost alerts.</li>
+            <li><b>Compliance + data sovereignty</b> — which countries can store the data legally?</li>
+            <li><b>Account takeover</b> — phished root credentials → enforce MFA + PIM.</li>
+          </ul>
+
+          <h2>Common cloud terminology</h2>
+          <ul>
+            <li><b>VPC</b> / <b>VNet</b> (Virtual Private Cloud / Virtual Network) — isolated network in cloud.</li>
+            <li><b>NSG</b> / <b>Security Group</b> — stateful firewall for VMs.</li>
+            <li><b>NACL</b> — stateless subnet ACL.</li>
+            <li><b>Reserved Instance / Savings Plan</b> — 1-3 year commitment for discount.</li>
+            <li><b>Spot / Preemptible</b> — deep discount; can be reclaimed.</li>
+            <li><b>CMK / BYOK</b> — Customer-Managed Keys / Bring Your Own Key for encryption.</li>
+            <li><b>CDN</b> — Content Delivery Network (CloudFront, Azure Front Door, Cloudflare).</li>
+            <li><b>Direct Connect / ExpressRoute / Interconnect</b> — private dedicated link to cloud, bypasses Internet.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Bare-metal hypervisor in datacenter" → Type 1 (ESXi, Hyper-V, KVM).</li>
+            <li>"Run Linux VM on my laptop" → Type 2 (VirtualBox, Workstation, Fusion, Parallels).</li>
+            <li>"Provider manages OS + runtime, I deploy code" → PaaS.</li>
+            <li>"Finished app accessed via web browser" → SaaS.</li>
+            <li>"Customer responsibility for guest OS patches" → IaaS.</li>
+            <li>"Mix of on-prem and public cloud" → hybrid.</li>
+            <li>"Independent fault domain inside a region" → Availability Zone.</li>
+            <li>"Pay only for what you use" → measured / metered service.</li>
+          </ul>
         `
       },
       {
