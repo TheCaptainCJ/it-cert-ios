@@ -2705,13 +2705,186 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
       {
         title: '7. Mobile OS Security',
         body: `
+          <p>Modern smartphones / tablets carry more sensitive data than most laptops: email, payment apps, MFA codes, photos, location, contacts. Mobile OS security is built on hardware-rooted trust + app sandboxing + cloud management. Exam tests screen locks, biometrics, MDM, encryption, jailbreak/root risk, and the BYOD vs corporate divide.</p>
+
+          <h2>The two dominant mobile OSes</h2>
           <ul>
-            <li><b>Screen lock</b> — PIN, pattern, password, biometric.</li>
-            <li><b>Remote wipe</b> — Find My iPhone / Android Find My Device.</li>
-            <li><b>MDM</b> — Mobile Device Management; pushes policies, apps, wipes.</li>
-            <li><b>Full device encryption</b> — default on modern iOS/Android.</li>
-            <li><b>App store only</b> — sideloading risk; jailbreak/root removes sandbox.</li>
-            <li><b>BYOD vs corporate</b> — containerization separates work apps.</li>
+            <li><b>iOS / iPadOS</b> — Apple. Closed source. Apps reviewed + signed by Apple. Distributed only via App Store (plus enterprise / dev signing). Very tight control.</li>
+            <li><b>Android</b> — Google + AOSP (Android Open Source Project). Open ecosystem. Multiple vendors, multiple update timelines. Sideload allowed (with warning).</li>
+          </ul>
+
+          <h2>Screen lock methods</h2>
+          <ul>
+            <li><b>PIN</b> — 4-6+ digit numeric. Avoid 1234 / birthdays.</li>
+            <li><b>Pattern</b> (Android) — connect dots. Smudge attacks make patterns easier to guess; less secure than PIN/password.</li>
+            <li><b>Password / passphrase</b> — alphanumeric. Strongest knowledge-factor.</li>
+            <li><b>Biometric</b>:
+              <ul>
+                <li><b>Touch ID</b> — Apple fingerprint sensor. Templates stored in Secure Enclave; never leave device.</li>
+                <li><b>Face ID</b> — Apple TrueDepth IR + dot projector face map.</li>
+                <li><b>Android fingerprint</b> — vendor-specific (under-display optical / ultrasonic).</li>
+                <li><b>Android face unlock</b> — quality varies; some are camera-only (less secure), some 3D (more secure).</li>
+              </ul>
+            </li>
+            <li><b>Smart Lock</b> (Android) — trusted location / Bluetooth device skips lock. Convenience vs security trade-off.</li>
+          </ul>
+          <p><b>Lockout policies:</b> Devices wipe (iOS) or progressively delay (Android) after consecutive failed unlock attempts. iOS default = data wipe after 10 fails if enabled.</p>
+
+          <h2>Full-device encryption</h2>
+          <p><b>What:</b> Storage encrypted at hardware level, keys derived from user passcode + hardware-fused secret. Without passcode, data is unreadable.</p>
+          <ul>
+            <li><b>iOS Data Protection</b> — file-based encryption tiered by class (e.g., NSFileProtectionComplete = unreadable until unlocked).</li>
+            <li><b>Android File-Based Encryption (FBE)</b> — per-file keys; lets boot-time notifications work without unlock.</li>
+            <li>Keys protected by Secure Enclave (Apple) / Titan / Trusty TEE (Android).</li>
+          </ul>
+          <p>Encryption is <b>on by default</b> on every modern iOS device and Android 10+. Just set a passcode to enable it.</p>
+
+          <h2>Hardware roots of trust</h2>
+          <ul>
+            <li><b>Secure Enclave</b> (Apple) — coprocessor in A/M-series + T2 chip. Stores biometrics + cryptographic keys.</li>
+            <li><b>Titan M / Titan M2</b> (Pixel) — Google's secure element.</li>
+            <li><b>Trusty TEE</b> (Trusted Execution Environment) — Android-wide TEE standard built on ARM TrustZone.</li>
+            <li><b>SE</b> (Secure Element) — separate chip used in payment + transit + access cards.</li>
+            <li><b>Verified Boot</b> / <b>Boot Attestation</b> — each stage signature-checks the next, refuses to boot tampered firmware.</li>
+          </ul>
+
+          <h2>App sandboxing + permissions</h2>
+          <p><b>What:</b> Every app runs in its own UID + filesystem space. Cannot read another app's data or hardware without explicit permission.</p>
+          <p><b>Permission models:</b></p>
+          <ul>
+            <li><b>iOS</b> — runtime prompts the first time an app uses a sensitive API (camera, contacts, location, mic, Bluetooth, photos, notifications, tracking). User can revoke any time in Settings.</li>
+            <li><b>Android (6.0+)</b> — runtime permissions, granular. "While using the app" location. "Limited access" photos. App-by-app review in Settings → Apps → Permissions.</li>
+            <li><b>Privacy dashboards</b> — both OSes show recent sensor / data access (iOS App Privacy Report, Android Privacy Dashboard).</li>
+            <li><b>App Tracking Transparency</b> (iOS) — apps must request permission to track across apps + websites.</li>
+          </ul>
+
+          <h2>App distribution + sideloading</h2>
+          <ul>
+            <li><b>App Store</b> (iOS) — only source for non-jailbroken devices in most regions. App review + code signing by Apple.</li>
+            <li><b>Enterprise / Apple Configurator / Developer enrollment</b> — for in-house and dev apps.</li>
+            <li><b>Google Play</b> — primary Android store. Google Play Protect scans apps.</li>
+            <li><b>Sideloading</b> (Android) — install APKs from outside the store. Off by default; user must enable for each source.</li>
+            <li><b>Third-party stores</b> — F-Droid, Amazon Appstore, Aurora. Higher risk if unvetted.</li>
+            <li><b>Risk:</b> Outside-store apps may bundle malware. Default policy: install only from official store; lock with MDM in enterprise.</li>
+          </ul>
+
+          <h2>Jailbreak (iOS) / Root (Android)</h2>
+          <p><b>What:</b> Bypass OS-enforced restrictions to gain admin / root privileges on the device.</p>
+          <p><b>How:</b> Exploits unpatched kernel / bootloader vulns. Tools: checkra1n, palera1n, Magisk (root manager).</p>
+          <p><b>Why people do it:</b> Custom themes, tweaks, alt app stores, removing carrier locks, advanced testing.</p>
+          <p><b>Risks:</b></p>
+          <ul>
+            <li>Disables sandbox + Secure Boot guarantees.</li>
+            <li>Apple Pay / banking apps refuse to run.</li>
+            <li>Lose warranty + OTA updates.</li>
+            <li>Easy malware install.</li>
+            <li>Many corporate MDM profiles forbid + auto-wipe.</li>
+          </ul>
+          <p><b>Detection:</b> MDM solutions detect via integrity attestation (DeviceCheck / Play Integrity API). Block enrollment of jailbroken/rooted devices.</p>
+
+          <h2>MDM — Mobile Device Management</h2>
+          <p><b>What:</b> Server platform that pushes configuration + policy + apps to enrolled mobile devices.</p>
+          <p><b>Examples:</b> Microsoft Intune, Jamf, VMware Workspace ONE, Google Endpoint, IBM MaaS360, Hexnode.</p>
+          <p><b>Capabilities:</b></p>
+          <ul>
+            <li>Enforce passcode complexity + length.</li>
+            <li>Push Wi-Fi, VPN, certificate, mail profiles.</li>
+            <li>Required app catalog (managed apps).</li>
+            <li>Block jailbroken / out-of-policy devices.</li>
+            <li>Remote lock + wipe.</li>
+            <li>Geofencing, location, asset inventory.</li>
+            <li>Compliance reporting.</li>
+          </ul>
+          <p><b>Variants:</b></p>
+          <ul>
+            <li><b>MDM</b> — whole device management. Common on corporate-owned.</li>
+            <li><b>MAM</b> (Mobile Application Management) — manage only specific corporate apps + data, not the device. Common on BYOD.</li>
+            <li><b>EMM</b> (Enterprise Mobility Management) = MDM + MAM + identity.</li>
+            <li><b>UEM</b> (Unified Endpoint Management) = mobile + Windows + macOS + Linux in one platform.</li>
+          </ul>
+
+          <h2>Enrollment programs</h2>
+          <ul>
+            <li><b>Apple Business Manager (ABM)</b> / <b>Apple School Manager</b> — auto-enroll org-purchased iPhones, iPads, Macs into MDM out of the box. (Formerly DEP — Device Enrollment Program.)</li>
+            <li><b>Android Zero-Touch Enrollment</b> — equivalent for Android.</li>
+            <li><b>Samsung Knox Mobile Enrollment</b> — Samsung-specific zero-touch.</li>
+            <li><b>QR / Manual enrollment</b> — user-driven for existing devices.</li>
+          </ul>
+
+          <h2>BYOD vs Corporate vs CYOD vs COPE</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Model</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What</th></tr>
+            <tr><td><b>BYOD</b></td><td>Bring Your Own Device. Employee-owned. Org uses MAM / work profile / containerization.</td></tr>
+            <tr><td><b>Corporate-owned</b></td><td>Org buys, owns, manages. Full MDM control.</td></tr>
+            <tr><td><b>CYOD</b></td><td>Choose Your Own Device — pick from approved list, org pays/owns.</td></tr>
+            <tr><td><b>COPE</b></td><td>Corporate-Owned, Personally Enabled — limited personal use allowed.</td></tr>
+            <tr><td><b>COBO</b></td><td>Corporate-Owned, Business Only — kiosk / single-purpose.</td></tr>
+          </table>
+          <p>Mixing personal + corporate data on BYOD raises privacy and legal concerns. Containerization keeps work data wipeable without touching the user's photos.</p>
+
+          <h2>Containerization / Work profiles</h2>
+          <ul>
+            <li><b>Android Work Profile</b> — separate user space on the device. Work apps are visible with a briefcase badge. Selective wipe just removes the work profile.</li>
+            <li><b>iOS Managed Apps</b> — MDM-installed apps are tagged "Managed" and respect data-flow restrictions (Open-In, copy/paste, save target).</li>
+            <li><b>Samsung Knox Workspace</b> — hardware-isolated container.</li>
+          </ul>
+
+          <h2>Network + transport security</h2>
+          <ul>
+            <li><b>Always-on VPN</b> (per-device or per-app) pushed by MDM.</li>
+            <li><b>Per-app VPN</b> tunnels only specific apps.</li>
+            <li><b>Wi-Fi profile</b> with WPA2/3-Enterprise EAP-TLS + RADIUS cert.</li>
+            <li>Avoid open public Wi-Fi unless tunneled.</li>
+            <li>Disable AirDrop / Nearby Share in public.</li>
+          </ul>
+
+          <h2>Lost / stolen device response</h2>
+          <ol>
+            <li>Mark as lost / stolen in MDM or "Find My iPhone" / "Find My Device".</li>
+            <li>Trigger remote lock / sound alarm.</li>
+            <li>Locate via GPS if possible.</li>
+            <li>If unrecoverable, <b>remote wipe</b>.</li>
+            <li>Activation Lock (iOS) / Factory Reset Protection (Android) prevents reactivation without original Apple ID / Google account.</li>
+            <li>Report to carrier + IT + police; revoke certificates + sessions in IdP.</li>
+          </ol>
+
+          <h2>Updates</h2>
+          <ul>
+            <li>Patch promptly — known Android / iOS exploits are weaponized within days.</li>
+            <li><b>iOS</b> — Apple ships updates directly to all supported devices.</li>
+            <li><b>Android</b> — depends on vendor + carrier; Pixel/Samsung quickest. Monthly Android Security Patch Level (SPL) and yearly major release.</li>
+            <li>MDM can enforce minimum OS version for compliance.</li>
+          </ul>
+
+          <h2>Mobile-specific threats</h2>
+          <ul>
+            <li><b>Bluejacking</b> — sending unsolicited messages over Bluetooth.</li>
+            <li><b>Bluesnarfing</b> — unauthorized data theft over Bluetooth.</li>
+            <li><b>Bluebugging</b> — remote control via Bluetooth.</li>
+            <li><b>SIM swapping</b> — attacker convinces carrier to port your number to their SIM, captures SMS OTPs. <b>Defense:</b> add carrier PIN, prefer app-based or FIDO MFA over SMS.</li>
+            <li><b>SS7 attacks</b> — exploits in telecom signaling to intercept SMS / calls.</li>
+            <li><b>Stalkerware</b> — covert tracking apps installed by a partner with physical access.</li>
+            <li><b>Public Wi-Fi MITM</b> — captured traffic on open networks.</li>
+            <li><b>Pegasus / mercenary spyware</b> — zero-click iOS / Android exploits used by state actors. Defense: enable iOS Lockdown Mode, keep up to date.</li>
+          </ul>
+
+          <h2>Backups + recovery</h2>
+          <ul>
+            <li><b>iCloud Backup</b> — encrypted; "Advanced Data Protection" gives end-to-end encryption.</li>
+            <li><b>Google One Backup</b> — Android device backups.</li>
+            <li>Local encrypted backups via Finder / iTunes / vendor PC apps.</li>
+            <li><b>Restoring</b> a new device from a backup transfers app data + settings.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Wipe a stolen iPhone remotely" → Find My / MDM remote wipe.</li>
+            <li>"Push corporate Wi-Fi to many phones" → MDM Wi-Fi profile.</li>
+            <li>"Block sideloaded apps" → MDM configuration + enforce app store only.</li>
+            <li>"Jailbreak/root effect" → disables OS sandbox / Secure Boot, banking + corporate apps refuse to run.</li>
+            <li>"BYOD privacy concern" → use MAM / work profile / containerization, not full MDM wipe.</li>
+            <li>"Strongest mobile auth factor" → FIDO2 / passkey or hardware-backed biometric (Face ID, Touch ID) + passcode.</li>
+            <li>"Threat where attacker steals SMS OTPs by porting your number" → SIM swap.</li>
           </ul>
         `
       },
