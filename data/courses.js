@@ -1605,16 +1605,175 @@ const COURSES = [
       {
         title: '1. Windows Editions & Features',
         body: `
-          <h2>Windows 10/11 editions</h2>
+          <p>Windows ships in multiple <b>editions</b> (also called SKUs — Stock Keeping Units) that gate features by use case. Exam expects you to recognize which edition is required for domain join, BitLocker, Group Policy, RDP host, Hyper-V, and AppLocker — and to identify the built-in admin tools and where to launch them.</p>
+
+          <h2>Windows 10 / 11 — main editions</h2>
+
+          <h3>Home</h3>
+          <p><b>What:</b> Consumer / OEM edition shipped on most retail laptops.</p>
+          <p><b>Why constrained:</b> Microsoft reserves enterprise features for paid SKUs. Home cannot:</p>
           <ul>
-            <li><b>Home</b> — consumer; no domain join, no BitLocker mgmt, no Group Policy.</li>
-            <li><b>Pro</b> — domain join, BitLocker, RDP host, Group Policy, Hyper-V.</li>
-            <li><b>Pro for Workstations</b> — adds high core/RAM, ReFS.</li>
-            <li><b>Enterprise</b> — volume licensing, AppLocker, DirectAccess.</li>
-            <li><b>Education</b> — Enterprise feature set for schools.</li>
+            <li>Join an Active Directory <b>domain</b>.</li>
+            <li>Manage <b>BitLocker</b> via UI (device encryption may exist on modern hardware with MSA sign-in).</li>
+            <li>Use <b>Group Policy Editor</b> (<code>gpedit.msc</code>).</li>
+            <li>Host a Remote Desktop session (can only connect OUT as a client).</li>
+            <li>Run <b>Hyper-V</b>.</li>
           </ul>
-          <h2>Key tools</h2>
-          <p><code>regedit</code>, <code>services.msc</code>, <code>devmgmt.msc</code>, <code>diskmgmt.msc</code>, <code>gpedit.msc</code>, <code>eventvwr.msc</code>, <code>msconfig</code>, <code>resmon</code>, <code>perfmon</code>.</p>
+
+          <h3>Pro</h3>
+          <p><b>What:</b> Small-business / power-user edition. The minimum for any business environment.</p>
+          <p><b>Adds over Home:</b></p>
+          <ul>
+            <li><b>Domain join</b> + <b>Microsoft Entra Join</b> (formerly Azure AD).</li>
+            <li><b>BitLocker</b> + BitLocker To Go.</li>
+            <li><b>Group Policy</b> client + local <code>gpedit.msc</code>.</li>
+            <li><b>RDP host</b> — Remote Desktop service accepts inbound connections.</li>
+            <li><b>Hyper-V</b> — Type 1 hypervisor built in.</li>
+            <li><b>Windows Sandbox</b> — ephemeral isolated session.</li>
+            <li><b>WSL</b> (Windows Subsystem for Linux), <b>WSLg</b> for graphical Linux apps.</li>
+          </ul>
+
+          <h3>Pro for Workstations</h3>
+          <p><b>What:</b> Pro with extras targeted at high-end workstations.</p>
+          <p><b>Adds:</b></p>
+          <ul>
+            <li>Up to <b>6 TB RAM</b> and 4 CPU sockets.</li>
+            <li><b>ReFS</b> (Resilient File System) support — checksums, scale.</li>
+            <li><b>SMB Direct</b> over RDMA.</li>
+            <li><b>Persistent memory (PMEM)</b> support.</li>
+          </ul>
+
+          <h3>Enterprise</h3>
+          <p><b>What:</b> Sold via <b>volume licensing</b> + Microsoft 365 E3/E5 plans. Targets large orgs and managed deployments.</p>
+          <p><b>Adds:</b></p>
+          <ul>
+            <li><b>AppLocker</b> / <b>WDAC</b> (Windows Defender Application Control) — allowlist apps.</li>
+            <li><b>DirectAccess</b> (legacy always-on VPN) / <b>Always On VPN</b> (modern).</li>
+            <li><b>Windows Defender for Endpoint</b> integration.</li>
+            <li><b>Credential Guard</b> + <b>Device Guard</b> — VBS-based credential isolation.</li>
+            <li>Long-Term Servicing Channel (<b>LTSC</b>) — minimal features, 10-year support for kiosks, ATMs, medical equipment.</li>
+            <li>Windows Information Protection (legacy DLP).</li>
+          </ul>
+
+          <h3>Education / Pro Education</h3>
+          <p><b>What:</b> Enterprise feature set licensed for schools. Functionally identical to Enterprise in most respects.</p>
+
+          <h3>IoT Enterprise</h3>
+          <p><b>What:</b> Embedded / fixed-purpose deployments (kiosks, signage, industrial). Allows shell replacement, write filters.</p>
+
+          <h2>Differences worth remembering</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Feature</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Home</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Pro</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Enterprise</th></tr>
+            <tr><td>Domain join</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>BitLocker management</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Group Policy editor</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>RDP host (accept connections)</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Hyper-V</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>AppLocker / WDAC</td><td>—</td><td>—</td><td>✓</td></tr>
+            <tr><td>Credential Guard</td><td>—</td><td>—</td><td>✓</td></tr>
+            <tr><td>LTSC release channel</td><td>—</td><td>—</td><td>✓</td></tr>
+          </table>
+
+          <h2>32-bit vs 64-bit</h2>
+          <ul>
+            <li><b>32-bit (x86)</b> — max 4 GB RAM addressable (~3.5 GB usable). Only legacy installs.</li>
+            <li><b>64-bit (x64 / AMD64)</b> — addresses 16 EB theoretical, typically 128-512 GB in consumer SKUs. Required by Windows 11.</li>
+            <li><b>ARM64</b> — Windows on ARM for Snapdragon / Surface Pro X. Uses <b>x86/x64 emulation</b> layer for compatibility.</li>
+          </ul>
+
+          <h2>Activation + licensing</h2>
+          <ul>
+            <li><b>OEM</b> license — tied to motherboard / firmware. Transferred with the device.</li>
+            <li><b>Retail</b> license — moveable to a different PC after deactivation.</li>
+            <li><b>Volume licensing (VLSC, M365 admin center)</b> — MAK or KMS keys for enterprises.</li>
+            <li><b>KMS</b> (Key Management Service) — on-prem server activates clients on the network; re-activation every 180 days.</li>
+            <li><b>MAK</b> (Multiple Activation Key) — single-use key per install up to a quota.</li>
+            <li><b>Digital license</b> — tied to your Microsoft account in modern Windows.</li>
+          </ul>
+
+          <h2>Built-in management consoles + tools</h2>
+
+          <h3>MMC — Microsoft Management Console</h3>
+          <p>Container for snap-ins (the <code>.msc</code> files). Run <code>mmc.exe</code>, File → Add/Remove Snap-in to assemble a custom console.</p>
+
+          <h3>Common <code>.msc</code> snap-ins</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Command</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Tool</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td><code>devmgmt.msc</code></td><td>Device Manager</td><td>Drivers, hardware errors (yellow ⚠), enable/disable devices.</td></tr>
+            <tr><td><code>diskmgmt.msc</code></td><td>Disk Management</td><td>Partitions, volumes, format, change letters.</td></tr>
+            <tr><td><code>services.msc</code></td><td>Services</td><td>Start/stop/disable services, startup type.</td></tr>
+            <tr><td><code>eventvwr.msc</code></td><td>Event Viewer</td><td>Application/System/Security logs.</td></tr>
+            <tr><td><code>gpedit.msc</code></td><td>Local Group Policy Editor</td><td>Local computer + user policies. Pro+.</td></tr>
+            <tr><td><code>secpol.msc</code></td><td>Local Security Policy</td><td>Account/audit/user-rights policies.</td></tr>
+            <tr><td><code>compmgmt.msc</code></td><td>Computer Management</td><td>Bundled console (users/groups, services, disk, eventvwr).</td></tr>
+            <tr><td><code>certmgr.msc</code></td><td>User Certificates</td><td>Personal cert store.</td></tr>
+            <tr><td><code>certlm.msc</code></td><td>Computer Certificates</td><td>Machine cert store (HKLM).</td></tr>
+            <tr><td><code>wf.msc</code></td><td>Windows Defender Firewall Advanced</td><td>Inbound/outbound rules.</td></tr>
+            <tr><td><code>perfmon.msc</code></td><td>Performance Monitor</td><td>Counters + Data Collector Sets.</td></tr>
+            <tr><td><code>taskschd.msc</code></td><td>Task Scheduler</td><td>Scheduled jobs.</td></tr>
+            <tr><td><code>printmanagement.msc</code></td><td>Print Management</td><td>Servers, drivers, queues.</td></tr>
+          </table>
+
+          <h3>Non-MMC tools</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Command</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Tool</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td><code>regedit</code></td><td>Registry Editor</td><td>Direct registry edits — dangerous, back up first.</td></tr>
+            <tr><td><code>msconfig</code></td><td>System Configuration</td><td>Boot options, Safe Mode, services, startup pointer to Task Manager.</td></tr>
+            <tr><td><code>msinfo32</code></td><td>System Information</td><td>Hardware, drivers, environment.</td></tr>
+            <tr><td><code>dxdiag</code></td><td>DirectX Diagnostic</td><td>GPU + audio + input details.</td></tr>
+            <tr><td><code>taskmgr</code></td><td>Task Manager</td><td>Processes, performance, startup apps, users.</td></tr>
+            <tr><td><code>resmon</code></td><td>Resource Monitor</td><td>Detailed CPU/RAM/disk/network counters.</td></tr>
+            <tr><td><code>sysdm.cpl</code></td><td>System Properties</td><td>Computer name, perf options, env vars.</td></tr>
+            <tr><td><code>appwiz.cpl</code></td><td>Programs and Features</td><td>Uninstall classic Win32 apps.</td></tr>
+            <tr><td><code>ncpa.cpl</code></td><td>Network Connections</td><td>NIC properties.</td></tr>
+            <tr><td><code>powercfg.cpl</code></td><td>Power Options</td><td>Plans, sleep, hibernation.</td></tr>
+            <tr><td><code>winver</code></td><td>About Windows</td><td>Build + edition.</td></tr>
+            <tr><td><code>cleanmgr</code></td><td>Disk Cleanup</td><td>Free space — also has /sageset for automation.</td></tr>
+          </table>
+
+          <h2>Settings vs Control Panel</h2>
+          <p>Modern <b>Settings app</b> (Win+I) gradually replaces classic <b>Control Panel</b>. Many advanced functions still live in Control Panel or <code>.cpl</code> applets. Know both — exam can use either path.</p>
+
+          <h2>Run dialog + shell shortcuts</h2>
+          <p><b>Win+R</b> opens Run. Useful shortcuts:</p>
+          <ul>
+            <li><code>shell:startup</code> — current user startup folder.</li>
+            <li><code>shell:common startup</code> — all-users startup folder.</li>
+            <li><code>shell:sendto</code> — Send To menu items.</li>
+            <li><code>%temp%</code> — temp dir.</li>
+            <li><code>%appdata%</code> — Roaming AppData.</li>
+            <li><code>%localappdata%</code> — Local AppData.</li>
+            <li><code>%userprofile%</code> — user home folder.</li>
+            <li><code>%windir%</code>, <code>%systemroot%</code> — Windows directory.</li>
+          </ul>
+
+          <h2>Update channels</h2>
+          <ul>
+            <li><b>General Availability Channel (GAC)</b> — consumer + business. Annual feature updates, monthly cumulative.</li>
+            <li><b>Long-Term Servicing Channel (LTSC)</b> — Enterprise only. New feature release every ~2-3 years, ~10 years support. No Store, no Edge updates pushed (deliberately stable).</li>
+            <li><b>Insider Preview</b> — Dev / Beta / Release Preview rings for testing.</li>
+            <li><b>Windows Update for Business (WUfB)</b> — policy-based deferrals.</li>
+            <li><b>WSUS</b> (Windows Server Update Services) — on-prem repository pushing approved updates.</li>
+          </ul>
+
+          <h2>Upgrade paths</h2>
+          <ul>
+            <li><b>In-place upgrade</b> — keeps apps + data. Win10 → Win11 if hardware meets reqs (TPM 2.0, Secure Boot, UEFI, 4 GB RAM, 64-bit CPU on approved list).</li>
+            <li><b>Clean install</b> — wipe + reinstall.</li>
+            <li><b>Reset this PC</b> — keep files or remove all. Built into WinRE.</li>
+            <li><b>USMT</b> (User State Migration Tool) — automates migration of user profiles, settings, data for refresh scenarios.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Must join AD domain" → Pro or higher (NOT Home).</li>
+            <li>"AppLocker / WDAC" → Enterprise / Education.</li>
+            <li>"Kiosk with 10-year support" → Enterprise LTSC.</li>
+            <li>"Manage local services + view event logs" → Computer Management (<code>compmgmt.msc</code>).</li>
+            <li>"Boot to Safe Mode from running Windows" → <code>msconfig</code> → Boot tab.</li>
+            <li>"On-prem corporate update server" → WSUS.</li>
+            <li>"Apply existing on-prem Windows licenses to Azure VMs" → Azure Hybrid Benefit.</li>
+          </ul>
         `
       },
       {
