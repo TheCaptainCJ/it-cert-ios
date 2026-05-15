@@ -472,16 +472,102 @@ const COURSES = [
       {
         title: '5. Internet Connection Types',
         body: `
+          <p>Last-mile technologies that link a home/business to an <b>ISP</b> (Internet Service Provider). Exam tests typical speeds, distance limits, latency, and where each fits.</p>
+
+          <h2>DSL — Digital Subscriber Line</h2>
+          <p><b>What:</b> Broadband over existing copper telephone wires using high-frequency carriers (above voice band).</p>
+          <p><b>Why:</b> Reuses installed phone infrastructure — wide reach in older neighborhoods.</p>
+          <p><b>How used:</b> A DSL modem at the customer site terminates the loop to the telco <b>DSLAM</b> (Digital Subscriber Line Access Multiplexer) at the central office.</p>
+          <p><b>Flavors:</b></p>
           <ul>
-            <li><b>DSL</b> — over phone lines, asymmetric usually.</li>
-            <li><b>Cable</b> — over coax (DOCSIS), shared bandwidth.</li>
-            <li><b>Fiber (FTTH)</b> — fastest, symmetric.</li>
-            <li><b>Satellite</b> — rural; latency issue (GEO ~600ms, LEO/Starlink ~30ms).</li>
-            <li><b>Cellular</b> — 4G LTE / 5G hotspot.</li>
-            <li><b>WISP</b> — fixed wireless ISP.</li>
+            <li><b>ADSL</b> (Asymmetric DSL) — much faster down than up. Typical ~10/1 to 50/5 Mbps. Distance-limited (~18,000 ft from CO).</li>
+            <li><b>VDSL</b> (Very-high-bit-rate DSL) — up to 100 Mbps, shorter range.</li>
+            <li><b>SDSL</b> (Symmetric DSL) — equal up/down, business focus.</li>
           </ul>
-          <h2>Network types</h2>
-          <p><b>LAN</b> = local. <b>WAN</b> = wide area (Internet). <b>MAN</b> = metropolitan. <b>PAN</b> = personal (Bluetooth). <b>WLAN</b> = wireless LAN. <b>SAN</b> = storage area network.</p>
+          <p><b>Downsides:</b> Slow uplink, distance-sensitive, being phased out where fiber arrives.</p>
+
+          <h2>Cable broadband (DOCSIS)</h2>
+          <p><b>What:</b> Internet over the same coaxial / hybrid fiber-coax (<b>HFC</b>) plant as cable TV.</p>
+          <p><b>Standard:</b> <b>DOCSIS</b> (Data Over Cable Service Interface Specification). Latest <b>DOCSIS 3.1</b> supports up to ~10 Gbps down / 1-2 Gbps up; <b>DOCSIS 4.0</b> targets symmetric multi-gig.</p>
+          <p><b>Why:</b> Widely deployed in suburbs. Faster than DSL in most markets.</p>
+          <p><b>How used:</b> Cable modem at home → coax → node → ISP core. Bandwidth is <b>shared</b> with neighbors on the same segment — peak-time slowdown is the classic complaint.</p>
+
+          <h2>Fiber to the X (FTTx)</h2>
+          <p><b>FTTH</b> = Fiber To The Home. <b>FTTP</b> = To The Premises. <b>FTTC</b> = To The Curb (then copper). <b>FTTB</b> = To The Building.</p>
+          <p><b>What:</b> Optical fiber runs all (or most) of the way to the customer.</p>
+          <p><b>Why best-in-class:</b> Symmetric multi-gigabit speeds, low latency, no copper attenuation, future-proof.</p>
+          <p><b>Common access tech:</b></p>
+          <ul>
+            <li><b>GPON</b> (Gigabit Passive Optical Network) — splits one fiber among multiple subscribers via passive optical splitters. ~2.5 Gbps down / 1.25 Gbps up shared.</li>
+            <li><b>XGS-PON</b> — 10 Gbps symmetric PON, replacing GPON.</li>
+            <li><b>Active Ethernet</b> — dedicated fiber + active switch per customer (enterprise).</li>
+          </ul>
+          <p><b>How delivered:</b> ISP installs an <b>ONT</b> (Optical Network Terminal) at the home — converts fiber light to Ethernet.</p>
+
+          <h2>Satellite</h2>
+          <p><b>What:</b> Internet relayed via satellites orbiting Earth.</p>
+          <p><b>Two architectures:</b></p>
+          <ul>
+            <li><b>GEO</b> (Geostationary Earth Orbit) — ~36,000 km up. Examples: HughesNet, Viasat. Round-trip latency ~600 ms.</li>
+            <li><b>LEO</b> (Low Earth Orbit) — ~550 km up. Constellations like Starlink, OneWeb, Project Kuiper. Round-trip ~25-50 ms — comparable to terrestrial.</li>
+          </ul>
+          <p><b>Why:</b> The only option in many rural / maritime / aviation scenarios. LEO finally usable for video calls and gaming.</p>
+          <p><b>Downsides:</b> Affected by heavy rain / snow (rain fade), required clear sky view, monthly cost.</p>
+
+          <h2>Cellular wireless</h2>
+          <p><b>What:</b> Internet over carrier mobile networks via SIM-equipped device (phone, hotspot, modem).</p>
+          <ul>
+            <li><b>3G</b> — legacy, mostly retired in US. Includes HSPA+.</li>
+            <li><b>4G LTE</b> (Long-Term Evolution) — typical 10-100 Mbps down. Still dominant.</li>
+            <li><b>5G</b> — sub-6 GHz mid-band offers wide coverage at 100-900 Mbps. <b>mmWave</b> (24+ GHz) delivers multi-gigabit but only a few hundred meters per cell.</li>
+            <li><b>FWA</b> (Fixed Wireless Access) — 5G-based "home internet" service (T-Mobile Home Internet, Verizon 5G Home).</li>
+          </ul>
+          <p><b>How used:</b> Phone hotspot, mobile USB modem, embedded LTE in laptop. Watch monthly data caps and throttling thresholds.</p>
+
+          <h2>WISP — Wireless ISP (fixed wireless)</h2>
+          <p><b>What:</b> ISP delivers Internet via licensed/unlicensed point-to-point or point-to-multipoint microwave or Wi-Fi-like radios.</p>
+          <p><b>How used:</b> Subscriber antenna aims at WISP tower a few miles away. Common in rural communities. Speeds 10-300 Mbps typically.</p>
+          <p><b>Downsides:</b> Line-of-sight needed; weather affects signal.</p>
+
+          <h2>Legacy / niche connections</h2>
+          <ul>
+            <li><b>Dial-up</b> — analog modem over POTS (Plain Old Telephone Service). Up to 56 Kbps. Essentially extinct.</li>
+            <li><b>ISDN</b> (Integrated Services Digital Network) — 128 Kbps digital phone line. Retired but exam may mention BRI / PRI.</li>
+            <li><b>T1 / T3</b> (DS1 / DS3) — leased copper digital lines. T1 = 1.544 Mbps, T3 = 44.7 Mbps. Now replaced by Ethernet over fiber.</li>
+            <li><b>Metro Ethernet</b> — carrier Ethernet over fiber for businesses, scaling from 10 Mbps to 100 Gbps.</li>
+          </ul>
+
+          <h2>Network types — by scope</h2>
+          <ul>
+            <li><b>PAN</b> (Personal Area Network) — Bluetooth, USB cable distance (a few meters). Phone + earbuds.</li>
+            <li><b>LAN</b> (Local Area Network) — single building / floor. Ethernet + Wi-Fi.</li>
+            <li><b>WLAN</b> (Wireless LAN) — the Wi-Fi portion of a LAN.</li>
+            <li><b>CAN</b> (Campus Area Network) — multiple buildings on one campus (university, corporate park).</li>
+            <li><b>MAN</b> (Metropolitan Area Network) — city-wide. Often carrier metro Ethernet.</li>
+            <li><b>WAN</b> (Wide Area Network) — across cities/countries. The Internet is the largest WAN.</li>
+            <li><b>SAN</b> (Storage Area Network) — dedicated high-speed network for block storage (Fibre Channel, iSCSI).</li>
+          </ul>
+
+          <h2>Connection comparison summary</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical down/up</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Latency</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Best fit</th></tr>
+            <tr><td>DSL</td><td>10–100 / 1–10 Mbps</td><td>20–40 ms</td><td>Phone-line areas</td></tr>
+            <tr><td>Cable</td><td>100M–1G / 10–50M</td><td>15–30 ms</td><td>Suburban home/SMB</td></tr>
+            <tr><td>FTTH</td><td>500M–10G symmetric</td><td>5–15 ms</td><td>Future-proof everywhere</td></tr>
+            <tr><td>GEO sat</td><td>25–100 / 3 Mbps</td><td>~600 ms</td><td>Truly remote</td></tr>
+            <tr><td>LEO sat</td><td>100–250 / 10–25 Mbps</td><td>25–50 ms</td><td>Rural broadband</td></tr>
+            <tr><td>5G FWA</td><td>100M–1G / 10–100M</td><td>15–40 ms</td><td>Suburban + urban home</td></tr>
+            <tr><td>WISP</td><td>10–300 Mbps</td><td>10–40 ms</td><td>Rural line-of-sight</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Most rural with low latency" → LEO satellite (Starlink).</li>
+            <li>"Fastest residential, symmetric" → FTTH / FTTP.</li>
+            <li>"DOCSIS" automatically means cable broadband.</li>
+            <li>"Asymmetric" wording typically points to DSL or cable.</li>
+            <li>SAN vs LAN: SAN moves block storage between servers and storage arrays — NOT generic file traffic.</li>
+          </ul>
         `
       },
       {
