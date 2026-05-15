@@ -73,6 +73,7 @@
     h.innerHTML = `<h2>${c.name}</h2><div class="meta">${c.code} · ${c.lessons.length} lessons · ${c.quiz.length} practice Qs</div>`;
     renderLessonsTab();
     renderCardsTab();
+    renderLabsTab();
     renderQuizTab();
     activateTab('lessons');
     showView('certView');
@@ -82,7 +83,123 @@
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.getElementById('lessonsTab').classList.toggle('active', tab === 'lessons');
     document.getElementById('cardsTab').classList.toggle('active', tab === 'cards');
+    document.getElementById('labsTab').classList.toggle('active', tab === 'labs');
     document.getElementById('quizTab').classList.toggle('active', tab === 'quiz');
+  }
+
+  function getLabsForCert(certId) {
+    if (typeof LABS !== 'undefined' && LABS[certId]) return LABS[certId];
+    return [];
+  }
+
+  function renderLabsTab() {
+    const c = state.currentCert;
+    const labs = getLabsForCert(c.id);
+    const el = document.getElementById('labsTab');
+    if (labs.length === 0) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:14px">No labs yet for this track.</p>';
+      return;
+    }
+    const p = getCertProgress(c.id);
+    const completed = p.labsDone || {};
+    el.innerHTML = `<p style="color:var(--muted);font-size:14px;margin:0 0 12px">${labs.length} scenario labs. Tap to start.</p><div class="lesson-list"></div>`;
+    const list = el.querySelector('.lesson-list');
+    labs.forEach((lab, i) => {
+      const done = !!completed[lab.id];
+      const item = document.createElement('button');
+      item.className = 'lesson-item' + (done ? ' done' : '');
+      item.innerHTML = `
+        <span class="num">${done ? '✓' : (i + 1)}</span>
+        <span class="ltitle"><b>${lab.title}</b><br><span style="font-size:12px;color:var(--muted)">${lab.objective}</span></span>
+        <span class="chev">›</span>
+      `;
+      item.addEventListener('click', () => startLab(lab));
+      list.appendChild(item);
+    });
+  }
+
+  function startLab(lab) {
+    const c = state.currentCert;
+    let step = 0;
+    setTitle(`Lab · ${lab.title.split(':')[0]}`);
+    showView('labView');
+    render();
+
+    function render() {
+      const runner = document.getElementById('labRunner');
+      if (step >= lab.steps.length) {
+        const p = getCertProgress(c.id);
+        if (!p.labsDone) p.labsDone = {};
+        p.labsDone[lab.id] = true;
+        state.progress[c.id] = p;
+        saveProgress();
+        runner.innerHTML = `
+          <div class="quiz-summary">
+            <div class="score">✓</div>
+            <div class="label">Lab complete</div>
+            <div style="font-size:14px;color:var(--muted);margin-top:8px">${lab.title}</div>
+            <div style="margin-top:20px;display:flex;gap:8px">
+              <button class="btn" id="labBack">Back to labs</button>
+              <button class="btn primary" id="labRedo">Replay</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('labBack').onclick = () => openCert(c.id);
+        document.getElementById('labRedo').onclick = () => startLab(lab);
+        return;
+      }
+      const s = lab.steps[step];
+      const header = `<div class="card-meta">Step ${step + 1} of ${lab.steps.length} · ${lab.title}</div>`;
+      if (s.type === 'note') {
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p style="font-size:16px;line-height:1.5;margin:0">${s.text}</p>
+            <button class="btn primary" id="labNext" style="margin-top:14px;width:100%">Continue ›</button>
+          </div>`;
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else if (s.type === 'command') {
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p class="q-text">${s.prompt}</p>
+            <pre style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;font-size:13px;line-height:1.5">${escapeHtml(s.cmd)}</pre>
+            <div class="q-explain" style="display:block;margin-top:10px">${s.explain}</div>
+            <button class="btn primary" id="labNext" style="margin-top:14px;width:100%">Got it ›</button>
+          </div>`;
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else if (s.type === 'choice') {
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p class="q-text">${s.prompt}</p>
+            <div class="q-options" id="labOpts"></div>
+            <div class="q-explain" id="labExp" style="display:none"></div>
+            <button class="btn primary" id="labNext" style="margin-top:14px;display:none;width:100%">Next ›</button>
+          </div>`;
+        const opts = document.getElementById('labOpts');
+        s.options.forEach((opt, i) => {
+          const b = document.createElement('button');
+          b.className = 'q-opt';
+          b.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span><span>${opt}</span>`;
+          b.addEventListener('click', () => {
+            if (opts.dataset.locked) return;
+            opts.dataset.locked = '1';
+            Array.from(opts.children).forEach((c, idx) => {
+              if (idx === s.answer) c.classList.add('correct');
+              else if (idx === i) c.classList.add('wrong');
+            });
+            const exp = document.getElementById('labExp');
+            exp.style.display = 'block';
+            exp.textContent = s.explain;
+            document.getElementById('labNext').style.display = 'block';
+          });
+          opts.appendChild(b);
+        });
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      }
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function renderLessonsTab() {
@@ -348,7 +465,8 @@
   document.getElementById('backBtn').addEventListener('click', () => {
     if (document.getElementById('lessonView').classList.contains('active') ||
         document.getElementById('quizView').classList.contains('active') ||
-        document.getElementById('cardsView').classList.contains('active')) {
+        document.getElementById('cardsView').classList.contains('active') ||
+        document.getElementById('labView').classList.contains('active')) {
       openCert(state.currentCert.id);
     } else {
       renderHome();

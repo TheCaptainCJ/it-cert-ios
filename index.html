@@ -35,11 +35,13 @@
       <div class="cert-header" id="certHeader"></div>
       <div class="tabs">
         <button class="tab active" data-tab="lessons">Lessons</button>
-        <button class="tab" data-tab="cards">Flashcards</button>
+        <button class="tab" data-tab="cards">Cards</button>
+        <button class="tab" data-tab="labs">Labs</button>
         <button class="tab" data-tab="quiz">Quiz</button>
       </div>
       <div id="lessonsTab" class="tab-panel active"></div>
       <div id="cardsTab" class="tab-panel"></div>
+      <div id="labsTab" class="tab-panel"></div>
       <div id="quizTab" class="tab-panel"></div>
     </section>
 
@@ -63,6 +65,11 @@
       <div id="cardsRunner"></div>
     </section>
 
+    <!-- Lab runner -->
+    <section id="labView" class="view">
+      <div id="labRunner"></div>
+    </section>
+
     <!-- Settings drawer -->
     <aside id="drawer" class="drawer">
       <h3>Menu</h3>
@@ -76,6 +83,7 @@
 
   <script src="data/courses.js"></script>
   <script src="data/flashcards.js"></script>
+  <script src="data/labs.js"></script>
   <script src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
