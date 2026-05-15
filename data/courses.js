@@ -102,23 +102,100 @@ const COURSES = [
       {
         title: '2. Networking — Cables & Connectors',
         body: `
-          <h2>Copper cabling</h2>
+          <p>Network cabling is the physical layer of any wired LAN. Picking the right cable matters for speed, distance, interference resistance, and cost. Exam will test categories, distances, connectors, and use cases.</p>
+
+          <h2>Copper twisted-pair Ethernet</h2>
+          <p><b>What:</b> 4 pairs of insulated copper conductors twisted together. The twist cancels electromagnetic noise (crosstalk). All modern LAN copper is twisted-pair.</p>
+          <p><b>UTP</b> = Unshielded Twisted Pair. Cheaper, used for normal office runs.<br>
+          <b>STP</b> = Shielded Twisted Pair. Foil or braid around the conductors plus a drain wire. Used in industrial / high-EMI environments (motors, transformers, hospitals).</p>
+
+          <h3>Cat 5e — Category 5 enhanced</h3>
+          <p><b>What:</b> Baseline modern Ethernet cable rated for 1 Gbps to 100 meters at 100 MHz.</p>
+          <p><b>Why:</b> Cheap, ubiquitous, sufficient for typical desktops. Found pre-installed in older buildings.</p>
+          <p><b>How used:</b> Voice + 1 Gbps data drops, patch cords. Cannot carry 10 Gbps reliably.</p>
+
+          <h3>Cat 6 — Category 6</h3>
+          <p><b>What:</b> Tighter twist + plastic spline separator. Rated 1 Gbps to 100 m, OR <b>10 Gbps to ~55 m</b>.</p>
+          <p><b>Why:</b> Better signal-to-noise + alien crosstalk resistance than Cat 5e.</p>
+          <p><b>How used:</b> New residential / small office installs. Avoid for 10 Gbps over long runs.</p>
+
+          <h3>Cat 6a — Augmented Category 6</h3>
+          <p><b>What:</b> Even tighter twist + often shielded. Rated <b>10 Gbps to full 100 m</b> at 500 MHz.</p>
+          <p><b>Why:</b> Future-proof for 10 GbE backbone, multi-gig Wi-Fi 6/6E AP uplinks.</p>
+          <p><b>How used:</b> Enterprise / datacenter horizontal cabling. Thicker + stiffer than Cat 6 — plan conduit + bend radius.</p>
+
+          <h3>Cat 7 / Cat 8</h3>
+          <p><b>Cat 7</b>: foiled shielded twisted-pair, never standardized by TIA. Rare in North America.<br>
+          <b>Cat 8</b>: 40 Gbps to 30 m at 2 GHz. Datacenter top-of-rack short runs only.</p>
+
+          <h3>Coaxial — RG-6 / RG-59</h3>
+          <p><b>What:</b> Center conductor + dielectric + braided shield + jacket. <b>RG</b> = "Radio Guide" mil-spec naming.</p>
+          <p><b>Why:</b> Carries broadband RF. RG-6 is thicker, better shielded, lower loss than RG-59.</p>
+          <p><b>How used:</b> Cable TV, cable modems (<b>DOCSIS</b> — Data Over Cable Service Interface Specification), security camera RF, satellite.</p>
+          <p><b>Connector:</b> <b>F-type</b> screw-on, or BNC (bayonet) for older equipment / lab gear.</p>
+
+          <h2>Fiber-optic cabling</h2>
+          <p><b>What:</b> Glass or plastic strand carrying light pulses instead of electrons. Two operational modes:</p>
+
+          <h3>Single-mode fiber (SMF)</h3>
+          <p><b>What:</b> Very thin core (~9 µm) carrying ONE light path. Uses laser source at 1310 / 1550 nm.</p>
+          <p><b>Why:</b> Lowest dispersion → longest distance. Tens of kilometers per link without repeater.</p>
+          <p><b>How used:</b> ISP backbones, building-to-building runs, metro / long-haul transport. Jacket usually <b>yellow</b>.</p>
+
+          <h3>Multimode fiber (MMF)</h3>
+          <p><b>What:</b> Larger core (~50 or 62.5 µm) carrying many light modes. Uses LED or VCSEL at 850 nm.</p>
+          <p><b>Why:</b> Cheaper transceivers, suitable for shorter runs (typically &lt; 550 m for 1 GbE, less for 10 GbE).</p>
+          <p><b>How used:</b> Inside datacenters, between switches, server-to-SAN. Jacket: <b>orange</b> (OM1/OM2), <b>aqua</b> (OM3/OM4), <b>lime/magenta</b> (OM5).</p>
+
+          <h3>Fiber connectors</h3>
           <ul>
-            <li><b>Cat 5e</b> — up to 1 Gbps, 100m.</li>
-            <li><b>Cat 6</b> — 1 Gbps full / 10 Gbps to 55m.</li>
-            <li><b>Cat 6a</b> — 10 Gbps to 100m.</li>
-            <li><b>Coaxial (RG-6)</b> — cable TV / cable modem.</li>
+            <li><b>LC</b> (Lucent Connector) — small push-pull, duplex. Dominates modern SFP/SFP+ optics.</li>
+            <li><b>SC</b> (Subscriber / Square Connector) — square push-pull. Older switches, ISP-side gear.</li>
+            <li><b>ST</b> (Straight Tip) — round bayonet twist-lock. Legacy / FDDI.</li>
+            <li><b>MTP/MPO</b> — multi-fiber push-on, used for 40/100 Gbps parallel optics.</li>
           </ul>
-          <h2>Fiber</h2>
+
+          <h3>Transceivers — SFP / SFP+ / QSFP</h3>
+          <p><b>SFP</b> = Small Form-factor Pluggable. Hot-swappable optic module that fits switch port. Variants: <b>SFP</b> (1 Gbps), <b>SFP+</b> (10 Gbps), <b>SFP28</b> (25 Gbps), <b>QSFP</b>/<b>QSFP+</b>/<b>QSFP28</b> (4×, up to 100 Gbps).</p>
+          <p><b>Reach codes</b>: <b>SR</b> Short Reach (multimode), <b>LR</b> Long Reach (single-mode 10 km), <b>ER</b> Extended Reach (40 km), <b>ZR</b> (80 km).</p>
+          <p><b>Why:</b> Same chassis port supports copper, multimode, or single-mode by swapping the SFP. Match optic to cable type or no link.</p>
+
+          <h2>Copper connectors</h2>
           <ul>
-            <li><b>Single-mode</b> — long distance (km+), yellow jacket, laser.</li>
-            <li><b>Multimode</b> — short runs, orange/aqua, LED.</li>
-            <li>Connectors: <code>LC</code>, <code>SC</code>, <code>ST</code>.</li>
+            <li><b>RJ45</b> — Registered Jack 45. 8-position 8-conductor (8P8C) plug used for Ethernet.</li>
+            <li><b>RJ11</b> — 6P2C or 6P4C, analog telephone lines.</li>
+            <li><b>RJ48</b> — looks like RJ45 but pinout for T1/E1 WAN circuits.</li>
+            <li><b>F-type</b> — screw-on coax for cable/sat. <b>BNC</b> — bayonet coax for lab gear.</li>
           </ul>
-          <h2>Connector types</h2>
-          <p><b>RJ45</b> = Ethernet (8 pins). <b>RJ11</b> = phone (6P2C/4C). <b>F-type</b> = coax screw-on.</p>
-          <h2>Wiring standards</h2>
-          <p><b>T568A</b> and <b>T568B</b> — same on both ends = straight-through. Different = crossover (rare, MDI-X auto handles).</p>
+
+          <h2>Ethernet wiring standards — T568A vs T568B</h2>
+          <p><b>What:</b> Two standardized pin-to-wire color assignments for RJ45 termination, defined by <b>TIA/EIA-568</b> (Telecommunications Industry Association).</p>
+          <p><b>T568B</b> (more common in US installs) pin order: White/Orange, Orange, White/Green, Blue, White/Blue, Green, White/Brown, Brown.<br>
+          <b>T568A</b>: swaps the orange and green pairs.</p>
+          <p><b>Why it matters:</b></p>
+          <ul>
+            <li>Same standard on BOTH ends = <b>straight-through</b> cable. Used PC-to-switch, switch-to-router.</li>
+            <li>Different standard on each end = <b>crossover</b>. Historically used switch-to-switch. Modern switches use <b>Auto-MDI/MDI-X</b> to automatically handle either cable — crossover is mostly obsolete.</li>
+          </ul>
+          <p><b>How used:</b> Pick ONE standard for your site (often B) and stick with it. Documenting choice prevents future patch panel chaos.</p>
+
+          <h2>Plenum vs riser vs PVC jackets</h2>
+          <ul>
+            <li><b>Plenum (CMP)</b> — fire-retardant jacket required by code for air-handling spaces (above drop ceilings). Releases less toxic smoke when burned.</li>
+            <li><b>Riser (CMR)</b> — for vertical runs between floors.</li>
+            <li><b>PVC / general purpose (CM)</b> — least restrictive, cheapest, indoor only outside plenum.</li>
+          </ul>
+          <p><b>Why:</b> Building codes (NEC, local AHJ) mandate plenum where applicable. Wrong jacket = failed inspection.</p>
+
+          <h2>Termination tools</h2>
+          <ul>
+            <li><b>Crimper</b> — attaches RJ45 plug to cable.</li>
+            <li><b>Punch-down tool (110 blade)</b> — seats wires into keystone jacks / patch panels (insulation displacement).</li>
+            <li><b>Cable tester</b> — confirms pinout + continuity. <b>Certifier</b> measures attenuation, NEXT, return loss against TIA standards.</li>
+            <li><b>Tone generator + probe</b> ("fox &amp; hound") — find which jack in a closet matches a wall port.</li>
+            <li><b>TDR</b> (Time-Domain Reflectometer) — measures distance to a copper fault.</li>
+            <li><b>OTDR</b> (Optical TDR) — same for fiber.</li>
+          </ul>
         `
       },
       {
