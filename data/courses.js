@@ -201,25 +201,122 @@ const COURSES = [
       {
         title: '3. TCP/IP, Ports, Protocols',
         body: `
-          <h2>Common ports</h2>
-          <table style="width:100%;font-size:14px"><tr><th align="left">Port</th><th align="left">Protocol</th></tr>
-          <tr><td>20/21</td><td>FTP</td></tr>
-          <tr><td>22</td><td>SSH / SFTP</td></tr>
-          <tr><td>23</td><td>Telnet (insecure)</td></tr>
-          <tr><td>25</td><td>SMTP</td></tr>
-          <tr><td>53</td><td>DNS</td></tr>
-          <tr><td>67/68</td><td>DHCP</td></tr>
-          <tr><td>80</td><td>HTTP</td></tr>
-          <tr><td>110</td><td>POP3</td></tr>
-          <tr><td>143</td><td>IMAP</td></tr>
-          <tr><td>161/162</td><td>SNMP</td></tr>
-          <tr><td>389</td><td>LDAP</td></tr>
-          <tr><td>443</td><td>HTTPS</td></tr>
-          <tr><td>445</td><td>SMB</td></tr>
-          <tr><td>3389</td><td>RDP</td></tr>
+          <p><b>TCP/IP</b> = Transmission Control Protocol / Internet Protocol. The protocol stack that runs the modern Internet and all corporate networks. Every other protocol on this page rides on top of it.</p>
+
+          <h2>Transport layer — TCP vs UDP</h2>
+          <h3>TCP — Transmission Control Protocol</h3>
+          <p><b>What:</b> Connection-oriented, reliable, ordered byte stream between two endpoints.</p>
+          <p><b>Why:</b> Guarantees delivery (retransmits lost packets), preserves order, and handles flow + congestion control.</p>
+          <p><b>How used:</b> Web (HTTP/HTTPS), email (SMTP/IMAP/POP3), SSH, file transfer (FTP/SFTP), database connections — anywhere data corruption or reordering is unacceptable.</p>
+          <p><b>3-way handshake</b> opens the connection:</p>
+          <ol>
+            <li>Client → server: <b>SYN</b> (synchronize, "let's talk")</li>
+            <li>Server → client: <b>SYN-ACK</b> (synchronize + acknowledge)</li>
+            <li>Client → server: <b>ACK</b> (final acknowledgement)</li>
+          </ol>
+          <p>Tear-down: 4-way (FIN, ACK, FIN, ACK) or abrupt RST.</p>
+
+          <h3>UDP — User Datagram Protocol</h3>
+          <p><b>What:</b> Connectionless. Send a datagram, hope it arrives, no retransmission.</p>
+          <p><b>Why:</b> Far lower overhead than TCP. Caller (application) handles loss if it cares.</p>
+          <p><b>How used:</b> Real-time traffic where retransmission is worse than loss — VoIP/SIP, video streaming, gaming, DNS queries, NTP, SNMP, DHCP discovery, TFTP.</p>
+
+          <h2>Ports — the address of a service on a host</h2>
+          <p><b>What:</b> 16-bit number (0–65535) identifying a specific service on an IP. Combine IP + port = socket.</p>
+          <p>Ranges:</p>
+          <ul>
+            <li><b>0–1023</b> well-known (privileged on Linux, require root to bind).</li>
+            <li><b>1024–49151</b> registered with IANA.</li>
+            <li><b>49152–65535</b> ephemeral / dynamic — used by clients as source ports.</li>
+          </ul>
+          <p>IANA = Internet Assigned Numbers Authority.</p>
+
+          <h2>Essential port + protocol cheat sheet</h2>
+
+          <h3>FTP — File Transfer Protocol (20 TCP data, 21 TCP control)</h3>
+          <p><b>What:</b> Classic two-channel file transfer protocol. Port 21 carries commands, 20 carries data (active mode).</p>
+          <p><b>Why avoid:</b> Plaintext credentials + data — sniffable.</p>
+          <p><b>Replace with:</b> <b>SFTP</b> (SSH File Transfer Protocol, port 22) or <b>FTPS</b> (FTP over TLS, ports 21 + 990).</p>
+
+          <h3>SSH — Secure Shell (22 TCP)</h3>
+          <p><b>What:</b> Encrypted remote shell + secure tunnel.</p>
+          <p><b>Why:</b> Replaces Telnet (which is plaintext). Authenticates with passwords or, better, public-key pairs.</p>
+          <p><b>How used:</b> Linux/Unix remote admin, SFTP file transfer, port forwarding, git over SSH.</p>
+
+          <h3>Telnet (23 TCP) — legacy</h3>
+          <p><b>What:</b> Plaintext remote shell. Everything visible on the wire.</p>
+          <p><b>Why removed:</b> No encryption. Replaced by SSH everywhere; only used now for connecting to legacy network gear consoles or simple TCP port testing (`telnet host 80`).</p>
+
+          <h3>SMTP — Simple Mail Transfer Protocol (25 TCP, 587 TCP submission, 465 TCP SMTPS)</h3>
+          <p><b>What:</b> Server-to-server email transport. Clients submit on 587 (with auth + STARTTLS) or 465 (implicit TLS).</p>
+          <p><b>Why:</b> Backbone of email delivery. Port 25 is now blocked by most residential ISPs to limit spam.</p>
+
+          <h3>DNS — Domain Name System (53 UDP + 53 TCP)</h3>
+          <p><b>What:</b> Translates human names (`www.example.com`) to IP addresses.</p>
+          <p><b>Why:</b> No DNS = nothing works. Failure looks like total Internet outage.</p>
+          <p><b>How used:</b> UDP for normal queries (fast, small). TCP for large responses (DNSSEC, zone transfers). Newer: <b>DoT</b> (DNS over TLS, 853) and <b>DoH</b> (DNS over HTTPS, 443) encrypt queries.</p>
+          <p>Record types: <b>A</b> (IPv4), <b>AAAA</b> (IPv6), <b>CNAME</b> (alias), <b>MX</b> (mail server), <b>TXT</b> (SPF/DKIM/DMARC), <b>NS</b> (nameserver), <b>PTR</b> (reverse).</p>
+
+          <h3>DHCP — Dynamic Host Configuration Protocol (67 UDP server, 68 UDP client)</h3>
+          <p><b>What:</b> Automatic IP address assignment + gateway + DNS info for hosts.</p>
+          <p><b>Why:</b> Manually configuring every laptop, phone, IoT device is impossible at scale.</p>
+          <p><b>How used:</b> <b>DORA</b> exchange — Discover (client broadcast) → Offer (server) → Request (client) → Acknowledgement (server). Lease has a duration; renewed at 50% expiry.</p>
+
+          <h3>HTTP / HTTPS (80 TCP / 443 TCP)</h3>
+          <p><b>HTTP</b> = HyperText Transfer Protocol. Plaintext web traffic. Now almost entirely replaced.<br>
+          <b>HTTPS</b> = HTTP Secure, wrapped in <b>TLS</b> (Transport Layer Security). Encrypts + authenticates server identity via X.509 cert.</p>
+          <p><b>Why HTTPS everywhere:</b> Prevents on-path attackers reading or modifying traffic. Required for HSTS, modern browser features, SEO.</p>
+
+          <h3>POP3 / IMAP (110/995 TCP, 143/993 TCP)</h3>
+          <p><b>POP3</b> = Post Office Protocol v3 — downloads + deletes mail from server. Single-device model.<br>
+          <b>IMAP</b> = Internet Message Access Protocol — keeps mail on server, syncs state across devices. Universal modern default.</p>
+          <p>Secure variants: <b>POP3S</b> 995, <b>IMAPS</b> 993 (TLS-wrapped).</p>
+
+          <h3>SNMP — Simple Network Management Protocol (161 UDP query, 162 UDP trap)</h3>
+          <p><b>What:</b> Poll/notify protocol used by NMS (Network Management System) tools to read counters + send alerts from switches, routers, servers.</p>
+          <p><b>Versions:</b> v1/v2c use plaintext community strings. <b>SNMPv3</b> adds authentication + encryption — use it.</p>
+
+          <h3>LDAP / LDAPS (389 TCP / 636 TCP)</h3>
+          <p><b>LDAP</b> = Lightweight Directory Access Protocol. Queries directory services (Active Directory, OpenLDAP) for users, groups, attributes.</p>
+          <p><b>LDAPS</b> = LDAP over TLS. Preferred for any auth or sensitive lookup.</p>
+
+          <h3>SMB / CIFS (445 TCP)</h3>
+          <p><b>SMB</b> = Server Message Block. <b>CIFS</b> = Common Internet File System (older Microsoft branding of SMB1).</p>
+          <p><b>What:</b> Windows file/print sharing, network drives (\\\\server\\share).</p>
+          <p><b>Why critical:</b> Heavily targeted by ransomware/worms (EternalBlue → WannaCry). <b>Disable SMBv1</b> and patch.</p>
+
+          <h3>RDP — Remote Desktop Protocol (3389 TCP)</h3>
+          <p><b>What:</b> Microsoft remote desktop access to Windows graphical session.</p>
+          <p><b>Why:</b> Top admin tool, also top breach vector when exposed to Internet. Always front with VPN or RD Gateway, enforce NLA + MFA.</p>
+
+          <h3>Other useful ports</h3>
+          <ul>
+            <li><b>69 UDP — TFTP</b> Trivial FTP. Used by network gear for firmware/config push. No auth.</li>
+            <li><b>123 UDP — NTP</b> Network Time Protocol.</li>
+            <li><b>137-139 UDP/TCP — NetBIOS</b> legacy Windows name + session. Disable on modern networks.</li>
+            <li><b>514 UDP — Syslog</b> centralized logging.</li>
+            <li><b>1433 TCP — MS SQL Server</b>; <b>1521 TCP — Oracle DB</b>; <b>3306 TCP — MySQL/MariaDB</b>; <b>5432 TCP — PostgreSQL</b>.</li>
+            <li><b>5060/5061 — SIP</b> Session Initiation Protocol (VoIP signaling).</li>
+            <li><b>8080 / 8443</b> — common alt HTTP/HTTPS dev ports.</li>
+          </ul>
+
+          <h2>Connectionless vs connection-oriented examples</h2>
+          <table style="width:100%;font-size:14px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Why</th></tr>
+            <tr><td>HTTPS</td><td>TCP</td><td>Reliable delivery of pages/data</td></tr>
+            <tr><td>SSH</td><td>TCP</td><td>Interactive shell needs no loss</td></tr>
+            <tr><td>DNS query</td><td>UDP</td><td>Small + speed-critical</td></tr>
+            <tr><td>VoIP/SIP/RTP</td><td>UDP</td><td>Lost packet &lt; delayed packet</td></tr>
+            <tr><td>SMB / RDP</td><td>TCP</td><td>File / desktop integrity</td></tr>
+            <tr><td>SNMP / NTP / DHCP</td><td>UDP</td><td>Lightweight broadcasts/polls</td></tr>
           </table>
-          <h2>TCP vs UDP</h2>
-          <p><b>TCP</b> = reliable, ordered, 3-way handshake (SYN, SYN-ACK, ACK). <b>UDP</b> = fire-and-forget, lower latency (DNS, VoIP, streaming).</p>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>If question says "secure replacement for X", think: Telnet → SSH; FTP → SFTP/FTPS; HTTP → HTTPS; SNMPv1/v2 → SNMPv3; LDAP → LDAPS.</li>
+            <li>If you see ports 80 / 443, the question is usually about web traffic + cert handling.</li>
+            <li>Port + protocol pairings are pure memorization — flashcards beat re-reading.</li>
+          </ul>
         `
       },
       {
