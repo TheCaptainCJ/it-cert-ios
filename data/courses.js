@@ -814,19 +814,154 @@ const COURSES = [
       {
         title: '8. Storage Devices',
         body: `
-          <h2>Drive types</h2>
+          <p>Storage = persistent (non-volatile) memory. Survives power-off. Every system needs at least one drive holding the OS, apps, and data. Exam expects identification of drive types, form factors, interfaces, and RAID levels.</p>
+
+          <h2>HDD — Hard Disk Drive</h2>
+          <p><b>What:</b> Mechanical drive. Spinning magnetic platters + moving read/write heads.</p>
+          <p><b>RPM</b> (Revolutions Per Minute) classes:</p>
           <ul>
-            <li><b>HDD</b> — spinning platters; 5400 / 7200 / 10K / 15K RPM.</li>
-            <li><b>SSD (SATA)</b> — 2.5" form factor, 600 MB/s ceiling.</li>
-            <li><b>SSD (M.2 SATA)</b> — gumstick, same speed cap as SATA.</li>
-            <li><b>NVMe (M.2 PCIe)</b> — much faster (Gen3 ~3.5 GB/s, Gen4 ~7 GB/s, Gen5 ~14 GB/s).</li>
+            <li><b>5400 RPM</b> — laptops, low-power, archival.</li>
+            <li><b>7200 RPM</b> — desktop standard.</li>
+            <li><b>10K / 15K RPM</b> — enterprise SAS drives (now mostly displaced by SSDs).</li>
           </ul>
-          <h2>RAID</h2>
+          <p><b>Why still used:</b> Highest capacity per dollar (multi-TB drives are still cheaper than equivalent SSDs). Good for bulk storage, backups, NAS.</p>
+          <p><b>Downsides:</b> Mechanical = slow random I/O (~100-200 IOPS), fragile, audible, high power. Failures often preceded by clicking sounds and SMART warnings.</p>
+          <p><b>HDD recording techniques:</b></p>
           <ul>
-            <li><b>RAID 0</b> — stripe, speed, NO redundancy.</li>
-            <li><b>RAID 1</b> — mirror, 2 disks, 1 copy.</li>
-            <li><b>RAID 5</b> — stripe + parity, needs 3+ disks, tolerates 1 fail.</li>
-            <li><b>RAID 10</b> — mirror of stripes, fast + redundant, 4+ disks.</li>
+            <li><b>CMR</b> (Conventional Magnetic Recording) — tracks side-by-side, write any sector at full speed.</li>
+            <li><b>SMR</b> (Shingled Magnetic Recording) — overlapping tracks, more capacity but slow random writes. Check spec sheet — SMR in a RAID is a disaster.</li>
+            <li><b>HAMR / MAMR</b> — Heat- / Microwave-Assisted Magnetic Recording, used for newest 20+ TB drives.</li>
+          </ul>
+
+          <h2>SSD — Solid-State Drive</h2>
+          <p><b>What:</b> Flash memory, no moving parts. Controller talks to <b>NAND</b> flash chips storing data as electric charge in floating-gate transistors.</p>
+          <p><b>Why:</b> Silent, low power, durable, dramatically faster than HDD. Random I/O is 100-1000× HDD.</p>
+          <p><b>Flash types (cell density):</b></p>
+          <ul>
+            <li><b>SLC</b> (Single-Level Cell) — 1 bit/cell. Fastest, longest endurance, most expensive. Enterprise-only.</li>
+            <li><b>MLC</b> (Multi-Level Cell) — 2 bits/cell.</li>
+            <li><b>TLC</b> (Triple-Level Cell) — 3 bits/cell. Mainstream consumer.</li>
+            <li><b>QLC</b> (Quad-Level Cell) — 4 bits/cell. Cheapest, lowest endurance, slower sustained writes. Used for read-heavy bulk SSDs.</li>
+            <li><b>3D / V-NAND</b> — stacks cells vertically for density. Now standard regardless of bit-count.</li>
+          </ul>
+          <p><b>Wear leveling + TRIM:</b> Controller spreads writes across cells (wear leveling) and the OS sends <b>TRIM</b> commands so the drive knows which blocks are free for garbage collection — keeps performance high over time.</p>
+
+          <h2>Drive interfaces (where the drive plugs in)</h2>
+
+          <h3>SATA — Serial ATA</h3>
+          <p><b>Acronym:</b> Serial Advanced Technology Attachment.</p>
+          <p><b>What:</b> Mainstream consumer drive interface for ~20 years.</p>
+          <p><b>Cap:</b> SATA III = 6 Gbps, ~600 MB/s effective.</p>
+          <p><b>How used:</b> 7-pin data cable + 15-pin power cable for 2.5" or 3.5" drives. M.2 slots can also operate in SATA mode.</p>
+
+          <h3>SAS — Serial Attached SCSI</h3>
+          <p><b>Acronym:</b> Serial Attached Small Computer System Interface.</p>
+          <p><b>What:</b> Server / enterprise drive interface. Higher reliability, dual-port for failover.</p>
+          <p><b>Cap:</b> 12 Gbps and 24 Gbps SAS-4. Backward-compatible with SATA drives in a SAS backplane.</p>
+
+          <h3>NVMe — Non-Volatile Memory Express</h3>
+          <p><b>What:</b> Protocol designed for flash, running directly over <b>PCIe</b> (Peripheral Component Interconnect Express) — bypasses SATA bottleneck.</p>
+          <p><b>Speed by PCIe generation (typical x4 lanes):</b></p>
+          <ul>
+            <li>PCIe Gen3 NVMe → ~3.5 GB/s</li>
+            <li>PCIe Gen4 NVMe → ~7 GB/s</li>
+            <li>PCIe Gen5 NVMe → ~14 GB/s</li>
+          </ul>
+          <p><b>Why:</b> Massive IOPS (1M+) and low latency vs SATA. Default for modern OS drive.</p>
+          <p><b>NVMe-oF</b> (NVMe over Fabrics) extends the protocol across networks (TCP, RoCE, Fibre Channel) for enterprise storage.</p>
+
+          <h3>USB / Thunderbolt / eSATA external interfaces</h3>
+          <ul>
+            <li>USB 3.x, USB4 — external drive enclosures, thumb drives.</li>
+            <li>Thunderbolt 3/4/5 — high-speed external NVMe enclosures, 40+ Gbps.</li>
+            <li>eSATA — legacy external SATA. Largely replaced by USB-C.</li>
+          </ul>
+
+          <h2>Drive form factors</h2>
+          <ul>
+            <li><b>3.5"</b> — desktop / server HDDs.</li>
+            <li><b>2.5"</b> — laptop HDDs and SATA SSDs.</li>
+            <li><b>M.2</b> — gumstick PCB. Common keys/lengths: M.2 2280 (22 mm wide × 80 mm long). Slot can be SATA-only, NVMe-only, or both — check motherboard manual.</li>
+            <li><b>U.2 / U.3</b> — enterprise 2.5"-shaped NVMe drives connected via SFF-8639 connector.</li>
+            <li><b>E1.S / E1.L / EDSFF</b> — datacenter ruler form factors for hyperscale NVMe.</li>
+            <li><b>mSATA</b> — older small SSD form, replaced by M.2.</li>
+          </ul>
+
+          <h2>Partitioning + filesystems</h2>
+          <p><b>Partition tables:</b></p>
+          <ul>
+            <li><b>MBR</b> (Master Boot Record) — legacy. Max 4 primary partitions, max 2 TB disk.</li>
+            <li><b>GPT</b> (GUID Partition Table) — modern UEFI standard. Effectively unlimited partitions, supports disks &gt; 2 TB.</li>
+          </ul>
+          <p><b>Common filesystems:</b></p>
+          <ul>
+            <li><b>NTFS</b> (New Technology File System) — Windows default. Permissions, journaling, encryption (EFS).</li>
+            <li><b>exFAT</b> — cross-platform USB/SD, no journaling, ideal for large removable media.</li>
+            <li><b>FAT32</b> — universal but max 4 GB file size, 2 TB partition.</li>
+            <li><b>ext4</b> — Linux default.</li>
+            <li><b>XFS</b> — high-performance Linux fs, default on RHEL.</li>
+            <li><b>APFS</b> (Apple File System) — modern macOS / iOS.</li>
+            <li><b>HFS+</b> — older macOS.</li>
+            <li><b>ReFS</b> (Resilient File System) — Windows Server, integrity streams.</li>
+            <li><b>ZFS / Btrfs</b> — copy-on-write filesystems with snapshots, native RAID, checksums.</li>
+          </ul>
+
+          <h2>RAID — Redundant Array of Independent Disks</h2>
+          <p><b>What:</b> Combines multiple drives into one logical volume for performance, redundancy, or both. Hardware RAID = dedicated controller. Software RAID = OS-managed (mdadm on Linux, Storage Spaces on Windows, ZFS on TrueNAS).</p>
+
+          <h3>RAID 0 — Stripe</h3>
+          <p>2+ drives. Data is striped across all members. <b>Performance:</b> 2× single-drive speed. <b>Redundancy:</b> NONE — losing any drive destroys the array. Use only for scratch / throwaway workloads.</p>
+
+          <h3>RAID 1 — Mirror</h3>
+          <p>2 drives. Identical copy on each. <b>Redundancy:</b> tolerates one drive failure. <b>Capacity:</b> 50% (one drive's worth). Used for OS boot drives in servers.</p>
+
+          <h3>RAID 5 — Stripe with distributed parity</h3>
+          <p>3+ drives. Parity rotates across all drives. <b>Tolerates 1 drive failure.</b> Capacity = (N-1) × drive size. Slow rebuilds and risk of double-failure during rebuild make it less popular on huge drives. Decent for read-heavy.</p>
+
+          <h3>RAID 6 — Double parity</h3>
+          <p>4+ drives. Tolerates <b>2</b> simultaneous failures via dual parity. Slower writes than RAID 5 but safer for large multi-TB arrays.</p>
+
+          <h3>RAID 10 (1+0) — Mirror of stripes</h3>
+          <p>4+ drives (even number). Pairs of mirrors, striped together. <b>Fast + redundant.</b> Tolerates 1 failure per mirror pair. Capacity = 50%. Used for high-IOPS workloads — databases.</p>
+
+          <h3>RAID 50 / 60</h3>
+          <p>Striped sets of RAID 5 / 6 arrays. Performance + larger capacity. Enterprise/SAN.</p>
+
+          <h3>JBOD / Spanning</h3>
+          <p><b>JBOD</b> = Just a Bunch Of Disks. Each drive presented independently OR concatenated into one volume (spanned). No redundancy.</p>
+
+          <h2>Hot spare</h2>
+          <p>An idle drive in the array. On failure of any member, controller automatically rebuilds onto the spare — no human intervention. Common in production storage.</p>
+
+          <h2>SMART monitoring</h2>
+          <p><b>SMART</b> (Self-Monitoring, Analysis, and Reporting Technology) — drives expose health attributes (reallocated sectors, pending sectors, power-on hours, total bytes written). Tools: <b>CrystalDiskInfo</b>, <b>smartctl</b> (smartmontools).</p>
+          <p><b>Action:</b> If reallocated/pending sectors rise → back up + replace immediately.</p>
+
+          <h2>Encryption</h2>
+          <ul>
+            <li><b>BitLocker</b> (Windows Pro/Enterprise) — full-disk encryption, typically TPM-backed.</li>
+            <li><b>BitLocker To Go</b> — removable media.</li>
+            <li><b>FileVault 2</b> (macOS).</li>
+            <li><b>LUKS</b> (Linux Unified Key Setup) — Linux FDE standard.</li>
+            <li><b>SED</b> (Self-Encrypting Drive) — hardware-level AES inside the drive controller. ATA password unlocks.</li>
+          </ul>
+
+          <h2>Drive disposal</h2>
+          <p>NIST SP 800-88 guidelines:</p>
+          <ul>
+            <li><b>Clear</b> — overwrite all sectors (HDDs) or built-in secure erase (SSDs).</li>
+            <li><b>Purge</b> — cryptographic erase (delete key on SED), degauss HDDs (NOT effective on SSDs).</li>
+            <li><b>Destroy</b> — physical shred, incinerate, drill. Required for high-classification data.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Lose any disk in RAID 0 = lose ALL data.</li>
+            <li>Minimum disks: RAID 0 = 2, RAID 1 = 2, RAID 5 = 3, RAID 6 = 4, RAID 10 = 4.</li>
+            <li>"Fastest interface" → NVMe over PCIe.</li>
+            <li>2 TB+ boot drive → must be GPT.</li>
+            <li>Degaussing wipes magnetic media (HDD) — does NOT wipe SSDs. Use crypto-erase or shred for SSD.</li>
+            <li>Clicking sound on HDD = imminent failure. Back up NOW.</li>
           </ul>
         `
       },
