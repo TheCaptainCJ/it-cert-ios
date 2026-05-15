@@ -322,22 +322,150 @@ const COURSES = [
       {
         title: '4. Wireless Networking',
         body: `
-          <h2>802.11 standards</h2>
+          <p><b>Wi-Fi</b> = "Wireless Fidelity" (marketing name for IEEE <b>802.11</b> wireless LAN standards). Replaces Ethernet cable with radio waves so devices can move freely. Exam tests standards, frequencies, channel planning, security modes, and antenna concepts.</p>
+
+          <h2>The 802.11 family — Wi-Fi generations</h2>
+          <p>Every Wi-Fi version is a different amendment to IEEE 802.11. Marketing renamed them Wi-Fi 4/5/6/7 starting in 2018 for clarity.</p>
+
+          <h3>Wi-Fi 4 (802.11n) — 2009</h3>
+          <p><b>What:</b> First Wi-Fi to use <b>MIMO</b> (Multiple Input Multiple Output) — multiple antennas + spatial streams. Runs on either 2.4 GHz or 5 GHz.</p>
+          <p><b>Speed:</b> Up to 600 Mbps theoretical with 4 streams + 40 MHz channel.</p>
+          <p><b>Why care:</b> Still found everywhere — printers, IoT, budget devices. Slowest device on the AP slows others on the same channel.</p>
+
+          <h3>Wi-Fi 5 (802.11ac) — 2014</h3>
+          <p><b>What:</b> 5 GHz-only. Added <b>MU-MIMO</b> (Multi-User MIMO) downstream — AP serves multiple clients simultaneously. Wider channels (80 / 160 MHz). 256-QAM modulation.</p>
+          <p><b>Speed:</b> Up to ~3.5 Gbps (Wave 2) per AP.</p>
+          <p><b>How used:</b> Mainstream office / home up to ~2020. Still very common.</p>
+
+          <h3>Wi-Fi 6 (802.11ax) — 2019</h3>
+          <p><b>What:</b> Both 2.4 + 5 GHz. New <b>OFDMA</b> (Orthogonal Frequency-Division Multiple Access) splits a channel into smaller resource units so one transmission carries data for many clients simultaneously. <b>BSS Coloring</b> tags overlapping APs to reduce contention. <b>TWT</b> (Target Wake Time) lets battery-powered IoT sleep longer.</p>
+          <p><b>Why:</b> Performs much better in crowded environments (stadiums, schools, dense apartments).</p>
+          <p><b>Speed:</b> Up to ~9.6 Gbps aggregate.</p>
+
+          <h3>Wi-Fi 6E — 2020/21</h3>
+          <p><b>What:</b> Same 802.11ax tech but extended into the new <b>6 GHz</b> band — additional spectrum from 5.925 to 7.125 GHz.</p>
+          <p><b>Why:</b> 6 GHz is fresh, has many 80/160 MHz channels with no legacy gear. Lower latency, higher throughput.</p>
+          <p><b>Watch out:</b> Range is shorter than 5 GHz; walls attenuate more.</p>
+
+          <h3>Wi-Fi 7 (802.11be) — 2024</h3>
+          <p><b>What:</b> Adds <b>MLO</b> (Multi-Link Operation) — a client can use 2.4 + 5 + 6 GHz simultaneously. 320 MHz channels (6 GHz only). 4K-QAM modulation.</p>
+          <p><b>Speed:</b> Up to ~46 Gbps theoretical.</p>
+
+          <h2>Frequency bands</h2>
+
+          <h3>2.4 GHz</h3>
+          <p><b>What:</b> 2.400–2.4835 GHz <b>ISM</b> (Industrial, Scientific, Medical) band — license-free worldwide.</p>
+          <p><b>Why use:</b> Longer range, better wall penetration.</p>
+          <p><b>Downsides:</b> Crowded — Bluetooth, microwave ovens, baby monitors, cordless phones all share it. Only <b>3 non-overlapping 20 MHz channels: 1, 6, 11</b>.</p>
+          <p><b>How used:</b> IoT, old laptops, distant rooms.</p>
+
+          <h3>5 GHz</h3>
+          <p><b>What:</b> 5.150–5.825 GHz (varies by country). Mix of <b>UNII-1 / UNII-2 / UNII-2 Extended / UNII-3</b> sub-bands.</p>
+          <p><b>Why:</b> Many non-overlapping channels (~24 in 20 MHz, fewer in wider 40/80/160). Less interference.</p>
+          <p><b>DFS</b> (Dynamic Frequency Selection): UNII-2 channels are shared with weather/military radar. AP must vacate the channel if radar is detected. Provides more spectrum but possible disruption.</p>
+          <p><b>Downsides:</b> Shorter range; weaker through walls.</p>
+
+          <h3>6 GHz (Wi-Fi 6E / 7)</h3>
+          <p><b>What:</b> 5.925–7.125 GHz, ~1.2 GHz of additional spectrum. Many fresh channels.</p>
+          <p><b>Why:</b> Best throughput + latency. No legacy 802.11a/b/g/n/ac devices to drag it down.</p>
+
+          <h2>Channel width</h2>
+          <p>Channels can be bonded for more bandwidth at the cost of fewer non-overlapping options:</p>
           <ul>
-            <li><b>Wi-Fi 4 (802.11n)</b> — 2.4/5 GHz, up to 600 Mbps.</li>
-            <li><b>Wi-Fi 5 (802.11ac)</b> — 5 GHz, up to ~3.5 Gbps.</li>
-            <li><b>Wi-Fi 6 (802.11ax)</b> — 2.4/5 GHz, OFDMA, better dense env.</li>
-            <li><b>Wi-Fi 6E</b> — adds 6 GHz band.</li>
+            <li><b>20 MHz</b> — most reliable, most channels available. Use in 2.4 GHz always.</li>
+            <li><b>40 MHz</b> — double throughput. Common 5 GHz default.</li>
+            <li><b>80 MHz</b> — 5 GHz high-perf indoor.</li>
+            <li><b>160 MHz</b> — 5 / 6 GHz, high throughput, fewer slots.</li>
+            <li><b>320 MHz</b> — Wi-Fi 7 in 6 GHz only.</li>
           </ul>
-          <h2>Frequencies</h2>
-          <p><b>2.4 GHz</b> — longer range, more interference, 3 non-overlapping channels (1, 6, 11).</p>
-          <p><b>5 GHz</b> — shorter range, less interference, many channels.</p>
-          <h2>Security</h2>
+
+          <h2>Security modes</h2>
+
+          <h3>WEP — Wired Equivalent Privacy (1999)</h3>
+          <p><b>What:</b> Original wireless encryption using RC4 cipher and a static shared key.</p>
+          <p><b>Why broken:</b> IV (initialization vector) collisions + key reuse let attackers crack any WEP key in minutes with free tools.</p>
+          <p><b>Use today:</b> Never. Even legacy IoT must be replaced.</p>
+
+          <h3>WPA — Wi-Fi Protected Access (2003)</h3>
+          <p><b>What:</b> Stopgap upgrade still using RC4 but with per-packet keying via <b>TKIP</b> (Temporal Key Integrity Protocol).</p>
+          <p><b>Why deprecated:</b> TKIP weaknesses exposed by 2008. Treat as legacy only.</p>
+
+          <h3>WPA2 — 2004</h3>
+          <p><b>What:</b> Mandates <b>AES-CCMP</b> (Counter Mode CBC-MAC Protocol over AES). Two flavors:</p>
           <ul>
-            <li><b>WEP</b> — broken, never use.</li>
-            <li><b>WPA</b> — TKIP, deprecated.</li>
-            <li><b>WPA2</b> — AES, current minimum.</li>
-            <li><b>WPA3</b> — SAE handshake, current best.</li>
+            <li><b>WPA2-Personal</b> (PSK = Pre-Shared Key) — single passphrase shared by all users. Home / small office.</li>
+            <li><b>WPA2-Enterprise</b> — uses <b>802.1X</b> + <b>RADIUS</b> server. Each user has their own credentials/certificate. Mandatory at workplaces.</li>
+          </ul>
+          <p><b>Why still around:</b> Universal device support. Current minimum acceptable security.</p>
+          <p><b>Weakness:</b> 4-way handshake can be captured + brute-forced offline (KRACK attack mitigated by patches; weak PSKs still vulnerable).</p>
+
+          <h3>WPA3 — 2018</h3>
+          <p><b>What:</b> Replaces the WPA2 4-way handshake with <b>SAE</b> (Simultaneous Authentication of Equals, aka Dragonfly). Mandates <b>PMF</b> (Protected Management Frames, 802.11w).</p>
+          <p><b>Why:</b> SAE makes offline dictionary attacks infeasible. PMF blocks deauthentication / disassociation injection attacks (used in evil twin setups).</p>
+          <p><b>Flavors:</b> WPA3-Personal, WPA3-Enterprise (192-bit suite for government/regulated). <b>Enhanced Open</b> uses <b>OWE</b> (Opportunistic Wireless Encryption) to encrypt guest Wi-Fi without a password.</p>
+
+          <h2>Auth + identity infrastructure (Enterprise)</h2>
+
+          <h3>802.1X — Port-based Network Access Control</h3>
+          <p><b>Roles:</b></p>
+          <ul>
+            <li><b>Supplicant</b> — the client device.</li>
+            <li><b>Authenticator</b> — the AP or switch.</li>
+            <li><b>Authentication Server</b> — RADIUS server.</li>
+          </ul>
+          <p><b>Why:</b> Per-user / per-device credentials. Disable an account → that user can no longer get on Wi-Fi. Standard for office Wi-Fi + wired NAC.</p>
+
+          <h3>RADIUS — Remote Authentication Dial-In User Service</h3>
+          <p><b>What:</b> Central AAA (Authentication, Authorization, Accounting) protocol. Microsoft NPS (Network Policy Server) or FreeRADIUS are common implementations.</p>
+          <p><b>How used:</b> AP forwards user EAP exchange to RADIUS, which checks credentials against AD/LDAP. Server returns Access-Accept or Access-Reject.</p>
+
+          <h3>EAP — Extensible Authentication Protocol methods</h3>
+          <ul>
+            <li><b>EAP-TLS</b> — both client AND server have certs. Strongest. Requires PKI.</li>
+            <li><b>EAP-PEAP / PEAP-MSCHAPv2</b> — server cert only, password tunneled inside TLS. Common in AD environments.</li>
+            <li><b>EAP-TTLS</b> — like PEAP, supports more inner auth types.</li>
+            <li><b>EAP-FAST</b> — Cisco-developed, PAC file replaces server cert.</li>
+            <li><b>EAP-MD5</b> — weak, avoid.</li>
+          </ul>
+
+          <h2>Antennas + RF concepts</h2>
+          <ul>
+            <li><b>Omnidirectional</b> — radiates 360° horizontally (donut). Default for indoor APs.</li>
+            <li><b>Directional / Yagi / Panel</b> — focused beam for point-to-point or coverage of one area.</li>
+            <li><b>Parabolic dish</b> — very high gain for long-distance links (building-to-building).</li>
+            <li><b>dBi</b> — antenna gain relative to isotropic. Higher dBi = narrower but stronger.</li>
+            <li><b>RSSI</b> (Received Signal Strength Indicator) — usually shown as a negative dBm. -50 great, -70 marginal, -80 poor, -90 unusable.</li>
+            <li><b>SNR</b> (Signal-to-Noise Ratio) — signal level above noise floor. 25+ dB SNR good, &lt; 15 dB struggles.</li>
+          </ul>
+
+          <h2>Common wireless attacks (and defenses)</h2>
+          <ul>
+            <li><b>Evil twin</b> — attacker AP impersonates legit SSID. Defense: WPA2/3-Enterprise (server cert verification), MDM-pushed Wi-Fi profile.</li>
+            <li><b>Deauth attack</b> — forged 802.11 management frame disconnects clients. Defense: <b>PMF (802.11w)</b>, mandatory in WPA3.</li>
+            <li><b>WPS brute force</b> — Wi-Fi Protected Setup PIN attack (Reaver). Defense: disable WPS on routers.</li>
+            <li><b>Rogue AP</b> — unauthorized AP plugged into corporate LAN. Defense: wireless intrusion prevention (<b>WIPS</b>), 802.1X on wired ports.</li>
+            <li><b>Jamming / DoS</b> — RF interference. Defense: spectrum analyzer, locate source, report to regulator.</li>
+          </ul>
+
+          <h2>Site survey + placement</h2>
+          <p>Before deploying multi-AP Wi-Fi, perform a site survey:</p>
+          <ul>
+            <li><b>Predictive</b> — software (Ekahau, AirMagnet) models building floor plan + materials.</li>
+            <li><b>Passive</b> — walk with laptop logging signal from existing APs.</li>
+            <li><b>Active</b> — associate to APs and test throughput.</li>
+          </ul>
+          <p>Goal: -65 dBm signal everywhere with SNR &gt; 20. Avoid sticky-client and rogue overlap. Use channel reuse (1, 6, 11 in 2.4 GHz) and non-overlapping channels in 5 GHz.</p>
+
+          <h2>Captive portal</h2>
+          <p><b>What:</b> First HTTP request from a new client is intercepted and redirected to a login / acceptance page (hotel Wi-Fi, conference).</p>
+          <p><b>How:</b> DNS or HTTP hijack at the gateway until client is authenticated. Often combined with vouchers, social login, or RADIUS.</p>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>If question says "use strongest current encryption" → WPA3 (or WPA2 if WPA3 not offered).</li>
+            <li>2.4 GHz non-overlapping channels = 1, 6, 11. Always.</li>
+            <li>Evil twin defense = Enterprise mode + server cert validation.</li>
+            <li>WPA2-PSK vs Enterprise: PSK = home, Enterprise = office with RADIUS.</li>
           </ul>
         `
       },
