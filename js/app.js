@@ -17,7 +17,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.progress));
   }
   function getCertProgress(certId) {
-    return state.progress[certId] || { lessons: {}, quizBest: 0 };
+    return state.progress[certId] || { lessons: {}, quizBest: 0, cardsKnown: {} };
   }
   function setLessonDone(certId, lessonIdx, done) {
     const p = getCertProgress(certId);
@@ -72,6 +72,7 @@
     const h = document.getElementById('certHeader');
     h.innerHTML = `<h2>${c.name}</h2><div class="meta">${c.code} · ${c.lessons.length} lessons · ${c.quiz.length} practice Qs</div>`;
     renderLessonsTab();
+    renderCardsTab();
     renderQuizTab();
     activateTab('lessons');
     showView('certView');
@@ -80,6 +81,7 @@
   function activateTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.getElementById('lessonsTab').classList.toggle('active', tab === 'lessons');
+    document.getElementById('cardsTab').classList.toggle('active', tab === 'cards');
     document.getElementById('quizTab').classList.toggle('active', tab === 'quiz');
   }
 
@@ -113,6 +115,130 @@
       <button class="btn primary" id="startQuiz">Start practice quiz</button>
     `;
     document.getElementById('startQuiz').addEventListener('click', () => startQuiz());
+  }
+
+  // ---------- Flashcards ----------
+  function getCardsForCert(certId) {
+    if (typeof FLASHCARDS !== 'undefined' && FLASHCARDS[certId]) return FLASHCARDS[certId];
+    return [];
+  }
+
+  function renderCardsTab() {
+    const c = state.currentCert;
+    const cards = getCardsForCert(c.id);
+    const p = getCertProgress(c.id);
+    const known = Object.values(p.cardsKnown || {}).filter(Boolean).length;
+    const el = document.getElementById('cardsTab');
+    if (cards.length === 0) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:14px">No flashcards for this track yet.</p>';
+      return;
+    }
+    el.innerHTML = `
+      <p style="color:var(--muted);font-size:14px;margin:0 0 12px">
+        ${cards.length} cards · ${known} known. Tap card to flip. Swipe or buttons to navigate.
+      </p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn primary" id="cardsStartAll">Study all (${cards.length})</button>
+        <button class="btn" id="cardsStartUnknown">Study unknown only (${cards.length - known})</button>
+        <button class="btn" id="cardsStartShuffle">Shuffle &amp; study all</button>
+        <button class="btn" id="cardsResetKnown">Reset known marks</button>
+      </div>
+    `;
+    document.getElementById('cardsStartAll').onclick = () => startCards(cards, false);
+    document.getElementById('cardsStartUnknown').onclick = () => {
+      const unk = cards.filter((_, i) => !p.cardsKnown || !p.cardsKnown[i]);
+      if (unk.length === 0) { alert('All cards already marked known. Reset to study again.'); return; }
+      startCards(unk, false);
+    };
+    document.getElementById('cardsStartShuffle').onclick = () => startCards(cards, true);
+    document.getElementById('cardsResetKnown').onclick = () => {
+      if (!confirm('Reset known marks for this deck?')) return;
+      p.cardsKnown = {};
+      state.progress[c.id] = p;
+      saveProgress();
+      renderCardsTab();
+    };
+  }
+
+  function startCards(deck, shuffleDeck) {
+    const c = state.currentCert;
+    const allCards = getCardsForCert(c.id);
+    const cards = shuffleDeck ? shuffle([...deck]) : [...deck];
+    let idx = 0;
+    let flipped = false;
+
+    setTitle(`Cards · ${c.short || c.name}`);
+    showView('cardsView');
+    render();
+
+    function render() {
+      const runner = document.getElementById('cardsRunner');
+      if (idx >= cards.length) {
+        const p = getCertProgress(c.id);
+        const known = Object.values(p.cardsKnown || {}).filter(Boolean).length;
+        runner.innerHTML = `
+          <div class="quiz-summary">
+            <div class="score">Done</div>
+            <div class="label">${known} / ${allCards.length} marked known</div>
+            <div style="margin-top:20px;display:flex;gap:8px">
+              <button class="btn" id="cardsHome">Home</button>
+              <button class="btn primary" id="cardsAgain">Study again</button>
+            </div>
+          </div>
+        `;
+        document.getElementById('cardsHome').onclick = () => renderHome();
+        document.getElementById('cardsAgain').onclick = () => startCards(deck, shuffleDeck);
+        return;
+      }
+      const card = cards[idx];
+      const allIdx = allCards.indexOf(card);
+      const p = getCertProgress(c.id);
+      const isKnown = !!(p.cardsKnown && p.cardsKnown[allIdx]);
+      runner.innerHTML = `
+        <div class="card-meta">Card ${idx + 1} of ${cards.length}${isKnown ? ' · ✓ known' : ''}</div>
+        <div class="flashcard ${flipped ? 'flipped' : ''}" id="flashcard">
+          <div class="flashcard-inner">
+            <div class="flashcard-face front">
+              <div class="face-label">FRONT · tap to flip</div>
+              <div class="face-content">${card.front}</div>
+            </div>
+            <div class="flashcard-face back">
+              <div class="face-label">BACK · tap to flip</div>
+              <div class="face-content">${card.back}</div>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn" id="cardPrev">‹ Prev</button>
+          <button class="btn ${isKnown ? 'primary' : ''}" id="cardKnown">${isKnown ? '✓ Known' : 'Mark known'}</button>
+          <button class="btn" id="cardNext">Next ›</button>
+        </div>
+      `;
+      const fc = document.getElementById('flashcard');
+      fc.addEventListener('click', () => { flipped = !flipped; render(); });
+      document.getElementById('cardPrev').onclick = (e) => { e.stopPropagation(); if (idx > 0) { idx--; flipped = false; render(); } };
+      document.getElementById('cardNext').onclick = (e) => { e.stopPropagation(); idx++; flipped = false; render(); };
+      document.getElementById('cardKnown').onclick = (e) => {
+        e.stopPropagation();
+        const pp = getCertProgress(c.id);
+        if (!pp.cardsKnown) pp.cardsKnown = {};
+        pp.cardsKnown[allIdx] = !pp.cardsKnown[allIdx];
+        state.progress[c.id] = pp;
+        saveProgress();
+        render();
+      };
+
+      let touchStartX = null;
+      fc.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+      fc.addEventListener('touchend', (e) => {
+        if (touchStartX === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        touchStartX = null;
+        if (Math.abs(dx) < 60) return;
+        if (dx < 0) { idx++; flipped = false; render(); }
+        else if (idx > 0) { idx--; flipped = false; render(); }
+      });
+    }
   }
 
   // ---------- Lesson ----------
@@ -221,7 +347,8 @@
   // ---------- Wire UI ----------
   document.getElementById('backBtn').addEventListener('click', () => {
     if (document.getElementById('lessonView').classList.contains('active') ||
-        document.getElementById('quizView').classList.contains('active')) {
+        document.getElementById('quizView').classList.contains('active') ||
+        document.getElementById('cardsView').classList.contains('active')) {
       openCert(state.currentCert.id);
     } else {
       renderHome();
@@ -256,7 +383,9 @@
         const lines = COURSES.map(c => {
           const p = getCertProgress(c.id);
           const done = Object.values(p.lessons).filter(Boolean).length;
-          return `${c.short || c.name}: ${done}/${c.lessons.length} · Quiz best: ${p.quizBest || 0}%`;
+          const known = Object.values(p.cardsKnown || {}).filter(Boolean).length;
+          const totalCards = (typeof FLASHCARDS !== 'undefined' && FLASHCARDS[c.id]) ? FLASHCARDS[c.id].length : 0;
+          return `${c.short || c.name}: ${done}/${c.lessons.length} lessons · Cards ${known}/${totalCards} · Quiz best: ${p.quizBest || 0}%`;
         });
         alert('Progress\n\n' + lines.join('\n'));
       }

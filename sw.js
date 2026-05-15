@@ -1,4 +1,4 @@
-const CACHE = 'it-cert-ios-v1.0.0';
+const CACHE = 'it-cert-ios-v1.1.0';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,8 @@ const ASSETS = [
   './css/style.css',
   './js/app.js',
   './data/courses.js',
+  './data/flashcards.js',
+  './data/labs.js',
   './icons/icon.svg'
 ];
 
