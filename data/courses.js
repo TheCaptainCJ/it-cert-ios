@@ -2394,18 +2394,140 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
       {
         title: '5. Social Engineering',
         body: `
+          <p><b>Social engineering</b> = exploiting human trust + behavior instead of code vulnerabilities. Cheaper than 0-days, works against every org regardless of tech stack. Most breaches today start here. Exam tests identification of the technique + the right countermeasure.</p>
+
+          <h2>Psychological principles attackers exploit</h2>
+          <p>Robert Cialdini's "Influence" pillars summarize most attacks:</p>
           <ul>
-            <li><b>Phishing</b> — mass email lure.</li>
-            <li><b>Spear phishing</b> — targeted at individual/role.</li>
-            <li><b>Whaling</b> — targets executives.</li>
-            <li><b>Vishing</b> — voice phone phishing.</li>
-            <li><b>Smishing</b> — SMS phishing.</li>
-            <li><b>Tailgating / piggybacking</b> — follow through badge door.</li>
-            <li><b>Shoulder surfing</b> — observe screen/keyboard.</li>
-            <li><b>Pretexting</b> — invented scenario (e.g., fake IT call).</li>
-            <li><b>Quid pro quo</b> — offer help in exchange for info.</li>
-            <li><b>Dumpster diving</b> — physical info gathering.</li>
-            <li><b>Evil twin</b> — rogue Wi-Fi AP impersonates legit SSID.</li>
+            <li><b>Authority</b> — pretending to be a boss, IT, vendor, government, police.</li>
+            <li><b>Urgency / Scarcity</b> — "act NOW", "only 5 minutes left", deadlines.</li>
+            <li><b>Social proof</b> — "everyone in your department already did this".</li>
+            <li><b>Liking</b> — built rapport, common interest, attractive caller.</li>
+            <li><b>Reciprocity</b> — "I helped you, now you owe me".</li>
+            <li><b>Commitment / consistency</b> — small "yes" leads to big "yes".</li>
+            <li><b>Fear</b> — threats of account closure, legal action, virus infection.</li>
+            <li><b>Trust</b> — leveraging brand, badge, uniform.</li>
+          </ul>
+
+          <h2>Phishing</h2>
+          <p><b>What:</b> Mass-distributed email pretending to be a legitimate brand (bank, Microsoft, FedEx) to lure users into clicking malicious links or opening attachments.</p>
+          <p><b>Why effective:</b> Volume. Even a 0.1% click rate on millions of emails yields thousands of victims.</p>
+          <p><b>How used:</b> Credential harvesting (fake login page), malware drop, business intel reconnaissance.</p>
+          <p><b>Defenses:</b> Email security gateways (Mimecast, Proofpoint, Defender for Office), <b>SPF</b> / <b>DKIM</b> / <b>DMARC</b> record alignment, link rewriting + sandbox detonation, user training, MFA, browser safe browsing, report-phish button.</p>
+
+          <h3>Email auth acronyms</h3>
+          <ul>
+            <li><b>SPF</b> (Sender Policy Framework) — DNS TXT listing IPs allowed to send for a domain.</li>
+            <li><b>DKIM</b> (DomainKeys Identified Mail) — public-key signature in DNS that verifies email content + sender.</li>
+            <li><b>DMARC</b> (Domain-based Message Authentication, Reporting &amp; Conformance) — policy telling receivers what to do (none / quarantine / reject) when SPF / DKIM fail. Sends aggregate + forensic reports.</li>
+          </ul>
+
+          <h2>Spear phishing</h2>
+          <p><b>What:</b> Targeted phishing crafted for a specific individual or small group. Uses real names, projects, internal jargon scraped from LinkedIn / leaks / social media.</p>
+          <p><b>Why scary:</b> Much higher click rate. Attackers spend hours on recon.</p>
+          <p><b>Defenses:</b> Same as phishing + heightened scrutiny of HR / finance / executive assistants who hold sensitive workflows.</p>
+
+          <h2>Whaling (BEC)</h2>
+          <p><b>What:</b> Spear phishing aimed at executives / C-suite / partners with payment authority. Also called <b>BEC</b> (Business Email Compromise) when the goal is wire-fraud authorization.</p>
+          <p><b>Common BEC patterns:</b></p>
+          <ul>
+            <li>"CEO" emails AP / finance asking for urgent wire transfer.</li>
+            <li>"Vendor" emails accounts payable with updated bank details (vendor email compromise).</li>
+            <li>"HR" requests employee W-2 / payroll info.</li>
+          </ul>
+          <p><b>Defenses:</b> Out-of-band verification (call known number) for any payment / banking change, separation of duties on wire requests, signed approval workflow, finance training, anti-spoofing on org domain (DMARC reject).</p>
+
+          <h2>Vishing — Voice phishing</h2>
+          <p><b>What:</b> Phishing by phone call. Caller pretends to be IT, bank fraud dept, IRS, Microsoft support, etc.</p>
+          <p><b>How:</b> VoIP makes caller-ID spoofing easy. AI voice cloning now allows "boss" impersonation from seconds of public speech.</p>
+          <p><b>Defenses:</b> Verify by calling back on a number you trust (NOT the one given), require ticket numbers, never share password / OTP / MFA code by phone, training to recognize urgency + authority patterns.</p>
+
+          <h2>Smishing — SMS phishing</h2>
+          <p><b>What:</b> Phishing via SMS / iMessage / WhatsApp. Common lures: "package delivery failed", "bank fraud alert", "USPS reschedule".</p>
+          <p><b>Defenses:</b> Don't click links in unsolicited texts, verify by visiting site directly, carrier spam filters, OS spam detection (iOS Filter Unknown Senders).</p>
+
+          <h2>Pharming</h2>
+          <p><b>What:</b> Redirects users to a fake site at the DNS layer — without needing them to click a phishing link. Achieved via DNS cache poisoning, malicious DNS server, hosts file manipulation, or router compromise.</p>
+          <p><b>Defenses:</b> DNSSEC, DoH / DoT (encrypted DNS), monitor for changes to local hosts file, secure DNS resolver, browser cert warnings.</p>
+
+          <h2>Tailgating / Piggybacking</h2>
+          <p><b>What:</b> Attacker physically follows an authorized person through a badge-controlled door without scanning. <b>Piggybacking</b> = authorized person knowingly allows it.</p>
+          <p><b>Defenses:</b> Access-control vestibules / mantraps, security guards, badge-required turnstiles, signage + culture ("badge in or escort"), CCTV review, social-policy training.</p>
+
+          <h2>Shoulder surfing</h2>
+          <p><b>What:</b> Watching the screen / keyboard / PIN pad to capture credentials or sensitive data. Done in person, via cameras, or even smartphones in public.</p>
+          <p><b>Defenses:</b> Privacy screen filters (polarized films), auto-lock with short timeout, screen positioning away from foot traffic, awareness in cafes / airports.</p>
+
+          <h2>Pretexting</h2>
+          <p><b>What:</b> Invented scenario / persona to extract info or access. "I'm from corporate IT calling about your VPN issue, I just need to verify your password to reset it." "I'm an auditor from HQ, can you let me into the server room."</p>
+          <p><b>Defenses:</b> Verification protocols (callback, ticket required), "never give passwords" policy, role-play training, document handling rules, escort policies.</p>
+
+          <h2>Impersonation</h2>
+          <p><b>What:</b> Posing as someone else — IT tech, delivery driver, utility worker, fellow employee. Often combined with pretexting.</p>
+          <p><b>Defenses:</b> Visitor logs, escort policies, badge requirements, photo ID on all employee badges, vendor pre-registration.</p>
+
+          <h2>Quid pro quo</h2>
+          <p><b>What:</b> "Something for something." Attacker offers a benefit (free tech support, gift card, software) in exchange for credentials / access.</p>
+          <p><b>Defenses:</b> Awareness training, suspicious of unsolicited offers, mandatory reporting of bribes.</p>
+
+          <h2>Baiting</h2>
+          <p><b>What:</b> Drops physical media (USB sticks, CDs) in parking lots / lobbies marked "Salary 2026" or "Layoff list". Curiosity drives victim to plug it into work PC, executing malware.</p>
+          <p><b>Defenses:</b> Disable AutoRun, USB device control (allow only registered IDs), endpoint AV, training, locked-down kiosk standard for "found media" inspection.</p>
+
+          <h2>Dumpster diving</h2>
+          <p><b>What:</b> Physical search of trash / recycling for sensitive printouts, sticky notes, hard drives, badges.</p>
+          <p><b>Defenses:</b> Shred-bin policy + cross-cut shredders, locked dumpsters, secure media destruction (NIST SP 800-88), end-of-life device wipe / destroy chain of custody.</p>
+
+          <h2>Watering hole attack</h2>
+          <p><b>What:</b> Compromise a website that a target group frequently visits (industry forum, vendor portal) and use it to serve malware. Indirect.</p>
+          <p><b>Defenses:</b> EDR, browser sandbox, NoScript / content filtering, patched browser + OS, segmented browsing VM for risky sites.</p>
+
+          <h2>Typosquatting + homoglyph attacks</h2>
+          <p><b>What:</b> Register lookalike domains — <code>microsoft.com</code> vs <code>rnicrosoft.com</code> (rn looks like m), <code>paypa1.com</code>, <code>g00gle.com</code>. Or Unicode homoglyphs from Cyrillic alphabet (а vs a).</p>
+          <p><b>Defenses:</b> DNS filtering, browser URL inspection, defensive domain registration of common typos, hover-to-preview link.</p>
+
+          <h2>Evil twin</h2>
+          <p><b>What:</b> Rogue Wi-Fi access point broadcasting the same SSID as a trusted network (corporate Wi-Fi, "Free Airport WiFi"). Captures credentials + traffic.</p>
+          <p><b>Defenses:</b> WPA2/3-Enterprise with server cert validation, MDM-pushed Wi-Fi profile (so clients verify the RADIUS cert), WIPS (Wireless Intrusion Prevention) flagging rogue APs, VPN always-on, user training about "Free WiFi".</p>
+
+          <h2>Eavesdropping</h2>
+          <p><b>What:</b> Listening to private conversations in person (open offices, restaurants) or via compromised devices.</p>
+          <p><b>Defenses:</b> Private rooms for sensitive discussion, mute on conferences when not speaking, avoid sensitive talk in public, MDM device management.</p>
+
+          <h2>Hoax</h2>
+          <p><b>What:</b> Fake virus warnings / chain emails urging users to forward / take action. Wastes time + may push them to disable real security.</p>
+          <p><b>Defenses:</b> Verify with IT before forwarding, snopes.com check, security awareness.</p>
+
+          <h2>Influence campaign + disinformation</h2>
+          <p><b>What:</b> Coordinated false content to shape opinion / damage reputation. Often nation-state.</p>
+          <p><b>Defenses:</b> Brand monitoring, takedown processes, trusted communication channels, executive social media security.</p>
+
+          <h2>Layered defenses against social engineering</h2>
+          <ol>
+            <li><b>Awareness training</b> — short, frequent, scenario-based.</li>
+            <li><b>Phishing simulations</b> — KnowBe4, Cofense, Microsoft Attack Simulator.</li>
+            <li><b>Reporting culture</b> — easy "Report Phish" button + no blame for reporting.</li>
+            <li><b>Email auth</b> — SPF + DKIM + DMARC enforcement.</li>
+            <li><b>MFA / phishing-resistant MFA</b> — FIDO2 / WebAuthn keys defeat credential phishing.</li>
+            <li><b>Conditional Access</b> — block sign-in from impossible-travel / risky devices.</li>
+            <li><b>Network filtering</b> — DNS filter, URL filter, malware sandboxing.</li>
+            <li><b>Privileged access</b> — separate admin accounts, PIM / just-in-time, MFA mandatory.</li>
+            <li><b>Verification protocols</b> — out-of-band callback for any sensitive transaction.</li>
+            <li><b>Physical controls</b> — badges, mantraps, visitor logs, escorts.</li>
+            <li><b>Asset disposal</b> — shred + certified destruction of media.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Email lure targeting CFO for wire transfer → whaling / BEC.</li>
+            <li>Phone caller pretending to be IT asking for password → vishing + pretexting.</li>
+            <li>SMS "click here to reschedule package" → smishing.</li>
+            <li>Following someone through a badge door → tailgating.</li>
+            <li>Watching someone enter a PIN → shoulder surfing.</li>
+            <li>USB sticks dropped in parking lot → baiting.</li>
+            <li>Looking through trash for sensitive docs → dumpster diving.</li>
+            <li>Rogue AP with same SSID as corporate → evil twin.</li>
+            <li>Strongest defense against credential phishing → phishing-resistant MFA (FIDO2 / hardware key).</li>
           </ul>
         `
       },
