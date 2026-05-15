@@ -245,7 +245,7 @@ const COURSES = [
 
           <h3>Telnet (23 TCP) — legacy</h3>
           <p><b>What:</b> Plaintext remote shell. Everything visible on the wire.</p>
-          <p><b>Why removed:</b> No encryption. Replaced by SSH everywhere; only used now for connecting to legacy network gear consoles or simple TCP port testing (`telnet host 80`).</p>
+          <p><b>Why removed:</b> No encryption. Replaced by SSH everywhere; only used now for connecting to legacy network gear consoles or simple TCP port testing (<code>telnet host 80</code>).</p>
 
           <h3>SMTP — Simple Mail Transfer Protocol (25 TCP, 587 TCP submission, 465 TCP SMTPS)</h3>
           <p><b>What:</b> Server-to-server email transport. Clients submit on 587 (with auth + STARTTLS) or 465 (implicit TLS).</p>
