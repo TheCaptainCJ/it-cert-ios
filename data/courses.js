@@ -1093,18 +1093,123 @@ const COURSES = [
       {
         title: '10. Power Supplies',
         body: `
-          <h2>Wattage & efficiency</h2>
-          <p>Pick wattage to cover system load + headroom. <b>80 PLUS</b> ratings: Bronze, Silver, Gold, Platinum, Titanium.</p>
-          <h2>Connectors</h2>
+          <p><b>PSU</b> = Power Supply Unit. Converts wall AC (110/120 V in North America, 220-240 V in EU) into the regulated DC rails (+3.3 V, +5 V, +12 V) that the motherboard, drives, and accessories need. Bad / undersized PSU = mystery crashes, dead components, fire.</p>
+
+          <h2>Form factors</h2>
           <ul>
-            <li><b>24-pin ATX</b> — main board power.</li>
-            <li><b>8-pin EPS</b> — CPU power.</li>
-            <li><b>PCIe 6+2</b> — GPU power.</li>
-            <li><b>SATA</b> — drives.</li>
-            <li><b>Molex</b> — legacy.</li>
+            <li><b>ATX12V</b> — standard desktop PSU. ~150 × 86 × 140 mm. Fits any ATX case.</li>
+            <li><b>SFX / SFX-L</b> — Small Form Factor for Mini-ITX builds. SFX-L slightly taller for quieter 120 mm fan.</li>
+            <li><b>TFX</b> — Thin Form Factor, slim cases.</li>
+            <li><b>Flex ATX</b> — very small 1U server / NUC chassis.</li>
+            <li><b>Server / redundant PSUs</b> — hot-swap, dual redundant (1+1) for high availability.</li>
           </ul>
-          <h2>Modular types</h2>
-          <p>Modular, semi-modular, non-modular. Modular = detach unused cables.</p>
+          <p>Confirm case PSU bay matches form factor before buying.</p>
+
+          <h2>Wattage</h2>
+          <p><b>What:</b> Total continuous DC output the PSU is rated for, expressed in watts. Modern PSUs are rated at peak ambient temperature; quality matters more than headline number.</p>
+          <p><b>How to size:</b></p>
+          <ul>
+            <li>Sum component max draw: CPU TDP + GPU TBP (Total Board Power) + drives + fans + a margin for transients.</li>
+            <li>Aim to run at 50-70% of PSU rated wattage at typical full load — efficiency is best in that band, and headroom helps transient spikes (modern GPUs spike 2× their TDP for milliseconds).</li>
+            <li>Vendor power calculators (Seasonic, Cooler Master) give realistic estimates.</li>
+          </ul>
+          <p><b>Typical budgets:</b> Office PC: 350-500 W. Gaming with mid-range GPU: 650-750 W. High-end (RTX 4080/4090, 13900K/7950X3D): 850-1200 W.</p>
+
+          <h2>Efficiency — 80 PLUS ratings</h2>
+          <p><b>80 PLUS</b> = certification that a PSU is at least 80% efficient at 20%, 50%, and 100% load (115 V internal vs 230 V EU variants). Higher tiers = less wasted heat + lower electric bill.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tier</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Efficiency at 50% load (115 V)</th></tr>
+            <tr><td>80 PLUS</td><td>≥ 80%</td></tr>
+            <tr><td>Bronze</td><td>≥ 85%</td></tr>
+            <tr><td>Silver</td><td>≥ 88%</td></tr>
+            <tr><td>Gold</td><td>≥ 90%</td></tr>
+            <tr><td>Platinum</td><td>≥ 92%</td></tr>
+            <tr><td>Titanium</td><td>≥ 94%</td></tr>
+          </table>
+          <p>Gold is the sweet spot for most builds. Titanium is luxury / 24×7 servers.</p>
+
+          <h2>Power rails</h2>
+          <p>Voltages delivered through the cables:</p>
+          <ul>
+            <li><b>+12 V</b> — does almost all the work (CPU, GPU, drives, fans).</li>
+            <li><b>+5 V</b> — USB ports, some logic.</li>
+            <li><b>+3.3 V</b> — DDR memory, chipset.</li>
+            <li><b>−12 V</b> — legacy serial port support, almost unused now.</li>
+            <li><b>+5 VSB</b> (Standby) — always-on rail powering Wake-on-LAN, RTC, soft power button.</li>
+          </ul>
+          <p><b>Single-rail vs multi-rail:</b> Single-rail PSU presents one big +12 V pool; multi-rail splits into virtual rails with separate OCP (Over Current Protection) limits. Modern PSUs trend single-rail.</p>
+
+          <h2>Connectors — what plugs where</h2>
+          <ul>
+            <li><b>24-pin ATX</b> — main motherboard power. Splits into 20+4 for old boards.</li>
+            <li><b>8-pin EPS / 4+4-pin</b> — CPU power. High-end boards have two (8+8).</li>
+            <li><b>PCIe 6+2 (8-pin)</b> — traditional GPU power. Provides 150 W each.</li>
+            <li><b>12VHPWR / 12V-2x6</b> — single 16-pin connector (12 power + 4 sense pins) delivering up to 600 W. Used by RTX 40-series. Seat fully — partial seating causes melting.</li>
+            <li><b>SATA power</b> — 15-pin L-shaped, for 2.5"/3.5" drives.</li>
+            <li><b>Molex (4-pin)</b> — legacy peripheral connector. Some accessories (fan hubs, pumps) still use it.</li>
+            <li><b>Berg (floppy)</b> — extinct.</li>
+          </ul>
+
+          <h2>Modularity</h2>
+          <ul>
+            <li><b>Non-modular</b> — every cable is permanently attached. Cheapest, messiest builds.</li>
+            <li><b>Semi-modular</b> — required cables (24-pin, CPU 8-pin) attached; SATA / PCIe / Molex detachable. Best value.</li>
+            <li><b>Fully modular</b> — every cable detachable. Cleanest builds, custom cable kits available. Highest cost.</li>
+          </ul>
+          <p>WARNING: PSU-side connectors are NOT standardized between brands. Never reuse a modular cable from a different PSU — can short or fry components.</p>
+
+          <h2>Protections — read the datasheet</h2>
+          <p>Quality PSUs include:</p>
+          <ul>
+            <li><b>OVP</b> (Over Voltage Protection) — shuts off if rail goes too high.</li>
+            <li><b>UVP</b> (Under Voltage Protection) — shuts off if rail sags.</li>
+            <li><b>OCP</b> (Over Current Protection) — per-rail current cap.</li>
+            <li><b>OPP</b> (Over Power Protection) — total wattage cap.</li>
+            <li><b>OTP</b> (Over Temperature Protection) — shuts down if internal temp too high.</li>
+            <li><b>SCP</b> (Short Circuit Protection) — disconnects on short.</li>
+            <li><b>SIP</b> (Surge / Inrush Protection).</li>
+          </ul>
+          <p>A "cheap PSU" missing several of these is a leading cause of damaged motherboards / drives.</p>
+
+          <h2>AC side considerations</h2>
+          <ul>
+            <li><b>Voltage selector</b> — some older PSUs have 115/230 V switch. Modern <b>active PFC</b> (Power Factor Correction) PSUs auto-range.</li>
+            <li><b>PFC</b> — active PFC is required by EU regulations and improves efficiency.</li>
+            <li><b>UPS</b> (Uninterruptible Power Supply) — battery backup, conditions power, allows graceful shutdown during outages.</li>
+            <li><b>Surge protector</b> — shunts voltage spikes (lightning). Measured in joules; "Class I/II/III" defines lightning protection level.</li>
+            <li><b>Line conditioner</b> — corrects sags and minor over-voltage.</li>
+            <li><b>Generator</b> — extended outage backup. Watch for "dirty" power — line conditioner / online UPS may be needed.</li>
+          </ul>
+
+          <h2>Common PSU troubleshooting</h2>
+          <ul>
+            <li><b>No power at all</b> — outlet, surge strip, AC cord, rear switch, 24-pin seating. Try paperclip / PSU tester to short PS_ON to ground; if PSU fan spins, motherboard is suspect.</li>
+            <li><b>Random shutdown under load</b> — OPP / OCP tripping. Wattage may be undersized, or PSU aging. Replace with higher-quality / wattage unit.</li>
+            <li><b>Coil whine</b> — high-pitched noise from inductors under specific loads. Often harmless; replace if persistent.</li>
+            <li><b>Burning smell</b> — power off, unplug, replace. Could be PSU or motherboard. Inspect carefully before reusing parts.</li>
+            <li><b>UPS battery beeping</b> — battery dying; replace UPS battery, not whole unit.</li>
+          </ul>
+
+          <h2>Server / redundant power</h2>
+          <p><b>Hot-swap PSUs</b> in servers allow one unit to fail or be replaced without downtime. <b>1+1 redundancy</b> means two PSUs, either sufficient alone. Connect them to separate <b>PDU</b> (Power Distribution Unit) feeds for true redundancy. Datacenters provide <b>A and B feeds</b> from independent UPS + generator branches.</p>
+
+          <h2>Battery backup specifications</h2>
+          <ul>
+            <li><b>VA</b> (Volt-Amps) — apparent power, the headline number on UPS specs.</li>
+            <li><b>W</b> (Watts) — real power. <b>Always size by watts</b> needed.</li>
+            <li><b>Power factor</b> (W ÷ VA) — modern active-PFC PSUs have near unity PF; older units ~0.6.</li>
+            <li><b>Topology:</b> Standby (battery only on outage), Line-Interactive (regulates voltage too), Online / Double-Conversion (constant inverter, cleanest power).</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Most cables removable for cleanest build" → fully modular.</li>
+            <li>"Lower electric cost + less heat" → higher 80 PLUS tier (Gold+).</li>
+            <li>"Survives short outages" → UPS (battery), not just a surge protector.</li>
+            <li>"600W single connector for high-end GPU" → 12VHPWR / 12V-2x6.</li>
+            <li>"Two PSUs in one server for HA" → redundant / hot-swap.</li>
+            <li>"Wake-on-LAN works while powered off" → +5 VSB standby rail.</li>
+          </ul>
         `
       },
       {
