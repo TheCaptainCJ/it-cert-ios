@@ -20,25 +20,83 @@ const COURSES = [
         title: '1. Mobile Devices',
         body: `
           <h2>Laptop hardware</h2>
-          <p>Laptops use compact, often proprietary parts. Key replaceable components:</p>
+          <p>Laptops pack desktop functions into compact, battery-powered chassis. Field service techs are expected to identify and replace these field-replaceable units (FRUs).</p>
+
+          <h3>Battery (Li-ion / LiPo)</h3>
+          <p><b>What:</b> Lithium-Ion or Lithium-Polymer rechargeable cell stack. Acronym <b>Li-ion</b> = Lithium-Ion.</p>
+          <p><b>Why:</b> Powers laptop when AC is unplugged. Degrades with charge cycles — a "cycle count" of 300-500 = noticeable capacity loss; 1000+ = near end of life. Swollen batteries are a fire/pressure hazard and MUST be replaced.</p>
+          <p><b>How used:</b> Removable on older laptops (slide latch). Modern slim laptops have internal batteries requiring back-cover removal. Check capacity in Windows: <code>powercfg /batteryreport</code>. macOS: System Info → Power.</p>
+
+          <h3>RAM (SO-DIMM)</h3>
+          <p><b>What:</b> <b>SO-DIMM</b> = Small Outline Dual Inline Memory Module. Compact RAM stick for laptops/mini-PCs.</p>
+          <p><b>Why:</b> Working memory for the OS + apps. Laptop sockets are limited (often 1-2 slots, sometimes soldered).</p>
+          <p><b>How used:</b> Match the laptop's exact DDR generation (DDR4 / DDR5), speed (MHz), and capacity. Mismatched modules run at the slowest rating. Modules are physically keyed — DDR4 will NOT fit a DDR5 slot.</p>
+
+          <h3>Storage</h3>
+          <p><b>Types:</b></p>
           <ul>
-            <li><b>Battery</b> — Li-ion; cycle count predicts life.</li>
-            <li><b>Keyboard / touchpad</b> — ribbon-cable connected.</li>
-            <li><b>RAM (SO-DIMM)</b> — DDR4/DDR5 small form-factor.</li>
-            <li><b>Storage</b> — 2.5" SATA, M.2 SATA, or M.2 NVMe (PCIe).</li>
-            <li><b>Display</b> — LCD (TN/IPS) or OLED; backlight + inverter (older).</li>
-            <li><b>Wireless card</b> — usually M.2 with antenna leads.</li>
+            <li><b>2.5" SATA HDD/SSD</b> — older laptops. SATA = Serial ATA, up to 600 MB/s.</li>
+            <li><b>M.2 SATA SSD</b> — gumstick form factor on the SATA bus. Same 600 MB/s ceiling.</li>
+            <li><b>M.2 NVMe SSD</b> — gumstick on PCIe bus. <b>NVMe</b> = Non-Volatile Memory Express. PCIe Gen3 ~3.5 GB/s, Gen4 ~7 GB/s, Gen5 ~14 GB/s.</li>
           </ul>
+          <p><b>Why NVMe:</b> Bypasses SATA's bottleneck. Critical for fast boot, app launch, large file work.</p>
+          <p><b>Watch out:</b> Some M.2 slots are SATA-only, some NVMe-only, some both. Check motherboard manual before buying.</p>
+
+          <h3>Display panel</h3>
+          <ul>
+            <li><b>LCD</b> = Liquid Crystal Display. Two sub-types:
+              <ul>
+                <li><b>TN</b> (Twisted Nematic) — fast response, weak viewing angles, cheap.</li>
+                <li><b>IPS</b> (In-Plane Switching) — better color + viewing angle, slightly slower.</li>
+              </ul>
+            </li>
+            <li><b>OLED</b> = Organic Light Emitting Diode. Each pixel emits its own light → true blacks, infinite contrast, risk of burn-in.</li>
+          </ul>
+          <p><b>Backlight:</b> LCDs need backlight to be visible. Older laptops used <b>CCFL</b> (Cold Cathode Fluorescent Lamp) with an <b>inverter</b> to step up voltage. Modern: LED backlight, no inverter. <i>Symptom of bad backlight: image visible only when flashlight is shined on the screen.</i></p>
+
+          <h3>Wireless card / Bluetooth combo</h3>
+          <p><b>What:</b> M.2 2230 or 1216 card with Wi-Fi + Bluetooth radios. Antenna leads (u.FL/MHF4) snap onto card and route into the lid.</p>
+          <p><b>How used:</b> Replaceable for upgrades (e.g., adding Wi-Fi 6E) or repair. Always reconnect both antenna pigtails (typically MAIN and AUX) — single antenna degrades range and MIMO.</p>
+
+          <h3>Keyboard / touchpad / hinges</h3>
+          <p>Connected by ribbon cables (FFC/FPC — Flexible Flat / Printed Cable). Replace ribbons gently; ZIF (Zero-Insertion-Force) sockets must be unlocked before pulling.</p>
+
           <h2>Mobile device types</h2>
-          <p>Smartphones, tablets, wearables, e-readers, GPS. Mostly soldered, sealed batteries.</p>
-          <h2>Connection types</h2>
           <ul>
-            <li><b>USB-C</b> — universal; power + data + DisplayPort.</li>
-            <li><b>Lightning</b> — Apple proprietary (being phased out).</li>
-            <li><b>Bluetooth</b> — short-range pairing.</li>
-            <li><b>NFC</b> — Apple Pay/Google Pay tap.</li>
-            <li><b>Hotspot / tethering</b> — phone shares cellular to other devices.</li>
+            <li><b>Smartphone</b> — handheld with cellular radio + sensors.</li>
+            <li><b>Tablet</b> — larger screen, optional cellular, no/limited phone capability.</li>
+            <li><b>Phablet</b> — large smartphone bridging phone/tablet.</li>
+            <li><b>Wearable</b> — smartwatch, fitness tracker, smart glasses. Limited storage; companion phone usually required.</li>
+            <li><b>E-reader</b> — e-ink display, long battery life.</li>
+            <li><b>GPS unit</b> — <b>GPS</b> = Global Positioning System. Dedicated nav device; smartphones largely replaced these.</li>
           </ul>
+          <p>Modern phones/tablets use soldered RAM, sealed batteries — almost no user-serviceable parts.</p>
+
+          <h2>Connection types</h2>
+          <h3>USB-C / Thunderbolt 4</h3>
+          <p><b>What:</b> Reversible 24-pin connector. Supports data (USB 3.2/4), video (DisplayPort Alt Mode), and power (<b>USB-PD</b> = USB Power Delivery, up to 240W on PD 3.1).</p>
+          <p><b>Thunderbolt 4</b> over USB-C: 40 Gbps, dual 4K displays, mandatory PD, supports PCIe tunneling (external GPUs).</p>
+          <p><b>Why:</b> Single-cable docking. Charge laptop + drive monitors + carry data over one port.</p>
+
+          <h3>Lightning (Apple proprietary)</h3>
+          <p><b>What:</b> Apple's pre-2023 phone/tablet connector. 8-pin reversible.</p>
+          <p><b>Status:</b> Being phased out — iPhone 15+ uses USB-C (EU mandate).</p>
+
+          <h3>Bluetooth</h3>
+          <p><b>What:</b> Short-range (typically 10m) wireless protocol using 2.4 GHz ISM band.</p>
+          <p><b>Why:</b> Wireless peripherals — headphones, keyboards, watches. Low power vs. Wi-Fi.</p>
+          <p><b>How used:</b> Pairing via PIN or numeric comparison. Bluetooth Low Energy (BLE) variant powers IoT sensors. Versions 5.x add longer range + higher throughput.</p>
+
+          <h3>NFC (Near Field Communication)</h3>
+          <p><b>What:</b> Very-short-range (≤4 cm) RFID-based wireless using 13.56 MHz.</p>
+          <p><b>Why:</b> Tap-to-pay (Apple Pay, Google Pay, Samsung Pay), transit cards, fast pairing handoff, access badges.</p>
+
+          <h3>Hotspot / Tethering</h3>
+          <p><b>What:</b> Phone shares its cellular data connection with another device.</p>
+          <p><b>How:</b> Wi-Fi hotspot (phone broadcasts SSID), USB tethering (cable), Bluetooth tethering. Watch for carrier data caps and battery drain.</p>
+
+          <h3>MicroSD / SD card</h3>
+          <p><b>SD</b> = Secure Digital. Removable flash storage for cameras, drones, some Android phones. Speed classes (Class 10, U3, V30, V90) indicate sustained write speed for 4K video.</p>
         `
       },
       {
