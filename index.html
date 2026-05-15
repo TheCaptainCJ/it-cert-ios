@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="IT Cert iOS">
+  <meta name="theme-color" content="#0d0d12">
+  <title>IT Cert Prep — iOS</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button id="backBtn" class="back-btn" hidden>‹</button>
+    <h1 id="topTitle">IT Cert Prep</h1>
+    <button id="menuBtn" class="menu-btn">≡</button>
+  </header>
+
+  <main id="app">
+    <!-- Home: cert grid -->
+    <section id="homeView" class="view active">
+      <div class="hero">
+        <h2>Pick a track</h2>
+        <p class="sub">7 certs · PowerShell mastery · Mobile-optimized</p>
+      </div>
+      <div id="certGrid" class="cert-grid"></div>
+    </section>
+
+    <!-- Cert detail: lessons + quiz -->
+    <section id="certView" class="view">
+      <div class="cert-header" id="certHeader"></div>
+      <div class="tabs">
+        <button class="tab active" data-tab="lessons">Lessons</button>
+        <button class="tab" data-tab="quiz">Practice Quiz</button>
+      </div>
+      <div id="lessonsTab" class="tab-panel active"></div>
+      <div id="quizTab" class="tab-panel"></div>
+    </section>
+
+    <!-- Lesson reader -->
+    <section id="lessonView" class="view">
+      <article id="lessonContent" class="lesson"></article>
+      <div class="lesson-nav">
+        <button id="prevLesson" class="btn">‹ Prev</button>
+        <button id="markDone" class="btn primary">Mark Done</button>
+        <button id="nextLesson" class="btn">Next ›</button>
+      </div>
+    </section>
+
+    <!-- Quiz runner -->
+    <section id="quizView" class="view">
+      <div id="quizRunner"></div>
+    </section>
+
+    <!-- Settings drawer -->
+    <aside id="drawer" class="drawer">
+      <h3>Menu</h3>
+      <button class="drawer-link" data-go="home">🏠 Home</button>
+      <button class="drawer-link" data-go="progress">📊 Progress</button>
+      <button class="drawer-link" data-go="reset">🗑 Reset progress</button>
+      <button class="drawer-link" data-go="about">ℹ About</button>
+    </aside>
+    <div id="drawerScrim" class="scrim"></div>
+  </main>
+
+  <script src="data/courses.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "IT Cert Prep — iOS Edition",
+  "short_name": "IT Cert",
+  "description": "CompTIA A+ Core 1/2, Network+, Security+, Linux+, Cloud+, Azure AZ-900, and PowerShell mastery — offline-ready PWA.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d12",
+  "theme_color": "#0d0d12",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "categories": ["education", "productivity"]
+}
