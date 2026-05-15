@@ -2534,16 +2534,172 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
       {
         title: '6. Windows Security Settings',
         body: `
-          <h2>UAC</h2>
-          <p>User Account Control — prompts before elevation. Four levels: always notify → never.</p>
-          <h2>BitLocker</h2>
-          <p>Full-disk encryption; uses TPM 2.0 + optional PIN. BitLocker To Go = removable media.</p>
+          <p>Windows ships with layered security: user account isolation, disk encryption, file-system permissions, antivirus + firewall, exploit mitigations, and Microsoft Defender features. Exam tests how each layer works, where to configure it, and the rules for resolving conflicts.</p>
+
+          <h2>UAC — User Account Control</h2>
+          <p><b>What:</b> Windows feature that runs even administrators with a STANDARD-user token by default. When admin action is needed, the system prompts (consent or credentials) before <b>elevating</b> the token. Introduced in Vista; still the cornerstone of Windows privilege isolation.</p>
+          <p><b>Why:</b> Stops malware running in your normal session from silently making system-wide changes. Forces a visible choice.</p>
+          <p><b>Four notification levels</b> (Control Panel → User Accounts → Change UAC settings):</p>
+          <ol>
+            <li><b>Always notify</b> — desktop is "secure" (dimmed) for every prompt. Most secure.</li>
+            <li><b>Notify when apps make changes (default)</b> — secure desktop for app prompts; user setting changes do not prompt.</li>
+            <li>Notify when apps change, do NOT dim desktop — weaker, vulnerable to UI spoofing.</li>
+            <li><b>Never notify</b> — effectively turns UAC off. Avoid.</li>
+          </ol>
+          <p><b>Standard vs admin token:</b> Even admin users get a stripped token at logon. UAC elevation provides a separate full-admin token only for the prompted process. Standard users see a credential prompt — must enter admin password.</p>
+          <p><b>Group Policy:</b> <code>secpol.msc</code> → Local Policies → Security Options → "User Account Control: …".</p>
+
+          <h2>BitLocker — drive encryption</h2>
+          <p><b>What:</b> Full-volume encryption of Windows drives using AES (128 or 256-bit XTS).</p>
+          <p><b>Why:</b> Stolen / lost laptop is unreadable without the key. Required for many compliance frameworks (HIPAA, PCI, GDPR, SOC 2).</p>
+          <p><b>Editions:</b> Pro, Enterprise, Education. Home only supports "Device Encryption" (a stripped subset) on TPM + Microsoft-account systems.</p>
+          <p><b>Key protectors (how the key unlocks the drive):</b></p>
+          <ul>
+            <li><b>TPM</b> only — drive auto-unlocks when booted on the same hardware. Default, transparent to user.</li>
+            <li><b>TPM + PIN</b> — pre-boot PIN entered before Windows loads. Resists cold-boot + cloned hardware.</li>
+            <li><b>TPM + USB startup key</b> — physical key required.</li>
+            <li><b>USB-only</b> (no TPM) — used on older hardware. Less secure.</li>
+            <li><b>Password</b> protector — data drives + BitLocker To Go.</li>
+          </ul>
+          <p><b>Recovery key</b> — 48-digit numeric key escrowed to AD, Entra ID, or Microsoft Account at enable time. Required if TPM doesn't match (BIOS change, hardware swap) or PIN forgotten.</p>
+          <p><b>BitLocker To Go</b> — same tech for removable drives (USB, external HDD). Unlocks with password or smart card.</p>
+          <p><b>Manage via:</b> <code>manage-bde</code> CLI or PowerShell <code>Get-BitLockerVolume</code> / <code>Enable-BitLocker</code>.</p>
+
+          <h2>EFS — Encrypting File System</h2>
+          <p><b>What:</b> NTFS-level encryption of individual files / folders using a per-user certificate.</p>
+          <p><b>Why:</b> Lighter than BitLocker. Protects against other users on the SAME system.</p>
+          <p><b>Caveats:</b> Doesn't survive copy to non-NTFS media (FAT, SMB share without compatible cipher). EFS cert loss = permanent data loss unless DRA (Data Recovery Agent) configured.</p>
+
           <h2>NTFS permissions</h2>
-          <p>Standard: Full Control, Modify, Read & Execute, List, Read, Write. <b>Deny overrides Allow.</b> Inherited from parent unless broken.</p>
-          <h2>Share vs NTFS</h2>
-          <p>When both apply, the <b>most restrictive</b> wins.</p>
-          <h2>Defender</h2>
-          <p>Windows Defender Antivirus, Firewall, SmartScreen (browser/file rep), Application Guard.</p>
+          <p><b>NTFS</b> (New Technology File System) controls who can do what to files + folders. ACL = Access Control List, made of ACEs (Access Control Entries).</p>
+          <p><b>Standard permissions:</b></p>
+          <ul>
+            <li><b>Full Control</b> — read, write, change perms, take ownership.</li>
+            <li><b>Modify</b> — read, write, delete; cannot change perms.</li>
+            <li><b>Read &amp; Execute</b> — read + run executables.</li>
+            <li><b>List Folder Contents</b> — applies only to folders, allows enumeration.</li>
+            <li><b>Read</b> — view contents + attributes.</li>
+            <li><b>Write</b> — create new files / folders, modify metadata.</li>
+            <li><b>Special permissions</b> — fine-grained set (read attributes, write extended, delete subfolders, etc.) — viewable via Advanced.</li>
+          </ul>
+          <p><b>Inheritance:</b> Child objects inherit parent permissions unless explicitly broken ("Disable inheritance" in Advanced Security). Inherited entries can be converted to explicit or removed.</p>
+          <p><b>Conflict resolution rules:</b></p>
+          <ol>
+            <li>Permissions from multiple groups are CUMULATIVE (union of Allows).</li>
+            <li><b>Deny ALWAYS overrides Allow</b> — even an explicit Allow loses to an inherited Deny.</li>
+            <li>Explicit permissions on the object override inherited ones.</li>
+          </ol>
+          <p><b>Tools:</b> Right-click → Properties → Security tab. CLI: <code>icacls</code>. PowerShell: <code>Get-Acl</code> / <code>Set-Acl</code>.</p>
+
+          <h2>Share permissions vs NTFS permissions</h2>
+          <p>When a folder is accessed over the network (SMB share), <b>both</b> permission sets evaluate. Effective permission = MOST RESTRICTIVE intersection.</p>
+          <p><b>Common practice:</b> Share = "Everyone — Full Control" so it's not the constraint; rely on NTFS for actual control. Local access doesn't traverse share permissions at all.</p>
+
+          <h2>Ownership</h2>
+          <p>Every object has an <b>owner</b>. Owner can always modify the ACL even if all Allow ACEs are removed. Administrators can <b>take ownership</b> of any object to recover from misconfigurations (<code>takeown /f path /r</code>).</p>
+
+          <h2>Microsoft Defender — built-in security stack</h2>
+          <ul>
+            <li><b>Microsoft Defender Antivirus</b> — real-time signature + behavior scanner. Cloud-delivered + tamper protection on by default.</li>
+            <li><b>Microsoft Defender Firewall</b> — host-based stateful firewall. Profiles: Domain, Private, Public. Configure with <code>wf.msc</code>.</li>
+            <li><b>SmartScreen</b> — browser + file reputation. Warns on unsafe downloads / phishing URLs.</li>
+            <li><b>Defender Application Guard</b> — opens untrusted Edge sites / Office docs in Hyper-V container. Enterprise.</li>
+            <li><b>Controlled Folder Access</b> — anti-ransomware that blocks unauthorized writes to documents.</li>
+            <li><b>Tamper Protection</b> — prevents AV settings from being disabled by malware / scripts.</li>
+            <li><b>Exploit Protection</b> — DEP, ASLR, CFG, mitigation policies. Configure under "App &amp; browser control → Exploit protection settings".</li>
+            <li><b>Microsoft Defender for Endpoint (MDE)</b> — Enterprise EDR / XDR with cloud telemetry, attack surface reduction (ASR) rules, advanced hunting (KQL).</li>
+            <li><b>Credential Guard</b> + <b>Device Guard</b> — VBS (Virtualization-Based Security) isolates LSASS so credentials are not memory-accessible. Defeats Mimikatz-style pass-the-hash.</li>
+            <li><b>HVCI</b> (Hypervisor-protected Code Integrity / Memory Integrity) — kernel runs in a virtualized memory protection mode; blocks unsigned kernel code.</li>
+            <li><b>Windows Hello</b> — biometric / PIN authentication using TPM-backed keys; enables passwordless sign-in.</li>
+          </ul>
+
+          <h2>Account + sign-in security</h2>
+          <ul>
+            <li><b>Local accounts</b> — stored in SAM. Use for offline / standalone.</li>
+            <li><b>Microsoft Account (MSA)</b> — consumer cloud account for Windows.</li>
+            <li><b>Microsoft Entra (Azure AD) joined</b> — workplace cloud identity. Conditional Access enforced.</li>
+            <li><b>Domain account</b> — Active Directory.</li>
+            <li><b>Hybrid joined</b> — both on-prem AD and Entra ID.</li>
+            <li><b>Account Lockout Policy</b> — n bad attempts → lockout for x minutes. Configured under <code>secpol.msc</code> → Account Policies → Account Lockout Policy.</li>
+            <li><b>Password policy</b> — minimum length, complexity, history, age. Modern NIST 800-63B guidance favors length + breached-password check over forced rotation.</li>
+            <li><b>MFA</b> via Microsoft Authenticator, FIDO2 key, Windows Hello.</li>
+            <li><b>LAPS</b> (Local Administrator Password Solution) — manages + rotates local admin passwords centrally. Now built into Entra ID + AD.</li>
+          </ul>
+
+          <h2>AutoRun / AutoPlay</h2>
+          <p><b>What:</b> Historical Windows feature that auto-executed scripts/programs from inserted media. Disabled by default since Windows 7 for executables, still risky for AutoPlay handlers.</p>
+          <p><b>Defense:</b> Group Policy "Turn off AutoPlay" on all drives. USB device-control software for enterprise.</p>
+
+          <h2>Removable-media + USB control</h2>
+          <ul>
+            <li><b>Device Installation Restrictions</b> Group Policy — block install of unknown USB devices.</li>
+            <li><b>BitLocker To Go</b> + force-encrypt removable drives.</li>
+            <li><b>Defender for Endpoint Device Control</b> — read-only / blocked by device class or vendor ID.</li>
+          </ul>
+
+          <h2>Windows Update + security baselines</h2>
+          <ul>
+            <li><b>Cumulative updates</b> — monthly rollups (Patch Tuesday).</li>
+            <li><b>Servicing channels</b> — GAC (consumer/business), LTSC (Enterprise long-term).</li>
+            <li><b>Microsoft Security Baselines</b> — Microsoft-published Group Policy + Intune templates aligning with CIS / NIST. Apply via Security Compliance Toolkit.</li>
+            <li><b>WSUS</b> / <b>WUfB</b> — on-prem / cloud-managed update deferrals.</li>
+          </ul>
+
+          <h2>Group Policy + Local Security Policy</h2>
+          <ul>
+            <li><b><code>gpedit.msc</code></b> — Local Group Policy Editor (Pro+).</li>
+            <li><b><code>secpol.msc</code></b> — Local Security Policy — focused on account, audit, user-rights, security options.</li>
+            <li><b>Domain GPOs</b> — pushed from AD via SYSVOL. Apply in <b>LSDOU</b> order: Local → Site → Domain → OU. Closer-to-user wins by default. <b>Enforced</b> and <b>Block Inheritance</b> flags adjust.</li>
+            <li><b><code>gpresult /r</code></b> — show applied GPOs.</li>
+            <li><b><code>gpupdate /force</code></b> — re-apply now.</li>
+          </ul>
+
+          <h2>Audit + logging</h2>
+          <ul>
+            <li><b>Event Viewer</b> (<code>eventvwr.msc</code>) — Application, System, Security, Setup logs.</li>
+            <li><b>Common Security event IDs:</b>
+              <ul>
+                <li>4624 — successful logon.</li>
+                <li>4625 — failed logon.</li>
+                <li>4634 — logoff.</li>
+                <li>4672 — special privileges assigned.</li>
+                <li>4720 — user account created.</li>
+                <li>4732 — user added to local group.</li>
+                <li>4688 — process creation (if audit enabled).</li>
+              </ul>
+            </li>
+            <li><b>Audit policy</b> via <code>secpol.msc</code> → Local Policies → Audit Policy (or Advanced Audit Policy Configuration).</li>
+            <li><b>Forward logs</b> via <b>WEF</b> (Windows Event Forwarding) to SIEM.</li>
+          </ul>
+
+          <h2>Common security hardening checklist</h2>
+          <ol>
+            <li>Run latest Windows version + monthly patches.</li>
+            <li>BitLocker on every drive.</li>
+            <li>Standard user for daily work; separate admin account.</li>
+            <li>UAC at default "Notify" or higher.</li>
+            <li>Windows Hello / passwordless sign-in.</li>
+            <li>Disable SMBv1.</li>
+            <li>Disable AutoRun.</li>
+            <li>Enable Defender real-time + cloud-delivered + Tamper Protection.</li>
+            <li>Apply Microsoft Security Baselines.</li>
+            <li>Configure Windows Firewall — allow only required inbound, drop unsolicited.</li>
+            <li>For Enterprise: enable Credential Guard, HVCI, ASR rules, Controlled Folder Access.</li>
+            <li>Log forwarding to SIEM, retain Security log appropriately.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Most restrictive wins" when Share and NTFS conflict.</li>
+            <li>"Deny ALWAYS overrides Allow" in NTFS.</li>
+            <li>BitLocker uses TPM 2.0 (with optional PIN / USB).</li>
+            <li>UAC prompts elevation, runs admins as standard by default.</li>
+            <li>"VBS isolation of credentials" → Credential Guard.</li>
+            <li>"Defender feature that opens untrusted sites in container" → Application Guard.</li>
+            <li>"Rotates local admin passwords" → LAPS.</li>
+            <li>"GPO precedence" → LSDOU (Local → Site → Domain → OU; OU is closest, applied last → wins).</li>
+            <li>"Failed logon event ID" → 4625.</li>
+          </ul>
         `
       },
       {
