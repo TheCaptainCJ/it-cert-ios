@@ -2243,17 +2243,151 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
       {
         title: '4. Malware Types',
         body: `
+          <p><b>Malware</b> = MALicious softWARE — any code crafted to harm, surveil, or extract value from a system or user. Exam expects you to recognize each category by its <i>behavior</i> + <i>delivery</i>, not by name alone. Same payload can be packaged as virus + trojan + ransomware simultaneously.</p>
+
+          <h2>Virus</h2>
+          <p><b>What:</b> Code that attaches itself (infects) to a host file, document, or executable. Requires user action — opening the host — to run.</p>
+          <p><b>Why:</b> Historically spread via floppy disks, then email attachments. Less common today than worms + trojans because user interaction is required.</p>
+          <p><b>How used by attackers:</b> Macro virus in Office docs (VBA), executable file infectors, script viruses. The host file CARRIES the virus around.</p>
+          <p><b>Defenses:</b> AV signature + behavior scanning, disable Office macros from the Internet, file reputation.</p>
+
+          <h2>Worm</h2>
+          <p><b>What:</b> Self-replicating malware that spreads across a network WITHOUT user interaction or host file. Exploits a vulnerability to copy itself to the next victim automatically.</p>
+          <p><b>Famous examples:</b> Code Red, SQL Slammer, Conficker, NotPetya (delivered via supply chain + EternalBlue worming).</p>
+          <p><b>Why dangerous:</b> Exponential spread within minutes. Saturates bandwidth + brings down servers.</p>
+          <p><b>Defenses:</b> Patch promptly, segment networks (microsegmentation, VLANs), disable unused services, IPS signatures.</p>
+
+          <h2>Trojan (Trojan Horse)</h2>
+          <p><b>What:</b> Malware disguised as legitimate software. User installs it voluntarily, thinking it's a useful tool / cracked game / fake AV.</p>
+          <p><b>Why:</b> Bypasses signature defenses that watch for binary patterns — humans run the file willingly.</p>
+          <p><b>How used:</b> Fake installers, "free" warez, malvertising downloads, cracked software, fake codec packs.</p>
+          <p><b>Defenses:</b> Only install from trusted sources / vendor sites, application allowlisting (AppLocker / WDAC), reputation services (SmartScreen, Gatekeeper, Notarization).</p>
+
+          <h2>RAT — Remote Access Trojan</h2>
+          <p><b>What:</b> Trojan that opens a remote-control backdoor for the attacker. Often runs as a persistent service.</p>
+          <p><b>Examples:</b> DarkComet, njRAT, Quasar, Cobalt Strike beacon, Sliver implant.</p>
+          <p><b>Capabilities:</b> File transfer, screen capture, webcam + mic access, keylogging, registry edits, lateral movement.</p>
+          <p><b>Defenses:</b> EDR behavior detection, network egress filtering, application allowlisting, separation of admin accounts, hunt for beaconing patterns.</p>
+
+          <h2>Rootkit</h2>
+          <p><b>What:</b> Malware that hides itself + other malware deeply in the OS, often at <b>kernel</b>, <b>firmware</b>, or <b>bootloader</b> level. Subverts OS APIs so processes, files, registry keys look invisible.</p>
+          <p><b>Variants:</b> Kernel-mode (driver), user-mode, <b>bootkit</b> (infects bootloader / MBR / VBR), <b>firmware rootkit</b> (UEFI / system management mode).</p>
+          <p><b>Why scary:</b> Even AV running on the same OS can't see it. Removal often requires offline scanning, full reinstall, sometimes BIOS reflash.</p>
+          <p><b>Defenses:</b> <b>Secure Boot</b> + TPM measured boot + <b>Boot Guard</b>, signed drivers, kernel mode integrity (HVCI / Memory Integrity), offline scanning, EDR with kernel telemetry.</p>
+
+          <h2>Ransomware</h2>
+          <p><b>What:</b> Encrypts files (or whole disk) and demands payment (typically cryptocurrency) for the decryption key.</p>
+          <p><b>Variants:</b></p>
           <ul>
-            <li><b>Virus</b> — attaches to host file, needs execution.</li>
-            <li><b>Worm</b> — self-replicating across network.</li>
-            <li><b>Trojan</b> — disguised as legit software.</li>
-            <li><b>RAT</b> — Remote Access Trojan; backdoor control.</li>
-            <li><b>Rootkit</b> — kernel/firmware-level, hides itself.</li>
-            <li><b>Ransomware</b> — encrypts files, demands payment.</li>
-            <li><b>Keylogger</b> — records keystrokes.</li>
-            <li><b>Spyware / adware</b> — tracks user / pushes ads.</li>
-            <li><b>Cryptominer</b> — uses CPU/GPU silently.</li>
-            <li><b>Boot sector</b> — infects MBR/UEFI loader.</li>
+            <li><b>Crypto-ransomware</b> — encrypts files, leaves system bootable. WannaCry, Ryuk, LockBit, Conti.</li>
+            <li><b>Locker</b> — locks the screen without encryption. Mostly older variants.</li>
+            <li><b>Double-extortion</b> — exfiltrates data BEFORE encrypting, threatens public release if unpaid.</li>
+            <li><b>Triple-extortion</b> — adds DDoS / customer pressure.</li>
+            <li><b>RaaS</b> (Ransomware as a Service) — affiliates buy access to ransomware kit from operators for a cut.</li>
+          </ul>
+          <p><b>Defenses:</b> Immutable / air-gapped backups (3-2-1 rule), MFA on remote access (RDP, VPN), segmentation, EDR + canary file detection, patch the entry vectors (RDP, VPN, public-facing apps), least-privilege account hygiene, exercise restores regularly.</p>
+
+          <h2>Keylogger</h2>
+          <p><b>What:</b> Records keystrokes (and often clipboard, screenshots, form fills).</p>
+          <p><b>Forms:</b></p>
+          <ul>
+            <li><b>Software keylogger</b> — hooks the OS keyboard API.</li>
+            <li><b>Hardware keylogger</b> — physical USB / PS-2 inline device, no software footprint. Found by physical inspection.</li>
+            <li><b>Kernel-mode keylogger</b> — embedded in driver.</li>
+            <li><b>Form-grabbing</b> — captures browser HTTP POST data before TLS encryption.</li>
+          </ul>
+          <p><b>Why:</b> Steal passwords, banking credentials, MFA backup codes typed in.</p>
+          <p><b>Defenses:</b> Hardware MFA (FIDO2 / YubiKey), password manager autofill (not typing), EDR, physical inspection of public/shared workstations, on-screen virtual keyboards for one-off banking.</p>
+
+          <h2>Spyware</h2>
+          <p><b>What:</b> Covertly collects user activity — browsing, location, contacts, files — and sends it to a third party.</p>
+          <p><b>Examples:</b> Stalkerware on phones (mSpy), commercial surveillance (Pegasus on iPhones), bundled bloatware adware.</p>
+          <p><b>Defenses:</b> Anti-spyware scans, careful permission grants on mobile, MDM, OS-level "Tracking Transparency" controls.</p>
+
+          <h2>Adware</h2>
+          <p><b>What:</b> Pushes ads — pop-ups, browser injections, redirects.</p>
+          <p><b>Why:</b> Revenue for adware author. Some adware crosses the line into tracking / spyware.</p>
+          <p><b>Defenses:</b> Browser extensions (uBlock Origin), DNS filtering, remove unwanted programs, careful installer "express" vs "custom" choices.</p>
+
+          <h2>Cryptominer / Cryptojacker</h2>
+          <p><b>What:</b> Hijacks CPU / GPU cycles to mine cryptocurrency for the attacker. Browser-based (Coinhive style) or installed.</p>
+          <p><b>Symptoms:</b> Fans constantly maxed, CPU 100% even when idle, electric bill spike, throttled cloud VM bills (high cloud cost is the big tell in cloud breaches).</p>
+          <p><b>Defenses:</b> EDR, browser extensions that block cryptomining scripts, cloud cost-anomaly alerts, restrict outbound to known mining pools.</p>
+
+          <h2>Boot sector / Bootkit</h2>
+          <p><b>What:</b> Infects the <b>MBR</b> (Master Boot Record), <b>VBR</b> (Volume Boot Record), or modern UEFI boot manager so malware loads BEFORE the OS — and thus before AV.</p>
+          <p><b>Defenses:</b> UEFI <b>Secure Boot</b>, TPM-measured boot, drive encryption, AV with offline scan capability, recovery media to repair (<code>bootrec /fixmbr</code>, <code>bootrec /rebuildbcd</code>).</p>
+
+          <h2>Logic bomb</h2>
+          <p><b>What:</b> Dormant code that triggers on a condition — date, file presence, user logon, employee removal from AD.</p>
+          <p><b>Why:</b> Insider sabotage, time-delayed disruption.</p>
+          <p><b>Defenses:</b> Code review, separation of duties, monitoring for unauthorized scheduled tasks / cron jobs, careful offboarding.</p>
+
+          <h2>Backdoor</h2>
+          <p><b>What:</b> Hidden access path bypassing normal auth. Sometimes intentional (vendor "support" account), often planted by attackers post-compromise.</p>
+          <p><b>Defenses:</b> Hunt for unauthorized accounts / SSH keys / scheduled tasks, integrity monitoring (Tripwire, AIDE), config baselining, EDR.</p>
+
+          <h2>Fileless malware</h2>
+          <p><b>What:</b> Lives in memory / leverages legitimate tools (PowerShell, WMI, mshta, rundll32) — does not drop traditional executable files on disk.</p>
+          <p><b>Why:</b> Signature-based AV doesn't see anything. "Living-off-the-land" binaries (<b>LOLBins</b>) are abused.</p>
+          <p><b>Defenses:</b> PowerShell logging + constrained language mode, AMSI integration with AV, EDR behavior detection, application allowlisting.</p>
+
+          <h2>Botnet</h2>
+          <p><b>What:</b> Network of compromised hosts (zombies) under a single command-and-control (<b>C2</b>) operator. Used for DDoS, spam, credential stuffing, click fraud, mining.</p>
+          <p><b>Examples:</b> Mirai (IoT), Emotet, Conficker, TrickBot.</p>
+          <p><b>Defenses:</b> Egress filtering to known C2 IPs, EDR + IPS signatures, removal of default credentials on IoT, ISP-side mitigation.</p>
+
+          <h2>PUP / PUA</h2>
+          <p><b>PUP</b> (Potentially Unwanted Program) / <b>PUA</b> (Potentially Unwanted Application) — bundled toolbars, "system optimizers", changed homepages. Not strictly malware but degrade the system and often act as adware/spyware.</p>
+
+          <h2>Anti-malware tooling categories</h2>
+          <ul>
+            <li><b>AV</b> (Antivirus) — signature + heuristic file scanning.</li>
+            <li><b>EDR</b> (Endpoint Detection &amp; Response) — behavior monitoring + investigation + remote response. Modern replacement / complement to AV.</li>
+            <li><b>XDR</b> (Extended Detection &amp; Response) — correlates endpoint + network + identity + cloud signals.</li>
+            <li><b>NGAV</b> (Next-Generation AV) — ML / behavior, no signatures.</li>
+            <li><b>MDR</b> (Managed Detection &amp; Response) — outsourced 24/7 SOC.</li>
+            <li><b>Sandbox / detonation</b> — run unknown file in isolated VM, observe behavior.</li>
+            <li><b>SIEM</b> + <b>SOAR</b> — log aggregation + automated response.</li>
+            <li><b>IOC</b> (Indicator of Compromise) — hash, IP, domain, registry key associated with known badness.</li>
+            <li><b>TTPs</b> (Tactics, Techniques, Procedures) — MITRE ATT&amp;CK mapping of adversary behavior.</li>
+          </ul>
+
+          <h2>CompTIA 7-step malware removal process (memorize order)</h2>
+          <ol>
+            <li><b>Investigate and verify malware symptoms.</b></li>
+            <li><b>Quarantine</b> infected systems (network isolation).</li>
+            <li><b>Disable System Restore</b> in Windows so the malware can't be re-introduced from a tainted restore point.</li>
+            <li><b>Remediate</b> — update AV definitions + scan + remove. Use offline / safe-mode scans if active.</li>
+            <li><b>Schedule</b> regular scans + updates going forward.</li>
+            <li><b>Re-enable System Restore</b> + create a fresh, clean restore point.</li>
+            <li><b>Educate</b> the end user on how the infection happened + how to avoid it.</li>
+          </ol>
+
+          <h2>Detection signs</h2>
+          <ul>
+            <li>Unexpected pop-ups, browser redirects, changed homepage.</li>
+            <li>Sluggish performance, fans constantly running.</li>
+            <li>Disk thrash without user activity.</li>
+            <li>New unknown processes / services / scheduled tasks.</li>
+            <li>Unusual outbound traffic (beaconing, large uploads).</li>
+            <li>Disabled AV / firewall / Windows Update.</li>
+            <li>Encrypted files with strange extensions + ransom note.</li>
+            <li>Logon failures from unfamiliar IPs (post-credential theft).</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Self-replicating across the network without user action" → worm.</li>
+            <li>"Disguised as legit software" → trojan.</li>
+            <li>"Remote backdoor control" → RAT.</li>
+            <li>"Hides at kernel / firmware level" → rootkit.</li>
+            <li>"Encrypts files + ransom" → ransomware.</li>
+            <li>"Records keystrokes" → keylogger.</li>
+            <li>"100% CPU + electric bill spike" → cryptominer.</li>
+            <li>"Triggers on a condition (date, fired employee)" → logic bomb.</li>
+            <li>"Lives in RAM / uses PowerShell + WMI" → fileless malware.</li>
+            <li>CompTIA 7-step removal — order is exam-critical.</li>
           </ul>
         `
       },
