@@ -1393,16 +1393,147 @@ const COURSES = [
       {
         title: '12. Troubleshooting Methodology',
         body: `
-          <h2>CompTIA 6-step method</h2>
+          <p>Troubleshooting is a defined, repeatable PROCESS — not random guessing. CompTIA loves "which step is FIRST / NEXT" questions and expects you to follow the exact 6-step sequence. Memorize the order. Failing to do so on the job leads to wasted time, lost data, and escalated incidents.</p>
+
+          <h2>The CompTIA 6-step troubleshooting method</h2>
+
+          <h3>Step 1 — Identify the problem</h3>
+          <p><b>What you do:</b></p>
+          <ul>
+            <li><b>Gather information</b> — ask the user open-ended questions ("When did this start? What changed? What error appears?").</li>
+            <li><b>Question users</b> politely + non-judgmentally.</li>
+            <li><b>Identify user-changed environment</b> — new software, new hardware, OS updates, antivirus install.</li>
+            <li><b>Reproduce</b> the issue if safe to do so.</li>
+            <li><b>Back up data</b> BEFORE making changes — protects against further loss.</li>
+            <li><b>Inquire about environmental or infrastructure changes</b> — power surge, recent firmware, new building wiring.</li>
+          </ul>
+          <p><b>Why:</b> Cannot fix what you don't understand. Many "problems" are misunderstandings or expected behavior.</p>
+
+          <h3>Step 2 — Establish a theory of probable cause</h3>
+          <p><b>What you do:</b></p>
+          <ul>
+            <li><b>Question the obvious</b> — is it plugged in? Powered on? Loose cable?</li>
+            <li>Consider multiple approaches: external research (vendor KBs, forums), top-to-bottom OSI layer review, divide-and-conquer.</li>
+            <li>Refer to internal documentation (runbooks, change logs).</li>
+          </ul>
+          <p><b>Why:</b> A focused theory channels effort. Best techs run several theories in parallel, ranked by likelihood and ease of testing.</p>
+
+          <h3>Step 3 — Test the theory to determine cause</h3>
+          <p><b>Two outcomes:</b></p>
+          <ul>
+            <li>Theory <b>confirmed</b> → proceed to step 4 (plan of action).</li>
+            <li>Theory <b>not confirmed</b> → form a new theory (loop back to Step 2) OR <b>escalate</b> to someone with higher access / expertise.</li>
+          </ul>
+          <p><b>How:</b> Change ONE thing at a time so the result is unambiguous. Don't replace cable, drivers, and RAM all at once — you won't know which fixed it.</p>
+
+          <h3>Step 4 — Establish a plan of action to resolve and implement the solution</h3>
+          <p><b>Inputs to the plan:</b></p>
+          <ul>
+            <li>Vendor documentation, internal SOPs, peer review.</li>
+            <li>Risk assessment — what could go wrong?</li>
+            <li>Change management approval if production / customer impact.</li>
+            <li>Backout / rollback plan.</li>
+            <li>Communication plan — who needs notice, what's the downtime window.</li>
+          </ul>
+          <p><b>Then execute</b> the plan during the agreed maintenance window. Keep it surgical.</p>
+
+          <h3>Step 5 — Verify full system functionality and, if applicable, implement preventive measures</h3>
+          <p><b>What you do:</b></p>
+          <ul>
+            <li>Confirm the original symptom is gone.</li>
+            <li>Test related functions to ensure no regression.</li>
+            <li>Have the user verify the fix from their perspective.</li>
+            <li>Apply preventive measures — patch sources of the problem, add monitoring, tune alerts, update runbooks.</li>
+          </ul>
+          <p><b>Why:</b> A fix that breaks something else is a regression. Verifying broader functionality avoids creating a new ticket out of the old one.</p>
+
+          <h3>Step 6 — Document findings, actions, and outcomes</h3>
+          <p><b>What you record:</b></p>
+          <ul>
+            <li>Symptom, root cause, fix applied, why.</li>
+            <li>Affected systems + users + timeline.</li>
+            <li>Update knowledge base / KB articles / runbooks for next time.</li>
+            <li>Close the ticket with searchable notes.</li>
+          </ul>
+          <p><b>Why critical:</b> The next tech (or your future self at 3 AM) needs a paper trail. Trend analysis across tickets surfaces systemic issues.</p>
+
+          <h2>Cross-cutting principles</h2>
+          <ul>
+            <li><b>Always consider corporate policies, procedures, and impacts BEFORE applying changes.</b></li>
+            <li><b>Backup first</b> — always have a known-good restore point.</li>
+            <li><b>One change at a time</b> when testing theories.</li>
+            <li><b>Escalate</b> when the scope or risk exceeds your authority or skill. Not a failure — it's correct procedure.</li>
+            <li><b>Safety first</b> — ESD for hardware, lockout/tagout for power, MSDS/SDS for chemicals.</li>
+            <li><b>Respect privacy + confidentiality</b> when accessing user systems.</li>
+            <li><b>Communicate professionally</b> with users + stakeholders throughout.</li>
+          </ul>
+
+          <h2>Common troubleshooting techniques</h2>
+          <ul>
+            <li><b>Divide and conquer / bisection</b> — split the problem in half repeatedly to localize. (Switch port? Cable? NIC? Driver? App?)</li>
+            <li><b>Top-down OSI</b> — start at L7 application, descend if no luck.</li>
+            <li><b>Bottom-up OSI</b> — start at L1 physical (cable, power, link), ascend. Often best for "no network at all".</li>
+            <li><b>Substitution</b> — swap suspected part with known-good (cable, RAM stick, power supply).</li>
+            <li><b>Comparison</b> — known-working similar system shows what differs.</li>
+            <li><b>Eliminate the simplest first</b> — outlet, cable, power, reboot before tearing apart.</li>
+            <li><b>Rubber-duck</b> — explain the problem out loud or to a colleague; often reveals the solution.</li>
+          </ul>
+
+          <h2>Useful diagnostic categories</h2>
+          <ul>
+            <li><b>Power</b> — outlet, cable, PSU, battery.</li>
+            <li><b>POST</b> (Power-On Self-Test) errors / beep codes / debug LEDs.</li>
+            <li><b>OS boot</b> — Safe Mode, WinRE, recovery USB, live Linux ISO for diagnosis.</li>
+            <li><b>Drivers</b> — Device Manager errors, vendor sites, rollback to previous driver.</li>
+            <li><b>Logs</b> — Event Viewer (Windows), Console / log files (macOS), <code>journalctl</code> / <code>/var/log</code> (Linux).</li>
+            <li><b>Network</b> — link lights, ipconfig/ip a, ping, tracert, DNS resolve, port scan.</li>
+            <li><b>Storage</b> — SMART, chkdsk, fsck, fragmentation, free space.</li>
+            <li><b>Resource</b> — CPU / RAM / disk I/O via Task Manager, Resource Monitor, top, htop, iostat.</li>
+          </ul>
+
+          <h2>Change management — interaction with troubleshooting</h2>
+          <p>For non-trivial fixes in production:</p>
           <ol>
-            <li><b>Identify</b> the problem (gather info, reproduce, back up).</li>
-            <li><b>Establish a theory</b> (probable cause; question the obvious).</li>
-            <li><b>Test the theory</b> to confirm. If confirmed → fix. If not → new theory or escalate.</li>
-            <li><b>Plan of action</b> to resolve.</li>
-            <li><b>Verify</b> full functionality; implement preventive measures.</li>
-            <li><b>Document</b> findings, actions, outcomes.</li>
+            <li><b>RFC</b> (Request for Change) opened with scope, justification, risk.</li>
+            <li><b>CAB</b> (Change Advisory Board) reviews and approves.</li>
+            <li><b>Test in lab / pilot</b> when feasible.</li>
+            <li><b>Schedule maintenance window</b>, notify affected users.</li>
+            <li><b>Execute</b> with rollback plan ready.</li>
+            <li><b>Post-implementation review</b> — capture outcome, update CMDB.</li>
           </ol>
-          <blockquote>Always consider corporate policies, procedures, and impacts before applying changes.</blockquote>
+
+          <h2>Ticket / incident lifecycle (ITIL-aligned)</h2>
+          <ul>
+            <li><b>Open</b> — symptom, user info, severity / priority.</li>
+            <li><b>Assignment</b> — to the correct queue / tier.</li>
+            <li><b>Diagnosis</b> — follow troubleshooting steps.</li>
+            <li><b>Resolution</b> — fix applied, user confirms.</li>
+            <li><b>Closure</b> — knowledge base updated.</li>
+            <li><b>Trends</b> — repeat tickets indicate <b>problem management</b> issue, not just incidents.</li>
+          </ul>
+
+          <h2>Soft skills that exam tests</h2>
+          <ul>
+            <li><b>Cultural sensitivity</b> + respect.</li>
+            <li><b>Active listening</b> — don't interrupt.</li>
+            <li><b>Use proper language</b> — avoid jargon with non-tech users.</li>
+            <li><b>Avoid distractions</b> — no personal calls, no checking social media on the user's PC.</li>
+            <li><b>Maintain a positive attitude</b> + project confidence.</li>
+            <li><b>Set + meet expectations</b> — give a realistic ETA.</li>
+            <li><b>Deal appropriately with confidential / private materials</b> on a user's device.</li>
+            <li><b>Don't argue or be defensive</b> — even if user is wrong.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Memorize the SIX steps IN ORDER: Identify → Theory → Test → Plan + Implement → Verify → Document.</li>
+            <li>"FIRST step" is always Identify the problem.</li>
+            <li>"NEXT step after establishing theory" → Test the theory.</li>
+            <li>"AFTER implementing solution" → Verify functionality (then document).</li>
+            <li>"LAST step" → Document.</li>
+            <li>"Cannot resolve at your skill level" → Escalate.</li>
+            <li>Always back up before making changes.</li>
+          </ul>
         `
       }
     ],
