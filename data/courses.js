@@ -1985,23 +1985,259 @@ bcdboot C:\\Windows /s S: /f UEFI         # repair UEFI bootloader</code></pre>
       {
         title: '3. macOS & Linux Essentials',
         body: `
-          <h2>macOS</h2>
-          <p>Time Machine = backup. FileVault = full-disk encryption. Disk Utility, Activity Monitor, Spotlight (Cmd+Space), Mission Control, Force Quit (Cmd+Opt+Esc).</p>
-          <h2>Linux commands</h2>
-          <pre><code>ls -la           list with hidden
-cd /path
-pwd              working dir
-cp src dst
-mv src dst       move/rename
-rm -rf dir       recursive force delete
-chmod 755 file   perms
-chown user file
-ps aux           processes
-top / htop       live processes
-grep "x" file
-sudo command     elevate
-apt / dnf / yum  package managers
-systemctl status sshd</code></pre>
+          <p>A+ Core 2 covers Windows in depth + the basics of macOS and Linux that any field tech sees in mixed shops. Exam asks for built-in tools and core CLI commands on each platform.</p>
+
+          <h2>macOS overview</h2>
+          <p><b>macOS</b> is Apple's desktop operating system. Modern naming uses California place names (Ventura, Sonoma, Sequoia). UNIX-certified, built on the Darwin kernel + BSD userland + Apple frameworks.</p>
+
+          <h3>Key built-in apps + utilities</h3>
+          <ul>
+            <li><b>Finder</b> — file manager. Sidebar shows Favorites, iCloud, Tags, devices.</li>
+            <li><b>Launchpad</b> — iOS-style app grid.</li>
+            <li><b>Mission Control</b> (F3 / 3-finger swipe up) — overview of all open windows + Spaces (virtual desktops).</li>
+            <li><b>Spotlight</b> (Cmd+Space) — system-wide search, app launcher, math, definitions.</li>
+            <li><b>System Settings</b> (formerly System Preferences) — central config.</li>
+            <li><b>System Information</b> (Apple menu → About This Mac → More Info) — hardware + software details.</li>
+            <li><b>Activity Monitor</b> — process manager (CPU, Memory, Energy, Disk, Network).</li>
+            <li><b>Console</b> — system + app log viewer.</li>
+            <li><b>Disk Utility</b> — format, partition, repair (First Aid), erase.</li>
+            <li><b>Migration Assistant</b> — move data from old Mac / PC / Time Machine backup.</li>
+            <li><b>Terminal</b> — UNIX shell (default zsh since Catalina).</li>
+            <li><b>AirDrop</b> — peer Bluetooth + Wi-Fi file transfer between Apple devices.</li>
+            <li><b>iCloud Drive</b> — Apple cloud file sync (and Photos, Mail, Contacts, etc.).</li>
+            <li><b>Keychain Access</b> — credential + cert store (passwords, certs, secure notes).</li>
+            <li><b>App Store</b> — software install.</li>
+            <li><b>Boot Camp Assistant</b> — install Windows on Intel Macs. Not on Apple Silicon (Parallels / UTM instead).</li>
+          </ul>
+
+          <h3>Backup + recovery</h3>
+          <ul>
+            <li><b>Time Machine</b> — incremental backups to external drive or network share (AFP/SMB). Browse historical "snapshots" through a star-field UI.</li>
+            <li><b>macOS Recovery</b> — boot to <b>Cmd+R</b> (Intel) or hold the power button (Apple Silicon) → Recovery contains Disk Utility, Reinstall macOS, Restore from Time Machine, Terminal, Network Utility.</li>
+            <li><b>Snapshots</b> — APFS local snapshots used by Time Machine and Reverse Restore.</li>
+          </ul>
+
+          <h3>Security features</h3>
+          <ul>
+            <li><b>FileVault</b> — full-disk encryption via AES-XTS, tied to user password. Recovery key shown at enable.</li>
+            <li><b>Gatekeeper</b> — only allows apps from App Store / identified developers by default. Right-click → Open lets you bypass per-app.</li>
+            <li><b>XProtect</b> — built-in signature-based malware scanner.</li>
+            <li><b>SIP</b> (System Integrity Protection) — kernel-enforced protection of system directories. Disabled only from Recovery (<code>csrutil disable</code>).</li>
+            <li><b>Notarization</b> — Apple must scan + sign third-party apps for safe distribution.</li>
+            <li><b>T2 / Apple Silicon Secure Enclave</b> — hardware key store; Touch ID, FileVault keys, boot integrity.</li>
+            <li><b>Find My / Activation Lock</b> — anti-theft tying device to Apple ID.</li>
+            <li><b>iCloud Keychain</b> — synced password manager across Apple devices.</li>
+          </ul>
+
+          <h3>Keyboard shortcuts (exam-favored)</h3>
+          <ul>
+            <li><b>Cmd+Space</b> — Spotlight.</li>
+            <li><b>Cmd+Tab</b> — app switcher.</li>
+            <li><b>Cmd+Q</b> — quit app (vs Cmd+W which only closes window).</li>
+            <li><b>Cmd+Opt+Esc</b> — Force Quit Applications.</li>
+            <li><b>Cmd+Shift+3</b> — full-screen screenshot.</li>
+            <li><b>Cmd+Shift+4</b> — region screenshot.</li>
+            <li><b>Cmd+Shift+5</b> — screenshot toolbar / screen recording.</li>
+            <li><b>Ctrl+Cmd+Q</b> — lock screen.</li>
+            <li><b>Cmd+,</b> — preferences in any app.</li>
+            <li><b>Cmd+Shift+G</b> in Finder — "Go to folder" dialog.</li>
+          </ul>
+
+          <h3>Common file paths</h3>
+          <ul>
+            <li><code>/Applications</code> — installed apps.</li>
+            <li><code>/Users/&lt;name&gt;</code> — home dir. Aliased as <code>~</code>.</li>
+            <li><code>~/Library</code> (hidden) — per-user app data. Show with Cmd+Shift+. or <code>chflags nohidden ~/Library</code>.</li>
+            <li><code>/Library</code> — system-wide app data.</li>
+            <li><code>/System</code> — Apple system files (protected by SIP).</li>
+            <li><code>/private/etc</code> → <code>/etc</code> — UNIX config files.</li>
+            <li><code>/Volumes</code> — mounted disks.</li>
+          </ul>
+
+          <h2>Linux overview</h2>
+          <p><b>Linux</b> is a family of open-source UNIX-like operating systems built around the Linux kernel. Common distributions:</p>
+          <ul>
+            <li><b>Debian / Ubuntu / Mint / Pop!_OS</b> — Debian family. Use <b>apt</b> + .deb packages.</li>
+            <li><b>RHEL / Fedora / CentOS Stream / Rocky / AlmaLinux</b> — Red Hat family. Use <b>dnf</b> (or older <b>yum</b>) + .rpm.</li>
+            <li><b>Arch / Manjaro</b> — rolling release, <b>pacman</b>.</li>
+            <li><b>openSUSE</b> — <b>zypper</b>.</li>
+            <li><b>Alpine</b> — minimal, used in containers, <b>apk</b>.</li>
+          </ul>
+
+          <h3>Filesystem Hierarchy Standard (FHS)</h3>
+          <ul>
+            <li><code>/</code> — root of everything.</li>
+            <li><code>/bin</code>, <code>/sbin</code>, <code>/usr/bin</code>, <code>/usr/sbin</code> — executables.</li>
+            <li><code>/etc</code> — config files.</li>
+            <li><code>/home/&lt;user&gt;</code> — user home.</li>
+            <li><code>/root</code> — root user's home (NOT the same as /).</li>
+            <li><code>/var</code> — variable data: <code>/var/log</code> (logs), <code>/var/spool</code>, <code>/var/cache</code>.</li>
+            <li><code>/tmp</code> — ephemeral, cleared on reboot.</li>
+            <li><code>/opt</code> — optional third-party packages.</li>
+            <li><code>/proc</code>, <code>/sys</code> — virtual filesystems exposing kernel + hardware info.</li>
+            <li><code>/dev</code> — device nodes (<code>/dev/sda</code>, <code>/dev/null</code>).</li>
+            <li><code>/mnt</code>, <code>/media</code> — mount points for removable + temp media.</li>
+          </ul>
+
+          <h3>Essential CLI commands</h3>
+          <pre><code># Navigation + listing
+pwd                          # working dir
+ls -la                       # long + hidden
+cd /etc
+cd -                         # previous dir
+tree /etc/network            # tree view
+
+# File ops
+cp -r src dst                # copy recursive
+mv old new                   # move / rename
+rm -rf dir                   # recursive force delete (DANGER)
+touch file                   # create empty file
+mkdir -p a/b/c               # make dirs incl parents
+ln -s target link            # symbolic link
+
+# View + search
+cat file                     # print to stdout
+less file                    # pager (q to quit)
+head -n 20 file
+tail -f /var/log/syslog      # follow live
+grep -i "error" file         # case-insensitive search
+grep -r "pattern" /etc       # recursive
+find / -name "*.conf" 2>/dev/null
+find /var -mtime -1          # modified within 24h
+locate filename              # uses updatedb index
+
+# Permissions + ownership
+chmod 755 script.sh          # rwx r-x r-x
+chmod u+x file               # add execute to owner
+chown alice:devs file        # change owner + group
+chgrp staff file
+getfacl / setfacl            # POSIX ACLs
+
+# Users + groups
+whoami
+id                           # uid, gid, groups
+sudo -i                      # interactive root shell
+useradd -m -s /bin/bash alice
+passwd alice
+usermod -aG sudo alice       # append to sudo group (Debian/Ubuntu)
+usermod -aG wheel alice      # RHEL/Fedora equivalent
+groupadd devs
+userdel -r alice             # delete user + home
+
+# Processes + jobs
+ps aux                       # snapshot of all
+ps -ef
+top                          # live, interactive
+htop                         # nicer top (often must be installed)
+kill -9 PID                  # SIGKILL
+pkill -f pattern             # kill by name regex
+jobs / bg / fg
+nohup cmd &                  # run + survive logout
+
+# Disk + filesystems
+df -h                        # filesystem usage
+du -sh /var/log              # dir size summary
+lsblk                        # tree of block devices
+mount /dev/sdb1 /mnt/data
+umount /mnt/data
+fsck /dev/sda1               # filesystem check (UNMOUNTED!)
+mkfs.ext4 /dev/sdb1          # format
+lsof | grep deleted          # find deleted files held open
+
+# Networking
+ip a                         # interfaces (replaces ifconfig)
+ip route
+ip link set eth0 up
+ss -tunlp                    # listening sockets (replaces netstat)
+ping host
+traceroute host
+mtr host                     # combined live ping + traceroute
+dig host                     # DNS query
+host host                    # short DNS
+curl -I https://example.com
+wget https://example.com/file
+nmcli device status          # NetworkManager
+
+# Package mgmt
+sudo apt update && sudo apt upgrade -y     # Debian/Ubuntu
+sudo apt install nginx
+sudo apt remove nginx
+dpkg -l | grep nginx
+sudo dnf install httpd                     # RHEL/Fedora
+sudo dnf update
+rpm -qa | grep httpd
+
+# Service control (systemd)
+systemctl status sshd
+systemctl start sshd
+systemctl stop sshd
+systemctl restart sshd
+systemctl reload sshd        # reload config without dropping connections
+systemctl enable sshd        # start at boot
+systemctl disable sshd
+systemctl list-units --type=service
+journalctl -u sshd -f        # follow log for one service
+journalctl --since "1 hour ago"
+
+# Shutdown / reboot
+sudo shutdown -h now
+sudo reboot
+uptime</code></pre>
+
+          <h3>Editors</h3>
+          <ul>
+            <li><b>nano</b> — beginner-friendly modeless editor.</li>
+            <li><b>vi / vim</b> — modal; ubiquitous on servers. Esc → :wq save+quit, :q! quit no save.</li>
+            <li><b>emacs</b> — heavyweight extensible editor.</li>
+          </ul>
+
+          <h3>Logs to check on Linux</h3>
+          <ul>
+            <li><b>systemd journal</b> — <code>journalctl -xe</code> for recent + tagged errors.</li>
+            <li><code>/var/log/syslog</code> or <code>/var/log/messages</code> — general system log.</li>
+            <li><code>/var/log/auth.log</code> (Debian) / <code>/var/log/secure</code> (RHEL) — sudo, SSH, PAM events.</li>
+            <li><code>/var/log/dmesg</code> — kernel boot messages.</li>
+            <li>Service-specific: <code>/var/log/nginx/</code>, <code>/var/log/mysql/</code>, etc.</li>
+          </ul>
+
+          <h3>SSH essentials</h3>
+          <pre><code>ssh user@host                     # connect
+ssh -p 2222 user@host
+ssh-keygen -t ed25519             # generate key pair
+ssh-copy-id user@host             # push public key into ~/.ssh/authorized_keys
+scp file user@host:/path/         # copy via SSH
+rsync -av src/ user@host:/dst/    # smart sync</code></pre>
+
+          <h2>cmd-style → POSIX cheat sheet</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Windows cmd</th><th align="left" style="padding:4px;border-bottom:1px solid #444">macOS / Linux</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>dir</td><td>ls -la</td><td>List directory</td></tr>
+            <tr><td>cd</td><td>cd</td><td>Change directory</td></tr>
+            <tr><td>cls</td><td>clear</td><td>Clear screen</td></tr>
+            <tr><td>type file</td><td>cat file</td><td>Show file</td></tr>
+            <tr><td>copy / xcopy</td><td>cp</td><td>Copy file</td></tr>
+            <tr><td>move</td><td>mv</td><td>Move / rename</td></tr>
+            <tr><td>del</td><td>rm</td><td>Delete file</td></tr>
+            <tr><td>md / rd</td><td>mkdir / rmdir</td><td>Make / remove dir</td></tr>
+            <tr><td>tasklist / taskkill</td><td>ps / kill</td><td>List / kill process</td></tr>
+            <tr><td>shutdown /r</td><td>shutdown -r now / reboot</td><td>Reboot</td></tr>
+            <tr><td>ipconfig</td><td>ifconfig / ip a</td><td>NIC info</td></tr>
+            <tr><td>tracert</td><td>traceroute</td><td>Trace route</td></tr>
+            <tr><td>net user</td><td>useradd / passwd</td><td>User mgmt</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"macOS full-disk encryption" → FileVault.</li>
+            <li>"macOS Time Machine" → backup.</li>
+            <li>"Force quit macOS app shortcut" → Cmd+Opt+Esc.</li>
+            <li>"List processes interactively on Linux" → top (or htop).</li>
+            <li>"Linux package install Debian/Ubuntu" → apt; "RHEL/Fedora" → dnf (yum legacy).</li>
+            <li>"Show systemd service status" → systemctl status &lt;name&gt;.</li>
+            <li>"View live service logs" → journalctl -u &lt;name&gt; -f.</li>
+            <li>"Add Linux user to sudo group keeping existing groups" → usermod -aG sudo user (the -a is critical).</li>
+            <li>"Generate strong SSH key" → ssh-keygen -t ed25519.</li>
+          </ul>
         `
       },
       {
