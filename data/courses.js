@@ -1779,21 +1779,207 @@ const COURSES = [
       {
         title: '2. Command-Line — Windows',
         body: `
-          <pre><code>ipconfig /all          show all NIC info
-ipconfig /release      drop DHCP lease
-ipconfig /renew        request new lease
-ipconfig /flushdns     clear DNS cache
-ping host              echo test
-tracert host           hop-by-hop route
-nslookup host          DNS query
-netstat -ano           sockets + PID
-sfc /scannow           system file check
-chkdsk /f /r           fix + recover bad sectors
-gpupdate /force        reapply Group Policy
-gpresult /r            show applied policies
-shutdown /r /t 0       reboot now
-tasklist / taskkill /PID
-robocopy src dst /MIR  mirror folders</code></pre>
+          <p>Windows offers three shells: legacy <b>cmd.exe</b> (a.k.a. <b>Command Prompt</b> or DOS-style shell), modern <b>PowerShell</b> (object-based, recommended), and <b>Windows Terminal</b> (tabbed UI hosting any of them). Exam tests cmd-style utilities heavily. Most run from either shell.</p>
+
+          <h2>Launching a shell</h2>
+          <ul>
+            <li><b>cmd</b> — Win+R → <code>cmd</code> → Enter.</li>
+            <li><b>Elevated cmd</b> — Win+X → "Terminal (Admin)" / right-click → "Run as administrator". Required for any system change.</li>
+            <li><b>PowerShell</b> — Win+R → <code>powershell</code> (5.1, in-box) or <code>pwsh</code> (PS 7+, cross-platform install).</li>
+            <li><b>Windows Terminal</b> — modern host with tabs, themes, GPU rendering.</li>
+          </ul>
+
+          <h2>Networking diagnostics</h2>
+
+          <h3>ipconfig — IP Configuration</h3>
+          <pre><code>ipconfig               # brief NIC list
+ipconfig /all          # full info: MAC, DHCP, DNS, lease
+ipconfig /release      # drop DHCP lease for all NICs
+ipconfig /release "Wi-Fi"
+ipconfig /renew        # request new DHCP lease
+ipconfig /flushdns     # clear local DNS resolver cache
+ipconfig /displaydns   # show cached DNS entries
+ipconfig /registerdns  # re-register with DNS server</code></pre>
+          <p><b>Use cases:</b> Verify IP / gateway / DNS, fix stuck DHCP lease (release + renew), clear bad DNS cache after a record change.</p>
+
+          <h3>ping — ICMP echo</h3>
+          <pre><code>ping host                    # 4 packets, default
+ping -t host                 # continuous until Ctrl+C
+ping -n 100 host             # 100 packets
+ping -l 1500 host            # 1500-byte payload (test MTU)
+ping -a 8.8.8.8              # reverse-DNS the target</code></pre>
+          <p><b>Use cases:</b> Reachability + latency. Loss patterns localize the fault. Some firewalls drop ICMP — absence of ping doesn't prove down.</p>
+
+          <h3>tracert / pathping</h3>
+          <pre><code>tracert host                 # hop-by-hop route, ICMP TTL
+pathping host                # combined tracert + per-hop loss/latency over time</code></pre>
+          <p><b>Use cases:</b> Locate where path breaks or latency jumps. pathping takes longer but produces statistics.</p>
+
+          <h3>nslookup — DNS query</h3>
+          <pre><code>nslookup host                    # quick lookup
+nslookup host 8.8.8.8            # query specific server
+nslookup -type=MX example.com    # mail records
+nslookup -type=TXT example.com   # TXT (SPF/DKIM/DMARC)</code></pre>
+          <p><b>Use cases:</b> Verify DNS resolution, compare authoritative vs local resolver.</p>
+
+          <h3>netstat — network statistics</h3>
+          <pre><code>netstat -an                  # all connections + listening sockets numeric
+netstat -ano                 # adds PID
+netstat -anob                # adds owning executable (admin)
+netstat -r                   # routing table</code></pre>
+          <p><b>Use cases:</b> Find which app is using a port, hunt unauthorized listeners, check whether a service is bound.</p>
+
+          <h3>arp — Address Resolution Protocol cache</h3>
+          <pre><code>arp -a                       # show local IP↔MAC cache
+arp -d *                     # clear cache (admin)
+arp -s 192.168.1.50 aa-bb-cc-dd-ee-ff   # static entry (rare)</code></pre>
+
+          <h3>route — routing table</h3>
+          <pre><code>route print                  # show all routes
+route add 10.0.0.0 mask 255.0.0.0 192.168.1.1   # add (volatile)
+route add ... -p             # persistent (survives reboot)
+route delete 10.0.0.0</code></pre>
+
+          <h3>nbtstat / net view (legacy SMB / NetBIOS)</h3>
+          <pre><code>nbtstat -n                   # local NetBIOS names
+net view                     # SMB-visible computers
+net view \\\\server            # shares on server
+net use Z: \\\\server\\share /persistent:yes</code></pre>
+
+          <h3>Curl, Test-NetConnection (modern probes)</h3>
+          <pre><code>curl -I https://example.com  # built into modern Windows
+Test-NetConnection example.com -Port 443       # PowerShell: TCP test + traceroute</code></pre>
+
+          <h2>System health + repair</h2>
+
+          <h3>sfc — System File Checker</h3>
+          <pre><code>sfc /scannow                 # verify + replace corrupt system files
+sfc /verifyonly              # check only, no changes
+sfc /scanfile=C:\\path\\file
+sfc /scanboot                # next boot</code></pre>
+          <p>Replaces protected files from the Component Store (WinSxS).</p>
+
+          <h3>DISM — Deployment Image Servicing and Management</h3>
+          <pre><code>DISM /Online /Cleanup-Image /CheckHealth      # quick
+DISM /Online /Cleanup-Image /ScanHealth       # full scan
+DISM /Online /Cleanup-Image /RestoreHealth    # repair Component Store from Windows Update</code></pre>
+          <p><b>Combo workflow:</b> DISM /RestoreHealth → then sfc /scannow. Required when sfc alone can't repair.</p>
+
+          <h3>chkdsk — Check Disk</h3>
+          <pre><code>chkdsk                       # read-only summary of current drive
+chkdsk D:                    # check D:
+chkdsk /f C:                 # fix logical errors (reboot required for C:)
+chkdsk /r C:                 # /f + recover readable info from bad sectors (long)
+chkdsk /b C:                 # re-evaluate bad clusters</code></pre>
+          <p><b>Caution:</b> Don't run /r on a failing SSD — flash doesn't have "bad sectors" in the HDD sense.</p>
+
+          <h3>format / diskpart</h3>
+          <pre><code>format D: /fs:NTFS /Q        # quick format D
+diskpart                     # interactive partition tool
+  list disk
+  select disk 1
+  clean
+  create partition primary
+  format fs=ntfs quick
+  assign letter=E
+  exit</code></pre>
+
+          <h2>Process + service control</h2>
+          <pre><code>tasklist                     # list processes
+tasklist /v                  # verbose with username, mem, status
+tasklist /svc                # show services per PID
+taskkill /PID 1234 /F        # force kill
+taskkill /IM notepad.exe /F  # by name
+sc query                     # all services
+sc query type= service state= all
+sc qc <service>              # query config
+sc stop <service>            # stop
+sc start <service>           # start
+sc config <service> start= auto    # set startup type</code></pre>
+
+          <h2>User + group + permissions</h2>
+          <pre><code>net user                     # list local users
+net user alice               # detail on alice
+net user alice * /add        # add user; prompt for password
+net localgroup Administrators alice /add
+whoami / whoami /priv        # current user + privileges
+takeown /f C:\\path /r       # take ownership recursively
+icacls C:\\path /grant alice:(M)    # grant Modify
+icacls C:\\path /inheritance:r       # remove inherited
+runas /user:Administrator cmd       # run as another user
+gpresult /r                  # show applied Group Policy
+gpresult /h gpreport.html    # full HTML report
+gpupdate /force              # reapply policy now</code></pre>
+
+          <h2>File copy + cleanup</h2>
+          <pre><code>copy a b                     # single file
+xcopy /E /I /H /K src dst    # legacy bulk copy
+robocopy src dst /MIR /Z /R:3 /W:5 /LOG:copy.log
+  # /MIR mirror (deletes extras at dst!)
+  # /Z resumable
+  # /R retry count, /W wait
+attrib +h file.txt           # set hidden bit
+del file                     # delete file
+del /s /q dir                # delete recursively quietly
+rmdir /s /q dir              # remove dir tree
+cleanmgr /sageset:1          # configure cleanup preset</code></pre>
+
+          <h2>Power + scheduling</h2>
+          <pre><code>shutdown /r /t 0             # reboot now
+shutdown /s /t 600 /c "Maintenance"   # shut down in 10 min
+shutdown /a                  # abort scheduled shutdown
+shutdown /r /o               # advanced boot options
+powercfg /batteryreport      # battery health HTML
+powercfg /a                  # supported sleep states
+powercfg /h on               # enable hibernation
+schtasks /create /tn backup /tr "C:\\scripts\\bk.cmd" /sc daily /st 02:00
+schtasks /run /tn backup
+schtasks /delete /tn backup</code></pre>
+
+          <h2>Useful utilities</h2>
+          <ul>
+            <li><code>winver</code> — Windows build + edition popup.</li>
+            <li><code>systeminfo</code> — OS, BIOS, uptime, patches.</li>
+            <li><code>wmic</code> — Windows Management Instrumentation Command-line (deprecated in Win 11 24H2; replaced by PowerShell <code>Get-CimInstance</code>).</li>
+            <li><code>ver</code> — short version.</li>
+            <li><code>set</code> — environment variables. <code>setx VAR val</code> persists.</li>
+            <li><code>where program</code> — find executable in PATH.</li>
+            <li><code>where /q program</code> — exit code, scriptable.</li>
+            <li><code>fc a b</code> — file compare.</li>
+            <li><code>findstr /S /I pattern *.log</code> — recursive grep.</li>
+            <li><code>echo</code>, <code>cls</code>, <code>pause</code>, <code>title</code> — script flavoring.</li>
+            <li><code>bitsadmin / curl / Invoke-WebRequest</code> — file downloads.</li>
+            <li><code>certutil -hashfile file SHA256</code> — verify integrity.</li>
+          </ul>
+
+          <h2>Boot + recovery commands (run inside WinRE / install media)</h2>
+          <pre><code>bootrec /fixmbr            # rewrite MBR (legacy BIOS systems)
+bootrec /fixboot           # write new boot sector
+bootrec /scanos            # find Windows installs
+bootrec /rebuildbcd        # rebuild Boot Configuration Data
+bcdedit /enum              # show BCD entries
+bcdedit /set {default} safeboot minimal   # next boot → Safe Mode
+bcdedit /deletevalue {default} safeboot
+bcdboot C:\\Windows /s S: /f UEFI         # repair UEFI bootloader</code></pre>
+
+          <h2>Helpful script-mode shortcuts</h2>
+          <ul>
+            <li><b>Run elevated PowerShell from cmd:</b> <code>powershell -Command "Start-Process powershell -Verb runAs"</code></li>
+            <li><b>Wait for command + capture exit code:</b> <code>cmd /c "ping -n 1 host" & echo %errorlevel%</code></li>
+            <li><b>For-loop over files:</b> <code>for %f in (*.log) do echo %f</code></li>
+            <li><b>Bash-like piping:</b> <code>tasklist | findstr /I chrome</code></li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Clear local DNS resolver cache" → <code>ipconfig /flushdns</code>.</li>
+            <li>"Find which process owns a TCP port" → <code>netstat -ano</code> then match PID in Task Manager / <code>tasklist /svc</code>.</li>
+            <li>"Restore corrupt system files" → <code>sfc /scannow</code>; if it fails, run <code>DISM /Online /Cleanup-Image /RestoreHealth</code> first.</li>
+            <li>"Check disk for bad sectors" → <code>chkdsk /r</code>.</li>
+            <li>"Reapply Group Policy now" → <code>gpupdate /force</code>.</li>
+            <li>"Mirror folder contents incl. deletions" → <code>robocopy src dst /MIR</code>.</li>
+            <li>"Rebuild BCD after boot failure" → <code>bootrec /rebuildbcd</code>.</li>
+          </ul>
         `
       },
       {
