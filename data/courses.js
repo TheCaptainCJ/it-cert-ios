@@ -968,19 +968,126 @@ const COURSES = [
       {
         title: '9. Motherboards, CPUs, Cooling',
         body: `
-          <h2>Form factors</h2>
-          <p>ATX (large), microATX, mini-ITX (smallest mainstream).</p>
-          <h2>CPU sockets</h2>
-          <p>Intel uses LGA (pins on board). AMD uses PGA or AM5 LGA. Mismatched = no boot.</p>
-          <h2>Chipset</h2>
-          <p>Northbridge/Southbridge merged on modern CPUs; chipset (PCH) handles I/O.</p>
-          <h2>Cooling</h2>
+          <p>The motherboard is the central PCB that ties together CPU, RAM, storage, expansion cards, and power. The CPU is the brain; cooling keeps it within thermal limits. Exam tests form factors, socket types, chipset roles, firmware features, and cooling methods.</p>
+
+          <h2>Motherboard form factors</h2>
+          <p>Standardized board dimensions that dictate case + power compatibility.</p>
           <ul>
-            <li><b>Air</b> — heatsink + fan; thermal paste required.</li>
-            <li><b>Liquid (AIO)</b> — pump + radiator; better for high-TDP CPUs.</li>
+            <li><b>ATX</b> (Advanced Technology eXtended) — 12 × 9.6 in (305 × 244 mm). Most expansion slots + RAM slots. Standard for desktops.</li>
+            <li><b>microATX (mATX)</b> — 9.6 × 9.6 in. Up to 4 PCIe slots. Mid-size builds + budget systems.</li>
+            <li><b>Mini-ITX</b> — 6.7 × 6.7 in. One PCIe slot, two RAM slots. SFF (Small Form Factor) builds, HTPCs, mini servers.</li>
+            <li><b>EATX</b> (Extended ATX) — 12 × 13 in. Workstation / server. More VRM phases, more RAM slots.</li>
+            <li><b>SSI EEB / CEB</b> — server-specific form factors for dual-socket boards.</li>
           </ul>
-          <h2>BIOS/UEFI</h2>
-          <p>UEFI = modern firmware. Supports Secure Boot, GPT disks &gt; 2 TB, faster boot. Settings: boot order, virtualization (VT-x / AMD-V), TPM.</p>
+          <p><b>Mount</b>: every form factor uses standardized standoff positions. Cases label "supports ATX / mATX / mITX".</p>
+
+          <h2>CPU — Central Processing Unit</h2>
+          <p><b>What:</b> Silicon die that executes instructions. Modern CPUs have multiple cores + threads, integrated memory controller, integrated GPU (some), and a stack of caches (L1, L2, L3).</p>
+          <p><b>Key specs:</b></p>
+          <ul>
+            <li><b>Cores / threads</b> — physical cores + simultaneous multithreading (Intel <b>HT</b> = Hyper-Threading, AMD <b>SMT</b> = Simultaneous Multi-Threading).</li>
+            <li><b>Base / boost clock</b> — GHz at idle vs under load (Turbo Boost / Precision Boost).</li>
+            <li><b>Cache</b> — fast SRAM near the cores. L1 per-core, L2 per-core, L3 shared.</li>
+            <li><b>TDP</b> (Thermal Design Power) — heat output the cooler must dissipate. e.g., 65 W desktop, 125-170 W enthusiast, 15-45 W laptop.</li>
+            <li><b>Process node</b> — fabrication size (5 nm, 3 nm). Smaller = more efficient.</li>
+            <li><b>ISA</b> (Instruction Set Architecture) — x86-64 (Intel/AMD), ARM (Apple Silicon, mobile, server).</li>
+          </ul>
+
+          <h2>CPU sockets</h2>
+          <p>Physical mechanism connecting CPU to motherboard. Mismatched socket = won't fit / won't post.</p>
+          <ul>
+            <li><b>LGA</b> (Land Grid Array) — pins are on the MOTHERBOARD; CPU has flat contact pads. Intel desktop standard (LGA 1700, LGA 1851), AMD's AM5 + Threadripper sTRX4/sTR5.</li>
+            <li><b>PGA</b> (Pin Grid Array) — pins are on the CPU; board has receptacles. Older AMD (AM4 and back). Bent pin = bricked CPU.</li>
+            <li><b>BGA</b> (Ball Grid Array) — CPU soldered directly to board. Laptops, NUCs, phones — non-replaceable.</li>
+          </ul>
+          <p><b>Tips:</b> Lift the LGA load lever, lower the CPU using its triangle marker to align with the socket. Never force. Keep socket pins protected — even one bent pin can kill the board.</p>
+
+          <h2>Chipset</h2>
+          <p><b>What:</b> Silicon companion to the CPU that provides I/O the CPU doesn't handle natively (SATA, USB, extra PCIe lanes, audio, networking).</p>
+          <p><b>Old design:</b> Two chips — <b>Northbridge</b> (CPU↔RAM↔GPU) + <b>Southbridge</b> (I/O).<br>
+          <b>Modern:</b> Memory controller + GPU lanes moved INTO the CPU die. A single chipset chip, called the <b>PCH</b> (Platform Controller Hub) on Intel or just "chipset" on AMD, handles slow I/O.</p>
+          <p><b>Why it matters:</b> Chipset tier (e.g., Intel H, B, Z; AMD A, B, X) determines available features — overclocking, PCIe lanes, USB count, RAID support.</p>
+
+          <h2>Expansion slots</h2>
+          <p><b>PCIe</b> (Peripheral Component Interconnect Express) is the universal modern expansion bus. Lane widths: x1, x4, x8, x16. Generations doubling bandwidth: Gen3 → Gen4 → Gen5 → Gen6.</p>
+          <ul>
+            <li>x16 slot — GPU.</li>
+            <li>x4 slot — NVMe / capture cards / NICs.</li>
+            <li>x1 — sound cards, low-bandwidth NICs.</li>
+          </ul>
+          <p>Legacy: PCI, AGP, ISA, AMR — almost never seen now.</p>
+
+          <h2>Motherboard headers + connectors</h2>
+          <ul>
+            <li><b>24-pin ATX</b> — main board power.</li>
+            <li><b>8-pin (or 4+4) EPS</b> — CPU power.</li>
+            <li><b>PCIe 6+2 / 12VHPWR / 12V-2x6</b> — GPU power.</li>
+            <li><b>SATA</b> — drives, 7-pin data.</li>
+            <li><b>USB headers</b> — case front USB.</li>
+            <li><b>Front-panel header</b> — power switch, reset, power LED, HDD LED, speaker.</li>
+            <li><b>Fan headers</b> — 4-pin PWM or 3-pin DC. <b>CPU_FAN</b> usually mandatory; mobo halts on missing fan.</li>
+            <li><b>RGB / ARGB</b> headers — 12V or 5V addressable lighting.</li>
+          </ul>
+
+          <h2>BIOS / UEFI firmware</h2>
+          <p><b>BIOS</b> (Basic Input/Output System) — legacy firmware initialized hardware + handed off to bootloader. Limited to 16-bit real mode + MBR + 2 TB disks.</p>
+          <p><b>UEFI</b> (Unified Extensible Firmware Interface) — modern replacement. Advantages:</p>
+          <ul>
+            <li>Boots from GPT disks &gt; 2 TB.</li>
+            <li>Mouse + GUI setup screens.</li>
+            <li><b>Secure Boot</b> — firmware verifies signature of bootloader before allowing execution. Prevents bootkit malware.</li>
+            <li>Fast boot, networking stack (PXE).</li>
+            <li>EFI System Partition (ESP) on the disk holds bootloaders.</li>
+          </ul>
+          <p><b>Key UEFI settings exam may quiz:</b></p>
+          <ul>
+            <li><b>Boot order</b> — which device to attempt first.</li>
+            <li><b>Virtualization</b> — Intel <b>VT-x</b> + Intel <b>VT-d</b> (IOMMU); AMD <b>SVM</b> + <b>AMD-Vi</b>. Required for Hyper-V, WSL2, VMware, etc.</li>
+            <li><b>TPM</b> (Trusted Platform Module) — must be enabled for Windows 11, BitLocker. Sometimes called <b>fTPM</b> (firmware TPM, AMD) or Intel <b>PTT</b> (Platform Trust Technology).</li>
+            <li><b>XMP / EXPO</b> — enable to run RAM at advertised high speed.</li>
+            <li><b>CSM</b> (Compatibility Support Module) — legacy BIOS emulation for old OSes. Disable on modern Windows installs.</li>
+            <li><b>Resizable BAR / Smart Access Memory</b> — lets CPU access full GPU VRAM at once. Modest gaming gains.</li>
+          </ul>
+          <p><b>CMOS battery</b> (CR2032 coin cell) backs up settings + RTC when AC removed. Dead battery → BIOS clock wrong, settings revert each boot.</p>
+
+          <h2>Cooling</h2>
+
+          <h3>Air cooling</h3>
+          <p><b>Components:</b> Heatsink (often with heat pipes) + fan(s). Direct die contact via thermal interface material.</p>
+          <p><b>Thermal paste / TIM</b> (Thermal Interface Material) — fills microscopic gaps between IHS (Integrated Heat Spreader) and heatsink base. Non-conductive paste is safest. Pea-sized drop, mount cooler, let pressure spread.</p>
+          <p><b>How used:</b> Cheap, reliable, no leak risk. Limits practical TDP to ~250 W on the best towers.</p>
+
+          <h3>Liquid cooling</h3>
+          <ul>
+            <li><b>AIO</b> (All-In-One) — sealed pump+block+tubes+radiator with fans. No maintenance.</li>
+            <li><b>Custom loop</b> — separate reservoir, pump, blocks, radiators, fittings. Highest performance, maintenance required.</li>
+          </ul>
+          <p><b>Why:</b> Handles 300+ W CPUs / high-end workstations / overclocking. Quieter for same heat than air.</p>
+
+          <h3>Passive cooling</h3>
+          <p>Heatsink only — no fan. Used for low-TDP SoC builds, fanless mini-PCs.</p>
+
+          <h3>Case airflow basics</h3>
+          <p>Front/bottom = intake, rear/top = exhaust. Aim for slight positive pressure (more intake CFM than exhaust) to reduce dust ingress through unfiltered openings.</p>
+
+          <h2>Common motherboard / CPU troubleshooting</h2>
+          <ul>
+            <li><b>No POST + no beeps + no display</b> — check PSU 24-pin + 8-pin EPS seated; speaker / debug LED reveals what's missing (CPU, RAM, GPU, BOOT).</li>
+            <li><b>POST code "RAM" lit</b> — reseat memory, test single stick in correct slot, try MemTest86.</li>
+            <li><b>Bios date wrong after every boot</b> — replace CMOS battery.</li>
+            <li><b>Random shutdowns under load</b> — thermal throttle / shutdown. Reseat cooler, repaste, check fan curve.</li>
+            <li><b>Boot loops after update</b> — clear CMOS (jumper or remove battery); revert UEFI to defaults.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Smallest mainstream form factor" → Mini-ITX.</li>
+            <li>"Pins on the motherboard, pads on CPU" → LGA.</li>
+            <li>"Required for Windows 11 secure boot" → TPM 2.0 + UEFI + Secure Boot.</li>
+            <li>"Enables virtualization features for Hyper-V" → VT-x / AMD-V.</li>
+            <li>"BIOS settings revert every boot" → dead CMOS battery.</li>
+            <li>"AIO" implies liquid cooling.</li>
+          </ul>
         `
       },
       {
