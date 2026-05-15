@@ -2891,15 +2891,193 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
       {
         title: '8. Windows Boot & Recovery',
         body: `
-          <h2>Boot process</h2>
-          <p>UEFI/BIOS → bootloader → kernel → drivers → services → logon.</p>
-          <h2>Recovery options</h2>
+          <p>When Windows fails to boot, knowing the stages and recovery tools is the difference between a 5-minute fix and a wipe + reinstall. Exam asks for the order of boot phases, where each tool lives, and which command repairs what.</p>
+
+          <h2>Windows boot process — stage by stage</h2>
+          <ol>
+            <li><b>Power on / POST</b> — firmware Power-On Self-Test. Hardware identified, RAM tested, GPU initialized. Beep codes or debug LEDs surface here.</li>
+            <li><b>Firmware initialization</b> — UEFI or legacy BIOS firmware loads. On UEFI systems, Secure Boot verifies the boot manager signature.</li>
+            <li><b>Boot manager</b>:
+              <ul>
+                <li><b>Legacy BIOS</b> — reads <b>MBR</b> (Master Boot Record, sector 0) → loads <b>VBR</b> (Volume Boot Record) → bootmgr.</li>
+                <li><b>UEFI</b> — firmware reads <b>EFI System Partition (ESP)</b> → <code>\\EFI\\Microsoft\\Boot\\bootmgfw.efi</code> (Windows Boot Manager).</li>
+              </ul>
+            </li>
+            <li><b>Windows Boot Manager (bootmgr / bootmgfw)</b> — reads <b>BCD</b> (Boot Configuration Data) → presents OS list (multi-boot) → loads winload.</li>
+            <li><b>winload.exe / winload.efi</b> — Windows OS loader. Reads registry hive (SYSTEM), loads ntoskrnl + HAL + boot-start drivers.</li>
+            <li><b>NT kernel (ntoskrnl.exe)</b> — initializes process / memory manager. Loads remaining drivers.</li>
+            <li><b>SMSS (Session Manager Subsystem)</b> — first user-mode process. Sets up environment.</li>
+            <li><b>WININIT / WINLOGON / LSASS / SERVICES</b> — system services start.</li>
+            <li><b>User logon</b> — credential prompt, Userinit, Explorer shell, autostarts run.</li>
+          </ol>
+          <p><b>Common failure points + symptoms:</b></p>
           <ul>
-            <li><b>Safe Mode</b> — minimal drivers/services.</li>
-            <li><b>WinRE</b> — Windows Recovery Environment; Startup Repair, Reset, System Restore.</li>
-            <li><b>System Restore</b> — registry/system files snapshot.</li>
-            <li><b>Reset this PC</b> — keep files or remove all.</li>
-            <li><b>bootrec /fixmbr /fixboot /rebuildbcd</b> — fix boot loader.</li>
+            <li><b>BIOS / firmware error</b> — POST error code, no Windows logo at all.</li>
+            <li><b>"Bootmgr is missing"</b> — bootmgr / BCD corrupt. Fix with bootrec.</li>
+            <li><b>"INACCESSIBLE_BOOT_DEVICE"</b> — driver / storage controller change. Boot to Safe Mode + verify drivers.</li>
+            <li><b>Repeating Startup Repair loop</b> — corrupt boot files or registry. Use WinRE Command Prompt.</li>
+            <li><b>Spinning dots forever after logo</b> — service or driver hang. F8 / WinRE → Safe Mode.</li>
+          </ul>
+
+          <h2>BCD — Boot Configuration Data</h2>
+          <p><b>What:</b> Vista+ replacement for the legacy <code>boot.ini</code>. Stores boot entries: which OS, partition, kernel options, multi-boot order. Lives in the EFI System Partition (UEFI) or boot volume.</p>
+          <p><b>Manage with <code>bcdedit</code></b>:</p>
+          <pre><code>bcdedit /enum                       # list entries
+bcdedit /default {GUID}             # set default OS
+bcdedit /set {default} description "Windows 11 Pro"
+bcdedit /timeout 5                  # boot menu timeout
+bcdedit /set {default} safeboot minimal     # next boot → Safe Mode
+bcdedit /deletevalue {default} safeboot
+bcdedit /export C:\\bcdbackup        # back up
+bcdedit /import C:\\bcdbackup</code></pre>
+
+          <h2>Advanced Startup Options + Recovery menu</h2>
+          <p>Reach the menu via:</p>
+          <ul>
+            <li>Hold <b>Shift</b> while clicking <b>Restart</b> from Start menu / login screen.</li>
+            <li>Settings → System → Recovery → Advanced startup → Restart now.</li>
+            <li>Three failed boot attempts trigger Automatic Repair → menu.</li>
+            <li>Boot from Windows install media or recovery USB.</li>
+            <li>From an admin command prompt: <code>shutdown /r /o /t 0</code>.</li>
+          </ul>
+          <p>From the menu: <b>Continue</b>, <b>Use a device</b>, <b>Troubleshoot → Advanced options</b>, <b>Turn off PC</b>.</p>
+
+          <h2>WinRE — Windows Recovery Environment</h2>
+          <p><b>What:</b> Minimal Windows PE-based environment shipped with every Windows install. Lives in a hidden <code>Recovery</code> partition. Loaded via boot manager when system fails or user requests.</p>
+          <p><b>Tools inside Troubleshoot → Advanced options:</b></p>
+          <ul>
+            <li><b>Startup Repair</b> — automatic diagnostic that fixes common boot issues (corrupt BCD, missing bootmgr, file corruption).</li>
+            <li><b>Startup Settings</b> — chooses Safe Mode + variations on next boot.</li>
+            <li><b>Command Prompt</b> — administrative shell. Run bootrec, sfc, chkdsk, regedit, diskpart, dism here.</li>
+            <li><b>Uninstall Updates</b> — remove latest cumulative or feature update if it broke boot.</li>
+            <li><b>UEFI Firmware Settings</b> — reboot into BIOS/UEFI directly.</li>
+            <li><b>System Restore</b> — roll back to a previous restore point.</li>
+            <li><b>System Image Recovery</b> — restore from a full image backup.</li>
+          </ul>
+          <p>Outside Troubleshoot:</p>
+          <ul>
+            <li><b>Reset this PC</b> — reinstall Windows, choose "Keep my files" (preserves user data, removes apps + settings) or "Remove everything".</li>
+            <li><b>Go back to previous version of Windows</b> (within 10 days of upgrade).</li>
+          </ul>
+
+          <h2>Safe Mode + Startup Settings</h2>
+          <p>After hitting Startup Settings, press number keys for:</p>
+          <ul>
+            <li><b>Safe Mode</b> — minimal drivers + services, no networking, 800×600 video.</li>
+            <li><b>Safe Mode with Networking</b> — adds network drivers (handy for downloading patches / drivers).</li>
+            <li><b>Safe Mode with Command Prompt</b> — boots to cmd, no shell.</li>
+            <li><b>Enable Boot Logging</b> — writes <code>%SystemRoot%\\ntbtlog.txt</code>.</li>
+            <li><b>Enable Low-Resolution Video</b> — for bad-driver / display issues.</li>
+            <li><b>Last Known Good Configuration</b> — registry rollback to last successful logon (legacy).</li>
+            <li><b>Directory Services Restore Mode</b> — for AD domain controllers.</li>
+            <li><b>Debugging Mode</b> — kernel-debugger over COM/USB.</li>
+            <li><b>Disable Driver Signature Enforcement</b> — load unsigned drivers (for testing).</li>
+            <li><b>Disable early-launch anti-malware (ELAM)</b>.</li>
+            <li><b>Disable automatic restart on system failure</b> — prevents reboot loop, lets you read STOP code.</li>
+          </ul>
+
+          <h2>bootrec — Boot Recovery (run inside WinRE cmd)</h2>
+          <pre><code>bootrec /fixmbr              # write a Windows-compatible MBR (legacy BIOS only)
+bootrec /fixboot             # write a new boot sector to the system partition
+bootrec /scanos              # scan all disks for installations
+bootrec /rebuildbcd          # rebuild the BCD store from found installs</code></pre>
+          <p><b>On UEFI systems with a missing/corrupt ESP loader, use bcdboot:</b></p>
+          <pre><code># Identify partitions
+diskpart
+list disk
+select disk 0
+list partition
+exit
+
+# Mount EFI System Partition (assume it's partition 1)
+mountvol S: /S       # or:  diskpart > select partition 1 > assign letter=S
+
+# Rebuild EFI bootloader
+bcdboot C:\\Windows /s S: /f UEFI</code></pre>
+
+          <h2>SFC + DISM (system file repair)</h2>
+          <p>If Windows boots into Safe Mode but apps misbehave or files are corrupt:</p>
+          <pre><code>DISM /Online /Cleanup-Image /CheckHealth      # quick check
+DISM /Online /Cleanup-Image /ScanHealth       # deeper scan
+DISM /Online /Cleanup-Image /RestoreHealth    # fetch + repair component store from Windows Update
+sfc /scannow                                   # replace corrupt protected files using component store</code></pre>
+          <p><b>Order matters:</b> DISM /RestoreHealth FIRST so sfc has a clean Component Store (WinSxS) to pull from. From WinRE (offline), point DISM at the install image:</p>
+          <pre><code>DISM /Image:C:\\ /Cleanup-Image /RestoreHealth /Source:E:\\sources\\install.wim</code></pre>
+
+          <h2>chkdsk + disk repair</h2>
+          <pre><code>chkdsk                           # read-only status of current volume
+chkdsk C: /f                     # fix logical errors (reboot to complete on system volume)
+chkdsk C: /r                     # /f + recover readable data from bad sectors (long)
+chkdsk C: /scan                  # online scan only (newer)
+chkdsk C: /spotfix                # quick offline fix</code></pre>
+
+          <h2>System Restore</h2>
+          <p><b>What:</b> Periodic point-in-time snapshots of system files, registry hives, drivers, installed programs. Does NOT include personal documents.</p>
+          <p><b>Trigger points:</b> Before driver install, before Windows Update, before app install, manual user-created, scheduled (Task Scheduler).</p>
+          <p><b>Restore:</b> Settings → System → About → Advanced system settings → System Protection. Or from WinRE → Troubleshoot → Advanced options → System Restore.</p>
+          <p><b>Disable during malware cleanup</b> so infected files aren't restored.</p>
+
+          <h2>Reset this PC</h2>
+          <p>Reinstalls Windows. Two options:</p>
+          <ul>
+            <li><b>Keep my files</b> — preserves user profiles, removes apps + settings. Useful when the OS is sick but user data is fine.</li>
+            <li><b>Remove everything</b> — wipe + reinstall. Optional "clean drive" for re-deployment / disposal.</li>
+            <li><b>Local reinstall</b> uses existing files.<br><b>Cloud download</b> pulls a fresh image (Win 10 May 2020+).</li>
+          </ul>
+
+          <h2>System image backup (legacy but still works)</h2>
+          <ul>
+            <li>Control Panel → Backup and Restore (Windows 7) → Create a system image.</li>
+            <li>WinRE → System Image Recovery restores from that <code>.vhdx</code> backup.</li>
+            <li>Modern equivalent: third-party (Macrium Reflect, Veeam Agent, Acronis) or built-in File History for user files.</li>
+          </ul>
+
+          <h2>Recovery drive / install media</h2>
+          <ul>
+            <li><b>Recovery drive</b> — Windows tool (RecoveryDrive.exe) creates bootable USB with WinRE + optional system files. Lets you boot a dead PC.</li>
+            <li><b>Install media</b> from Microsoft Media Creation Tool — full OS installer + recovery options.</li>
+            <li><b>WDS</b> (Windows Deployment Services) / <b>MDT</b> (Microsoft Deployment Toolkit) — enterprise PXE-boot OS deployment.</li>
+            <li><b>SCCM/Intune Autopilot</b> — modern cloud-based zero-touch deployment.</li>
+          </ul>
+
+          <h2>Reset firmware password / clear CMOS</h2>
+          <p>If UEFI password is forgotten + OEM doesn't unlock:</p>
+          <ul>
+            <li>Look for a CLR_CMOS jumper on the motherboard, short for 5-10 seconds with PSU unplugged.</li>
+            <li>Or remove the CR2032 CMOS battery for 30+ seconds.</li>
+            <li>Note: many modern laptops store UEFI passwords in non-volatile flash — only OEM can clear (proof of ownership required).</li>
+          </ul>
+
+          <h2>BSOD analysis basics</h2>
+          <p><b>BSOD</b> = Blue Screen of Death. Information shown:</p>
+          <ul>
+            <li><b>STOP code</b> (e.g., <code>SYSTEM_THREAD_EXCEPTION_NOT_HANDLED</code>) — categorizes the crash.</li>
+            <li><b>Failing module</b> (e.g., <code>nvlddmkm.sys</code>) — points at culprit driver.</li>
+            <li>Auto memory dump: small (mini), kernel, complete. Stored in <code>C:\\Windows\\Minidump\\</code> by default.</li>
+            <li>Analyze with <b>WinDbg</b> (Microsoft Store) or <b>BlueScreenView</b> (NirSoft).</li>
+            <li>Common fix patterns: roll back recent driver / Windows update; run memory diagnostic (<code>mdsched.exe</code>); update firmware; test with single RAM stick; check overheating.</li>
+          </ul>
+
+          <h2>Recovery decision tree</h2>
+          <ol>
+            <li>Won't POST? → hardware issue (PSU, RAM, GPU). Outside Windows.</li>
+            <li>Posts but "Bootmgr missing" / "no bootable device" → <b>bootrec /fixmbr /fixboot /rebuildbcd</b>; UEFI → <b>bcdboot</b>.</li>
+            <li>Boots, crashes during logo → Safe Mode → roll back driver / undo update / sfc + DISM.</li>
+            <li>Logs in but unstable / crashing → Safe Mode + Driver Verifier; Event Viewer + memory dump.</li>
+            <li>Mass corruption → System Restore → Reset this PC (Keep files) → Reset this PC (Remove all) → reinstall from media.</li>
+            <li>Pre-existing System Image backup → System Image Recovery from WinRE.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Memorize boot sequence order: Firmware → Boot Manager → BCD → winload → kernel → SMSS → Logon.</li>
+            <li>"Bootmgr is missing" → <code>bootrec /fixmbr</code> (and /fixboot, /rebuildbcd).</li>
+            <li>"Repair UEFI EFI System Partition bootloader" → <code>bcdboot C:\\Windows /s S: /f UEFI</code>.</li>
+            <li>"Minimal drivers + no networking" → Safe Mode.</li>
+            <li>"Reinstall Windows but keep my files" → Reset this PC → Keep my files.</li>
+            <li>"Roll back system files + registry" → System Restore.</li>
+            <li>"Repair Windows component store" → DISM /RestoreHealth + sfc /scannow.</li>
+            <li>Get to WinRE → Settings → Recovery → Advanced startup, OR Shift+Restart, OR three failed boots.</li>
           </ul>
         `
       },
