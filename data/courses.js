@@ -16511,19 +16511,84 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '1. Cloud Concepts',
         body: `
-          <h2>Benefits</h2>
+          <h2>What is cloud computing?</h2>
+          <p><b>Cloud computing</b> is the on-demand delivery of compute, storage, networking, databases, identity, AI, analytics, and other services over the Internet ("the cloud") on a pay-as-you-go basis. Instead of buying physical servers and running them in your own building, you rent capacity from a hyperscale provider — Microsoft (Azure), AWS, or Google (GCP) — and that provider operates the datacenters, hardware refresh, cooling, power, and physical security on your behalf. Azure is Microsoft's public cloud platform and is the focus of AZ-900.</p>
+          <p>The AZ-900 exam expects you to be fluent in <i>why</i> organizations adopt cloud, <i>what</i> the trade-offs are, and the <i>vocabulary</i> Microsoft uses to describe value (benefits) and economics (CapEx vs OpEx, consumption-based pricing). Memorize the definitions because Microsoft writes questions that hinge on a single word.</p>
+
+          <h2>Benefits (Microsoft's official list — memorize every one)</h2>
+          <p>Each benefit answers a specific business question. Know the definition + the scenario in which Microsoft would test it.</p>
           <ul>
-            <li><b>High availability</b> — SLA-backed uptime via redundancy.</li>
-            <li><b>Scalability</b> — vertical (scale up) and horizontal (scale out); manual or auto.</li>
-            <li><b>Elasticity</b> — scale dynamically with demand.</li>
-            <li><b>Reliability</b> — recover from failures.</li>
-            <li><b>Predictability</b> — performance + cost.</li>
-            <li><b>Security</b> — shared model + provider investment.</li>
-            <li><b>Governance</b> — central policy.</li>
-            <li><b>Manageability</b> — automation + monitoring.</li>
+            <li><b>High Availability (HA)</b> — <b>What:</b> ability of a workload to remain operational and accessible for an agreed percentage of time, typically expressed in a Service Level Agreement (SLA) such as 99.9% ("three nines") or 99.99% ("four nines"). <b>Why:</b> downtime costs revenue, reputation, and SLA penalties; the cloud provider engineers redundancy so a single hardware fault does not take you offline. <b>How used in Azure:</b> deploy a VM across multiple <b>Availability Zones</b> (physically separate datacenters in the same region), put a load balancer in front, and Microsoft signs an SLA — e.g., 99.99% for zonal VMs. HA is about <i>uptime</i>, not about disaster recovery.</li>
+            <li><b>Scalability</b> — <b>What:</b> the ability to increase or decrease resources to meet demand. Two flavors: <b>Vertical (scale up / scale down)</b> means giving the same VM more CPU/RAM (B2s → D4s_v5); <b>Horizontal (scale out / scale in)</b> means adding or removing identical instances behind a load balancer. <b>Why:</b> you can match cost to load instead of paying for peak capacity 24/7. <b>How used in Azure:</b> <b>Virtual Machine Scale Sets (VMSS)</b> and <b>App Service autoscale</b> add instances on CPU/memory/queue-length triggers. Scaling can be <b>manual</b> (you press the button) or <b>automatic</b> (autoscale rule).</li>
+            <li><b>Elasticity</b> — <b>What:</b> automatic, near-real-time scaling that follows actual demand up <i>and</i> down. <b>Why:</b> scalability with a brain — you do not have to predict load; the platform reacts. <b>How used in Azure:</b> Azure Functions Consumption plan spawns instances per request and removes them when idle; AKS Cluster Autoscaler grows the node pool when pods are pending. <b>Exam tip:</b> Microsoft draws a fine line — "scalability" is the <i>capability</i>, "elasticity" is <i>automatic + dynamic</i>.</li>
+            <li><b>Reliability</b> — <b>What:</b> a system's ability to recover from failures and continue functioning. <b>Why:</b> hardware fails, networks partition, regions occasionally have incidents; cloud is built on the assumption that failure is constant. <b>How used in Azure:</b> use <b>Availability Zones</b> for intra-region resilience, <b>region pairs</b> (East US ↔ West US) and <b>Azure Site Recovery</b> for cross-region disaster recovery, and <b>geo-redundant storage (GRS)</b> for data durability. Reliability covers both HA (no outage) and DR (recover after outage).</li>
+            <li><b>Predictability</b> — <b>What:</b> the ability to forecast both <i>performance</i> (consistent latency/throughput) and <i>cost</i> (consistent monthly bill). <b>Why:</b> finance teams need predictable spend; engineers need predictable response times. <b>How used in Azure:</b> <b>Reserved Instances</b> and <b>Savings Plans</b> lock in pricing for 1 or 3 years; <b>Azure Advisor</b> + <b>Cost Management</b> forecast spend; SKU tiers (Standard/Premium) give predictable IOPS. Predictability is one of the official "Pillars of cloud computing" Microsoft added in recent AZ-900 revisions.</li>
+            <li><b>Security</b> — <b>What:</b> protecting data, identities, networks, and workloads — combined effort of the provider (physical + hypervisor) and you (data + identity + apps). <b>Why:</b> compliance frameworks (ISO 27001, SOC 2, HIPAA, PCI-DSS, FedRAMP) require demonstrable controls; the cloud provider invests at a scale you cannot match. <b>How used in Azure:</b> <b>Microsoft Defender for Cloud</b> for posture, <b>Microsoft Sentinel</b> for SIEM/SOAR, <b>Microsoft Entra ID</b> for identity, <b>Key Vault</b> for secrets, default encryption at rest + in transit, DDoS protection on every VNet.</li>
+            <li><b>Governance</b> — <b>What:</b> the ability to enforce <i>rules</i> (what can be deployed, where, by whom, with which tags) across your entire estate from one place. <b>Why:</b> in a self-service cloud, anyone with a credit card can spin up a VM; without guardrails costs and risk explode. <b>How used in Azure:</b> <b>Azure Policy</b> (allow/deny/audit rules — e.g., "no public IPs on VMs"), <b>Management Groups</b> (hierarchy that scopes policies), <b>Blueprints</b> (deprecated → Template Specs + DeploymentStacks), <b>Resource Locks</b> (CanNotDelete / ReadOnly) to prevent accidental deletion.</li>
+            <li><b>Manageability</b> — <b>What:</b> ability to operate, monitor, and automate the environment without manually clicking through each resource. Has two halves Microsoft tests: <b>Management <i>of</i> the cloud</b> (auto-scale, self-healing, automation) and <b>Management <i>in</i> the cloud</b> (the portal, CLI, PowerShell, ARM/Bicep templates, REST API, SDKs). <b>Why:</b> at scale you must script and observe, not point-and-click. <b>How used in Azure:</b> <b>Azure Portal</b>, <b>Azure CLI</b> (<code>az</code>), <b>Azure PowerShell</b> (Az module), <b>ARM templates</b> + <b>Bicep</b> (declarative IaC), <b>Cloud Shell</b> (browser-based shell), <b>Azure Monitor</b> + <b>Log Analytics</b> + <b>Application Insights</b> for telemetry.</li>
           </ul>
-          <h2>Economic models</h2>
-          <p><b>CapEx</b> = up-front purchase (on-prem). <b>OpEx</b> = pay-as-you-go (cloud). Consumption-based billing.</p>
+
+          <h2>Economic models — CapEx vs OpEx (huge AZ-900 topic)</h2>
+          <p>The shift from on-prem to cloud is, in accounting terms, a shift from capital expenditure to operational expenditure. Expect at least one exam question on this.</p>
+          <ul>
+            <li><b>CapEx (Capital Expenditure)</b> — <b>What:</b> a large up-front purchase of an asset that is then depreciated over its useful life (typically 3–7 years for IT hardware). <b>Why on-prem:</b> you buy servers, racks, SANs, networking gear, licenses, and amortize the cost over years. <b>Pros:</b> long-term ownership; potential tax benefits via depreciation. <b>Cons:</b> high up-front spend; you must forecast capacity 3 years out (often overprovisioning by 2-3×); refresh cycles are disruptive; idle capacity is wasted cash.</li>
+            <li><b>OpEx (Operational Expenditure)</b> — <b>What:</b> an ongoing, recurring expense — like rent or electricity — fully deductible in the year it is incurred. <b>Why in cloud:</b> you pay monthly (or per-second) for what you actually consumed; no hardware to buy. <b>Pros:</b> low/zero up-front cost; pay-as-you-go matches cost to usage; no asset depreciation paperwork; no refresh cycles. <b>Cons:</b> can be higher long-term TCO for steady, predictable workloads (which is why Reserved Instances + Savings Plans exist); bill can spike if usage spikes.</li>
+            <li><b>Consumption-based pricing</b> — <b>What:</b> billing model where you pay for the precise units you used: per-second of VM uptime, per-GB-month of storage, per-million-requests for Functions, per-DTU/vCore for SQL. <b>Why it matters:</b> there is no "minimum buy" — turn the resource off and the bill stops (for most services; some have a small reservation charge). <b>How used in Azure:</b> the <b>Azure Pricing Calculator</b> estimates pre-purchase; the <b>Total Cost of Ownership (TCO) Calculator</b> compares on-prem CapEx vs Azure OpEx over 1–5 years.</li>
+          </ul>
+
+          <h2>Cloud deployment models (Microsoft terminology)</h2>
+          <ul>
+            <li><b>Public cloud</b> — <b>What:</b> shared infrastructure operated by a third-party provider (Azure, AWS, GCP) and offered to many tenants over the public Internet. <b>Why:</b> lowest cost, fastest provisioning, no hardware ownership. <b>How:</b> everything you build in <a>portal.azure.com</a> by default. Resources are logically isolated by subscription, RBAC, and VNets, even though hardware is shared.</li>
+            <li><b>Private cloud</b> — <b>What:</b> cloud-style infrastructure (self-service portal, automation, elasticity) but dedicated to a single organization, usually in your own datacenter or a co-location facility. <b>Why:</b> regulatory, sovereignty, latency, or data-residency requirements that prohibit public cloud. <b>How (Azure):</b> <b>Azure Stack Hub</b> (Azure-consistent stack in your own DC), <b>Azure Stack HCI</b> (hyper-converged on-prem), <b>VMware Cloud</b>. You own/operate the hardware (or a partner does).</li>
+            <li><b>Hybrid cloud</b> — <b>What:</b> a combination of public + private, connected so workloads and data can move between them. <b>Why:</b> a phased migration, a regulatory requirement to keep some data on-prem while bursting compute to cloud, or DR. <b>How (Azure):</b> <b>Azure Arc</b> (manage on-prem/multi-cloud servers, K8s, SQL from Azure Resource Manager), <b>ExpressRoute</b> (private fiber link to Azure), <b>VPN Gateway</b> (encrypted tunnel over Internet), <b>Azure AD Connect</b> (sync on-prem AD ↔ Entra ID).</li>
+            <li><b>Multi-cloud</b> — <b>What:</b> using multiple public clouds simultaneously (Azure + AWS + GCP). <b>Why:</b> avoid vendor lock-in, use best-of-breed services, regional coverage. <b>How (Azure):</b> Arc-enabled resources work across clouds; Microsoft Sentinel ingests AWS/GCP logs.</li>
+          </ul>
+
+          <h2>Shared responsibility model (introduced here, expanded next lesson)</h2>
+          <p><b>What:</b> the contract that defines which security and operational tasks the cloud provider owns vs which the customer owns. <b>Why:</b> a top cause of cloud breaches is customers assuming the provider covers something it does not (e.g., S3 / Blob bucket misconfiguration). <b>Universal rule:</b> the customer is <i>always</i> responsible for their own <b>data</b>, <b>identity & access management</b>, and <b>account management</b>; the provider is <i>always</i> responsible for the <b>physical datacenter</b>, the <b>physical network</b>, and the <b>physical hosts</b>. Everything in between (OS, runtime, middleware, app) shifts depending on whether the service is IaaS, PaaS, or SaaS.</p>
+
+          <h2>Acronyms you must own</h2>
+          <ul>
+            <li><b>SLA</b> — Service Level Agreement. The contractual uptime/performance commitment from Microsoft for a given service tier.</li>
+            <li><b>CapEx / OpEx</b> — Capital Expenditure / Operational Expenditure. The two ways IT spend is categorized in accounting.</li>
+            <li><b>TCO</b> — Total Cost of Ownership. The all-in 1–5-year cost of running a workload, including hardware, power, cooling, staff, licenses, and depreciation.</li>
+            <li><b>ROI</b> — Return on Investment. Net benefit ÷ cost, usually expressed as a percentage.</li>
+            <li><b>IaaS / PaaS / SaaS</b> — Infrastructure-/Platform-/Software-as-a-Service. The three classic cloud service models, covered in detail next lesson.</li>
+            <li><b>HA / DR</b> — High Availability / Disaster Recovery. HA = stay up during failure; DR = recover after a disaster.</li>
+            <li><b>RTO / RPO</b> — Recovery Time Objective / Recovery Point Objective. RTO = how long until you are back online; RPO = how much data loss you can tolerate.</li>
+            <li><b>VM</b> — Virtual Machine. The fundamental IaaS compute unit.</li>
+            <li><b>VNet</b> — Virtual Network. Azure's term for a logically isolated network in the cloud.</li>
+            <li><b>RBAC</b> — Role-Based Access Control. Permissions assigned by role rather than per-user.</li>
+            <li><b>ARM</b> — Azure Resource Manager. The deployment and management layer underneath every Azure resource.</li>
+            <li><b>Entra ID</b> — Microsoft Entra ID (formerly Azure Active Directory / AAD). Microsoft's cloud identity service.</li>
+            <li><b>MFA</b> — Multi-Factor Authentication. Second-factor verification (phone, Authenticator, FIDO2).</li>
+            <li><b>VMSS</b> — Virtual Machine Scale Set. Group of identical, auto-scaling VMs.</li>
+            <li><b>AKS</b> — Azure Kubernetes Service. Managed Kubernetes control plane.</li>
+            <li><b>ACI</b> — Azure Container Instances. Single-container, serverless container hosting.</li>
+            <li><b>CDN</b> — Content Delivery Network. Caches static content at edge points-of-presence to reduce latency.</li>
+            <li><b>BCDR</b> — Business Continuity and Disaster Recovery. The combined practice of staying running (BC) and recovering from disaster (DR).</li>
+          </ul>
+
+          <h2>Why organizations adopt cloud (drivers Microsoft loves to test)</h2>
+          <ul>
+            <li><b>Speed/agility</b> — provision a new VM in 2 minutes instead of 12 weeks of hardware procurement; deploy a new environment with one Bicep template.</li>
+            <li><b>Global reach</b> — Azure has 60+ regions on 6 continents; deploy close to users without building a datacenter.</li>
+            <li><b>Cost optimization</b> — pay for what you use; right-size aggressively; use Reservations or Savings Plans for steady workloads.</li>
+            <li><b>Innovation</b> — services like Azure OpenAI, Cognitive Services, Synapse, Cosmos DB are impractical to build in-house.</li>
+            <li><b>Disaster recovery</b> — geo-redundant storage and region-pair replication give DR that small companies could never build themselves.</li>
+            <li><b>Focus on the business</b> — let Microsoft worry about racking servers; your engineers work on differentiating apps.</li>
+          </ul>
+
+          <h2>Exam quick patterns (recognize these wordings)</h2>
+          <ul>
+            <li>"Recover quickly from a regional outage" → reliability / disaster recovery / region pair.</li>
+            <li>"Automatically increase resources when load rises and decrease when load falls" → <b>elasticity</b> (not just scalability — the "automatic + dynamic" wording is the giveaway).</li>
+            <li>"Pay only for what you use; no up-front hardware cost" → <b>OpEx</b> / consumption-based pricing.</li>
+            <li>"Apply organization-wide tagging and SKU rules" → <b>governance</b> via Azure Policy + Management Groups.</li>
+            <li>"Apps must remain available during a single datacenter failure in the region" → <b>Availability Zones</b> (HA, intra-region).</li>
+            <li>"Workloads run on-prem and in Azure with single management plane" → <b>hybrid cloud</b> + Azure Arc.</li>
+            <li>"Compare current on-prem cost vs Azure over 3 years" → <b>TCO Calculator</b> (vs Pricing Calculator, which is for sizing a new deployment).</li>
+          </ul>
         `
       },
       {
