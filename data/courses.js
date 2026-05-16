@@ -17166,17 +17166,126 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '7. Governance — RBAC, Policy, Locks, Blueprints',
         body: `
-          <h2>Azure RBAC</h2>
-          <p>Assign a <b>role</b> (Owner, Contributor, Reader, custom) to a <b>security principal</b> (user, group, SP, managed identity) at a <b>scope</b> (mgmt group → resource).</p>
-          <h2>Azure Policy</h2>
-          <p>Defines rules ("allowed locations", "must have tag X"). Evaluates resources, can audit or deny non-compliant. Initiatives = bundled policies.</p>
-          <h2>Resource locks</h2>
+          <h2>What is Azure governance?</h2>
+          <p><b>Governance</b> = the controls that keep a self-service cloud from turning into chaos. Microsoft's governance stack answers five questions: <i>Who can do what?</i> (RBAC), <i>What can be deployed where, by which rules?</i> (Azure Policy + Initiatives), <i>What must not be deleted or modified?</i> (Resource Locks), <i>Whose budget is this resource on?</i> (Tags + Cost Management), <i>How do we ship a compliant landing zone repeatedly?</i> (Blueprints → Template Specs + Deployment Stacks). AZ-900 tests each of these by scenario.</p>
+
+          <h2>Azure RBAC (Role-Based Access Control) — authorization for Azure resources</h2>
+          <p><b>Acronym:</b> Role-Based Access Control. <b>What:</b> the authorization system that decides which security principal can perform which action on which Azure resource. Every RBAC assignment is a triple: <b>Security Principal → Role Definition → Scope</b>.</p>
+
+          <h3>Security principals (the "who")</h3>
           <ul>
-            <li><b>ReadOnly</b> — block modifications.</li>
-            <li><b>Delete (CanNotDelete)</b> — block deletion.</li>
+            <li><b>User</b> — a single identity in Entra ID.</li>
+            <li><b>Group</b> — a collection; assign role to group, members inherit.</li>
+            <li><b>Service Principal (SP)</b> — application identity.</li>
+            <li><b>Managed Identity (MI)</b> — system- or user-assigned identity for an Azure resource.</li>
           </ul>
+
+          <h3>Role definitions (the "what")</h3>
+          <p>A role definition is a JSON document listing <b>Actions</b> (allowed control-plane operations), <b>NotActions</b> (excluded), <b>DataActions</b> (data-plane operations like reading a blob), and <b>NotDataActions</b>. ~120 built-in roles plus your custom roles. <b>Built-in roles to memorize:</b></p>
+          <ul>
+            <li><b>Owner</b> — full management + can delegate (manage access).</li>
+            <li><b>Contributor</b> — full management except access management; cannot grant roles.</li>
+            <li><b>Reader</b> — view everything; change nothing.</li>
+            <li><b>User Access Administrator</b> — manage user access only.</li>
+            <li><b>Service-specific roles</b> — Virtual Machine Contributor, Storage Blob Data Reader, Key Vault Secrets User, Network Contributor.</li>
+          </ul>
+
+          <h3>Scopes (the "where") — top-down inheritance</h3>
+          <p>Scope hierarchy mirrors the resource hierarchy: <b>Management Group → Subscription → Resource Group → Resource</b>. A role assigned higher up inherits down. <b>Example:</b> Reader on management group "Production" grants Reader on every subscription and resource under it.</p>
+
+          <h3>How RBAC evaluates a request</h3>
+          <ol>
+            <li>Collect all role assignments + deny assignments that apply to the principal at this scope and all parent scopes.</li>
+            <li>If any <b>Deny assignment</b> matches → blocked. (Deny always wins; created by Azure-managed services like Blueprints / Managed Apps — you cannot create them directly.)</li>
+            <li>If any role's <b>Actions</b> include the requested operation and no <b>NotActions</b> exclude it → allowed.</li>
+            <li>Otherwise → blocked.</li>
+          </ol>
+          <p>RBAC is <b>additive</b> for <i>allow</i> — granting Reader plus Contributor = effective Contributor (the union). There is no "deny over allow" in normal role assignments; you express deny via NotActions or a Deny assignment.</p>
+
+          <h3>Entra ID roles vs Azure RBAC roles (don't confuse)</h3>
+          <ul>
+            <li><b>Entra ID roles</b> (Global Admin, User Admin, Application Admin) — control the <i>directory</i> (users, apps, tenant settings).</li>
+            <li><b>Azure RBAC roles</b> (Owner, Contributor, Reader) — control <i>Azure resources</i> (VMs, storage, etc.).</li>
+            <li>Same person can be Global Admin in Entra and Reader in Azure — different planes.</li>
+          </ul>
+
+          <h2>Azure Policy</h2>
+          <p><b>What:</b> rule engine that audits or enforces standards across resources — independent of who deployed them. Policy answers "What rules must every resource follow?" RBAC answers "Who can deploy them?"</p>
+
+          <h3>Components</h3>
+          <ul>
+            <li><b>Policy definition</b> — a JSON rule with conditions + an <b>effect</b>. Examples: "Allowed locations = eastus, westus", "Storage accounts must have HTTPS-only".</li>
+            <li><b>Initiative</b> (Policy Set) — a bundle of related policy definitions for a goal (e.g., "NIST 800-53 baseline", "Microsoft Cloud Security Benchmark").</li>
+            <li><b>Assignment</b> — apply a definition or initiative at a scope (MG / Sub / RG).</li>
+            <li><b>Parameters</b> — make a definition reusable (allowed-locations parameter).</li>
+            <li><b>Compliance state</b> — Compliant / Non-compliant per resource, visible in Policy blade and Microsoft Defender for Cloud.</li>
+            <li><b>Exemptions</b> — temporary or waiver-based exclusions; logged for audit.</li>
+          </ul>
+
+          <h3>Policy effects (memorize)</h3>
+          <ul>
+            <li><b>Deny</b> — block non-compliant deployment at create/update time.</li>
+            <li><b>Audit</b> — let it through but log non-compliance.</li>
+            <li><b>Append</b> — add fields/tags to resources during creation.</li>
+            <li><b>Modify</b> — patch tags/properties on create/update.</li>
+            <li><b>DeployIfNotExists (DINE)</b> — auto-deploy a related resource if missing (e.g., enable diagnostic settings).</li>
+            <li><b>AuditIfNotExists</b> — audit when a related resource is missing.</li>
+            <li><b>Disabled</b> — turn the rule off without deleting it.</li>
+            <li><b>Manual / EnforceOPAConstraint</b> — newer effects for attestation + AKS Gatekeeper.</li>
+          </ul>
+          <p><b>Why use Policy vs RBAC?</b> RBAC controls <i>permissions</i>; Policy controls <i>configurations</i>. An Owner can deploy anything they have rights to — but Policy can still reject the deployment because it violates company standards (e.g., no public IPs).</p>
+
+          <h2>Resource Locks</h2>
+          <p><b>What:</b> protection against accidental deletion or modification. Applied at subscription, RG, or resource scope; inherit downward; require Owner or User Access Administrator role to set/remove. <b>Two types:</b></p>
+          <ul>
+            <li><b>CanNotDelete (Delete)</b> — read + modify allowed; delete blocked.</li>
+            <li><b>ReadOnly</b> — read allowed; modify + delete blocked. <i>Caution:</i> some operations Azure classifies as "modify" are surprising (listing storage keys = a write op, so ReadOnly blocks normal storage reads).</li>
+          </ul>
+          <p><b>Important:</b> locks are <i>not</i> RBAC and do not depend on it. Even Owner with full RBAC cannot delete a locked resource without first removing the lock.</p>
+
           <h2>Tags</h2>
-          <p>Key/value metadata for cost allocation, automation, ownership.</p>
+          <p><b>What:</b> key/value metadata pairs (max 50 per resource, 512-char key, 256-char value). <b>Why:</b> cost allocation, ownership, automation, lifecycle (e.g., Environment=Prod, Owner=alice, CostCenter=42, AutoShutdown=true). <b>How used:</b> filter Cost Management by tag; automate VM shutdown with a tag flag; enforce required tags via Azure Policy (Append/Modify/Deny). Not all resources inherit tags from RG — use Policy's Modify effect to inherit.</p>
+
+          <h2>Blueprints → Template Specs + Deployment Stacks</h2>
+          <p><b>Azure Blueprints</b> (deprecated July 2026) packaged ARM templates + role assignments + policy assignments + RG layout into a versioned, repeatable "landing zone." <b>Replacement path:</b></p>
+          <ul>
+            <li><b>Template Specs</b> — versioned ARM/Bicep templates stored as first-class resources, reusable across the tenant.</li>
+            <li><b>Deployment Stacks</b> — collection of resources managed as one unit, with deny-settings to protect them.</li>
+            <li><b>Azure Verified Modules (AVM)</b> — Microsoft-maintained Bicep/Terraform modules following CAF best practices.</li>
+            <li>Combined with <b>Microsoft Entra Permissions Management</b> and the <b>Cloud Adoption Framework</b> for governance at enterprise scale.</li>
+          </ul>
+
+          <h2>Microsoft Purview (governance for data)</h2>
+          <p><b>What:</b> unified data governance — discover, classify, label, and lineage-track data across Azure, on-prem, multi-cloud, and SaaS (M365). <b>Why:</b> compliance (GDPR, HIPAA, PCI), data discovery, sensitivity labeling. <b>How used:</b> scan storage and databases, auto-classify with built-in or custom classifiers, publish a data catalog, enforce DLP.</p>
+
+          <h2>Microsoft Cost Management + Budgets (covered next lesson — preview)</h2>
+          <p>Tags + RBAC + Policy are useless if nobody watches the bill. Cost Management dashboards, budgets with alerts, and Azure Advisor recommendations close the governance loop.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>RBAC</b> — Role-Based Access Control.</li>
+            <li><b>SP / MI</b> — Service Principal / Managed Identity.</li>
+            <li><b>MG / RG</b> — Management Group / Resource Group.</li>
+            <li><b>DINE</b> — DeployIfNotExists (policy effect).</li>
+            <li><b>OPA</b> — Open Policy Agent (engine behind AKS Gatekeeper).</li>
+            <li><b>CAF</b> — Cloud Adoption Framework.</li>
+            <li><b>WAF</b> — Well-Architected Framework (Microsoft's 5 pillars: reliability, security, cost optimization, operational excellence, performance efficiency). Don't confuse with Web Application Firewall.</li>
+            <li><b>DLP</b> — Data Loss Prevention.</li>
+            <li><b>AVM</b> — Azure Verified Modules.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Grant team rights to manage VMs but not give others access" → <b>Contributor</b> at the RG scope (NOT Owner — Owner can delegate).</li>
+            <li>"Block resource deployment outside East US + West US" → <b>Azure Policy</b> Allowed Locations with <b>Deny</b> effect.</li>
+            <li>"Prevent accidental deletion of production database" → <b>CanNotDelete</b> lock.</li>
+            <li>"Auto-add CostCenter tag when missing" → <b>Modify</b> (or Append) policy effect.</li>
+            <li>"Auto-enable diagnostic logs on every storage account" → <b>DeployIfNotExists (DINE)</b>.</li>
+            <li>"Same admin in tenant but different access to Azure resources" → Entra ID roles ≠ Azure RBAC roles.</li>
+            <li>"Limit Global Admin to JIT activation" → <b>PIM</b> (Entra ID feature, not RBAC).</li>
+            <li>"Standard set of policies + RBAC + RGs deployed for every new subscription" → <b>landing zone</b> via Template Specs + Bicep / Deployment Stacks (Blueprints retiring).</li>
+            <li>"Identify and label all PII across storage and SQL" → <b>Microsoft Purview</b>.</li>
+          </ul>
         `
       },
       {
