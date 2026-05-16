@@ -8273,22 +8273,359 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '9. Incident Response & Forensics',
         body: `
-          <h2>IR phases (NIST 800-61)</h2>
-          <ol>
-            <li><b>Preparation</b> — policies, IR team, tools, training.</li>
-            <li><b>Detection &amp; Analysis</b>.</li>
-            <li><b>Containment, Eradication, Recovery</b>.</li>
-            <li><b>Post-incident</b> — lessons learned.</li>
-          </ol>
-          <h2>Evidence handling</h2>
+          <p>An <b>incident</b> is any event that violates security policy or compromises CIA. Incident response is the structured process to contain, recover, learn. <b>Forensics</b> is the disciplined evidence-gathering process used during + after an incident, with rigor sufficient for legal proceedings. Exam expects the NIST 6 phases (4 grouped), order of volatility, chain of custody, frameworks.</p>
+
+          <h2>Key definitions</h2>
           <ul>
-            <li><b>Chain of custody</b> — every transfer logged.</li>
-            <li><b>Order of volatility</b> — RAM → swap → disk → backups.</li>
-            <li><b>Hashing</b> — prove image integrity.</li>
-            <li><b>Write blockers</b> — prevent modification during imaging.</li>
+            <li><b>Event</b> — any observable occurrence in a system or network.</li>
+            <li><b>Adverse event</b> — has negative consequence.</li>
+            <li><b>Incident</b> — violation or imminent threat of violation of security policy, AUP, or standard practice.</li>
+            <li><b>Security incident</b> — incident with CIA impact.</li>
+            <li><b>Breach</b> — confirmed disclosure of protected data to unauthorized party.</li>
+            <li><b>Compromise</b> — successful exploitation of a vulnerability.</li>
+            <li><b>Near miss</b> — almost-incident that did not result in loss.</li>
+            <li><b>Indicator</b> — observable that points at an incident in progress (or past).</li>
           </ul>
-          <h2>Frameworks</h2>
-          <p>MITRE ATT&CK (TTPs), Cyber Kill Chain (7 stages), Diamond Model.</p>
+
+          <h2>NIST SP 800-61 — Computer Security Incident Handling Guide</h2>
+          <p>Four phases (often shown as 7 sub-steps):</p>
+          <ol>
+            <li><b>Preparation</b> — build the capability BEFORE incidents.</li>
+            <li><b>Detection &amp; Analysis</b> — recognize + verify + scope incidents.</li>
+            <li><b>Containment, Eradication, Recovery</b> — stop damage, remove cause, restore.</li>
+            <li><b>Post-Incident Activity</b> — lessons learned, evidence retention, improvement.</li>
+          </ol>
+
+          <h3>1. Preparation</h3>
+          <ul>
+            <li><b>IR policy + plan</b> approved by leadership.</li>
+            <li><b>IR team</b> — CSIRT / CERT / SOC w/ roles + contact list.</li>
+            <li><b>Runbooks / playbooks</b> per scenario (ransomware, BEC, lost laptop, DDoS, insider).</li>
+            <li><b>Tooling</b>: SIEM, EDR, forensic kit, packet capture, isolation switches, ticketing, secure comms (out-of-band: signal/burner/POTS).</li>
+            <li><b>Training + tabletops</b> regularly.</li>
+            <li><b>Threat intelligence subscriptions</b>.</li>
+            <li><b>Asset + data inventory</b> + classification.</li>
+            <li><b>Vendor + retainer contracts</b> (DFIR firm, breach coach, ransom negotiator) pre-arranged.</li>
+            <li><b>Logging baseline</b> — sysmon, audit policy, centralized syslog, cloud activity logs.</li>
+            <li><b>Backups + tested restores</b>.</li>
+          </ul>
+
+          <h3>2. Detection &amp; Analysis</h3>
+          <ul>
+            <li><b>Sources of detection:</b>
+              <ul>
+                <li>SIEM alerts (correlations, anomalies).</li>
+                <li>EDR detections.</li>
+                <li>IDS/IPS / NDR.</li>
+                <li>DLP / CASB.</li>
+                <li>External notification (law enforcement, vendor, customer).</li>
+                <li>User report (phishing button).</li>
+                <li>Threat hunting.</li>
+              </ul>
+            </li>
+            <li><b>Initial triage</b> — confirm true positive vs false positive.</li>
+            <li><b>Severity / Priority classification</b> — usually impact × urgency.</li>
+            <li><b>Scoping</b> — number of hosts, accounts, data sets, business processes.</li>
+            <li><b>Notifications</b> per policy + regulation (legal, PR, customers, regulators).</li>
+            <li><b>Documentation start</b> — every action logged with timestamp + operator.</li>
+            <li><b>Stakeholder alignment</b> — incident commander assigned.</li>
+          </ul>
+
+          <h3>3. Containment, Eradication, Recovery</h3>
+
+          <h4>Containment</h4>
+          <ul>
+            <li><b>Short-term</b> — immediate stop: disconnect network, disable account, kill process, isolate VM, block IP at firewall, segment the attacker's path.</li>
+            <li><b>Long-term</b> — fix that lets ops continue (rebuild from backup, route traffic via WAF, segment further).</li>
+            <li><b>Containment trade-off:</b> capture forensic evidence (volatile RAM) BEFORE powering off; isolate (network-quarantine VLAN) keeps host alive for analysis.</li>
+          </ul>
+
+          <h4>Eradication</h4>
+          <ul>
+            <li>Remove malware, attacker accounts, persistence (scheduled tasks, registry Run keys, services, cron, autoruns).</li>
+            <li>Patch exploited vulns.</li>
+            <li>Reset compromised credentials.</li>
+            <li>Reissue / revoke certificates.</li>
+            <li>Re-image rather than clean when in doubt.</li>
+          </ul>
+
+          <h4>Recovery</h4>
+          <ul>
+            <li>Restore from clean backups.</li>
+            <li>Validate integrity + functionality.</li>
+            <li>Phased return to service with enhanced monitoring ("watch window").</li>
+            <li>Reconnect to production.</li>
+          </ul>
+
+          <h3>4. Post-Incident Activity</h3>
+          <ul>
+            <li><b>Lessons learned meeting</b> within ~2 weeks.</li>
+            <li><b>Root Cause Analysis (RCA)</b> — 5 Whys, fishbone, formal RCA.</li>
+            <li><b>After-Action Report (AAR)</b> — what happened, what worked, what didn't, action items.</li>
+            <li>Update runbooks, controls, detections.</li>
+            <li>Evidence retention per legal hold.</li>
+            <li>Threat-intel sharing (ISAC, MISP, customer comms).</li>
+            <li>Report to regulators / customers per timelines.</li>
+            <li>Update training + tabletop scenarios.</li>
+          </ul>
+
+          <h2>IR team structure</h2>
+          <ul>
+            <li><b>CSIRT</b> (Computer Security Incident Response Team) — generic term.</li>
+            <li><b>CERT</b> (Computer Emergency Response Team) — national or large org.</li>
+            <li><b>PSIRT</b> — Product Security IRT (vendor-side).</li>
+            <li><b>SOC</b> (Security Operations Center) — 24/7 monitoring + Tier 1/2/3.</li>
+            <li><b>Incident Commander</b> — runs the incident.</li>
+            <li><b>DFIR analysts</b> — forensics + malware analysis.</li>
+            <li><b>SOC analysts</b> — triage + escalation.</li>
+            <li><b>Threat hunters</b> — proactive search.</li>
+            <li><b>Legal / compliance liaison</b>.</li>
+            <li><b>PR / communications</b>.</li>
+            <li><b>HR + Privacy + Executive sponsor</b>.</li>
+            <li><b>External firms (DFIR) on retainer</b> — Mandiant, CrowdStrike Services, Kroll, IBM X-Force, KPMG.</li>
+            <li><b>Cyber insurance + breach coach</b>.</li>
+            <li><b>Law enforcement contacts</b> — FBI IC3, Secret Service, local.</li>
+            <li><b>ISAC / ISAO</b> — sector intel sharing.</li>
+          </ul>
+
+          <h2>Severity + priority classification</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Sev</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Example</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Response</th></tr>
+            <tr><td>1 / Critical</td><td>Active ransomware encrypting production. Customer data exfil confirmed.</td><td>War-room 24/7, exec + legal + PR engaged.</td></tr>
+            <tr><td>2 / High</td><td>Confirmed RAT on workstation; lateral movement detected.</td><td>IR team activates; on-call sweep.</td></tr>
+            <tr><td>3 / Medium</td><td>Single endpoint AV detection, contained.</td><td>SOC investigates during business hours.</td></tr>
+            <tr><td>4 / Low</td><td>Suspicious activity, no impact verified.</td><td>SOC monitors / documents.</td></tr>
+          </table>
+
+          <h2>Containment playbook examples</h2>
+
+          <h3>Ransomware</h3>
+          <ol>
+            <li>Isolate affected hosts (disconnect / quarantine VLAN).</li>
+            <li>Identify the variant from ransom note + behavior (ID-Ransomware).</li>
+            <li>Preserve memory + key files (chain of custody).</li>
+            <li>Block C2 IPs / domains at egress.</li>
+            <li>Disable compromised accounts; rotate creds.</li>
+            <li>Check immutable / offline backups; validate clean restore point.</li>
+            <li>Engage cyber insurance + DFIR + legal.</li>
+            <li>Do NOT pay without legal / OFAC sanctions check.</li>
+            <li>Notify regulators per CIRCIA (24h ransom payment notification, 72h ransomware incident).</li>
+            <li>Rebuild from clean image; restore data; phased reconnect.</li>
+            <li>RCA + improvements (MFA, segmentation, EDR, training).</li>
+          </ol>
+
+          <h3>Compromised endpoint</h3>
+          <ol>
+            <li>Disable account + workstation network port (quarantine VLAN).</li>
+            <li>Capture RAM image + disk image while host is live (FTK Imager / KAPE / Velociraptor).</li>
+            <li>Pull EDR timeline of process tree, network connections, file changes.</li>
+            <li>Identify initial vector (phish, drive-by, USB).</li>
+            <li>Search for lateral movement (RDP, SMB, WinRM, PSExec).</li>
+            <li>Rotate passwords + invalidate tokens.</li>
+            <li>Reimage; restore from known-good backup.</li>
+          </ol>
+
+          <h3>Phishing / BEC</h3>
+          <ol>
+            <li>Pull and quarantine the email from all inboxes (admin quarantine).</li>
+            <li>Block sender + URLs + attachment hashes.</li>
+            <li>Identify users who clicked / submitted creds; force password reset + MFA invalidation + token revocation.</li>
+            <li>Check sign-in logs + inbox rules (forwarding rules, mailbox manipulation) — common BEC artifacts.</li>
+            <li>For wire-transfer requests: call recipient bank to attempt recall; engage law enforcement (FBI IC3).</li>
+            <li>Train + simulate again.</li>
+          </ol>
+
+          <h2>Forensic process</h2>
+          <p>"Forensic" = evidence gathered with integrity preserved + admissible. Phases (NIST SP 800-86):</p>
+          <ol>
+            <li><b>Collection</b> — acquire evidence.</li>
+            <li><b>Examination</b> — extract relevant data.</li>
+            <li><b>Analysis</b> — interpret findings.</li>
+            <li><b>Reporting</b> — present + preserve.</li>
+          </ol>
+
+          <h2>Order of volatility (RFC 3227)</h2>
+          <p>Collect MOST volatile first:</p>
+          <ol>
+            <li>CPU registers + cache.</li>
+            <li>Routing table, ARP cache, process table, kernel statistics, RAM.</li>
+            <li>Temporary file systems / swap.</li>
+            <li>Persistent storage (disk).</li>
+            <li>Remote logging + monitoring data.</li>
+            <li>Physical configuration, network topology.</li>
+            <li>Archival media (backups).</li>
+          </ol>
+
+          <h2>Evidence integrity controls</h2>
+          <ul>
+            <li><b>Chain of custody</b> — document every transfer of evidence: who, when, where, why. Signed log.</li>
+            <li><b>Write blocker</b> (hardware or software) — prevents writes to source media during imaging.</li>
+            <li><b>Forensic image</b> — bit-for-bit copy. Original sealed, work on copy.</li>
+            <li><b>Hashing</b> — SHA-256 before + after image to prove no alteration. Same hash = same data.</li>
+            <li><b>Timestamps</b> — record system + UTC times.</li>
+            <li><b>Photograph the scene</b> — before touching.</li>
+            <li><b>Tamper-evident bags</b> + serial numbers.</li>
+            <li><b>Secure storage</b> + access log.</li>
+            <li><b>Two-person rule</b> for sensitive evidence handling.</li>
+          </ul>
+
+          <h2>Legal concepts</h2>
+          <ul>
+            <li><b>Chain of custody</b> — paperwork trail.</li>
+            <li><b>Admissibility</b> — evidence is reliable + relevant + lawfully obtained + properly preserved.</li>
+            <li><b>Five rules of evidence</b> — authentic, accurate, complete, convincing, admissible.</li>
+            <li><b>Best evidence rule</b> — original preferred over copy.</li>
+            <li><b>Daubert / Frye standards</b> — expert testimony reliability (US courts).</li>
+            <li><b>Legal hold / litigation hold</b> — preserve data when litigation likely.</li>
+            <li><b>E-discovery</b> — formal process producing electronic evidence to opposing counsel.</li>
+            <li><b>Spoliation</b> — improper destruction of evidence; sanctions follow.</li>
+            <li><b>Search warrant</b> + <b>subpoena</b> — gov access mechanisms.</li>
+            <li><b>Mutual Legal Assistance Treaty (MLAT)</b> — cross-border evidence.</li>
+          </ul>
+
+          <h2>Imaging + acquisition tools</h2>
+          <ul>
+            <li><b>FTK Imager</b> (free; AccessData) — disk + memory imaging.</li>
+            <li><b>EnCase</b> — commercial industry standard.</li>
+            <li><b>X-Ways Forensics</b>.</li>
+            <li><b>Autopsy / Sleuth Kit</b> — open-source.</li>
+            <li><b>dd</b> / <b>dcfldd</b> / <b>dc3dd</b> — Linux raw imaging w/ logging.</li>
+            <li><b>Volatility</b> + <b>Rekall</b> — RAM analysis frameworks.</li>
+            <li><b>KAPE</b> (Kroll Artifact Parser/Extractor) — fast triage collection.</li>
+            <li><b>Velociraptor</b> — endpoint forensics + hunting at scale.</li>
+            <li><b>WinPmem / LiME / AVML</b> — RAM capture (Windows / Linux / cloud Linux).</li>
+            <li><b>Magnet AXIOM</b> — phone + cloud forensics.</li>
+            <li><b>Cellebrite / GrayKey</b> — mobile device extraction.</li>
+            <li><b>Wireshark / tcpdump</b> — packet capture analysis.</li>
+            <li><b>Plaso / log2timeline</b> — super-timeline from many artifacts.</li>
+          </ul>
+
+          <h2>Disk artifacts worth examining</h2>
+          <ul>
+            <li><b>MFT</b> (NTFS Master File Table) — file metadata.</li>
+            <li><b>$LogFile</b>, <b>USN Journal</b> — file changes.</li>
+            <li><b>Registry hives</b> (SYSTEM, SOFTWARE, SECURITY, NTUSER, USRCLASS).</li>
+            <li><b>Event logs</b> (Security, System, Application, PowerShell, Sysmon, RDP, Terminal Services).</li>
+            <li><b>Prefetch</b> — evidence of program execution.</li>
+            <li><b>Shimcache / AppCompatCache</b> — executed files.</li>
+            <li><b>Amcache.hve</b> — installed + executed apps.</li>
+            <li><b>Jump Lists, LNK files</b> — recently opened items.</li>
+            <li><b>Browser history + cookies</b>.</li>
+            <li><b>Recycle Bin ($I/$R)</b>.</li>
+            <li><b>Volume Shadow Copies</b> — snapshots.</li>
+            <li><b>Scheduled tasks</b>.</li>
+            <li><b>Autoruns + services + drivers</b>.</li>
+            <li><b>$Recycle.bin</b>, <b>RecentDocs</b>.</li>
+            <li>Linux equivalents: bash_history, auth.log, /var/log/*, systemd journal, /tmp.</li>
+          </ul>
+
+          <h2>RAM artifacts</h2>
+          <ul>
+            <li>Running processes + parent-child trees.</li>
+            <li>Network connections (listening / established).</li>
+            <li>Loaded DLLs / modules.</li>
+            <li>Decrypted secrets, keys, passwords (LSASS).</li>
+            <li>Injected code / hollowed processes.</li>
+            <li>Open files + handles.</li>
+            <li>Command lines.</li>
+          </ul>
+
+          <h2>Cloud / SaaS forensics</h2>
+          <ul>
+            <li><b>Cloud audit logs</b> — AWS CloudTrail, Azure Activity + Sign-in logs, GCP Audit Log.</li>
+            <li><b>Identity sign-in logs</b> — Entra ID, Okta.</li>
+            <li><b>Mailbox audit log</b> — Microsoft Purview audit (Office 365).</li>
+            <li><b>VPC Flow Logs / NSG Flow Logs</b>.</li>
+            <li><b>Snapshot the volume</b> for forensic image.</li>
+            <li><b>Tools:</b> Microsoft Defender XDR + Sentinel hunting (KQL), CloudTrail Lake, Splunk Cloud, Cribl, AWS Detective, Mandiant Managed.</li>
+            <li>Pre-arrange logging + retention (default cloud retention may be too short).</li>
+          </ul>
+
+          <h2>Mobile + IoT forensics</h2>
+          <ul>
+            <li>Encryption + secure enclaves complicate acquisition; vendor cooperation often required.</li>
+            <li>Mobile tools: Cellebrite UFED, MSAB XRY, Magnet AXIOM.</li>
+            <li>Cloud backups (iCloud / Google) may be alternate acquisition path.</li>
+            <li>IoT: extract storage chip (chip-off) for non-standard devices.</li>
+          </ul>
+
+          <h2>Network forensics</h2>
+          <ul>
+            <li><b>Packet captures</b> — Wireshark, tcpdump, Zeek (Bro) logs.</li>
+            <li><b>NetFlow / sFlow / IPFIX</b> for retroactive flow analysis.</li>
+            <li><b>Firewall + proxy logs</b>.</li>
+            <li><b>DNS query logs</b>.</li>
+            <li><b>TLS inspection logs</b> (where authorized).</li>
+            <li><b>Threat intel correlation</b> — known-bad IPs/domains.</li>
+            <li><b>Beaconing detection</b> — periodic outbound at consistent intervals.</li>
+          </ul>
+
+          <h2>Malware analysis</h2>
+          <ul>
+            <li><b>Static</b> — examine binary without running. Strings, PEview / pestudio, IDA Pro, Ghidra, Binary Ninja.</li>
+            <li><b>Dynamic</b> — run in sandbox. Cuckoo, Joe Sandbox, Any.run, Microsoft Defender Sandbox, Hybrid Analysis.</li>
+            <li><b>Manual</b> — debugger (x64dbg, WinDbg).</li>
+            <li><b>VirusTotal</b> hash lookup (be careful about uploading sensitive samples).</li>
+            <li><b>YARA rules</b> — pattern matching for samples + memory.</li>
+            <li><b>MITRE ATT&CK mapping</b> for TTPs.</li>
+          </ul>
+
+          <h2>Reporting + communication</h2>
+          <ul>
+            <li><b>Internal report</b> — facts, timeline, scope, RCA, recommendations.</li>
+            <li><b>Executive summary</b> — non-technical.</li>
+            <li><b>Customer / regulatory notifications</b> — per timelines (GDPR 72h, HIPAA 60d, SEC 4-day, CIRCIA).</li>
+            <li><b>Press / PR statements</b>.</li>
+            <li><b>Threat intel shared</b> via MISP / OpenCTI / TLP-coloured.</li>
+            <li><b>TLP</b> (Traffic Light Protocol): RED (named only), AMBER (org limited), GREEN (community), CLEAR (public).</li>
+          </ul>
+
+          <h2>Tabletop + drill types</h2>
+          <ul>
+            <li><b>Tabletop exercise</b> — discussion walkthrough of a scenario.</li>
+            <li><b>Functional / Live drill</b> — actually exercise tools + comms.</li>
+            <li><b>Red team / Purple team</b> — adversarial test of detection/response.</li>
+            <li><b>Game day / chaos engineering</b> — break things on purpose.</li>
+            <li><b>Full failover test</b> — for DR.</li>
+          </ul>
+
+          <h2>Frameworks (recap)</h2>
+          <ul>
+            <li><b>MITRE ATT&CK</b> — TTPs.</li>
+            <li><b>Cyber Kill Chain</b> — 7 attack stages.</li>
+            <li><b>Diamond Model</b> — Adversary / Capability / Infrastructure / Victim.</li>
+            <li><b>Pyramid of Pain</b> — hashes / IPs / domains / artifacts / tools / TTPs (top = most painful to change for attacker).</li>
+            <li><b>VERIS</b> — Vocabulary for Event Recording and Incident Sharing (Verizon DBIR).</li>
+          </ul>
+
+          <h2>Common IR pitfalls</h2>
+          <ul>
+            <li>Powering off before RAM capture → lose volatile evidence.</li>
+            <li>Communicating on the compromised network → attacker reads your plans.</li>
+            <li>Pulling the plug too early on a contained-but-still-recoverable system.</li>
+            <li>No playbook → improvising mid-crisis.</li>
+            <li>No logs → can't reconstruct.</li>
+            <li>Paying ransom without legal / OFAC review → potentially illegal.</li>
+            <li>Not preserving evidence → can't pursue insurance / legal.</li>
+            <li>Skipping lessons-learned → same incident again.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>NIST 800-61 phases: <b>Prep → Detect &amp; Analyze → Contain, Eradicate, Recover → Post-incident</b>.</li>
+            <li>"Capture volatile data first" → RAM before disk.</li>
+            <li>"Order of volatility (RFC 3227)" → registers, RAM, swap, disk, backups, archive.</li>
+            <li>"Document every transfer of evidence" → chain of custody.</li>
+            <li>"Prevent writes to source disk while imaging" → write blocker.</li>
+            <li>"Prove image not altered" → SHA-256 before + after.</li>
+            <li>"Stop attacker spread" → containment (short-term).</li>
+            <li>"Remove malware + close vuln" → eradication.</li>
+            <li>"Bring service back" → recovery.</li>
+            <li>"Lessons learned + RCA" → post-incident.</li>
+            <li>"Traffic Light Protocol" → AMBER limits sharing within receiving org.</li>
+            <li>"Periodic outbound at consistent intervals" → beaconing (likely C2).</li>
+            <li>"Pyramid of Pain top" → adversary TTPs (hardest to change).</li>
+          </ul>
         `
       },
       {
