@@ -12624,25 +12624,400 @@ RuntimeDirectory=myapp</code></pre>
       {
         title: '10. Troubleshooting',
         body: `
-          <h2>Where to look</h2>
-          <pre><code>journalctl -xe
-journalctl --since "1 hour ago"
-dmesg | tail
-/var/log/messages    (RHEL)
-/var/log/syslog      (Debian)
-/var/log/auth.log    or  /var/log/secure
-/var/log/nginx/      service logs</code></pre>
-          <h2>Performance</h2>
-          <pre><code>uptime / load average
-free -h
-vmstat 2 5
-iostat -xz 2
-sar -u 1 5
-lsof -i :443        what's on port 443
-strace -p PID
-htop</code></pre>
-          <h2>Boot issues</h2>
-          <p>Edit GRUB at boot, add <code>init=/bin/bash</code> or use rescue mode. <code>grub-mkconfig -o /boot/grub/grub.cfg</code> to regenerate.</p>
+          <p>Linux troubleshooting = methodical traversal of logs + counters + tools to isolate the failing layer (hardware → kernel → service → app). Follow the OSI / system-stack model: check the cheapest layer first. Exam tests log locations, performance tools, network/storage/boot diagnostics, and recovery techniques.</p>
+
+          <h2>Troubleshooting methodology</h2>
+          <ol>
+            <li><b>Identify</b> — gather facts: what / when / for whom / recent changes; reproduce if possible; back up data before riskier steps.</li>
+            <li><b>Theorize probable cause</b> — start with the obvious (cable / disk full / out of memory / wrong perms). Use OSI-style traversal.</li>
+            <li><b>Test theory</b> — change ONE variable at a time; capture before / after evidence.</li>
+            <li><b>Plan + implement fix</b> — note rollback / backout; schedule downtime if needed.</li>
+            <li><b>Verify</b> — confirm symptom gone + no regressions.</li>
+            <li><b>Document</b> — runbook update + KB article + RCA if outage.</li>
+          </ol>
+
+          <h2>Log locations</h2>
+          <ul>
+            <li><b>systemd journal</b> (binary, structured): <code>journalctl</code>. Persistent at <code>/var/log/journal/</code>.</li>
+            <li><b>/var/log/messages</b> (RHEL) or <b>/var/log/syslog</b> (Debian) — general syslog.</li>
+            <li><b>/var/log/auth.log</b> (Debian) or <b>/var/log/secure</b> (RHEL) — SSH, sudo, PAM.</li>
+            <li><b>/var/log/dmesg</b> + <code>dmesg -T</code> — kernel ring buffer.</li>
+            <li><b>/var/log/kern.log</b> — kernel events (Debian).</li>
+            <li><b>/var/log/cron</b> — cron jobs.</li>
+            <li><b>/var/log/mail.log</b> / <b>/var/log/maillog</b> — Postfix / Exim.</li>
+            <li><b>/var/log/audit/audit.log</b> — auditd (must use <code>ausearch</code>).</li>
+            <li><b>/var/log/wtmp</b>, <b>/var/log/btmp</b>, <b>/var/log/lastlog</b> — login records (use <code>last</code>, <code>lastb</code>, <code>lastlog</code>).</li>
+            <li><b>/var/log/apt/</b> (Debian) — package install/upgrade history.</li>
+            <li><b>/var/log/dnf.log</b>, <b>/var/log/dnf.rpm.log</b> (RHEL).</li>
+            <li><b>/var/log/Xorg.0.log</b> — graphical / X.</li>
+            <li><b>/var/log/cloud-init.log</b> + <b>cloud-init-output.log</b> — cloud bootstrap.</li>
+            <li><b>Per-service:</b> <b>/var/log/nginx/</b>, <b>/var/log/apache2/</b>, <b>/var/log/mysql/</b>, etc.</li>
+          </ul>
+
+          <h2>journalctl power moves</h2>
+          <pre><code>journalctl                          # all entries
+journalctl -xe                      # recent + explanations + jump to end
+journalctl -b                       # current boot
+journalctl -b -1                    # previous boot
+journalctl --list-boots
+journalctl -u sshd                  # by unit
+journalctl -u sshd -f               # follow live
+journalctl -u sshd --since "1 hour ago"
+journalctl --since "2024-01-15 14:00" --until "2024-01-15 15:30"
+journalctl -p err                   # priority &lt;= err (3) of current boot
+journalctl -p warning -b
+journalctl _PID=1234
+journalctl _COMM=sshd
+journalctl _UID=1000
+journalctl -k                       # kernel messages
+journalctl --no-pager               # plain output
+journalctl -o json                  # machine-readable
+journalctl --disk-usage
+journalctl --vacuum-time=2weeks     # prune
+journalctl --vacuum-size=500M
+journalctl --verify                 # journal integrity check</code></pre>
+
+          <h2>Performance + resource diagnostics</h2>
+
+          <h3>CPU</h3>
+          <pre><code>uptime                              # load avg (1/5/15 min). Compare vs core count.
+top, htop, btop, atop, glances
+mpstat -P ALL 1                     # per-CPU usage
+sar -u 1 5                          # historical CPU usage (sysstat)
+pidstat 1 5                         # per-process CPU
+ps -eo pid,user,%cpu,%mem,comm --sort=-%cpu | head
+perf top                            # live function-level CPU
+perf record -g cmd && perf report   # flame-graph-friendly profile
+turbostat                           # CPU freq + power
+cpupower frequency-info             # governor, scaling</code></pre>
+
+          <h3>Memory</h3>
+          <pre><code>free -h                             # used / free / buff/cache / available
+vmstat 2 5                          # si/so columns = swap activity
+sar -r 1 5                          # mem usage historical
+smem                                # per-process PSS / RSS
+ps_mem                              # nicer summary
+slabtop                             # kernel slab cache
+cat /proc/meminfo                   # all kernel mem stats
+cat /proc/&lt;pid&gt;/status              # per-process detail
+dmesg | grep -i 'oom\\|kill'         # OOM-killer history
+journalctl -k | grep -i 'out of memory'
+sudo journalctl -k --since today | grep -i killed</code></pre>
+
+          <h3>Disk I/O</h3>
+          <pre><code>iostat -xz 1                        # device + extended stats
+iotop                               # per-process I/O
+pidstat -d 1                        # alternative
+dstat -tcndylp                      # multi-resource live (deprecated; use atop)
+sar -d 1 5                          # historical disk
+lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT,STATE
+smartctl -a /dev/sda                # drive health (SMART)
+sudo fstrim -av                     # SSD TRIM</code></pre>
+
+          <h3>Network</h3>
+          <pre><code>ip -s link show eth0                # rx/tx, errors, dropped
+ss -tunlp                           # listening sockets + PIDs
+ss -s                               # summary
+ss -tn state established
+nload eth0
+iftop -i eth0
+nethogs                             # per-process bandwidth
+bmon                                # multi-interface UI
+ip route get 8.8.8.8                # which route applies
+mtr 8.8.8.8                         # combined ping + traceroute
+tcpdump -i any -nn host 10.0.0.5
+sudo conntrack -L                   # NAT conntrack table
+ethtool eth0 / -S eth0 / -i eth0</code></pre>
+
+          <h3>File descriptors + processes</h3>
+          <pre><code>lsof                                # all open files
+lsof -i :443                        # by port
+lsof -p 1234                        # by PID
+lsof -u alice
+lsof /var/log/syslog                # who has the file open
+fuser -v /var/log                   # users + PIDs of a mount/file
+ulimit -a                           # current shell limits
+prlimit --pid 1234                  # per-process limits
+cat /proc/sys/fs/file-nr             # system-wide open file count
+cat /proc/sys/fs/file-max</code></pre>
+
+          <h2>strace / ltrace / perf — runtime inspection</h2>
+          <pre><code>strace -p 1234                      # syscalls of running PID
+strace -f -e openat,read,write ./app
+strace -c cmd                       # summary table
+ltrace -p 1234                      # library calls
+perf stat cmd                       # CPU counters
+perf trace cmd                      # like strace but cheaper
+gdb -p 1234                         # interactive debugger
+sudo bpftrace -e 'tracepoint:syscalls:sys_enter_open { @ = count(); }'  # eBPF</code></pre>
+
+          <h2>Hardware diagnostics</h2>
+          <pre><code>lscpu                               # CPU info
+lsmem / cat /proc/meminfo
+lsblk / lsblk -f
+lspci                               # PCI devices
+lspci -nnk | grep -i ethernet
+lsusb
+lsmod                               # kernel modules loaded
+modinfo nvidia                      # module details
+dmidecode                           # BIOS / DMI tables
+dmidecode -t memory                 # RAM slots
+hwinfo                              # comprehensive (SUSE)
+inxi -Fxxxz                         # one-shot system info
+sudo smartctl -t short /dev/sda     # disk self-test
+sudo memtester 1024 5               # RAM test (consumes RAM!)
+sudo memtest86+                     # bootable RAM test
+sudo badblocks -v /dev/sdb          # block-level surface scan</code></pre>
+
+          <h2>Storage troubleshooting</h2>
+          <ul>
+            <li><b>Out of space:</b> <code>df -h</code>; check inodes too (<code>df -i</code>); locate hogs (<code>du -sh /* 2>/dev/null | sort -h</code>, <code>ncdu /</code>).</li>
+            <li><b>Read-only remount</b> after error → kernel saw I/O issues. <code>dmesg | tail</code>; <code>smartctl -a</code>; reboot + fsck or boot rescue.</li>
+            <li><b>"No space" with free shown</b> → out of inodes; small-file dir; <code>find / -xdev -printf "%h\\n" | sort | uniq -c | sort -rn | head</code>.</li>
+            <li><b>Open file deleted but space not freed</b> → process still holds handle. <code>lsof | grep deleted</code>; restart holder.</li>
+            <li><b>fsck</b> on root → boot to rescue or single-user; force at next boot via <code>touch /forcefsck</code>.</li>
+            <li><b>LVM thin pool full</b> → expand or delete thin LVs immediately; if data-out triggered, mounted FS will go read-only.</li>
+            <li><b>RAID degraded</b> → <code>cat /proc/mdstat</code>; add spare; replace failed disk; mdadm --re-add.</li>
+            <li><b>SMART pre-fail</b> → reallocated / pending sectors rising; back up + replace ASAP.</li>
+            <li><b>NFS hung</b> → <code>umount -lf /mnt/nfs</code>; check server reachability + exports.</li>
+          </ul>
+
+          <h2>Boot troubleshooting</h2>
+          <h3>Boot stages</h3>
+          <ol>
+            <li><b>POST / firmware</b> (BIOS or UEFI).</li>
+            <li><b>Bootloader</b> — GRUB 2 typically (also rEFInd, systemd-boot, syslinux).</li>
+            <li><b>Kernel</b> loaded; <b>initramfs</b> mounted; root pivots.</li>
+            <li><b>init (PID 1)</b> = systemd; default.target reached.</li>
+            <li><b>Login</b> (getty / display manager).</li>
+          </ol>
+
+          <h3>GRUB</h3>
+          <pre><code># Files
+/etc/default/grub                   # main config (GRUB_CMDLINE_LINUX, GRUB_TIMEOUT)
+/etc/grub.d/                         # script fragments
+/boot/grub/grub.cfg / /boot/grub2/grub.cfg / /boot/efi/EFI/.../grub.cfg
+
+# Regenerate after editing
+sudo update-grub                    # Debian
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg     # RHEL BIOS
+sudo grub2-mkconfig -o /boot/efi/EFI/redhat/grub.cfg  # RHEL UEFI
+
+# Interactive edit at boot: highlight kernel + press 'e'. Boot once with 'Ctrl-X'.
+# Recovery options: add 'single' or 'rescue' or 'init=/bin/bash' to kernel line
+# Reset root password (live):
+#  1. At GRUB, edit kernel line: add rd.break (RHEL) or init=/bin/bash
+#  2. Ctrl-X to boot → emergency shell
+#  3. mount -o remount,rw /sysroot ; chroot /sysroot ; passwd ; exit ; reboot
+#  4. (RHEL) touch /.autorelabel to fix SELinux on next boot</code></pre>
+
+          <h3>Common boot symptoms</h3>
+          <ul>
+            <li><b>"error: file not found" GRUB</b> → /boot or kernel image missing; reinstall kernel + regenerate grub.</li>
+            <li><b>"Kernel panic — not syncing"</b> → kernel can't find root or initramfs broken; reinstall initramfs (<code>dracut -f</code> / <code>update-initramfs -u -k all</code>) from rescue.</li>
+            <li><b>"Dropped to emergency shell"</b> → fs entry failed in /etc/fstab; comment out offending line, reboot.</li>
+            <li><b>UEFI Secure Boot mismatch</b> → enroll MOK or disable Secure Boot.</li>
+            <li><b>fsck loop</b> → unrepairable corruption; mount manually + investigate.</li>
+            <li><b>Hung after Plymouth</b> → systemd service stuck. Press Esc / add <code>quiet</code> removal + <code>nofb</code> to see; <code>systemctl status</code> when shell available.</li>
+          </ul>
+
+          <h3>systemd boot diagnostics</h3>
+          <pre><code>systemd-analyze                            # total boot time
+systemd-analyze blame                      # slowest units
+systemd-analyze critical-chain             # blocking path
+systemd-analyze plot > boot.svg
+systemd-analyze verify path.service
+systemctl --failed                         # failed services
+journalctl -b -p err
+systemctl list-jobs                        # pending jobs (during boot)
+systemctl status emergency.target</code></pre>
+
+          <h2>Network troubleshooting flow</h2>
+          <ol>
+            <li>Link up? <code>ip -br link</code> — must say UP.</li>
+            <li>IP assigned? <code>ip -br a</code>.</li>
+            <li>Default route? <code>ip route</code>.</li>
+            <li>Local LAN reachable? <code>ping &lt;gateway&gt;</code>.</li>
+            <li>Internet reachable? <code>ping 1.1.1.1</code> (skips DNS).</li>
+            <li>DNS works? <code>dig example.com</code>; check <code>/etc/resolv.conf</code> / resolvectl.</li>
+            <li>App-level port reachable? <code>nc -vz host port</code> or <code>curl -v</code>.</li>
+            <li>If TLS fails: <code>openssl s_client -connect host:443</code>; check cert chain, expiry, system trust store.</li>
+            <li>Firewall blocking? <code>firewall-cmd --list-all</code> / <code>ufw status</code> / <code>nft list ruleset</code>; SELinux: <code>ausearch -m AVC</code>.</li>
+            <li>Capture: <code>tcpdump -i any -nn host x and port y</code> → Wireshark.</li>
+          </ol>
+
+          <h2>Service / app troubleshooting</h2>
+          <ul>
+            <li><code>systemctl status name</code> — overview + recent log lines.</li>
+            <li><code>journalctl -u name -n 200 --no-pager</code> — last 200 lines.</li>
+            <li>Config syntax: <code>nginx -t</code>, <code>sshd -t</code>, <code>named-checkconf</code>, <code>postfix check</code>.</li>
+            <li>Port conflict: <code>ss -tunlp | grep :PORT</code>.</li>
+            <li>Permission / context: check user/group ownership; SELinux contexts (<code>ls -Z</code>).</li>
+            <li>Watch live: <code>journalctl -u name -f</code> + reproduce.</li>
+            <li>Raise log level temporarily (env var, drop-in unit override).</li>
+            <li>Run service in foreground for clearer output (e.g., <code>nginx -g 'daemon off;'</code>).</li>
+            <li>Audit firewall: <code>iptables -L -n -v</code> or nft equivalent.</li>
+            <li>OOM check: <code>journalctl -k | grep -i oom</code>.</li>
+            <li>Capacity: <code>df -h</code> + <code>free -h</code> + <code>uptime</code>.</li>
+          </ul>
+
+          <h2>Process state troubleshooting</h2>
+          <ul>
+            <li><b>D-state (uninterruptible sleep)</b> → stuck on kernel I/O (NFS, broken disk). Cannot kill; fix the underlying device.</li>
+            <li><b>Z-state (zombie)</b> → parent didn't reap. Signal parent (<code>kill -CHLD</code>) or kill parent so init reaps.</li>
+            <li><b>High CPU</b> → <code>top</code> by CPU; <code>perf top</code>; check for runaway loops.</li>
+            <li><b>High mem</b> → <code>smem</code> / <code>ps_mem</code>; check for leaks; OOM killer evidence.</li>
+            <li><b>Hung on syscall</b> → <code>strace -p PID</code>; <code>cat /proc/&lt;pid&gt;/wchan</code> + <code>/proc/&lt;pid&gt;/stack</code>.</li>
+          </ul>
+
+          <h2>Crashes + kernel debugging</h2>
+          <ul>
+            <li><b>kdump</b> — captures kernel crash dump (vmcore) to <code>/var/crash/</code>; analyze with <code>crash</code> + <code>makedumpfile</code>.</li>
+            <li><b>dmesg + journalctl -k</b> — kernel oops messages.</li>
+            <li><b>/proc/sys/kernel/panic</b> — seconds to reboot on panic (0 = never).</li>
+            <li><b>SysRq keys</b> — emergency: Alt+SysRq + R (recover keyboard), E (TERM all), I (KILL all), S (sync), U (remount RO), B (reboot). Sequence "REISUB" = clean panic recovery. Enable: <code>echo 1 > /proc/sys/kernel/sysrq</code>.</li>
+            <li><b>magic NMI watchdog</b> — detects hung CPU.</li>
+            <li><b>Kernel taint</b> — <code>cat /proc/sys/kernel/tainted</code> ≠ 0 means non-Open Source modules / oops occurred — vendor support may require clean kernel.</li>
+          </ul>
+
+          <h2>Time + clock issues</h2>
+          <ul>
+            <li><b>Skewed clock</b> breaks Kerberos / TLS / auth / cron + log correlation.</li>
+            <li><code>timedatectl status</code> — overview.</li>
+            <li><code>chronyc tracking</code> / <code>chronyc sources</code> — NTP status (chrony).</li>
+            <li><code>ntpq -p</code> for ntpd.</li>
+            <li>Fix: <code>timedatectl set-ntp true</code>; pick reliable pool servers.</li>
+            <li><b>hwclock --systohc</b> — sync hardware clock to system.</li>
+          </ul>
+
+          <h2>User / authentication issues</h2>
+          <ul>
+            <li><b>"Permission denied" SSH</b>: client <code>ssh -v</code>; server <code>journalctl -u sshd -f</code>; check key perms (700/600), authorized_keys path, AllowUsers, SELinux <code>restorecon -Rv ~/.ssh</code>.</li>
+            <li><b>"Account locked"</b>: <code>faillock --user alice --reset</code>; check <code>chage -l alice</code>.</li>
+            <li><b>sudo refusing</b>: <code>sudo -l</code>; verify group membership <code>id</code>; remember new group needs new login.</li>
+            <li><b>SSSD / AD lookup fails</b>: <code>id user</code>; <code>getent passwd user</code>; <code>sssctl user-show user</code>; check sssd.log; <code>realm list</code>.</li>
+            <li><b>Kerberos clock skew</b> error — sync NTP.</li>
+          </ul>
+
+          <h2>Package + library troubleshooting</h2>
+          <ul>
+            <li><b>"command not found"</b> — <code>which / type / command -v cmd</code>; check PATH; install package; rehash bash (<code>hash -r</code>).</li>
+            <li><b>"shared library not found"</b> — <code>ldd /path/to/bin</code>; install matching lib; <code>ldconfig -v</code>; check <code>/etc/ld.so.conf.d/</code>.</li>
+            <li><b>Broken upgrade</b>: <code>sudo apt --fix-broken install</code> / <code>dnf history undo</code>.</li>
+            <li><b>Mismatched glibc / kernel</b> after partial upgrade → run full upgrade or rollback.</li>
+            <li><b>rpm/dpkg verify</b> — <code>rpm -Va</code>, <code>debsums -s</code> — detect tampered files.</li>
+          </ul>
+
+          <h2>Container / virtualization troubleshooting</h2>
+          <ul>
+            <li><code>docker ps -a</code>, <code>docker logs CID</code>, <code>docker exec -it CID /bin/sh</code>.</li>
+            <li><code>kubectl get pods</code>, <code>kubectl describe pod x</code>, <code>kubectl logs x</code>, <code>kubectl exec -it x -- sh</code>.</li>
+            <li>Crashed pod → events + <code>kubectl logs --previous</code>.</li>
+            <li>Resource throttle → cgroup limits.</li>
+            <li>VM not starting → <code>virsh list --all</code>, <code>virsh start name</code>, check <code>/var/log/libvirt/</code>.</li>
+            <li>SELinux blocks container access → <code>chcon -Rt container_file_t /path</code> or run with <code>:Z</code> volume label.</li>
+          </ul>
+
+          <h2>Common log patterns to grep for</h2>
+          <ul>
+            <li><code>grep -i 'error\\|fail\\|panic\\|denied\\|timeout' /var/log/syslog</code></li>
+            <li>OOM: <code>grep -i 'killed process\\|out of memory'</code></li>
+            <li>Disk: <code>grep -iE 'ext4|xfs|i/o error|read error|smart'</code></li>
+            <li>Network: <code>grep -iE 'link is down|link up|carrier|martian'</code></li>
+            <li>SSH brute: <code>grep 'Failed password' /var/log/auth.log | awk '{print $11}' | sort | uniq -c | sort -rn | head</code></li>
+            <li>SELinux denial: <code>ausearch -m AVC -ts recent</code> or <code>sealert -a /var/log/audit/audit.log</code>.</li>
+          </ul>
+
+          <h2>Recovery techniques</h2>
+          <ul>
+            <li><b>Boot to single-user / rescue:</b> add <code>rescue</code> / <code>emergency</code> / <code>single</code> to kernel line; or boot live USB + chroot.</li>
+            <li><b>Live USB chroot:</b>
+              <pre><code>mount /dev/sda1 /mnt
+mount --bind /dev /mnt/dev
+mount --bind /proc /mnt/proc
+mount --bind /sys /mnt/sys
+chroot /mnt /bin/bash
+# Now you're in the broken system. Run grub-install, passwd, fix fstab, etc.</code></pre>
+            </li>
+            <li><b>Reset root password</b> (covered above): rd.break / init=/bin/bash.</li>
+            <li><b>Reinstall bootloader:</b> <code>grub-install /dev/sda</code> + regenerate grub.cfg.</li>
+            <li><b>Repair initramfs:</b> <code>sudo dracut -f --kver $(uname -r)</code> (RHEL) or <code>sudo update-initramfs -u -k all</code> (Debian).</li>
+            <li><b>SELinux relabel</b>: <code>touch /.autorelabel</code> + reboot.</li>
+            <li><b>Restore from backup</b> — last resort. Document RPO/RTO + practice.</li>
+          </ul>
+
+          <h2>Reference: kernel + system info shortcuts</h2>
+          <pre><code>uname -a                           # kernel + arch
+cat /etc/os-release                # distro
+hostnamectl                        # systemd + hostname + chassis
+timedatectl                        # time / timezone / NTP
+localectl                          # locale
+inxi -Fxxxz                        # comprehensive system report
+neofetch                           # fun system summary
+hostnamectl status</code></pre>
+
+          <h2>Useful one-liners</h2>
+          <pre><code># Top 10 memory-hogging processes
+ps -eo pid,user,%mem,%cpu,comm --sort=-%mem | head -10
+
+# Continuously watch listening sockets change
+watch -n 1 ss -tunlp
+
+# Show top 20 directories by size
+sudo du -hx --max-depth=1 / 2>/dev/null | sort -h | tail -20
+
+# Find files modified in last 10 min (recent malware planting?)
+sudo find / -xdev -mmin -10 -type f -printf '%T@ %p\\n' 2>/dev/null | sort -rn | head
+
+# Identify holder of port 8080
+sudo ss -tunlp | grep :8080
+
+# Live tail multiple files
+sudo tail -F /var/log/auth.log /var/log/syslog
+
+# Watch system load every 2 sec
+watch -n 2 'uptime; free -h; df -h | head -5'
+
+# Show network bandwidth top processes
+sudo nethogs
+
+# Find files with NO owner / group (orphaned)
+sudo find / -xdev \\( -nouser -o -nogroup \\) 2>/dev/null
+
+# Find SUID + SGID binaries
+sudo find / -perm /6000 -type f 2>/dev/null
+
+# Compare two directories
+diff -r dir1 dir2 | grep -v '^Common subdirectories'</code></pre>
+
+          <h2>Documentation discipline</h2>
+          <ul>
+            <li>Capture every shell session: <code>script ~/incident-$(date +%F).log</code>.</li>
+            <li>Take notes inline; copy commands + outputs.</li>
+            <li>After resolution, write KB article + update runbook.</li>
+            <li>For outages: blameless post-mortem with timeline + root cause + remediation tasks.</li>
+            <li>Track recurring issues; spot trends.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"View live service log" → <code>journalctl -u name -f</code>.</li>
+            <li>"Logs from previous boot" → <code>journalctl -b -1</code>.</li>
+            <li>"Kernel messages" → <code>dmesg -T</code> or <code>journalctl -k</code>.</li>
+            <li>"Slowest units at boot" → <code>systemd-analyze blame</code>.</li>
+            <li>"Hung mount kills shutdown" → <code>umount -lf</code>; remove from /etc/fstab.</li>
+            <li>"OOM killer evidence" → <code>journalctl -k | grep -i 'out of memory'</code>.</li>
+            <li>"Reset root password" → boot single-user / rd.break + <code>passwd</code>.</li>
+            <li>"NIC up + no IP" → DHCP fail or static config wrong.</li>
+            <li>"Permission denied SSH key" → check 700/600 + home dir not group-writable + sshd_config AuthorizedKeysFile.</li>
+            <li>"Disk full, df shows space" → out of inodes; <code>df -i</code>.</li>
+            <li>"Open file deleted, space not freed" → restart process holding it.</li>
+            <li>"systemd unit not found after edit" → <code>systemctl daemon-reload</code>.</li>
+            <li>"Capture syscalls of running PID" → <code>strace -p PID</code>.</li>
+            <li>"Boot UEFI rescue" → boot installer media in rescue mode + chroot.</li>
+            <li>"SELinux denial info" → <code>sealert</code> + <code>ausearch -m AVC</code>.</li>
+            <li>"Reapply Kerberos clock skew fix" → sync NTP (chrony).</li>
+          </ul>
         `
       }
     ],
