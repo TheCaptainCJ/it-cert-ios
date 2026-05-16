@@ -3931,17 +3931,210 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
       {
         title: '3. IPv6 Essentials',
         body: `
-          <p>128-bit addresses written in hex, 8 groups of 4. <code>2001:db8::1</code> uses <code>::</code> to compress one run of zeros.</p>
-          <h2>Address types</h2>
+          <p><b>IPv6</b> = Internet Protocol version 6. Successor to IPv4 (RFC 8200). Designed to solve IPv4 exhaustion and clean up legacy decisions. <b>128-bit</b> addresses = 2¹²⁸ ≈ 340 undecillion total — practically unlimited.</p>
+
+          <h2>Why IPv6?</h2>
           <ul>
-            <li><b>Global unicast</b> — 2000::/3, public.</li>
-            <li><b>Link-local</b> — fe80::/10, auto-configured per interface.</li>
-            <li><b>Unique local</b> — fc00::/7, ~ private IPv4.</li>
-            <li><b>Multicast</b> — ff00::/8 (no broadcast in v6).</li>
-            <li><b>Anycast</b> — closest of many.</li>
+            <li><b>Address exhaustion</b> — IPv4 (4.3 B addresses) ran out at IANA in 2011.</li>
+            <li><b>NAT not needed</b> — every device can have a public address again; restores end-to-end connectivity.</li>
+            <li><b>Built-in features</b> — IPsec mandatory in spec (in practice optional), better multicast, no broadcast, simpler header.</li>
+            <li><b>Auto-configuration</b> — SLAAC lets devices self-assign without DHCP.</li>
+            <li><b>Routing efficiency</b> — fewer routing-table entries due to better aggregation.</li>
           </ul>
-          <h2>SLAAC vs DHCPv6</h2>
-          <p>SLAAC = stateless, router advertises prefix, host generates address. DHCPv6 = stateful, server tracks leases.</p>
+
+          <h2>Address format</h2>
+          <p>128 bits written as 8 groups of 4 hex digits separated by colons:</p>
+          <p><code>2001:0db8:0000:0000:0000:0000:0000:0001</code></p>
+          <p>Two compression rules apply:</p>
+          <ol>
+            <li><b>Drop leading zeros</b> in each group — <code>0db8</code> → <code>db8</code>, <code>0000</code> → <code>0</code>.</li>
+            <li><b>Use <code>::</code> ONCE</b> to compress one or more consecutive all-zero groups.</li>
+          </ol>
+          <p>Above example compresses to: <code>2001:db8::1</code>.</p>
+          <p>Two compressions in one address would be ambiguous — only one <code>::</code> allowed.</p>
+
+          <h2>Prefix length (CIDR style)</h2>
+          <p>IPv6 still uses slash notation: <code>2001:db8:abcd:1234::/64</code> means the first 64 bits are the network portion.</p>
+          <p>Typical sizes:</p>
+          <ul>
+            <li><b>/32</b> — ISP allocation from RIR.</li>
+            <li><b>/48</b> — site allocation to a customer.</li>
+            <li><b>/56</b> — small site / business / home.</li>
+            <li><b>/64</b> — single subnet. The standard subnet size for end-host networks (required by SLAAC).</li>
+            <li><b>/128</b> — single host (like /32 in IPv4 host route).</li>
+          </ul>
+
+          <h2>Address types</h2>
+
+          <h3>Global Unicast</h3>
+          <p><b>What:</b> Globally routable, publicly reachable. Equivalent to a public IPv4.</p>
+          <p><b>Range:</b> <code>2000::/3</code> (anything starting with 2 or 3 binary 001-prefix).</p>
+          <p><b>How used:</b> Assigned by RIRs (ARIN, RIPE NCC, APNIC, LACNIC, AfriNIC) → ISPs → customers.</p>
+
+          <h3>Link-Local</h3>
+          <p><b>What:</b> Mandatory on every IPv6-enabled interface. Used for neighbor discovery, router advertisements, and traffic within a single link. Never routed off-link.</p>
+          <p><b>Range:</b> <code>fe80::/10</code> (in practice almost always <code>fe80::/64</code>).</p>
+          <p><b>How generated:</b> EUI-64 from MAC, or modern OS uses random "privacy addresses". On Windows / macOS / Linux, every NIC has one automatically.</p>
+          <p><b>Zone ID:</b> Same link-local prefix exists on every interface, so you must specify which interface — e.g., <code>ping fe80::1%eth0</code> or <code>fe80::1%12</code> on Windows.</p>
+
+          <h3>Unique Local Address (ULA)</h3>
+          <p><b>What:</b> Private-ish addressing for internal networks. Not routed on the public Internet.</p>
+          <p><b>Range:</b> <code>fc00::/7</code> — in practice <code>fd00::/8</code> for locally generated.</p>
+          <p><b>How used:</b> Like RFC 1918 in IPv4, but each org should generate a random 40-bit Global ID to avoid collisions on VPN merges.</p>
+
+          <h3>Multicast</h3>
+          <p><b>What:</b> One-to-many delivery. Replaces IPv4 broadcast.</p>
+          <p><b>Range:</b> <code>ff00::/8</code>.</p>
+          <p><b>Well-known multicast groups:</b></p>
+          <ul>
+            <li><code>ff02::1</code> — all nodes on the link.</li>
+            <li><code>ff02::2</code> — all routers on the link.</li>
+            <li><code>ff02::1:ff00:0/104</code> — solicited-node multicast (for ND).</li>
+          </ul>
+          <p>Scopes (4th hex digit): 1 = node, 2 = link, 5 = site, 8 = organization, e = global.</p>
+
+          <h3>Anycast</h3>
+          <p><b>What:</b> Same address assigned to multiple nodes. Routed traffic goes to the topologically nearest one.</p>
+          <p><b>How used:</b> DNS root servers, CDN POPs (Cloudflare 1.1.1.1, Google 8.8.8.8 — IPv4 examples; also IPv6 2606:4700:4700::1111 etc.), 6to4 relays.</p>
+
+          <h3>Loopback / Unspecified</h3>
+          <ul>
+            <li><b>Loopback</b> — <code>::1</code> (equivalent to 127.0.0.1).</li>
+            <li><b>Unspecified</b> — <code>::</code> (equivalent to 0.0.0.0).</li>
+          </ul>
+
+          <h3>Special-purpose</h3>
+          <ul>
+            <li><code>2001:db8::/32</code> — reserved for documentation.</li>
+            <li><code>::ffff:0:0/96</code> — IPv4-mapped IPv6 addresses (used when an IPv4 packet is represented inside an IPv6 socket).</li>
+            <li><code>64:ff9b::/96</code> — NAT64 well-known prefix.</li>
+            <li><code>2002::/16</code> — 6to4.</li>
+          </ul>
+
+          <h2>EUI-64 interface ID generation</h2>
+          <p>From a 48-bit MAC address:</p>
+          <ol>
+            <li>Split MAC in half.</li>
+            <li>Insert <code>ff:fe</code> in the middle (so 48 → 64 bits).</li>
+            <li>Flip the 7th bit (universal/local bit) — usually 0 → 1.</li>
+          </ol>
+          <p>Example: MAC <code>00:1a:2b:3c:4d:5e</code> → EUI-64 <code>021a:2bff:fe3c:4d5e</code>.</p>
+          <p>Modern OSes prefer <b>RFC 4941 privacy addresses</b> — random interface IDs rotated periodically to defeat tracking. Server / static config often still uses EUI-64.</p>
+
+          <h2>ICMPv6 + Neighbor Discovery Protocol (NDP)</h2>
+          <p>IPv6 collapses several IPv4 functions into one:</p>
+          <ul>
+            <li><b>NS</b> (Neighbor Solicitation) — replaces ARP. "Who has fe80::1?"</li>
+            <li><b>NA</b> (Neighbor Advertisement) — reply with link-layer (MAC) address.</li>
+            <li><b>RS</b> (Router Solicitation) — host on boot asks "any routers here?".</li>
+            <li><b>RA</b> (Router Advertisement) — router announces itself + prefix info + flags (M/O bits).</li>
+            <li><b>Redirect</b> — better next-hop available.</li>
+            <li><b>DAD</b> (Duplicate Address Detection) — verifies a self-generated address isn't already in use on the link.</li>
+          </ul>
+          <p>Security note: ND attacks (RA spoofing) are mitigated with <b>RA Guard</b> and <b>SEND</b> (Secure Neighbor Discovery).</p>
+
+          <h2>Address assignment methods</h2>
+
+          <h3>SLAAC — Stateless Address Auto-Configuration</h3>
+          <p><b>What:</b> Host receives a Router Advertisement containing a /64 prefix → host appends its own interface ID (EUI-64 or random) → has a working address with no DHCP server.</p>
+          <p><b>RA flags:</b></p>
+          <ul>
+            <li><b>M-flag</b> (Managed) — use DHCPv6 for address.</li>
+            <li><b>O-flag</b> (Other) — use DHCPv6 only for OTHER info (DNS, NTP), address via SLAAC.</li>
+            <li>Both 0 → pure SLAAC with RDNSS option for DNS.</li>
+          </ul>
+
+          <h3>DHCPv6</h3>
+          <p><b>What:</b> Server-managed assignment of IPv6 addresses + options.</p>
+          <p><b>Two modes:</b></p>
+          <ul>
+            <li><b>Stateful</b> — server hands out addresses + tracks leases (like DHCPv4).</li>
+            <li><b>Stateless</b> — server provides only auxiliary info (DNS, NTP) when SLAAC handles addressing.</li>
+          </ul>
+          <p><b>Ports:</b> server UDP 547, client UDP 546. <b>DUID</b> (DHCP Unique Identifier) replaces MAC for client identification.</p>
+
+          <h3>Static</h3>
+          <p>Manual assignment for servers, routers, firewalls.</p>
+
+          <h2>Header changes vs IPv4</h2>
+          <ul>
+            <li>Fixed 40-byte header (vs variable in v4).</li>
+            <li>No checksum (offloaded to L2/L4 → faster routing).</li>
+            <li>No fragmentation by routers — sender uses Path MTU Discovery.</li>
+            <li>Hop Limit replaces TTL (same idea).</li>
+            <li><b>Flow Label</b> field — labels traffic flows for QoS / load-balancing.</li>
+            <li><b>Extension headers</b> — optional, daisy-chained (Hop-by-Hop, Routing, Fragment, AH, ESP).</li>
+          </ul>
+
+          <h2>Routing</h2>
+          <ul>
+            <li>Same protocols upgraded: <b>OSPFv3</b>, <b>RIPng</b>, <b>EIGRP for IPv6</b>, <b>BGP with IPv6 AF</b>.</li>
+            <li>Routers don't ARP — they use ND.</li>
+            <li>"No NAT" is the ideal — but NAT66 / NPTv6 exist for special cases.</li>
+          </ul>
+
+          <h2>Transition mechanisms (IPv4 ↔ IPv6 coexistence)</h2>
+          <ul>
+            <li><b>Dual stack</b> — host runs IPv4 AND IPv6 simultaneously. Most common deployment.</li>
+            <li><b>6to4</b> — encapsulates IPv6 inside IPv4 using <code>2002::/16</code> prefix. Legacy.</li>
+            <li><b>6in4 / manual tunnel</b> — point-to-point IPv6 over IPv4.</li>
+            <li><b>Teredo</b> — Windows tunnel through NAT (UDP-encapsulated). Largely deprecated.</li>
+            <li><b>ISATAP</b> — Intra-Site Automatic Tunnel Addressing Protocol.</li>
+            <li><b>NAT64 + DNS64</b> — IPv6-only client communicating with IPv4-only servers.</li>
+            <li><b>464XLAT</b> — common on cellular networks.</li>
+            <li><b>MAP-T / MAP-E</b> — ISP-side IPv4-as-a-service over IPv6 backbone.</li>
+          </ul>
+
+          <h2>IPv6 in real networks</h2>
+          <ul>
+            <li>~45% of users globally reach Google over IPv6 (varies by country, Comcast / T-Mobile near 80%).</li>
+            <li>Many enterprises still IPv4-only internally + use NAT64 / dual stack at the edge.</li>
+            <li>Cellular networks are largely IPv6-first now.</li>
+            <li>Cloud (AWS / Azure / GCP) all support dual-stack VPCs; IPv6-only VPCs gaining ground.</li>
+          </ul>
+
+          <h2>Privacy + security considerations</h2>
+          <ul>
+            <li><b>Privacy addresses</b> rotate to make tracking harder.</li>
+            <li><b>RA Guard</b> on switches blocks rogue Router Advertisements.</li>
+            <li><b>DHCPv6 Guard</b> blocks rogue DHCPv6 servers.</li>
+            <li><b>SEND</b> + IPsec authenticate ND messages.</li>
+            <li><b>No NAT</b> means every host is potentially reachable — firewalls + ACLs become more important (stateful inspection still applies).</li>
+            <li><b>Scope filtering</b> — block multicast leakage at site boundaries.</li>
+          </ul>
+
+          <h2>Common troubleshooting commands</h2>
+          <pre><code># Windows
+ipconfig /all                   # see IPv6 addresses
+netsh interface ipv6 show route
+ping ::1
+ping -6 host
+tracert -6 host
+
+# Linux / macOS
+ip -6 addr
+ip -6 route
+ping6 host                      # or ping -6
+tracepath6 host
+
+# Generic
+nslookup -type=AAAA example.com  # IPv6 DNS record</code></pre>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>IPv6 address = 128 bits, written as 8 groups of 4 hex.</li>
+            <li>Compress with <code>::</code> ONCE per address.</li>
+            <li>Global unicast prefix: <code>2000::/3</code>.</li>
+            <li>Link-local: <code>fe80::/10</code> — mandatory, never routed off-link.</li>
+            <li>Unique Local: <code>fc00::/7</code> (used as <code>fd00::/8</code>).</li>
+            <li>Multicast: <code>ff00::/8</code>. IPv6 has NO broadcast.</li>
+            <li>SLAAC = stateless, host generates address from router-advertised prefix.</li>
+            <li>DHCPv6 = stateful or stateless-info modes.</li>
+            <li>NDP replaces ARP (uses ICMPv6).</li>
+            <li>Standard host subnet size = /64.</li>
+            <li>Common transition: dual stack.</li>
+            <li>NAT64 lets IPv6-only client reach IPv4-only server.</li>
+          </ul>
         `
       },
       {
