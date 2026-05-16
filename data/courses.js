@@ -17291,17 +17291,120 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '8. Cost Management & SLAs',
         body: `
-          <h2>Pricing tools</h2>
+          <h2>Why cost + SLA matter on the exam</h2>
+          <p>Microsoft tests whether you can pick the right <b>pricing tool</b> for each phase (before vs after deploy), name the major <b>cost optimization levers</b> (Reservations, Savings Plans, Hybrid Benefit, Spot), and read a <b>composite SLA</b>. Expect at least 4-6 questions hitting these directly.</p>
+
+          <h2>Pricing tools — pre-deployment vs post-deployment</h2>
+
+          <h3>Azure Pricing Calculator (pre-deployment estimate)</h3>
+          <p><b>What:</b> web tool at <code>azure.microsoft.com/pricing/calculator</code> that estimates monthly cost for a proposed deployment — pick services, regions, SKUs, hours/GB; it sums them. <b>Why:</b> budget approval before clicking Deploy. <b>How used:</b> save estimates, share by URL, export Excel. Includes options for Reservations, Hybrid Benefit, dev/test pricing, support plan.</p>
+
+          <h3>Azure TCO Calculator (cost comparison)</h3>
+          <p><b>Acronym:</b> Total Cost of Ownership Calculator. <b>What:</b> compares 3-year cost of running workloads on-prem vs Azure. <b>Why:</b> migration business case for CFOs. <b>How used:</b> input your servers, databases, storage, network, electricity, IT labor — it factors hardware, software, power, cooling, real estate, staff, then outputs side-by-side TCO. Different tool from Pricing Calculator — Pricing = new Azure deployment; TCO = on-prem vs Azure.</p>
+
+          <h3>Microsoft Cost Management + Billing (post-deployment analysis)</h3>
+          <p><b>What:</b> the operational tool for analyzing <i>actual</i> spend after resources are running. <b>Features:</b></p>
           <ul>
-            <li><b>Pricing Calculator</b> — estimate cost of services BEFORE deploying.</li>
-            <li><b>TCO Calculator</b> — compare on-prem cost vs. Azure migration.</li>
-            <li><b>Microsoft Cost Management</b> — analyze actual spend, budgets, alerts (post-deploy).</li>
-            <li><b>Azure Advisor</b> — cost, security, reliability, performance recommendations.</li>
+            <li><b>Cost analysis</b> — break down spend by subscription, resource group, service, location, tag, or time period.</li>
+            <li><b>Budgets</b> — set monthly/quarterly/annual budget at any scope; alert via email/action group at thresholds (50%, 75%, 90%, 100%, forecasted overrun).</li>
+            <li><b>Cost alerts</b> — credit, anomaly, budget alerts.</li>
+            <li><b>Exports</b> — daily push to a storage account for Power BI / Synapse analysis.</li>
+            <li><b>Cost allocation</b> — chargeback to departments via tags.</li>
+            <li><b>Cost Management for AWS</b> (via Cost Management connector — covers multi-cloud spend in one pane). Microsoft is migrating to <b>FinOps toolkit</b> for advanced patterns.</li>
           </ul>
-          <h2>Cost optimization</h2>
-          <p>Reservations (1-yr / 3-yr commitment, up to 72% off), Azure Hybrid Benefit (use existing Windows/SQL licenses), Spot VMs, dev/test pricing, auto-shutdown.</p>
-          <h2>SLAs</h2>
-          <p>Service Level Agreement = guaranteed uptime % (e.g., 99.9%, 99.95%, 99.99%). Composite SLA = product of dependent service SLAs. Higher availability = multi-AZ / multi-region design.</p>
+
+          <h3>Azure Advisor (recommendations engine)</h3>
+          <p><b>What:</b> free personalized recommendations across five pillars: <b>Cost</b>, <b>Security</b>, <b>Reliability</b>, <b>Operational Excellence</b>, <b>Performance</b>. <b>Why:</b> Microsoft scans your actual usage and tells you "this VM is idle, downsize", "this disk is unattached, delete", "buy a Reservation". <b>How used:</b> review Cost tab weekly; apply or dismiss with justification.</p>
+
+          <h2>Cost optimization levers (every one is fair game on the exam)</h2>
+
+          <h3>Reserved Instances (RI) / Azure Reservations</h3>
+          <p><b>What:</b> commit to a specific service + region + SKU for <b>1 year or 3 years</b> in exchange for up to <b>72% discount</b> vs pay-as-you-go. <b>Why:</b> steady-state workloads (production DBs, baseline web tier). <b>How used:</b> buy via Cost Management → Reservations; covers VMs, Azure SQL DB / MI, Cosmos DB throughput, Storage capacity, App Service, Synapse, Databricks. Payment: All upfront, Monthly, or Partial. Can be exchanged or refunded (early termination fee may apply).</p>
+
+          <h3>Azure Savings Plans for Compute</h3>
+          <p><b>What:</b> commit to a <b>fixed hourly spend</b> (e.g., $5/hr) for 1 or 3 years; covers any VM family, region, or compute service (VMs, VMSS, App Service, Container Instances, Functions Premium). <b>Why:</b> more flexible than RI — workload can move SKUs / regions and discount still applies. Up to 65% savings (less than RI's 72%, in exchange for flexibility).</p>
+
+          <h3>Azure Hybrid Benefit (AHB)</h3>
+          <p><b>Acronym:</b> Azure Hybrid Benefit. <b>What:</b> bring your existing <b>Windows Server</b> + <b>SQL Server</b> licenses with Software Assurance (or qualifying RHEL/SUSE subscriptions) to Azure. <b>Why:</b> pay only for the underlying compute, not the license — up to 85% savings on Windows VMs combined with Reservations. <b>How used:</b> toggle "Azure Hybrid Benefit" on VM/SQL during create or after; Microsoft trusts your declaration but you must have Software Assurance licenses to claim.</p>
+
+          <h3>Spot Virtual Machines</h3>
+          <p><b>What:</b> bid for unused Azure capacity at up to <b>90% discount</b>; Azure can evict your VM with 30 seconds notice when capacity is reclaimed. <b>Why:</b> interruptible workloads — batch, dev/test, CI build farms, video encoding, big-data crunching. <b>How used:</b> set a max price; if spot price exceeds, eviction. Not for production or stateful workloads.</p>
+
+          <h3>Right-sizing + auto-shutdown</h3>
+          <p>Pick the smallest SKU that meets perf; downsize idle VMs (Advisor flags); auto-shutdown dev VMs on a schedule (built into VM blade). B-series burstable VMs accumulate CPU credits when idle and burst on demand — cheap for spiky low-utilization workloads.</p>
+
+          <h3>Dev/Test pricing + Visual Studio subscriptions</h3>
+          <p>Discounted rates on non-production workloads via Enterprise Dev/Test or Pay-As-You-Go Dev/Test subscriptions. Free Windows/SQL licenses inside dev/test VMs.</p>
+
+          <h3>Free + Always-Free services</h3>
+          <p>Azure Free Account: $200 credit for 30 days + 12 months of certain services free (B1S VM, 5 GB blob, 250 GB SQL DB) + always-free items (App Service tier F1, Azure Functions 1M executions/month, Cosmos DB 1000 RU/s + 25 GB).</p>
+
+          <h3>Pricing factors that drive cost</h3>
+          <ul>
+            <li><b>Resource type + SKU tier</b> (Premium SSD &gt; Standard SSD &gt; Standard HDD).</li>
+            <li><b>Usage time</b> — VMs billed per-second when running.</li>
+            <li><b>Region</b> — same SKU costs differently in East US vs West Europe.</li>
+            <li><b>Egress (data leaving Azure)</b> — bandwidth out costs money; inbound is free.</li>
+            <li><b>Cross-region traffic</b> + cross-AZ traffic — charged.</li>
+            <li><b>Reservation vs PAYG</b> — commitment level.</li>
+            <li><b>Subscription type</b> — EA / MCA / CSP / PAYG / Dev-Test.</li>
+          </ul>
+
+          <h2>Service Level Agreements (SLAs)</h2>
+
+          <h3>What an SLA is</h3>
+          <p><b>SLA</b> = Microsoft's contractual commitment for a service's availability/performance, plus <b>service credits</b> if Microsoft misses it (e.g., 10% credit for &lt;99.9%, 25% for &lt;99%). SLA is a refund, not insurance — your downtime cost is yours.</p>
+
+          <h3>SLA tiers (memorize)</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>SLA</th><th>Allowed downtime / month</th><th>Allowed downtime / year</th><th>Common at</th></tr>
+            <tr><td>99% (two nines)</td><td>7h 18m</td><td>3d 15h</td><td>preview / single-instance</td></tr>
+            <tr><td>99.9% (three nines)</td><td>43m 49s</td><td>8h 45m</td><td>single VM w/ premium SSD; many PaaS</td></tr>
+            <tr><td>99.95%</td><td>21m 54s</td><td>4h 22m</td><td>VMs in same Availability Set</td></tr>
+            <tr><td>99.99% (four nines)</td><td>4m 22s</td><td>52m</td><td>VMs across Availability Zones; zone-redundant services</td></tr>
+            <tr><td>99.999% (five nines)</td><td>26s</td><td>5m 15s</td><td>Cosmos DB multi-region writes</td></tr>
+          </table>
+
+          <h3>Architectural SLA boosters in Azure</h3>
+          <ul>
+            <li><b>Single instance VM (Premium SSD)</b> — 99.9%.</li>
+            <li><b>Availability Set</b> (2+ VMs in same DC, different fault/update domains) — 99.95%.</li>
+            <li><b>Availability Zones</b> (2+ VMs across AZs) — <b>99.99%</b>.</li>
+            <li><b>Multi-region</b> — Azure does not publish a single SLA; you compose it via Traffic Manager / Front Door + per-region SLAs.</li>
+          </ul>
+
+          <h3>Composite SLA (math you may be asked to do)</h3>
+          <p>When an app depends on N services in series, the effective SLA is the <b>product</b> of each component's SLA. Example: a web app on App Service (99.95%) using Azure SQL (99.99%) → composite SLA = 0.9995 × 0.9999 ≈ 99.94%. <b>How to improve:</b> add parallel components — two regions with Traffic Manager turns a chain into a redundant path (1 − probability_both_fail). Always lower than the weakest link in series; always higher with parallel.</p>
+
+          <h3>SLA exclusions</h3>
+          <p>No SLA on: <b>Free / preview / Basic tier</b> services. Customer-caused outages (you misconfigured) excluded. Provider-acknowledged outage required to claim credit; you must file the claim.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>TCO</b> — Total Cost of Ownership.</li>
+            <li><b>PAYG</b> — Pay-As-You-Go.</li>
+            <li><b>RI</b> — Reserved Instance.</li>
+            <li><b>AHB</b> — Azure Hybrid Benefit.</li>
+            <li><b>SLA / SLO / SLI</b> — Service Level Agreement / Objective / Indicator. AZ-900 mostly tests SLA.</li>
+            <li><b>EA / MCA / CSP</b> — billing/subscription agreements.</li>
+            <li><b>FinOps</b> — Financial Operations practice — cross-functional cost governance.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Estimate cost BEFORE deploying" → <b>Pricing Calculator</b>.</li>
+            <li>"Compare on-prem vs Azure over 3 years" → <b>TCO Calculator</b>.</li>
+            <li>"Analyze ACTUAL spend and set alerts" → <b>Microsoft Cost Management</b> (Budgets).</li>
+            <li>"Recommends I shut down idle VMs" → <b>Azure Advisor</b>.</li>
+            <li>"Lower bill on steady-state workloads, 1-3 year commit" → <b>Reservations</b>.</li>
+            <li>"Flexible compute commit across SKUs/regions" → <b>Savings Plan</b>.</li>
+            <li>"Already own Windows Server licenses" → <b>Azure Hybrid Benefit</b>.</li>
+            <li>"Interruptible batch jobs at up to 90% off" → <b>Spot VMs</b>.</li>
+            <li>"Two VMs in Availability Zones, what SLA?" → <b>99.99%</b>.</li>
+            <li>"Two VMs in Availability Set in one DC, what SLA?" → <b>99.95%</b>.</li>
+            <li>"Web app on App Service (99.95%) calls SQL (99.99%) — composite SLA?" → <b>0.9995 × 0.9999 ≈ 99.94%</b>.</li>
+            <li>"No SLA on this service" → <b>Free / Basic / Preview</b> tiers.</li>
+          </ul>
         `
       },
       {
