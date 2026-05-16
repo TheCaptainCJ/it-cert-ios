@@ -8631,18 +8631,360 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '10. Secure Architecture & Cloud',
         body: `
-          <h2>Shared responsibility</h2>
-          <p>Cloud provider secures <i>of</i> the cloud (hardware, hypervisor). Customer secures <i>in</i> the cloud (data, IAM, OS patching for IaaS).</p>
-          <h2>Cloud controls</h2>
+          <p>Modern Security+ architecture is cloud-first + identity-centric. This lesson covers shared responsibility, cloud-native controls, resilience, secure design patterns, OT/IoT, and emerging considerations (AI, supply chain, post-quantum). Capstone topic — connects every prior domain.</p>
+
+          <h2>Service + deployment models (recap)</h2>
           <ul>
-            <li><b>CASB</b> — visibility/policy for SaaS.</li>
-            <li><b>CSPM</b> — config posture (misconfigs).</li>
-            <li><b>CWPP</b> — workload protection.</li>
-            <li><b>IAM least privilege</b>, MFA, conditional access.</li>
-            <li><b>Encryption at rest + in transit</b>; customer-managed keys (CMK / BYOK).</li>
+            <li><b>Service:</b> IaaS / PaaS / SaaS / FaaS / DBaaS / DaaS / SECaaS / IDaaS.</li>
+            <li><b>Deployment:</b> Public / Private / Hybrid / Community / Multi-cloud.</li>
+            <li><b>Edge / fog</b> — compute near data sources for latency.</li>
+            <li><b>Cloud-native</b> — designed for cloud (microservices, containers, serverless, managed services).</li>
+            <li><b>Cloud-bursting</b> — spillover to public cloud at peak.</li>
           </ul>
-          <h2>Resilience</h2>
-          <p>RAID, clustering, load balancing, geo-redundancy, hot/warm/cold sites, snapshots, immutable backups against ransomware.</p>
+
+          <h2>Shared responsibility model</h2>
+          <p>Provider secures "<b>of</b> the cloud" — physical DC, hardware, hypervisor, network backbone. Customer secures "<b>in</b> the cloud" — varies by service model.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">On-prem</th><th align="left" style="padding:4px;border-bottom:1px solid #444">IaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SaaS</th></tr>
+            <tr><td>Data classification + identity</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>App code + config</td><td>You</td><td>You</td><td>You</td><td>Provider</td></tr>
+            <tr><td>OS + middleware</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Hypervisor / hardware / DC</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+          </table>
+
+          <h2>Cloud security control families</h2>
+
+          <h3>CASB — Cloud Access Security Broker</h3>
+          <ul>
+            <li>Visibility + policy + DLP + threat protection for SaaS.</li>
+            <li>4 pillars: <b>Visibility</b>, <b>Compliance</b>, <b>Data Security</b>, <b>Threat Protection</b>.</li>
+            <li>Deployments: API-based (most common), forward proxy (inline), reverse proxy.</li>
+            <li>Examples: Microsoft Defender for Cloud Apps, Netskope, Zscaler, Skyhigh.</li>
+          </ul>
+
+          <h3>CSPM — Cloud Security Posture Management</h3>
+          <ul>
+            <li>Continuously scans cloud accounts for misconfigurations (public S3 buckets, open security groups, weak IAM).</li>
+            <li>Maps findings to compliance frameworks (CIS, PCI, HIPAA).</li>
+            <li>Examples: Wiz, Prisma Cloud, Microsoft Defender for Cloud, Orca, Lacework.</li>
+          </ul>
+
+          <h3>CWPP — Cloud Workload Protection Platform</h3>
+          <ul>
+            <li>Runtime protection for VMs, containers, serverless.</li>
+            <li>Combines vuln scanning + EDR-style behavior + integrity monitoring.</li>
+            <li>Examples: Wiz Runtime, CrowdStrike Falcon for Cloud, Aqua, Sysdig, Microsoft Defender for Cloud.</li>
+          </ul>
+
+          <h3>CNAPP — Cloud Native Application Protection Platform</h3>
+          <p>Bundle of CSPM + CWPP + CIEM + IaC scanning + container security + Kubernetes posture, single console. Wiz, Prisma Cloud, Microsoft Defender for Cloud, Orca.</p>
+
+          <h3>CIEM — Cloud Infrastructure Entitlement Management</h3>
+          <p>Identity-permissions analytics across clouds. Highlights over-privileged IAM, unused permissions, cross-account risks. Examples: Sonrai, Saviynt, Wiz.</p>
+
+          <h3>SSPM — SaaS Security Posture Management</h3>
+          <p>Specifically for SaaS app configurations (Salesforce, M365, Workday). AppOmni, Adaptive Shield.</p>
+
+          <h3>DSPM — Data Security Posture Management</h3>
+          <p>Discovers + classifies + monitors sensitive data across cloud. Identifies exposed databases, mis-shared files. Examples: Cyera, Laminar (Rubrik), Sentra.</p>
+
+          <h3>API security</h3>
+          <p>API gateway + dedicated API security platforms (Salt Security, 42Crunch, Noname). OWASP API Top 10.</p>
+
+          <h2>Cloud identity + IAM</h2>
+          <ul>
+            <li><b>IdP</b> centralized (Entra ID, Okta, Google).</li>
+            <li>Federation (SAML / OIDC) into AWS / Azure / GCP.</li>
+            <li>Short-lived role assumption via STS (AWS), Workload Identity (GCP), Managed Identities (Azure).</li>
+            <li>Avoid long-lived access keys; if used, rotate frequently + scope tightly.</li>
+            <li><b>MFA / Conditional Access</b> on every admin.</li>
+            <li><b>PIM</b> — just-in-time admin role activation.</li>
+            <li><b>Cross-account roles</b> + <b>external ID</b> to defeat confused-deputy.</li>
+            <li><b>Service accounts / workload identity</b> — let services authenticate without secrets.</li>
+            <li><b>OAuth scopes + token expiry</b> tight.</li>
+            <li><b>Service control policies / Org policies</b> (AWS SCP, Azure Management Group policies) as guardrails.</li>
+          </ul>
+
+          <h2>Encryption in the cloud</h2>
+          <ul>
+            <li><b>At rest</b> — provider keys (SSE) default, customer-managed keys (CMK), customer-supplied keys (CSE). HSM-backed (CloudHSM, Azure Dedicated HSM).</li>
+            <li><b>In transit</b> — TLS 1.2+, mTLS between services.</li>
+            <li><b>In use</b> — Confidential Computing (Intel SGX, AMD SEV-SNP, AWS Nitro Enclaves, Azure Confidential VMs).</li>
+            <li><b>Envelope encryption</b> — data key encrypted by master key in KMS.</li>
+            <li><b>Field-level encryption</b> — encrypt sensitive fields inside DB.</li>
+            <li><b>Tokenization</b> — replace sensitive values with random tokens stored in a vault. Common in PCI.</li>
+            <li><b>HYOK</b> (Hold Your Own Key) — keys never leave on-prem; cloud calls back.</li>
+            <li><b>BYOK</b> — customer generates key, uploads to KMS.</li>
+            <li><b>Key rotation</b> — automated regularly + on compromise.</li>
+            <li><b>FIPS 140-2/3</b> validation often required for regulated workloads.</li>
+          </ul>
+
+          <h2>Network architecture in cloud</h2>
+          <ul>
+            <li><b>VPC / VNet / VPC peering / Transit Gateway</b> — isolated virtual networks.</li>
+            <li><b>Subnets</b> — public + private.</li>
+            <li><b>Security Groups</b> (stateful) + <b>NACLs</b> (stateless).</li>
+            <li><b>Private endpoints / Service endpoints / PrivateLink</b> — access PaaS over private IP.</li>
+            <li><b>Egress filtering</b> — NAT gateway + outbound firewall.</li>
+            <li><b>VPN gateway / Direct Connect / ExpressRoute</b>.</li>
+            <li><b>Web Application Firewall</b> (cloud-native AWS WAF, Azure Front Door, Cloudflare).</li>
+            <li><b>DDoS protection</b> (AWS Shield, Azure DDoS, Cloudflare Magic Transit).</li>
+            <li><b>CDN</b> — edge caching + L7 WAF.</li>
+            <li><b>Service mesh</b> (Istio, Linkerd, Consul) — mTLS + observability for microservices.</li>
+          </ul>
+
+          <h2>Container + Kubernetes security</h2>
+          <ul>
+            <li><b>Image scanning</b> at build + registry (Trivy, Snyk, Anchore, Aqua, Clair).</li>
+            <li><b>Sign + verify images</b> (cosign + Sigstore, Notary v2).</li>
+            <li><b>Minimal base images</b> (distroless, Wolfi, Chainguard).</li>
+            <li><b>Don't run as root</b>; set non-root <code>USER</code>.</li>
+            <li><b>Read-only root filesystem</b>.</li>
+            <li><b>RBAC + NetworkPolicies</b> in cluster.</li>
+            <li><b>Pod Security Standards</b> (privileged / baseline / restricted).</li>
+            <li><b>Admission controllers</b> (OPA Gatekeeper, Kyverno) enforce policy.</li>
+            <li><b>Secrets management</b> via cloud KMS or HashiCorp Vault — not env vars.</li>
+            <li><b>Runtime detection</b> (Falco, Sysdig, CrowdStrike).</li>
+            <li><b>Patch nodes</b> automatically; use managed K8s (EKS / AKS / GKE) for control plane patches.</li>
+            <li><b>Service accounts</b> per workload with least-priv IAM.</li>
+            <li><b>Supply-chain</b>: SBOM, SLSA levels, in-toto attestations.</li>
+          </ul>
+
+          <h2>Serverless security</h2>
+          <ul>
+            <li>Least-privilege execution role.</li>
+            <li>Short timeouts.</li>
+            <li>Secrets via KMS / Parameter Store / Key Vault.</li>
+            <li>Input validation (event injection risk).</li>
+            <li>Code signing of Lambda packages.</li>
+            <li>Function URL / API Gateway protected by IAM, authorizers, WAF.</li>
+            <li>Cold start considerations.</li>
+            <li>Distributed tracing (X-Ray, App Insights).</li>
+          </ul>
+
+          <h2>Storage security</h2>
+          <ul>
+            <li>Default-private buckets; Block Public Access at account level.</li>
+            <li>Encryption at rest (KMS-managed).</li>
+            <li>Versioning + object lock (WORM) for ransomware resistance.</li>
+            <li>Access logging.</li>
+            <li>Signed URLs for short-lived access.</li>
+            <li>Lifecycle policies — tier + delete.</li>
+            <li><b>S3 / Blob / GCS misconfigurations</b> are top cloud breach cause.</li>
+          </ul>
+
+          <h2>Compute hardening</h2>
+          <ul>
+            <li>Hardened golden images (CIS Benchmark).</li>
+            <li>Patch automation (AWS SSM, Azure Update Manager, GCP OS Patch).</li>
+            <li>Disable unused services + close ports.</li>
+            <li>Use Confidential VMs for sensitive workloads.</li>
+            <li>Instance metadata service v2 (IMDSv2) on AWS — token-required.</li>
+            <li>SSH key + bastion or SSM Session Manager (no inbound 22 needed).</li>
+            <li>EDR / CWPP agent.</li>
+            <li>Boot integrity (Secure Boot + measured boot).</li>
+          </ul>
+
+          <h2>Resilience + recovery patterns</h2>
+          <ul>
+            <li><b>Multi-AZ</b> — within a region, fault-isolated DCs.</li>
+            <li><b>Multi-region</b> — DR + geo-failover.</li>
+            <li><b>Active-active</b> — both regions serve; lowest RTO/RPO, highest cost.</li>
+            <li><b>Pilot light</b> — minimum core running, scale up on event.</li>
+            <li><b>Warm standby</b> — full but scaled-down environment.</li>
+            <li><b>Backup-restore only</b> — slowest RTO.</li>
+            <li><b>Cloud DR / DRaaS</b> — replicate on-prem to cloud.</li>
+            <li><b>Anycast routing</b> for global failover.</li>
+            <li><b>Auto-scaling groups</b> + health checks.</li>
+            <li><b>Stateless app design</b> + externalized session storage.</li>
+            <li><b>Idempotent retries + circuit breakers</b>.</li>
+            <li><b>Chaos engineering</b> — Netflix Simian Army, AWS FIS, Azure Chaos Studio.</li>
+          </ul>
+
+          <h2>Site types (recap)</h2>
+          <ul>
+            <li><b>Hot</b> — fully equipped, real-time data replication. Lowest RTO.</li>
+            <li><b>Warm</b> — partially equipped.</li>
+            <li><b>Cold</b> — space + power, no equipment. Cheapest, longest RTO.</li>
+            <li><b>Mobile / portable</b> — trailer-based.</li>
+            <li><b>Cloud DR</b> — pay-as-you-go.</li>
+            <li><b>Reciprocal agreement</b> — share space with another org.</li>
+          </ul>
+
+          <h2>RAID + storage redundancy</h2>
+          <ul>
+            <li>RAID 0, 1, 5, 6, 10, 50, 60 (covered earlier).</li>
+            <li>Erasure coding (object storage replacement for RAID).</li>
+            <li>Multi-AZ / Multi-region replication (LRS, ZRS, GRS, GZRS in Azure).</li>
+            <li>Replication consistency: strong, eventual, bounded.</li>
+          </ul>
+
+          <h2>Backups (cloud-aware)</h2>
+          <ul>
+            <li><b>3-2-1-1-0</b> rule.</li>
+            <li><b>Immutable / Object Lock / WORM</b> for ransomware defense.</li>
+            <li><b>Cross-account / cross-region copies</b> — protect against single-account compromise.</li>
+            <li><b>Test restores</b> regularly + measure restore time.</li>
+            <li><b>Encrypt backups</b> with separate keys.</li>
+            <li><b>MFA-delete</b> on S3 versioning.</li>
+            <li><b>Backup admin separation</b> — backup admin distinct from production admin.</li>
+          </ul>
+
+          <h2>Secure software development (SSDF, NIST SP 800-218)</h2>
+          <ul>
+            <li><b>SDLC</b> phases: Plan → Design → Implement → Test → Deploy → Operate.</li>
+            <li><b>Secure SDLC</b> embeds security at every stage:</li>
+          </ul>
+          <ul>
+            <li><b>Threat modeling</b> (STRIDE, PASTA) in design.</li>
+            <li><b>Secure coding standards</b> + training (OWASP Top 10).</li>
+            <li><b>SAST</b> — static analysis (SonarQube, Semgrep, Checkmarx, Veracode).</li>
+            <li><b>DAST</b> — dynamic / black-box (OWASP ZAP, Burp Suite Pro, Acunetix).</li>
+            <li><b>IAST</b> — interactive instrumented runtime analysis.</li>
+            <li><b>SCA</b> (Software Composition Analysis) — open-source deps (Snyk, Dependabot, OWASP DC).</li>
+            <li><b>Container scanning</b>.</li>
+            <li><b>IaC scanning</b> (Checkov, tfsec, KICS, Terrascan).</li>
+            <li><b>Secrets scanning</b> in code (Gitleaks, TruffleHog, GitHub secret scanning).</li>
+            <li><b>Code signing</b> + reproducible builds.</li>
+            <li><b>Penetration testing</b> pre-release.</li>
+            <li><b>Bug bounty / VDP</b> after release.</li>
+            <li><b>WAF / RASP</b> in production.</li>
+          </ul>
+
+          <h2>DevSecOps + GitOps</h2>
+          <ul>
+            <li>Security checks shift LEFT into developer workflow.</li>
+            <li>CI/CD pipeline gates: lint → SAST → SCA → unit tests → build → image scan → IaC scan → DAST → deploy → DAST + runtime monitor.</li>
+            <li><b>SBOM</b> generated per build (Syft, CycloneDX).</li>
+            <li><b>Sigstore / cosign</b> — sign artifacts.</li>
+            <li><b>SLSA levels</b> — supply-chain integrity.</li>
+            <li><b>Policy-as-code</b> — OPA Rego, Sentinel.</li>
+            <li><b>GitOps</b> — Git is source of truth; ArgoCD/Flux reconciles cluster to repo.</li>
+          </ul>
+
+          <h2>Supply-chain security</h2>
+          <ul>
+            <li><b>SLSA</b> — Supply-chain Levels for Software Artifacts.</li>
+            <li><b>SBOM</b> in CycloneDX or SPDX format.</li>
+            <li><b>Code signing</b> with hardware-backed keys.</li>
+            <li><b>Reproducible builds</b>.</li>
+            <li><b>Dependency review + lockfiles</b>.</li>
+            <li><b>Vendor pen tests + SOC 2 + ISO 27001 verification</b>.</li>
+            <li>Hardware: <b>secure boot</b>, <b>measured boot</b>, <b>TPM attestation</b>, anti-tamper packaging, trusted foundry.</li>
+            <li><b>Open Source Security Foundation (OpenSSF)</b> initiatives.</li>
+          </ul>
+
+          <h2>Physical + environmental security</h2>
+          <ul>
+            <li><b>Locks, mantraps / access-control vestibules, badges, biometrics</b>.</li>
+            <li><b>CCTV + cameras</b> (PTZ, IP) with retention + tamper detection.</li>
+            <li><b>Guards + escorts</b>.</li>
+            <li><b>Fencing + bollards + lighting</b>.</li>
+            <li><b>Asset tagging + GPS for laptops + portables</b>.</li>
+            <li><b>Tamper-evident seals</b>.</li>
+            <li><b>Datacenter tiers</b> (Uptime Institute Tier I-IV).</li>
+            <li><b>Environmental:</b> HVAC, humidity 40-60% RH, fire suppression (FM-200, Inergen, water mist), water leak detection, EMI shielding, raised floors, hot/cold aisle.</li>
+            <li><b>Power:</b> UPS, generators with fuel contracts, dual feeds, automatic transfer switch.</li>
+            <li><b>Faraday cage</b> for TEMPEST / sensitive environments.</li>
+            <li><b>Visitor management</b>: photo ID, sign-in, escort.</li>
+          </ul>
+
+          <h2>OT / ICS / IoT security</h2>
+          <ul>
+            <li><b>OT</b> (Operational Technology) — physical processes (manufacturing, energy, water).</li>
+            <li><b>ICS</b> (Industrial Control Systems) — PLC, RTU, DCS, SCADA, HMI.</li>
+            <li><b>SCADA</b> — Supervisory Control + Data Acquisition.</li>
+            <li><b>Purdue Reference Model levels 0-5</b> — strict zoning between OT + IT.</li>
+            <li><b>Frameworks:</b> IEC 62443, NIST SP 800-82, NERC CIP.</li>
+            <li><b>Constraints:</b> uptime/safety > confidentiality; legacy systems; can't easily patch.</li>
+            <li><b>Defenses:</b> Network segmentation + diodes/one-way data, monitoring (Claroty, Nozomi, Dragos), strict change control, vendor-supplied patches only.</li>
+            <li><b>IoT-specific risks:</b> default credentials, no patching, weak crypto, broadcast vuln (Mirai-style).</li>
+            <li><b>Defenses:</b> isolated VLAN, MUD (Manufacturer Usage Description), gateway-based control, NAC.</li>
+          </ul>
+
+          <h2>Defense in depth — sample stack</h2>
+          <ol>
+            <li><b>Physical</b> — DC locks, badges.</li>
+            <li><b>Perimeter</b> — DDoS scrubbing + WAF + CDN + NGFW.</li>
+            <li><b>Network</b> — segmentation, NAC, IPS, encrypted DNS.</li>
+            <li><b>Endpoint</b> — EDR, host firewall, full-disk encryption, patching.</li>
+            <li><b>Application</b> — secure coding, WAF, secrets mgmt, code signing.</li>
+            <li><b>Data</b> — encryption at rest + transit + use, DLP, tokenization.</li>
+            <li><b>Identity</b> — MFA + Conditional Access + PIM + Zero Trust.</li>
+            <li><b>Monitoring</b> — SIEM + SOAR + UEBA + threat intel.</li>
+            <li><b>Administrative</b> — policy + training + audits.</li>
+          </ol>
+
+          <h2>Common architecture patterns</h2>
+          <ul>
+            <li><b>Zero Trust</b> — identity-centric, per-request authorization.</li>
+            <li><b>SASE / SSE</b> — cloud-delivered security + network.</li>
+            <li><b>Defense in depth</b>.</li>
+            <li><b>Microsegmentation</b> for east-west.</li>
+            <li><b>Immutable infrastructure</b> — replace, don't patch in place.</li>
+            <li><b>Twelve-factor app</b> design.</li>
+            <li><b>Service mesh</b> with mTLS for microservices.</li>
+            <li><b>Distributed identity</b> (IdP federation across clouds).</li>
+            <li><b>Cloud landing zones</b> — pre-built secure account structure (AWS Control Tower, Azure Landing Zones, GCP Foundation).</li>
+          </ul>
+
+          <h2>Logging + monitoring in cloud</h2>
+          <ul>
+            <li><b>Audit logs</b> — AWS CloudTrail, Azure Activity + AAD Sign-in, GCP Cloud Audit.</li>
+            <li><b>Flow logs</b> — VPC Flow / NSG Flow.</li>
+            <li><b>App + workload logs</b> — CloudWatch, Azure Monitor, Stackdriver, OpenTelemetry.</li>
+            <li><b>SIEM ingestion</b> — Splunk Cloud, Microsoft Sentinel, Sumo Logic, Elastic, Datadog, Chronicle.</li>
+            <li><b>Alerts</b> tuned via SOAR playbooks.</li>
+            <li><b>Retention</b> per regulation.</li>
+            <li><b>Integrity</b> — log to write-once / dedicated security account, separate retention.</li>
+          </ul>
+
+          <h2>Cost + security trade-offs</h2>
+          <ul>
+            <li>Right-size + reservations vs over-provision.</li>
+            <li>Spot for non-critical; reserved for steady-state.</li>
+            <li>Logging cost can balloon — tier hot logs vs archive.</li>
+            <li>Confidential computing premium; only for highest-sensitivity.</li>
+            <li>Premium DDoS tier vs basic.</li>
+            <li>Cross-region replication doubles storage cost.</li>
+          </ul>
+
+          <h2>Emerging considerations</h2>
+          <ul>
+            <li><b>AI security</b> — prompt injection, training data leakage, model theft, deepfakes; NIST AI RMF + EU AI Act guide.</li>
+            <li><b>Post-Quantum Cryptography migration</b> — start inventorying crypto deps; "harvest now, decrypt later".</li>
+            <li><b>Confidential computing</b> for in-use protection.</li>
+            <li><b>Software supply-chain</b> attacks rising → SLSA, in-toto, SBOM mandatory.</li>
+            <li><b>Edge security</b> — IoT, 5G, SASE convergence.</li>
+            <li><b>Quantum-resistant migration</b> — TLS hybrid handshakes already deploying.</li>
+            <li><b>Cyber insurance pre-conditions</b> tightening — MFA + EDR + segmentation required.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Provider secures of the cloud; customer secures in the cloud" → Shared responsibility.</li>
+            <li>"Open S3 bucket discovered automatically" → CSPM.</li>
+            <li>"Runtime protection for VMs + containers" → CWPP.</li>
+            <li>"SaaS visibility + DLP" → CASB.</li>
+            <li>"Unified cloud-native platform" → CNAPP.</li>
+            <li>"Identity-permission analysis" → CIEM.</li>
+            <li>"Provider-side DDoS absorption" → cloud DDoS protection (Shield, Front Door).</li>
+            <li>"Encrypt in use" → Confidential Computing (SGX, SEV-SNP).</li>
+            <li>"Customer-managed keys" → CMK / BYOK.</li>
+            <li>"Customer keeps keys on-prem; cloud calls back" → HYOK.</li>
+            <li>"Multi-AZ" survives one DC failure; "multi-region" survives a region outage.</li>
+            <li>"Active-active multi-region" → lowest RTO/RPO, highest cost.</li>
+            <li>"Pilot light" → minimal core; scale up on disaster.</li>
+            <li>"Object Lock / WORM" → immutable backups; ransomware-resistant.</li>
+            <li>"Static analysis of source code" → SAST.</li>
+            <li>"Black-box testing of running app" → DAST.</li>
+            <li>"Scan third-party dependencies" → SCA.</li>
+            <li>"Scan IaC for misconfigs" → IaC scanning (Checkov, tfsec).</li>
+            <li>"Supply-chain artifact integrity levels" → SLSA.</li>
+            <li>"Standardized inventory of components" → SBOM.</li>
+            <li>"Purdue model" → OT / ICS reference architecture.</li>
+            <li>"Pre-built secure cloud account structure" → Landing Zone.</li>
+          </ul>
         `
       }
     ],
