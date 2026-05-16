@@ -14135,16 +14135,308 @@ spec:
       {
         title: '4. Cloud Networking',
         body: `
+          <p>Cloud networking re-creates the entire datacenter network in software: isolated networks, subnets, route tables, gateways, firewalls, load balancers, DNS, CDN, VPN, and dedicated private circuits. Each cloud has its own jargon for the same concepts. Exam tests core building blocks + how they connect.</p>
+
+          <h2>Virtual networks — VPC / VNet</h2>
           <ul>
-            <li><b>VPC / VNet</b> — isolated virtual network with subnets, route tables.</li>
-            <li><b>Subnets</b> — public (route to internet GW) vs private.</li>
-            <li><b>Security groups / NSGs</b> — stateful instance-level firewall.</li>
-            <li><b>NACLs</b> — stateless subnet-level.</li>
-            <li><b>Load balancers</b> — L4 (NLB) and L7 (ALB / App Gateway).</li>
-            <li><b>CDN</b> — CloudFront, Azure Front Door — edge cache.</li>
-            <li><b>Connectivity</b> — VPN gateway (IPsec), Direct Connect / ExpressRoute (private).</li>
-            <li><b>Peering</b> — VPC-to-VPC; <b>Transit Gateway</b> hub.</li>
-            <li><b>Private endpoints</b> — access SaaS over private IP.</li>
+            <li><b>AWS</b> = <b>VPC</b> (Virtual Private Cloud).</li>
+            <li><b>Azure</b> = <b>VNet</b> (Virtual Network).</li>
+            <li><b>GCP</b> = <b>VPC</b> (Virtual Private Cloud) — but global by default.</li>
+            <li><b>What:</b> Logically isolated network with your own IP range, route tables, gateways. Private by default; nothing reachable from Internet unless you grant it.</li>
+            <li><b>CIDR block:</b> Pick non-overlapping RFC 1918 ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16). Plan ahead — many VPC features (peering, Transit Gateway) require no overlap.</li>
+            <li><b>Default vs custom VPC:</b> Default created on account creation; recommend always creating custom VPCs with intentional CIDR + subnetting.</li>
+          </ul>
+
+          <h2>Subnets</h2>
+          <ul>
+            <li>Slices of a VPC's CIDR; bound to a single Availability Zone (AWS, Azure) or global with regional resources (GCP).</li>
+            <li><b>Public subnet</b> — route table sends 0.0.0.0/0 to an <b>Internet Gateway</b>; resources can have public IPs.</li>
+            <li><b>Private subnet</b> — no direct Internet route; egress via NAT gateway or proxy.</li>
+            <li><b>Reserved IPs:</b> AWS reserves 5 IPs per subnet (network, VPC router, DNS, future, broadcast). Azure reserves 5 too.</li>
+            <li>Common pattern: per AZ, one public subnet (for LB), one private app subnet, one private DB subnet.</li>
+          </ul>
+
+          <h2>Gateways</h2>
+          <ul>
+            <li><b>Internet Gateway (IGW)</b> — AWS. Attaches to VPC; enables Internet routing.</li>
+            <li><b>Egress-Only Internet Gateway</b> — IPv6 outbound only.</li>
+            <li><b>NAT Gateway</b> — AWS managed NAT for private subnets to reach Internet outbound. Per-AZ. (Pay per GB processed.)</li>
+            <li><b>NAT Instance</b> — older self-managed alternative.</li>
+            <li><b>Virtual Network Gateway</b> — Azure VPN gateway.</li>
+            <li><b>NAT Gateway in Azure</b> — outbound NAT.</li>
+            <li><b>Cloud NAT</b> — GCP managed.</li>
+            <li><b>Customer Gateway</b> — represents on-prem VPN endpoint in cloud config.</li>
+          </ul>
+
+          <h2>Route tables</h2>
+          <ul>
+            <li>Each subnet associates with ONE route table.</li>
+            <li>Routes: destination CIDR → target (local, IGW, NAT, peering, gateway endpoint, transit gateway).</li>
+            <li>Default <b>local</b> route covers the VPC CIDR — never delete.</li>
+            <li>Add <code>0.0.0.0/0 → IGW</code> for public subnet, <code>0.0.0.0/0 → NAT GW</code> for private subnet.</li>
+            <li><b>Policy-based / propagation routes</b> — distinguished from static; mainly Transit Gateway / route reflectors.</li>
+          </ul>
+
+          <h2>Stateful vs stateless firewalls</h2>
+          <ul>
+            <li><b>Security Group (SG)</b> (AWS) / <b>NSG</b> (Azure) / <b>Firewall Rules</b> (GCP) — <b>stateful</b> + <b>instance-level</b>. Return traffic auto-allowed.</li>
+            <li><b>Network ACL (NACL)</b> (AWS only) — <b>stateless</b> + <b>subnet-level</b>. Numbered rules; both inbound + outbound must explicitly allow.</li>
+            <li><b>Azure NSG</b> applies at NIC or subnet (stateful).</li>
+            <li><b>GCP Firewall Rules</b> are project-wide, stateful, with priorities (lower number = higher priority).</li>
+            <li><b>Default deny</b> for inbound; default allow outbound (typically). Adjust per security policy.</li>
+            <li>Use SGs as building blocks; reference SGs in rules ("allow from sg-frontend") — automatic membership.</li>
+          </ul>
+
+          <h2>Load balancers</h2>
+
+          <h3>Layer 4 (Transport)</h3>
+          <ul>
+            <li><b>AWS NLB</b> (Network LB) — millions of pps, static IPs, preserves source IP.</li>
+            <li><b>Azure Standard Load Balancer</b>.</li>
+            <li><b>GCP Network Load Balancer</b> (passthrough or proxy variants).</li>
+            <li>Used for TCP/UDP, IoT, gaming, non-HTTP services.</li>
+          </ul>
+
+          <h3>Layer 7 (Application)</h3>
+          <ul>
+            <li><b>AWS ALB</b> (Application LB) — HTTP/HTTPS, host/path routing, WebSockets, redirects.</li>
+            <li><b>Azure Application Gateway</b> (regional) + <b>Azure Front Door</b> (global edge).</li>
+            <li><b>GCP HTTP(S) Load Balancer</b> — global anycast.</li>
+            <li>Often paired with WAF + bot management.</li>
+          </ul>
+
+          <h3>Global vs regional</h3>
+          <ul>
+            <li>Global LBs (Front Door / CloudFront / GCP global HTTPS LB) use anycast + edge POPs.</li>
+            <li>Regional LBs serve a single region with multi-AZ resilience.</li>
+          </ul>
+
+          <h3>Load-balancing algorithms</h3>
+          <ul>
+            <li>Round robin, least connections, source IP hash, weighted, latency-based.</li>
+            <li><b>Sticky sessions</b> — cookie-based; usually avoid (breaks horizontal scaling). Better: stateless backend + external session store.</li>
+            <li><b>Health checks</b> — TCP / HTTP / HTTPS path; remove unhealthy targets.</li>
+          </ul>
+
+          <h2>DNS in cloud</h2>
+          <ul>
+            <li><b>AWS Route 53</b> — authoritative DNS + health checks + routing policies (simple, weighted, latency, geolocation, failover, multi-value, geoproximity).</li>
+            <li><b>Azure DNS</b> + <b>Azure Private DNS</b> + <b>Azure Front Door DNS</b>.</li>
+            <li><b>Google Cloud DNS</b>.</li>
+            <li><b>Private hosted zone</b> — internal-only DNS for VPC resources.</li>
+            <li><b>Split-horizon DNS</b> — same name resolves differently inside vs outside.</li>
+            <li><b>DNSSEC</b> support varies; Route 53 added recently.</li>
+            <li><b>Service discovery:</b> AWS Cloud Map, Kubernetes CoreDNS, Consul.</li>
+          </ul>
+
+          <h2>CDN — Content Delivery Network</h2>
+          <ul>
+            <li><b>AWS CloudFront</b> — global edge POPs, integrates w/ S3, ALB, EC2; supports Lambda@Edge / CloudFront Functions.</li>
+            <li><b>Azure Front Door + Azure CDN</b> (third-party Akamai/Verizon CDN options deprecating).</li>
+            <li><b>GCP Cloud CDN</b> — built on global HTTP LB.</li>
+            <li><b>Third-party:</b> Cloudflare, Akamai, Fastly, BunnyCDN.</li>
+            <li><b>Benefits:</b> Lower latency, offload origin, DDoS absorption (anycast), TLS termination.</li>
+            <li><b>Cache headers:</b> Cache-Control max-age, ETag, Vary; control via origin or behavior config.</li>
+            <li><b>Edge compute:</b> Lambda@Edge, Cloudflare Workers, Front Door Rules, Fastly Compute@Edge.</li>
+          </ul>
+
+          <h2>VPN connectivity</h2>
+          <ul>
+            <li><b>Site-to-site VPN</b> — IPsec tunnels between on-prem firewall and cloud VPN gateway.
+              <ul>
+                <li><b>AWS Site-to-Site VPN</b> (2 tunnels for HA), <b>AWS Cloud WAN</b> for multi-site.</li>
+                <li><b>Azure VPN Gateway</b> (Basic / VpnGw1-5).</li>
+                <li><b>GCP HA VPN</b> (4 tunnels, BGP-based).</li>
+              </ul>
+            </li>
+            <li><b>Client / Point-to-Site VPN</b> — individual user device → cloud network.
+              <ul>
+                <li>AWS Client VPN, Azure Point-to-Site, GCP no native client VPN (use OpenVPN appliance).</li>
+              </ul>
+            </li>
+            <li><b>BGP routing</b> over VPN preferred over static for dynamic propagation.</li>
+            <li><b>SD-WAN appliances</b> deployable in cloud (Cisco, VMware, Palo Alto, Fortinet).</li>
+          </ul>
+
+          <h2>Dedicated private connectivity</h2>
+          <ul>
+            <li><b>AWS Direct Connect (DX)</b> — dedicated 1/10/100 Gbps fiber link to AWS region via colocation. Pair with VIFs (private / public / transit).</li>
+            <li><b>Azure ExpressRoute</b> — dedicated link via partner provider; private + Microsoft peering.</li>
+            <li><b>GCP Cloud Interconnect</b> — Dedicated (10/100 Gbps colocation) or Partner (any speed).</li>
+            <li><b>Megaport / Equinix Fabric</b> — software-defined cross-connect to any cloud.</li>
+            <li>Lower latency + predictable bandwidth + bypasses public Internet. Required for many regulated workloads.</li>
+            <li><b>Pricing:</b> Port hour + egress data; usually MUCH cheaper egress than Internet egress.</li>
+          </ul>
+
+          <h2>Peering</h2>
+          <ul>
+            <li><b>VPC / VNet peering</b> — direct private connection between two networks in same or different region / account.</li>
+            <li>Non-transitive by default — A peered with B + B peered with C does NOT mean A↔C.</li>
+            <li>CIDRs must NOT overlap.</li>
+            <li>Cross-region / cross-account peering supported.</li>
+          </ul>
+
+          <h2>Hub-and-spoke (Transit Gateway)</h2>
+          <ul>
+            <li><b>AWS Transit Gateway (TGW)</b> — central hub connecting hundreds of VPCs + on-prem; route tables per attachment.</li>
+            <li><b>Azure Virtual WAN</b> + <b>Hub-Spoke VNet</b>.</li>
+            <li><b>GCP Network Connectivity Center (NCC)</b>.</li>
+            <li>Solves the n-squared mesh peering problem.</li>
+            <li>Optional inter-region peering.</li>
+          </ul>
+
+          <h2>Private connectivity to managed services</h2>
+          <ul>
+            <li><b>AWS VPC Endpoints:</b>
+              <ul>
+                <li><b>Gateway endpoint</b> — for S3 + DynamoDB; route-table entry; free.</li>
+                <li><b>Interface endpoint</b> (PrivateLink) — ENI in your VPC with private IP for SaaS / AWS services. Paid per hour + GB.</li>
+              </ul>
+            </li>
+            <li><b>Azure Private Link / Private Endpoint</b> — private IP for PaaS in your VNet.</li>
+            <li><b>GCP Private Service Connect (PSC)</b> + <b>Private Google Access</b>.</li>
+            <li><b>Why:</b> Keep traffic to S3 / Storage / DB inside the cloud backbone; no Internet egress; no public exposure.</li>
+          </ul>
+
+          <h2>IPv6</h2>
+          <ul>
+            <li>Most providers support dual-stack subnets.</li>
+            <li>AWS introduces IPv6-only subnets too.</li>
+            <li>Egress-Only Internet Gateway = IPv6 equivalent of NAT outbound.</li>
+            <li>Important for IoT + scaling beyond IPv4 limits.</li>
+          </ul>
+
+          <h2>Network ACL summary (AWS-specific)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444"></th><th align="left" style="padding:4px;border-bottom:1px solid #444">Security Group</th><th align="left" style="padding:4px;border-bottom:1px solid #444">NACL</th></tr>
+            <tr><td>Scope</td><td>Instance / ENI</td><td>Subnet</td></tr>
+            <tr><td>State</td><td>Stateful</td><td>Stateless</td></tr>
+            <tr><td>Rule type</td><td>Allow only</td><td>Allow + Deny, numbered</td></tr>
+            <tr><td>Default</td><td>Deny in, Allow out</td><td>Allow all (default NACL); Deny all (custom)</td></tr>
+            <tr><td>Reference</td><td>Can reference other SGs</td><td>CIDR only</td></tr>
+          </table>
+
+          <h2>WAF + DDoS protection</h2>
+          <ul>
+            <li><b>AWS WAF</b> — managed rule groups + custom rules; integrates with ALB / API GW / CloudFront / AppSync.</li>
+            <li><b>AWS Shield Standard</b> (free, basic anti-DDoS) + <b>Shield Advanced</b> (paid, large-scale L3-L7).</li>
+            <li><b>Azure Web Application Firewall</b> on Front Door / App Gateway; <b>Azure DDoS Protection Standard</b>.</li>
+            <li><b>GCP Cloud Armor</b> — WAF + DDoS for HTTPS LB.</li>
+            <li><b>Third-party:</b> Cloudflare, Akamai Kona, Imperva — front the cloud origin.</li>
+          </ul>
+
+          <h2>Service mesh + east-west traffic</h2>
+          <p>For microservices inside the cloud: Istio, Linkerd, Consul, AWS App Mesh, Cilium service mesh. Provides mTLS, retries, traffic shifting, observability.</p>
+
+          <h2>Monitoring + observability</h2>
+          <ul>
+            <li><b>VPC Flow Logs</b> / <b>NSG Flow Logs</b> / <b>VPC Flow Logs</b> — capture metadata about traffic; ship to S3 / Log Analytics / BigQuery.</li>
+            <li><b>Reachability Analyzer</b> (AWS) / <b>Network Watcher</b> (Azure) / <b>Connectivity Tests</b> (GCP) — model + verify path between endpoints.</li>
+            <li><b>Traffic Mirroring</b> (AWS) / <b>Packet Capture</b> (Azure Network Watcher) — copy traffic for analysis.</li>
+            <li><b>VPC Reachability Analyzer / Network Insights</b> — graph routing.</li>
+            <li><b>CDN logs</b> for HTTP-layer visibility.</li>
+            <li>Integrate with SIEM (Sentinel, Splunk, Chronicle).</li>
+          </ul>
+
+          <h2>Zero Trust + cloud-native security</h2>
+          <ul>
+            <li><b>SASE / SSE</b> — Zscaler, Netskope, Palo Alto Prisma, Cisco Umbrella, Cloudflare One.</li>
+            <li><b>ZTNA</b> — per-app brokered identity-based access; replaces VPN.</li>
+            <li><b>Identity-aware proxy</b> (Google IAP), <b>BeyondCorp</b> philosophy.</li>
+            <li>Microsegmentation via NSG / SG rules + service mesh policies.</li>
+          </ul>
+
+          <h2>Network costs</h2>
+          <ul>
+            <li><b>Egress to Internet</b> — most expensive line (~$0.05-0.09/GB).</li>
+            <li><b>Inter-AZ traffic</b> — small per-GB charge (varies).</li>
+            <li><b>Cross-region traffic</b> — significantly more.</li>
+            <li><b>Direct Connect / ExpressRoute egress</b> — much cheaper than public Internet egress.</li>
+            <li><b>VPC Endpoints / PrivateLink</b> — hourly + GB; usually cheaper than NAT GW for high traffic.</li>
+            <li><b>NAT Gateway</b> — hourly + per-GB processed; combine with VPC Endpoints to avoid double charge.</li>
+            <li><b>CloudFront / Front Door / Cloud CDN</b> egress often cheaper than direct egress.</li>
+            <li>Always tag + log via Flow Logs to identify cost drivers.</li>
+          </ul>
+
+          <h2>Sample VPC design</h2>
+          <pre><code>VPC 10.10.0.0/16 (region us-east-1)
+├─ Public subnets   (per AZ)  10.10.0.0/24  10.10.1.0/24  10.10.2.0/24   → IGW
+├─ App subnets      (per AZ)  10.10.10.0/24 10.10.11.0/24 10.10.12.0/24  → NAT GW
+└─ DB subnets       (per AZ)  10.10.20.0/24 10.10.21.0/24 10.10.22.0/24  → no Internet
+
+Internet Gateway (IGW)
+NAT Gateways (one per AZ for HA, or one shared dev/staging)
+Route tables: public  → 0.0.0.0/0 IGW
+              private → 0.0.0.0/0 NAT
+              db      → no default route
+
+Security groups:
+  sg-web        Inbound 80/443 from 0.0.0.0/0  Outbound: app
+  sg-app        Inbound 8080 from sg-web        Outbound: db, internet (via NAT)
+  sg-db         Inbound 5432 from sg-app
+
+ALB         in public subnets, target group → app instances
+ECS / EC2   in app subnets
+RDS Multi-AZ in db subnets
+Bastion / SSM Session Manager replacing SSH bastion</code></pre>
+
+          <h2>Common cross-cloud equivalence</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Concept</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Isolated network</td><td>VPC</td><td>VNet</td><td>VPC</td></tr>
+            <tr><td>Slice within</td><td>Subnet (AZ)</td><td>Subnet (region)</td><td>Subnet (region)</td></tr>
+            <tr><td>Internet exit</td><td>IGW</td><td>None — default w/ public IP</td><td>Default Internet via gateway</td></tr>
+            <tr><td>Outbound NAT</td><td>NAT GW</td><td>NAT Gateway / SNAT</td><td>Cloud NAT</td></tr>
+            <tr><td>Stateful instance firewall</td><td>Security Group</td><td>NSG</td><td>Firewall Rules</td></tr>
+            <tr><td>Stateless subnet firewall</td><td>NACL</td><td>NSG at subnet</td><td>—</td></tr>
+            <tr><td>L4 LB</td><td>NLB</td><td>Standard LB</td><td>Network LB</td></tr>
+            <tr><td>L7 LB</td><td>ALB</td><td>App Gateway</td><td>HTTPS LB</td></tr>
+            <tr><td>Global LB / CDN</td><td>CloudFront + Global Accelerator</td><td>Front Door</td><td>Global HTTPS LB + Cloud CDN</td></tr>
+            <tr><td>WAF</td><td>AWS WAF</td><td>WAF on Front Door / App GW</td><td>Cloud Armor</td></tr>
+            <tr><td>VPN gateway</td><td>Site-to-Site VPN</td><td>VPN Gateway</td><td>HA VPN</td></tr>
+            <tr><td>Dedicated link</td><td>Direct Connect</td><td>ExpressRoute</td><td>Interconnect</td></tr>
+            <tr><td>VPC peering</td><td>VPC Peering</td><td>VNet Peering</td><td>VPC Network Peering</td></tr>
+            <tr><td>Hub network</td><td>Transit Gateway</td><td>Virtual WAN</td><td>Network Connectivity Center</td></tr>
+            <tr><td>Private SaaS endpoint</td><td>PrivateLink / VPC Endpoint</td><td>Private Link / Private Endpoint</td><td>Private Service Connect</td></tr>
+            <tr><td>DDoS protection</td><td>Shield Standard / Advanced</td><td>DDoS Protection Standard</td><td>Cloud Armor</td></tr>
+            <tr><td>Authoritative DNS</td><td>Route 53</td><td>Azure DNS</td><td>Cloud DNS</td></tr>
+            <tr><td>Flow logs</td><td>VPC Flow Logs</td><td>NSG / VNet Flow Logs</td><td>VPC Flow Logs</td></tr>
+            <tr><td>Connectivity tester</td><td>Reachability Analyzer</td><td>Network Watcher</td><td>Connectivity Tests</td></tr>
+          </table>
+
+          <h2>Network troubleshooting in cloud</h2>
+          <ul>
+            <li><b>"Cannot reach instance"</b> — check SG inbound + NACL inbound/outbound + route table + IGW attached + public IP assigned.</li>
+            <li><b>"Connection times out"</b> usually = SG / NACL blocking. <b>"Connection refused"</b> = nothing listening or app error.</li>
+            <li><b>"Reachable from VPC, not Internet"</b> — missing 0.0.0.0/0 → IGW route, or no public IP.</li>
+            <li><b>Slow cross-region</b> — use Direct Connect / ExpressRoute / Interconnect; or move workload closer.</li>
+            <li><b>SaaS over public Internet</b> when private possible → PrivateLink / Private Endpoint / PSC saves egress + improves latency.</li>
+            <li><b>Asymmetric routing</b> often from misconfigured stateless NACL; check both directions.</li>
+            <li><b>NAT Gateway expensive</b> — add Gateway Endpoint for S3/DynamoDB; cache traffic via CDN.</li>
+            <li><b>BGP not converging</b> on VPN — clock skew, MTU, advertised prefixes, ASN.</li>
+            <li><b>DNS in VPC fails</b> — check resolver config; private hosted zones associated with the VPC.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Isolated virtual network" → VPC / VNet.</li>
+            <li>"Stateful instance-level firewall" → Security Group / NSG.</li>
+            <li>"Stateless subnet-level firewall (AWS)" → NACL.</li>
+            <li>"Outbound to Internet from private subnet" → NAT Gateway.</li>
+            <li>"Public subnet" = has route 0.0.0.0/0 → IGW.</li>
+            <li>"Replace n-squared VPC mesh" → Transit Gateway / Virtual WAN / NCC.</li>
+            <li>"Private path to S3 without Internet" → VPC Gateway Endpoint.</li>
+            <li>"Private connection to a SaaS provider's service in your VPC" → PrivateLink / Private Endpoint / PSC.</li>
+            <li>"Dedicated private circuit to cloud" → Direct Connect / ExpressRoute / Interconnect.</li>
+            <li>"Global edge cache + DDoS absorption" → CDN (CloudFront / Front Door / Cloud CDN).</li>
+            <li>"Layer 7 path/host routing" → ALB / Application Gateway / HTTPS LB.</li>
+            <li>"Preserves source IP + TCP/UDP" → NLB (L4).</li>
+            <li>"Authoritative DNS service with failover routing" → Route 53 / Azure DNS / Cloud DNS.</li>
+            <li>"WAF for HTTPS layer" → AWS WAF / Azure WAF / Cloud Armor.</li>
+            <li>"Anti-DDoS" → Shield / DDoS Protection / Cloud Armor.</li>
+            <li>"Audit traffic metadata" → VPC Flow Logs / NSG Flow Logs.</li>
+            <li>"Replace VPN with brokered identity-based access" → ZTNA / SASE.</li>
+            <li>"Active-active 4-tunnel cloud VPN" → GCP HA VPN.</li>
           </ul>
         `
       },
