@@ -16807,23 +16807,110 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '4. Core Azure Services — Compute & Networking',
         body: `
-          <h2>Compute</h2>
+          <h2>Compute services — what to deploy code on</h2>
+          <p>Compute = where your code runs. Azure offers a spectrum from "full server, you manage" (IaaS VMs) to "no servers, just code" (Functions). Pick by control needed, lifecycle, scaling pattern, and cost model.</p>
+
+          <h3>Azure Virtual Machines (VM)</h3>
+          <p><b>Acronym:</b> Virtual Machine. <b>What:</b> IaaS — virtualized server running Windows or Linux on Azure's hypervisor (Hyper-V derivative). You own the OS and everything above. <b>Why:</b> maximum control, support for legacy/custom workloads, BYO licensing. <b>How used:</b> pick a <b>SKU family</b> (B-burstable, D-general, E-memory, F-compute, M-huge memory, N-GPU, H-HPC), an <b>image</b> (Windows Server, Ubuntu, RHEL, SUSE, marketplace), and <b>managed disk</b> type (Standard HDD/SSD, Premium SSD, Ultra). Billed per-second when running; stopped-deallocated VMs pay only for disk.</p>
+
+          <h3>VM Scale Sets (VMSS)</h3>
+          <p><b>Acronym:</b> Virtual Machine Scale Sets. <b>What:</b> a managed set of identical VMs deployed from one image, automatically load-balanced and auto-scaled. <b>Why:</b> horizontal scaling without writing your own orchestration. <b>How used:</b> autoscale rules on CPU/queue/custom metrics; supports Spot VMs for cost savings; can deploy across Availability Zones for HA. New "Flexible" orchestration mode allows mixed SKUs.</p>
+
+          <h3>Azure App Service</h3>
+          <p><b>What:</b> PaaS for web apps, REST APIs, and mobile backends. Supports .NET, .NET Framework, Java, Node, Python, PHP, Ruby, and custom containers. <b>Why:</b> deploy from Git/GitHub Actions/Azure DevOps in minutes; built-in SSL, custom domains, autoscale, deployment slots (blue/green), authentication add-on. <b>How used:</b> create an <b>App Service Plan</b> (the VMs that host apps — Free/Shared/Basic/Standard/Premium/Isolated tiers), then deploy one or more <b>Web Apps</b> to it. Isolated tier = App Service Environment (ASE) inside your VNet.</p>
+
+          <h3>Azure Container Instances (ACI)</h3>
+          <p><b>Acronym:</b> Azure Container Instances. <b>What:</b> single container, serverless — give Azure a Docker image and it runs it; no VMs to provision. <b>Why:</b> fastest path to "run a container in the cloud"; per-second billing; good for batch jobs, build agents, simple sidecars. <b>How used:</b> <code>az container create</code>; not ideal for production microservices (no built-in load balancing/orchestration).</p>
+
+          <h3>Azure Container Apps (ACA)</h3>
+          <p><b>What:</b> serverless container platform built on Kubernetes + KEDA + Dapr — production-grade microservices without managing K8s. <b>Why:</b> scale-to-zero, event-driven autoscale, traffic splitting, no node management. <b>How used:</b> deploy revisions, set min/max replicas; Microsoft's preferred path for new container workloads short of full AKS.</p>
+
+          <h3>Azure Kubernetes Service (AKS)</h3>
+          <p><b>Acronym:</b> Azure Kubernetes Service. <b>What:</b> managed Kubernetes — Microsoft runs the control plane (master nodes) for free; you provision and pay for worker node pools (VMSS underneath). <b>Why:</b> full K8s API for portability, large microservice fleets, multi-tenant workloads. <b>How used:</b> integrates with Entra ID for RBAC, Azure CNI for networking, Azure Monitor for Containers, Azure Policy for governance.</p>
+
+          <h3>Azure Functions</h3>
+          <p><b>What:</b> FaaS — event-driven code, pay per execution. <b>Why:</b> ideal for spiky/sparse workloads, glue code, webhooks, scheduled jobs. <b>Plans:</b> <b>Consumption</b> (scale-to-zero, cold starts, 10-min cap), <b>Premium</b> (pre-warmed, VNet integration, longer execution), <b>Dedicated/App Service Plan</b> (run on existing plan). <b>Triggers:</b> HTTP, Timer, Queue, Service Bus, Event Grid, Blob, Cosmos DB change feed.</p>
+
+          <h3>Azure Virtual Desktop (AVD) + Windows 365</h3>
+          <p><b>AVD:</b> multi-session Windows 10/11 Enterprise streamed to any device — DaaS for shared pooled desktops. <b>Windows 365 Cloud PC:</b> per-user fixed-spec cloud PC, flat monthly subscription. <b>Why:</b> remote workers, BYOD, regulated data that must not leave Azure, contractor access.</p>
+
+          <h2>Networking services — how traffic moves</h2>
+
+          <h3>Virtual Network (VNet)</h3>
+          <p><b>What:</b> your private network in Azure — a CIDR block (e.g., 10.0.0.0/16) divided into <b>subnets</b> (10.0.1.0/24). Resources placed in a subnet get a private IP from it. <b>Why:</b> isolation, segmentation, routing control, baseline for all VM/AKS/PaaS networking. <b>How used:</b> every VNet exists in one region; cannot span regions (use peering). Subnets reserve 5 IPs each (network, default gateway, two DNS, broadcast).</p>
+
+          <h3>Subnet</h3>
+          <p><b>What:</b> a range carved from a VNet's address space. <b>Why:</b> different subnets for different tiers (web/app/db) so you apply different NSGs and route rules. <b>How used:</b> some Azure services require a delegated subnet (App Gateway, Bastion, Firewall, VPN Gateway each get their own).</p>
+
+          <h3>Network Security Group (NSG)</h3>
+          <p><b>Acronym:</b> Network Security Group. <b>What:</b> stateful L3/L4 firewall ruleset attached to a subnet or NIC. Inbound + outbound rules with priority, source/dest CIDR or service tag, port, protocol, allow/deny. <b>Why:</b> the first line of micro-segmentation inside a VNet. <b>How used:</b> rule 100 allow tcp 22 from <code>AzureLoadBalancer</code> service tag; lower numbers win.</p>
+
+          <h3>Application Security Group (ASG)</h3>
+          <p><b>Acronym:</b> Application Security Group. <b>What:</b> logical grouping of NICs by application role (Web, App, DB) so NSG rules reference roles instead of IPs. <b>Why:</b> simpler rules; reusable across IP changes.</p>
+
+          <h3>VNet peering</h3>
+          <p><b>What:</b> private, non-transitive connection between two VNets that makes them act like one network. Two types: <b>regional</b> (same region) and <b>global</b> (cross-region). <b>Why:</b> connect hub-spoke architectures, share services across teams. <b>How used:</b> traffic stays on Microsoft backbone; low latency; charged egress per GB. <b>Limit:</b> non-transitive — A↔B and B↔C does not give A↔C unless you add A↔C or route through a hub via Azure Firewall/NVA.</p>
+
+          <h3>VPN Gateway</h3>
+          <p><b>What:</b> encrypted IPsec tunnel from your VNet to either an on-prem network (<b>site-to-site / S2S</b>) or remote users (<b>point-to-site / P2S</b>). <b>Why:</b> connect on-prem datacenter or remote employees to Azure resources. <b>How used:</b> pick a SKU (Basic, VpnGw1–5, AZ-redundant); supports active-active. Lives in a dedicated <b>GatewaySubnet</b>.</p>
+
+          <h3>ExpressRoute (ER)</h3>
+          <p><b>Acronym:</b> ExpressRoute. <b>What:</b> a private, dedicated fiber connection from your network to Microsoft via a connectivity partner (Equinix, Megaport, AT&amp;T, etc.) — does <i>not</i> traverse the public Internet. <b>Why:</b> higher throughput (50 Mbps–100 Gbps), lower/predictable latency, financially-backed SLA, sensitive workloads. <b>How used:</b> ExpressRoute circuit + ExpressRoute Gateway in your VNet. More expensive than VPN; production-grade enterprises pair both (VPN as failover).</p>
+
+          <h3>Azure DNS</h3>
+          <p><b>What:</b> managed authoritative DNS hosting for public domains, plus <b>Private DNS Zones</b> for VNet-internal names. <b>Why:</b> consolidate DNS in Azure, integrate with Entra ID, auto-register VM hostnames in a private zone.</p>
+
+          <h3>Azure Load Balancer (ALB)</h3>
+          <p><b>What:</b> L4 (TCP/UDP) load balancer — fast, cheap, works for any TCP/UDP workload. <b>SKUs:</b> Basic (deprecated) and Standard (zone-redundant, secure-by-default). <b>Why:</b> distribute traffic to VMs/VMSS at L4. <b>How used:</b> Public LB for internet traffic; Internal LB (ILB) for VNet-internal.</p>
+
+          <h3>Application Gateway (AppGW)</h3>
+          <p><b>What:</b> L7 (HTTP/HTTPS) load balancer with path-based routing, SSL termination, end-to-end TLS, and optional <b>Web Application Firewall (WAF)</b> for OWASP rules. <b>Why:</b> single entry point with URL-based routing; protect web apps. <b>How used:</b> regional — does not span regions.</p>
+
+          <h3>Azure Front Door (AFD)</h3>
+          <p><b>What:</b> global L7 load balancer + CDN + WAF, with anycast entry from 100+ Microsoft edge POPs. <b>Why:</b> low-latency global routing, failover between regions, static content caching. <b>How used:</b> point public DNS at the Front Door endpoint; configure origins (App Service, VM, storage, AKS).</p>
+
+          <h3>Azure CDN</h3>
+          <p><b>Acronym:</b> Content Delivery Network. <b>What:</b> cached static content at edge POPs to reduce latency for users globally. Microsoft is migrating from "Azure CDN" to <b>Front Door Standard/Premium</b> as the unified product.</p>
+
+          <h3>Azure Firewall</h3>
+          <p><b>What:</b> managed, cloud-native stateful firewall service with L3–L7 rules, threat intelligence feed, FQDN filtering. <b>Why:</b> central egress filtering in hub-spoke; replaces NVA appliances. <b>SKUs:</b> Standard, Premium (TLS inspection, IDPS).</p>
+
+          <h3>Azure Bastion</h3>
+          <p><b>What:</b> managed jumpbox — RDP/SSH to your VMs through the Azure Portal without exposing public IPs. <b>Why:</b> eliminate the public RDP/SSH surface that brute-force attacks target. <b>How used:</b> deploys to a dedicated <code>AzureBastionSubnet</code>.</p>
+
+          <h3>NAT Gateway</h3>
+          <p><b>Acronym:</b> Network Address Translation Gateway. <b>What:</b> managed outbound NAT for a subnet — gives all VMs a shared static public IP for egress without exposing them inbound. <b>Why:</b> SNAT port exhaustion on the default Azure NAT is real; NAT Gateway gives 64K ports per IP, scalable to many IPs.</p>
+
+          <h2>Acronyms recap</h2>
           <ul>
-            <li><b>Virtual Machines</b> — IaaS, full OS control.</li>
-            <li><b>VM Scale Sets</b> — auto-scaling identical VMs behind LB.</li>
-            <li><b>App Service</b> — PaaS for web apps.</li>
-            <li><b>Container Instances (ACI)</b> — single container, serverless.</li>
-            <li><b>Azure Kubernetes Service (AKS)</b> — managed K8s.</li>
-            <li><b>Azure Functions</b> — serverless / FaaS.</li>
-            <li><b>Azure Virtual Desktop</b> — DaaS (Windows desktop in cloud).</li>
+            <li><b>VM / VMSS</b> — Virtual Machine / Virtual Machine Scale Set.</li>
+            <li><b>ACI / ACA / AKS</b> — Container Instances / Container Apps / Kubernetes Service.</li>
+            <li><b>FaaS / DaaS</b> — Function-as-a-Service / Desktop-as-a-Service.</li>
+            <li><b>AVD</b> — Azure Virtual Desktop.</li>
+            <li><b>VNet</b> — Virtual Network.</li>
+            <li><b>NSG / ASG</b> — Network/Application Security Group.</li>
+            <li><b>VPN / ER</b> — Virtual Private Network / ExpressRoute.</li>
+            <li><b>ALB / AppGW / AFD</b> — Azure Load Balancer / Application Gateway / Azure Front Door.</li>
+            <li><b>WAF</b> — Web Application Firewall.</li>
+            <li><b>CDN</b> — Content Delivery Network.</li>
+            <li><b>NAT</b> — Network Address Translation.</li>
+            <li><b>NVA</b> — Network Virtual Appliance (3rd-party firewall/router VM).</li>
+            <li><b>POP</b> — Point of Presence (edge location).</li>
           </ul>
-          <h2>Networking</h2>
+
+          <h2>Exam quick patterns</h2>
           <ul>
-            <li><b>Virtual Network (VNet)</b> — isolated network with subnets.</li>
-            <li><b>VNet peering</b> — connect VNets.</li>
-            <li><b>VPN Gateway</b> — site-to-site or point-to-site VPN over Internet.</li>
-            <li><b>ExpressRoute</b> — private dedicated link to Azure.</li>
-            <li><b>Azure DNS</b>, <b>Load Balancer</b> (L4), <b>Application Gateway</b> (L7 + WAF), <b>Front Door</b> (global L7 + CDN).</li>
+            <li>"Run web app, Microsoft handles OS patching, deploy from GitHub" → <b>App Service</b>.</li>
+            <li>"Run container, no orchestration needed, per-second billing" → <b>ACI</b>.</li>
+            <li>"Microservices at scale, full K8s API" → <b>AKS</b>.</li>
+            <li>"Code runs only on HTTP request, scale-to-zero" → <b>Functions</b> Consumption.</li>
+            <li>"Stream Windows desktop to iPad" → <b>Azure Virtual Desktop</b>.</li>
+            <li>"Private dedicated 10 Gbps link to Azure, not over Internet" → <b>ExpressRoute</b>.</li>
+            <li>"Encrypted tunnel from branch office to Azure over Internet" → <b>VPN Gateway (S2S)</b>.</li>
+            <li>"Layer 7 HTTPS load balancing with OWASP protection" → <b>Application Gateway + WAF</b>.</li>
+            <li>"Global anycast entry + CDN + WAF in front of regional app" → <b>Azure Front Door</b>.</li>
+            <li>"RDP into a VM without giving it a public IP" → <b>Azure Bastion</b>.</li>
+            <li>"Filter outbound traffic centrally from a hub VNet" → <b>Azure Firewall</b>.</li>
           </ul>
         `
       },
