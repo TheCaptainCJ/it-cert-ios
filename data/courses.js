@@ -4356,17 +4356,248 @@ interface Gi0/24
       {
         title: '5. Routing Protocols',
         body: `
+          <p>A <b>router</b> moves packets between IP networks based on the contents of its <b>routing table</b>. Routes get into the table from three sources: directly connected interfaces, static administrator entries, and dynamic routing protocols that exchange topology with neighbors. Exam tests the protocols, metrics, administrative distance, convergence, and NAT.</p>
+
+          <h2>Routing table basics</h2>
+          <p>Each entry contains:</p>
           <ul>
-            <li><b>Static</b> — manually defined.</li>
-            <li><b>RIP / RIPv2</b> — distance vector, hop count, max 15.</li>
-            <li><b>OSPF</b> — link-state, areas, cost metric, fast convergence.</li>
-            <li><b>EIGRP</b> — Cisco hybrid, composite metric.</li>
-            <li><b>BGP</b> — path vector, runs the Internet between ASes.</li>
+            <li><b>Destination network + prefix</b> (e.g., 10.10.0.0/16).</li>
+            <li><b>Next-hop IP</b> or outgoing interface.</li>
+            <li><b>Administrative Distance (AD)</b> — trust level of the source protocol.</li>
+            <li><b>Metric</b> — cost within the source protocol.</li>
+            <li><b>Age, source protocol, flags</b>.</li>
           </ul>
-          <h2>Administrative distance (lower = preferred)</h2>
-          <p>Connected 0, Static 1, EIGRP 90, OSPF 110, RIP 120, eBGP 20, iBGP 200.</p>
-          <h2>NAT</h2>
-          <p>Static, Dynamic, PAT (overload) — many private behind one public.</p>
+          <p>Forwarding decision: <b>longest-prefix match</b> wins (the most specific route). If two routes are equally specific, lower AD wins. If AD is equal, lower metric wins. If both equal: equal-cost multi-path (ECMP) load-balances.</p>
+
+          <h2>Static routing</h2>
+          <p><b>What:</b> Administrator manually enters routes.</p>
+          <p><b>Why:</b> Simple, predictable, no protocol overhead. Used at the edge or in tiny networks.</p>
+          <p><b>How used:</b></p>
+          <pre><code># Cisco
+ip route 10.20.0.0 255.255.0.0 192.168.1.2
+ip route 0.0.0.0 0.0.0.0 203.0.113.1   # default route / "gateway of last resort"
+
+# Linux
+ip route add 10.20.0.0/16 via 192.168.1.2
+ip route add default via 203.0.113.1</code></pre>
+          <p><b>Floating static</b> — static route with a high AD (e.g., 200) so it's a backup that activates only when the dynamic route disappears.</p>
+          <p><b>Pros:</b> Deterministic, no CPU/bandwidth for updates, simple.<br>
+          <b>Cons:</b> Doesn't adapt to failures, scales poorly past a handful of routes.</p>
+
+          <h2>Dynamic routing categories</h2>
+
+          <h3>Distance Vector</h3>
+          <p><b>What:</b> Each router sends its full routing table (or differences) to neighbors. Routes chosen by metric (often hop count). "Routing by rumor".</p>
+          <p><b>Examples:</b> RIP, RIPv2, RIPng (IPv6), legacy IGRP.</p>
+          <p><b>Pros:</b> Simple to configure.<br>
+          <b>Cons:</b> Slow convergence, count-to-infinity loops, limited diameter.</p>
+
+          <h3>Link-State</h3>
+          <p><b>What:</b> Every router floods a description of its local links (LSA / LSP) to all routers in the area. Each router runs Dijkstra's <b>SPF</b> (Shortest Path First) algorithm on the resulting database to compute its routing table.</p>
+          <p><b>Examples:</b> OSPF, IS-IS.</p>
+          <p><b>Pros:</b> Fast convergence, loop-free by design, hierarchical scaling via areas.<br>
+          <b>Cons:</b> Higher CPU + memory, more complex to design.</p>
+
+          <h3>Path Vector</h3>
+          <p><b>What:</b> Carries entire AS-PATH for each route. Used between independent organizations on the Internet.</p>
+          <p><b>Example:</b> BGP.</p>
+
+          <h3>Hybrid / Advanced Distance Vector</h3>
+          <p><b>Example:</b> EIGRP (Cisco, now open). Uses neighbor relationships + DUAL algorithm — distance vector with link-state-style fast convergence.</p>
+
+          <h2>RIP / RIPv2 / RIPng — Routing Information Protocol</h2>
+          <ul>
+            <li><b>Type:</b> Distance vector.</li>
+            <li><b>Metric:</b> Hop count. Max 15 hops (16 = unreachable).</li>
+            <li><b>Updates:</b> Broadcast every 30 sec (RIPv1) or multicast 224.0.0.9 (RIPv2).</li>
+            <li><b>RIPv1</b> — classful, no auth, broadcast — basically dead.</li>
+            <li><b>RIPv2</b> — classless (CIDR), supports VLSM, multicast updates, MD5 auth.</li>
+            <li><b>RIPng</b> — IPv6 version, uses UDP 521, multicast ff02::9.</li>
+            <li><b>AD:</b> 120.</li>
+            <li><b>Use today:</b> Lab / very small networks. Replaced by OSPF / EIGRP in production.</li>
+          </ul>
+
+          <h2>OSPF — Open Shortest Path First</h2>
+          <ul>
+            <li><b>Type:</b> Link-state, open standard (RFC 2328 for OSPFv2 / RFC 5340 for OSPFv3 IPv6).</li>
+            <li><b>Metric:</b> Cost = reference bandwidth / interface bandwidth (lower = better).</li>
+            <li><b>AD:</b> 110.</li>
+            <li><b>Algorithm:</b> Dijkstra SPF on the link-state database.</li>
+            <li><b>Multicast addresses:</b> 224.0.0.5 (AllSPFRouters), 224.0.0.6 (AllDRouters).</li>
+            <li><b>Protocol number:</b> 89 (rides directly on IP, not TCP/UDP).</li>
+            <li><b>Hello packet:</b> default 10 s on broadcast networks (40 s dead).</li>
+          </ul>
+          <p><b>Hierarchical design:</b></p>
+          <ul>
+            <li><b>Area 0 (backbone)</b> — must exist; all other areas connect to it.</li>
+            <li><b>Standard area</b> — receives all LSAs.</li>
+            <li><b>Stub area</b> — blocks external (Type-5) LSAs.</li>
+            <li><b>Totally stubby area</b> — Cisco; blocks externals and inter-area routes.</li>
+            <li><b>NSSA</b> (Not-So-Stubby Area) — stub that can still import external routes via Type-7.</li>
+          </ul>
+          <p><b>Router roles:</b></p>
+          <ul>
+            <li><b>Internal router</b> — all interfaces in one area.</li>
+            <li><b>ABR</b> (Area Border Router) — connects two or more areas.</li>
+            <li><b>ASBR</b> (Autonomous System Boundary Router) — redistributes from another routing protocol.</li>
+            <li><b>DR / BDR</b> (Designated Router / Backup) — elected on multi-access networks; reduces full-mesh adjacency overhead.</li>
+          </ul>
+          <p><b>LSA types:</b> 1 Router, 2 Network, 3 Summary, 4 ASBR-summary, 5 External, 7 NSSA External, 9-11 Opaque.</p>
+          <p><b>Why preferred:</b> Open standard, fast convergence, scales to large enterprises, multi-vendor.</p>
+
+          <h2>IS-IS — Intermediate System to Intermediate System</h2>
+          <ul>
+            <li>Link-state, ISO standard, runs directly over L2 (CLNP/CLNS).</li>
+            <li>Used heavily by ISPs + telecom for IGP scalability.</li>
+            <li>Areas: Level 1 (intra-area) + Level 2 (inter-area).</li>
+            <li><b>AD:</b> 115.</li>
+          </ul>
+
+          <h2>EIGRP — Enhanced Interior Gateway Routing Protocol</h2>
+          <ul>
+            <li><b>Type:</b> Cisco-developed (now open), advanced distance vector / hybrid.</li>
+            <li><b>Algorithm:</b> <b>DUAL</b> (Diffusing Update Algorithm) — loop-free, fast convergence.</li>
+            <li><b>Metric:</b> Composite — by default bandwidth + delay (also can include reliability, load, MTU via K-values).</li>
+            <li><b>AD:</b> 90 (internal), 170 (external).</li>
+            <li><b>Multicast:</b> 224.0.0.10.</li>
+            <li><b>Protocol number:</b> 88.</li>
+            <li><b>Concepts:</b> Successor (best route), Feasible Successor (loop-free backup, instant failover).</li>
+            <li><b>Use:</b> Easy to configure, very fast convergence. Common in Cisco-only enterprises.</li>
+          </ul>
+
+          <h2>BGP — Border Gateway Protocol</h2>
+          <ul>
+            <li><b>Type:</b> Path-vector. Runs over TCP/179.</li>
+            <li><b>Use:</b> The protocol that runs the Internet. Exchanges routes between <b>Autonomous Systems (ASes)</b>.</li>
+            <li><b>Variants:</b> <b>eBGP</b> (between different ASes) + <b>iBGP</b> (within one AS — used to carry external routes through the internal backbone).</li>
+            <li><b>AD:</b> 20 eBGP, 200 iBGP.</li>
+            <li><b>AS number</b> — 16-bit or 32-bit identifier assigned by RIRs.</li>
+            <li><b>BGP attributes</b> (path selection order, Cisco's "We Love Oranges AS Oranges Mean Pure Refreshment"):
+              <ol>
+                <li><b>Weight</b> (Cisco-only local).</li>
+                <li><b>LOCAL_PREF</b> — within an AS, higher wins (outbound).</li>
+                <li>Locally originated.</li>
+                <li><b>AS_PATH</b> length (shorter wins).</li>
+                <li><b>Origin</b> (IGP &lt; EGP &lt; Incomplete).</li>
+                <li><b>MED</b> (Multi-Exit Discriminator) — sent to neighbors, lower wins (inbound).</li>
+                <li>eBGP over iBGP.</li>
+                <li>IGP metric to next hop.</li>
+                <li>Oldest path / tie-breakers.</li>
+              </ol>
+            </li>
+            <li><b>Why critical:</b> Misconfigurations cause global Internet outages (Facebook 2021, Cloudflare-Verizon 2019). RPKI + route filtering mitigate.</li>
+          </ul>
+
+          <h2>Administrative Distance (AD)</h2>
+          <p>When multiple sources offer a route to the same destination, the source with the LOWEST AD wins.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Source</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AD</th></tr>
+            <tr><td>Connected interface</td><td>0</td></tr>
+            <tr><td>Static route</td><td>1</td></tr>
+            <tr><td>eBGP</td><td>20</td></tr>
+            <tr><td>EIGRP (internal)</td><td>90</td></tr>
+            <tr><td>OSPF</td><td>110</td></tr>
+            <tr><td>IS-IS</td><td>115</td></tr>
+            <tr><td>RIP</td><td>120</td></tr>
+            <tr><td>EIGRP (external)</td><td>170</td></tr>
+            <tr><td>iBGP</td><td>200</td></tr>
+            <tr><td>Unknown / unreachable</td><td>255</td></tr>
+          </table>
+
+          <h2>Metric vs AD</h2>
+          <ul>
+            <li><b>AD</b> selects BETWEEN protocols (router only places one into table).</li>
+            <li><b>Metric</b> selects WITHIN a protocol (best path among that protocol's routes).</li>
+          </ul>
+
+          <h2>Convergence + loops</h2>
+          <ul>
+            <li><b>Convergence</b> — time for all routers to agree on a consistent view after a change.</li>
+            <li>RIP: slow (minutes), uses split horizon + poison reverse + holddown timers.</li>
+            <li>OSPF: seconds. Link state change triggers LSA flood + SPF.</li>
+            <li>EIGRP: sub-second (DUAL feasible-successor instant switch).</li>
+            <li>BGP: convergence depends on tuning (minutes globally; with BFD + tuning, seconds).</li>
+            <li><b>BFD</b> (Bidirectional Forwarding Detection) — sub-second link-down detection for fast convergence.</li>
+          </ul>
+
+          <h2>Route redistribution</h2>
+          <p>When two routing protocols exist (e.g., OSPF + EIGRP), inject routes from one into the other on the ASBR.</p>
+          <p><b>Watch out for:</b> Routing loops, suboptimal routing. Use route maps + prefix lists to filter, and adjust seed metric / AD.</p>
+
+          <h2>Route filtering tools</h2>
+          <ul>
+            <li><b>ACL</b> — Access Control List, permit/deny prefixes.</li>
+            <li><b>Prefix list</b> — match prefix length ranges.</li>
+            <li><b>Route map</b> — match conditions + set actions (metric, community, next-hop).</li>
+            <li><b>Community tags</b> in BGP — for traffic engineering policy.</li>
+            <li><b>RPKI</b> (Resource Public Key Infrastructure) — cryptographically validates BGP route origins.</li>
+          </ul>
+
+          <h2>NAT — Network Address Translation</h2>
+          <p>Already covered in IPv4 lesson, summarized here for routing context:</p>
+          <ul>
+            <li><b>Static NAT</b> — one private ↔ one public, fixed mapping.</li>
+            <li><b>Dynamic NAT</b> — pool of public addresses; first-come.</li>
+            <li><b>PAT / NAT overload</b> — many private behind one public, distinguished by source port.</li>
+            <li><b>Source NAT</b> — translates source address (outbound).</li>
+            <li><b>Destination NAT / port forwarding</b> — translates destination, used to expose internal services.</li>
+            <li><b>Carrier-Grade NAT (CGN / NAT44)</b> — ISP-side using 100.64.0.0/10 (RFC 6598).</li>
+            <li><b>NAT64</b> — translates IPv6 ↔ IPv4 for IPv6-only clients reaching IPv4-only servers.</li>
+          </ul>
+
+          <h2>First-hop redundancy</h2>
+          <p>For high-availability gateways:</p>
+          <ul>
+            <li><b>HSRP</b> (Hot Standby Router Protocol, Cisco) — active + standby, virtual IP.</li>
+            <li><b>VRRP</b> (Virtual Router Redundancy Protocol, IETF) — open standard.</li>
+            <li><b>GLBP</b> (Gateway Load Balancing Protocol, Cisco) — load balances across multiple active.</li>
+            <li><b>CARP</b> (BSD).</li>
+          </ul>
+
+          <h2>Show + debug commands (Cisco)</h2>
+          <pre><code>show ip route                         # full table
+show ip route ospf                    # only OSPF routes
+show ip protocols                     # running routing protocols
+show ip ospf neighbor
+show ip eigrp neighbors
+show ip bgp summary
+show ip route 8.8.8.8                 # which route applies
+debug ip routing                      # log adds/removes (careful in prod)
+ping 8.8.8.8 source GigabitEthernet0/0
+traceroute 8.8.8.8</code></pre>
+
+          <h2>Linux equivalents</h2>
+          <pre><code>ip route
+ip route get 8.8.8.8
+mtr 8.8.8.8
+# Dynamic routing daemons: FRR (FRRouting), BIRD, Quagga
+vtysh                                 # FRR CLI like Cisco IOS</code></pre>
+
+          <h2>Common routing troubleshooting</h2>
+          <ul>
+            <li><b>"Cannot ping a remote subnet"</b> — check both routers have a path back; asymmetric reverse path = ICMP works one way only.</li>
+            <li><b>"Route in table but traffic still drops"</b> — ACL, firewall, NAT, MTU.</li>
+            <li><b>"Routes flapping"</b> — interface up/down loop; check physical layer.</li>
+            <li><b>"Suboptimal routing"</b> — wrong metric / redistribution; check AD + metric.</li>
+            <li><b>"Default route missing"</b> — gateway died; static or default-originate via dynamic.</li>
+            <li><b>"OSPF neighbors stuck in EXSTART/EXCHANGE"</b> — MTU mismatch on the link.</li>
+            <li><b>"BGP not establishing"</b> — TCP/179 blocked, wrong AS number, wrong neighbor IP, password mismatch.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Lower AD wins" between protocols.</li>
+            <li>OSPF AD = 110; EIGRP = 90; RIP = 120; eBGP = 20; iBGP = 200.</li>
+            <li>OSPF metric = cost (bandwidth-derived).</li>
+            <li>EIGRP metric = composite (bandwidth + delay default).</li>
+            <li>RIP metric = hop count; max 15.</li>
+            <li>BGP runs the Internet, path vector, TCP/179.</li>
+            <li>Convergence speed: EIGRP &gt; OSPF &gt; RIP. Static is instant but doesn't react to failure.</li>
+            <li>"Many private behind one public" = PAT.</li>
+            <li>"Backup gateway with virtual IP" → HSRP / VRRP.</li>
+            <li>"Validate BGP route origins cryptographically" → RPKI.</li>
+            <li>"Detect link down sub-second" → BFD.</li>
+          </ul>
         `
       },
       {
