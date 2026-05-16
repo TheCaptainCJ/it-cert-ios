@@ -6444,21 +6444,270 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '3. Attack Types',
         body: `
-          <h2>Network</h2>
-          <p>DDoS, on-path (MitM), DNS poisoning, ARP spoofing, replay, downgrade attack.</p>
-          <h2>Application</h2>
+          <p>Catalog of attacks the exam expects you to identify by name + behavior. Group them by layer (network, web, app, password, crypto, physical) for easier recall. Same payload can fit multiple categories — focus on the BEHAVIOR.</p>
+
+          <h2>Network attacks</h2>
+
+          <h3>DoS / DDoS</h3>
           <ul>
-            <li><b>Injection</b> — SQLi, command injection.</li>
-            <li><b>XSS</b> — stored, reflected, DOM-based.</li>
-            <li><b>CSRF</b> — forged request from authenticated session.</li>
-            <li><b>SSRF</b> — server fetches attacker-supplied URL.</li>
-            <li><b>Buffer overflow</b> — overruns memory bounds.</li>
-            <li><b>Race condition / TOCTOU</b>.</li>
+            <li><b>DoS</b> (Denial of Service) — one source. <b>DDoS</b> (Distributed) — many sources (botnet).</li>
+            <li><b>Volumetric</b> — saturate bandwidth (UDP flood, ICMP flood, amplification).</li>
+            <li><b>Protocol</b> — exhaust state tables (SYN flood, Ping of Death, Smurf).</li>
+            <li><b>Application-layer (L7)</b> — Slowloris, HTTP flood, Low-and-slow.</li>
+            <li><b>Amplification:</b> DNS, NTP, SSDP, Memcached, CHARGEN — spoof victim IP in request, reflector sends huge reply.</li>
+            <li><b>Defenses:</b> Anycast scrubbing (Cloudflare Magic Transit, AWS Shield, Azure DDoS, Akamai Prolexic), rate limiting, BCP 38 anti-spoofing, blackholing, geo-block, BGP flowspec.</li>
           </ul>
-          <h2>Password</h2>
-          <p>Brute force, dictionary, password spraying (one pw, many users), credential stuffing (leaked db reuse), rainbow table.</p>
-          <h2>Cryptographic</h2>
-          <p>Birthday, collision, downgrade, side-channel, length-extension.</p>
+
+          <h3>On-path (MitM)</h3>
+          <p><b>What:</b> Attacker positions between two parties, can read + modify traffic. Modern term: <b>on-path attack</b> (replaces "Man in the Middle").</p>
+          <ul>
+            <li><b>Methods:</b> ARP poisoning, rogue Wi-Fi, BGP hijack, malicious proxy, compromised router.</li>
+            <li><b>Defenses:</b> End-to-end TLS w/ cert pinning, HSTS, mutual TLS, DNSSEC, RPKI, encrypted DNS (DoT/DoH).</li>
+          </ul>
+
+          <h3>ARP poisoning / spoofing</h3>
+          <p><b>What:</b> Forged ARP replies map attacker MAC to victim's IP. Causes traffic to route through attacker.</p>
+          <p><b>Defenses:</b> Dynamic ARP Inspection (DAI), DHCP Snooping, static ARP entries, port security.</p>
+
+          <h3>DNS poisoning / spoofing</h3>
+          <p><b>What:</b> Injects false records into a resolver cache or response, redirecting users to attacker IP.</p>
+          <p><b>Defenses:</b> DNSSEC, source-port randomization, query case randomization, encrypted DNS (DoT/DoH), DNS firewall (Cisco Umbrella, Cloudflare 1.1.1.1 for Families).</p>
+
+          <h3>MAC flooding / spoofing</h3>
+          <ul>
+            <li><b>Flood</b> — fill CAM table → switch flood-mode. Defense: Port Security.</li>
+            <li><b>Spoof</b> — change NIC MAC to impersonate. Defense: 802.1X authentication.</li>
+          </ul>
+
+          <h3>VLAN hopping</h3>
+          <ul>
+            <li><b>Switch spoofing</b> via DTP — disable DTP.</li>
+            <li><b>Double-tagging</b> — attacker tags frame twice; switch strips outer tag and forwards to wrong VLAN. Defense: change native VLAN from 1, tag native, prune trunks.</li>
+          </ul>
+
+          <h3>DHCP attacks</h3>
+          <ul>
+            <li><b>Rogue DHCP server</b> — hands out attacker-controlled gateway/DNS. Defense: DHCP Snooping.</li>
+            <li><b>DHCP starvation</b> — exhausts address pool. Defense: rate limit + Port Security.</li>
+          </ul>
+
+          <h3>Replay attack</h3>
+          <p><b>What:</b> Captures legitimate traffic + re-sends it later (auth token, cookie, RFID). Defense: nonces, timestamps, sequence numbers, one-time tokens, short-lived sessions, TLS.</p>
+
+          <h3>Session hijacking</h3>
+          <p><b>What:</b> Steals or predicts session cookie / token → impersonates user.</p>
+          <p><b>Defenses:</b> HTTPS + HSTS + Secure + HttpOnly + SameSite cookies, short-lived sessions, token binding, IP / device fingerprint anomaly detection.</p>
+
+          <h3>Downgrade attack</h3>
+          <p><b>What:</b> Forces protocol to use weaker version (TLS rollback, WPA2-only on WPA3 client). Example: POODLE forces SSL 3.0.</p>
+          <p><b>Defenses:</b> Disable old versions entirely; HSTS preload list; enforce minimum TLS 1.2 / WPA3.</p>
+
+          <h3>BGP hijack / route hijacking</h3>
+          <p><b>What:</b> Maliciously originate or path-prepend a prefix to redirect Internet traffic.</p>
+          <p><b>Defenses:</b> RPKI ROAs (Route Origin Authorizations), strict route filtering, IRR validation, BGP monitoring (BGPmon).</p>
+
+          <h3>Wireless attacks</h3>
+          <ul>
+            <li><b>Evil twin</b> — fake AP impersonates legit SSID.</li>
+            <li><b>Rogue AP</b> — unauthorized AP on corporate LAN.</li>
+            <li><b>Deauth flood</b> — 802.11 deauth packets boot clients off → reconnect → capture handshake. Defense: PMF (802.11w).</li>
+            <li><b>WPS PIN attack</b> — Reaver / Pixie Dust. Defense: disable WPS.</li>
+            <li><b>KRACK</b> (Key Reinstallation Attack) — WPA2 handshake replay. Patched.</li>
+            <li><b>Disassociation</b> — similar to deauth.</li>
+            <li><b>Bluejacking / Bluesnarfing / Bluebugging</b>.</li>
+            <li><b>Wardriving</b> — drive around mapping APs.</li>
+            <li><b>RFID / NFC cloning</b> — replay badge / payment.</li>
+          </ul>
+
+          <h2>Application / Web attacks</h2>
+
+          <h3>Injection</h3>
+          <p><b>SQLi</b> (SQL Injection) — attacker breaks out of intended SQL via input. Variants: in-band, blind, time-based, error-based, union-based.</p>
+          <p><b>Command injection / OS command injection</b> — input runs as shell command.</p>
+          <p><b>LDAP injection</b>, <b>XPath injection</b>, <b>NoSQL injection</b>, <b>HTML injection</b>, <b>SMTP/header injection</b>.</p>
+          <p><b>Defenses:</b> Parameterized queries / prepared statements, ORM, input validation + allowlists, least-privilege DB account, WAF, stored procedures (when written safely).</p>
+
+          <h3>XSS — Cross-Site Scripting</h3>
+          <ul>
+            <li><b>Stored / persistent</b> — payload saved server-side (DB / forum), runs every time someone views.</li>
+            <li><b>Reflected</b> — payload in URL → bounced back in response → runs in victim browser if they click attacker link.</li>
+            <li><b>DOM-based</b> — entirely client-side; JS reads URL fragment + writes to DOM unsafely.</li>
+            <li><b>Defenses:</b> Output encoding by context (HTML, JS, attribute, URL), Content Security Policy (CSP) header, framework auto-escaping (React JSX, Vue), no <code>innerHTML</code> from untrusted input, sanitize via DOMPurify.</li>
+          </ul>
+
+          <h3>CSRF — Cross-Site Request Forgery</h3>
+          <p><b>What:</b> Attacker tricks an authenticated victim's browser into making an unintended state-changing request.</p>
+          <p><b>Defenses:</b> Anti-CSRF tokens (synchronizer pattern), SameSite cookies, Origin/Referer checks, double-submit cookies.</p>
+
+          <h3>SSRF — Server-Side Request Forgery</h3>
+          <p><b>What:</b> Server fetches an attacker-supplied URL, often reaching internal-only resources (cloud metadata endpoint <code>169.254.169.254</code> is the classic target → credential theft).</p>
+          <p><b>Defenses:</b> Allowlist outbound destinations, block link-local + RFC 1918 from app, use IMDSv2 in AWS (token-required), egress firewall.</p>
+
+          <h3>XXE — XML External Entity</h3>
+          <p><b>What:</b> XML parser fetches external entities → can read files, SSRF, DoS.</p>
+          <p><b>Defenses:</b> Disable external entities in parser config; use modern data formats (JSON).</p>
+
+          <h3>Insecure deserialization</h3>
+          <p><b>What:</b> Untrusted serialized data deserialized into objects → RCE (Java <code>ObjectInputStream</code>, .NET <code>BinaryFormatter</code>, Python pickle).</p>
+          <p><b>Defenses:</b> Don't deserialize untrusted; use signed / authenticated tokens; restrict allowed classes.</p>
+
+          <h3>Buffer / integer overflow</h3>
+          <p><b>What:</b> Writing past buffer bounds corrupts adjacent memory → can hijack control flow.</p>
+          <p><b>Defenses:</b> Safe languages (Rust, Go, managed runtimes), bounds checking, ASLR, DEP/NX, stack canaries, CFG, fuzzing.</p>
+
+          <h3>Race condition / TOCTOU</h3>
+          <p><b>TOCTOU</b> = Time-Of-Check to Time-Of-Use. Resource changes between when you verify it and when you use it.</p>
+          <p><b>Defenses:</b> Atomic operations, file descriptors, mutex locks, transaction isolation.</p>
+
+          <h3>Directory traversal / Path traversal</h3>
+          <p><b>What:</b> Input like <code>../../etc/passwd</code> escapes intended directory.</p>
+          <p><b>Defenses:</b> Canonicalize paths, allowlist, reject <code>..</code> sequences.</p>
+
+          <h3>File inclusion (LFI / RFI)</h3>
+          <ul>
+            <li><b>LFI</b> (Local File Inclusion) — include arbitrary local file.</li>
+            <li><b>RFI</b> (Remote File Inclusion) — include remote URL → RCE.</li>
+          </ul>
+
+          <h3>Open redirect</h3>
+          <p>Redirect param under attacker control. Used in phishing chains (legit domain → attacker domain).</p>
+
+          <h3>Cookie / token theft</h3>
+          <ul>
+            <li>XSS → exfil cookie.</li>
+            <li>Network sniff (HTTP).</li>
+            <li>Malicious extensions / clipboard.</li>
+            <li><b>Defenses:</b> HttpOnly + Secure + SameSite cookies; HTTPS everywhere.</li>
+          </ul>
+
+          <h3>API attacks</h3>
+          <ul>
+            <li>Broken object-level auth (<b>BOLA</b>) — change ID in URL to access someone else's data.</li>
+            <li>Broken authentication.</li>
+            <li>Excessive data exposure.</li>
+            <li>Lack of rate limiting.</li>
+            <li>Mass assignment.</li>
+            <li>Security misconfiguration.</li>
+            <li>Improper inventory.</li>
+            <li>Unsafe consumption of APIs.</li>
+            <li><b>Reference:</b> OWASP API Security Top 10.</li>
+          </ul>
+
+          <h2>OWASP Web Top 10 (2021)</h2>
+          <ol>
+            <li>A01 — Broken Access Control.</li>
+            <li>A02 — Cryptographic Failures.</li>
+            <li>A03 — Injection.</li>
+            <li>A04 — Insecure Design.</li>
+            <li>A05 — Security Misconfiguration.</li>
+            <li>A06 — Vulnerable + Outdated Components.</li>
+            <li>A07 — Identification + Authentication Failures.</li>
+            <li>A08 — Software + Data Integrity Failures.</li>
+            <li>A09 — Security Logging + Monitoring Failures.</li>
+            <li>A10 — Server-Side Request Forgery.</li>
+          </ol>
+
+          <h2>Password attacks</h2>
+          <ul>
+            <li><b>Brute force</b> — try every combination. Online (rate-limited) vs offline (no limit).</li>
+            <li><b>Dictionary attack</b> — try common words + leaked passwords (RockYou.txt).</li>
+            <li><b>Hybrid attack</b> — dictionary + mutations (Password123!).</li>
+            <li><b>Password spraying</b> — ONE common password across MANY usernames (defeats lockout that triggers on per-user fail).</li>
+            <li><b>Credential stuffing</b> — try username/password pairs leaked from another breach (defeated by unique passwords + MFA).</li>
+            <li><b>Rainbow table</b> — precomputed hash lookup. Defeated by SALTING.</li>
+            <li><b>Pass-the-hash</b> — replay NTLM hash without knowing password. Defense: Credential Guard, disable NTLM, use Kerberos.</li>
+            <li><b>Pass-the-ticket</b> — Kerberos TGT/TGS theft + replay.</li>
+            <li><b>Golden ticket / Silver ticket</b> — forge Kerberos tickets after compromising KRBTGT or service account.</li>
+            <li><b>Keylogger</b> — capture as typed.</li>
+            <li><b>Phishing / reverse-proxy phishing (EvilGinx)</b> — captures both password and MFA token in transit.</li>
+            <li><b>Shoulder surfing</b>.</li>
+          </ul>
+          <p><b>Defenses summary:</b> Long unique passwords (passphrase 14+ chars), password manager, MFA (FIDO2 phishing-resistant), salt + slow KDF (Argon2id/bcrypt/scrypt/PBKDF2), account lockout w/ progressive delay, breach-password screening.</p>
+
+          <h2>Cryptographic attacks</h2>
+          <ul>
+            <li><b>Brute force</b> on small key — defeated by long keys (AES-256, RSA-3072+).</li>
+            <li><b>Birthday attack</b> — exploits collision probability in hashes. Use ≥ 256-bit hashes.</li>
+            <li><b>Collision attack</b> — find two inputs with same hash. MD5 and SHA-1 broken here.</li>
+            <li><b>Length-extension</b> — historic vulnerability in Merkle-Damgård hashes (MD5, SHA-1, SHA-2 without HMAC). Use HMAC or SHA-3.</li>
+            <li><b>Side-channel</b> — timing, power, EM, cache, acoustic attacks revealing keys.</li>
+            <li><b>Padding oracle</b> — POODLE, BEAST — broken CBC padding leaks plaintext.</li>
+            <li><b>Downgrade</b> — force weaker algorithm/version (FREAK, LOGJAM).</li>
+            <li><b>Known plaintext / Chosen plaintext / Chosen ciphertext</b> — classic crypto attack categories.</li>
+            <li><b>Replay</b> — covered in network.</li>
+            <li><b>Implementation flaws</b> — Heartbleed (OpenSSL), Debian weak RNG, Dual_EC backdoor.</li>
+            <li><b>Quantum threat</b> — Shor's algorithm breaks RSA/ECC. Mitigation: post-quantum crypto (ML-KEM, ML-DSA).</li>
+          </ul>
+
+          <h2>Physical + supply-chain attacks</h2>
+          <ul>
+            <li><b>Evil maid</b> — physical access to unattended device (bootkit, hardware keylogger).</li>
+            <li><b>Cold boot attack</b> — RAM retains data briefly after power-off; freeze + dump.</li>
+            <li><b>USB drop / baiting</b>.</li>
+            <li><b>Rubber Ducky / Bash Bunny</b> — HID-impersonating USB injects keystrokes.</li>
+            <li><b>Skimmers</b> — payment card readers planted on ATMs / POS.</li>
+            <li><b>Supply chain</b> — malicious component / firmware introduced in manufacturing or distribution (SolarWinds, ASUS LiveUpdate, Lenovo Superfish).</li>
+          </ul>
+
+          <h2>Malware attack categories (recap from A+ Core 2)</h2>
+          <ul>
+            <li>Virus, worm, trojan, RAT, rootkit, ransomware, keylogger, spyware, adware, cryptominer, logic bomb, backdoor, fileless, botnet, PUP.</li>
+          </ul>
+
+          <h2>AI-era + emerging attacks</h2>
+          <ul>
+            <li><b>Prompt injection</b> — manipulating LLM input to override guardrails or leak data.</li>
+            <li><b>Indirect prompt injection</b> — malicious content in a page / doc the model later reads.</li>
+            <li><b>Model exfiltration / extraction</b>.</li>
+            <li><b>Adversarial examples</b> — slightly modified input fools classifier.</li>
+            <li><b>Data poisoning</b> — corrupt training data.</li>
+            <li><b>Deepfake / synthetic voice fraud</b> — used in vishing CEO fraud.</li>
+            <li><b>Membership inference</b> — determine if a record was in training data.</li>
+          </ul>
+
+          <h2>Indicators of attack vs compromise</h2>
+          <ul>
+            <li><b>IOA</b> (Indicator of Attack) — pre-success behaviors: scanning, exploit attempts.</li>
+            <li><b>IOC</b> (Indicator of Compromise) — post-success: known-bad hashes, IPs, domains, registry keys, scheduled tasks.</li>
+          </ul>
+
+          <h2>Defense mapping — quick lookup</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Attack</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Primary defense</th></tr>
+            <tr><td>SQLi</td><td>Parameterized queries / prepared statements</td></tr>
+            <tr><td>XSS</td><td>Output encoding + CSP + framework auto-escape</td></tr>
+            <tr><td>CSRF</td><td>Anti-CSRF token + SameSite cookies</td></tr>
+            <tr><td>SSRF</td><td>Allowlist outbound + block metadata IP + IMDSv2</td></tr>
+            <tr><td>DDoS volumetric</td><td>Anycast scrubbing / CDN absorption</td></tr>
+            <tr><td>ARP poisoning</td><td>Dynamic ARP Inspection + DHCP Snooping</td></tr>
+            <tr><td>DNS poisoning</td><td>DNSSEC + encrypted DNS</td></tr>
+            <tr><td>BGP hijack</td><td>RPKI + route filtering</td></tr>
+            <tr><td>Phishing</td><td>SPF / DKIM / DMARC + MFA + training</td></tr>
+            <tr><td>Password spray / stuff</td><td>MFA + breach-password screening</td></tr>
+            <tr><td>Pass-the-hash</td><td>Credential Guard + disable NTLM</td></tr>
+            <tr><td>Replay</td><td>Nonces + timestamps + short tokens</td></tr>
+            <tr><td>Downgrade (TLS)</td><td>Disable old versions; enforce TLS 1.2+</td></tr>
+            <tr><td>Rainbow tables</td><td>Salt + slow KDF</td></tr>
+            <tr><td>Buffer overflow</td><td>ASLR + DEP + stack canaries + safe language</td></tr>
+            <tr><td>Insecure deserialization</td><td>Don't deserialize untrusted; allowlist classes</td></tr>
+            <tr><td>XXE</td><td>Disable external entities in parser</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Spraying" = one PW many users; "stuffing" = leaked pairs reused.</li>
+            <li>"DDoS amplification" → defense at upstream provider (scrubbing).</li>
+            <li>"Saved on server, runs on every viewer" → stored XSS.</li>
+            <li>"Tricks browser to act as logged-in user" → CSRF.</li>
+            <li>"Server reaches metadata service" → SSRF.</li>
+            <li>"Forced protocol weakness" → downgrade.</li>
+            <li>"Precomputed hash lookup" → rainbow table; defense = salt.</li>
+            <li>"Replay NTLM credential" → pass-the-hash.</li>
+            <li>"Force Kerberos to forge TGT" → golden ticket (compromise of KRBTGT).</li>
+            <li>"Same hash for two inputs" → collision attack.</li>
+            <li>"Time/power leak reveals key" → side-channel.</li>
+            <li>"USB pretends to be keyboard" → HID injection (Rubber Ducky / Bash Bunny).</li>
+          </ul>
         `
       },
       {
