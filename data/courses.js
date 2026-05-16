@@ -9058,28 +9058,343 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '1. Filesystem & Navigation',
         body: `
-          <h2>FHS key dirs</h2>
+          <p>Linux organizes everything as files under a single root tree (<code>/</code>). Knowing where things live + how to move/inspect them is the foundation for every other Linux+ topic. Exam tests <b>FHS</b> directory purposes, common navigation commands, find/grep, hard vs symbolic links, and mount points.</p>
+
+          <h2>Single tree — everything is a file</h2>
+          <p>Unlike Windows drives (C:\\, D:\\), Linux mounts every storage device + virtual filesystem somewhere under <code>/</code>. Devices, processes, network sockets, kernel info — all exposed as paths.</p>
+
+          <h2>FHS — Filesystem Hierarchy Standard</h2>
+          <p>FHS standardizes top-level directories so software finds the same paths across distros (Debian, RHEL, Arch, etc.). Latest version is FHS 3.0.</p>
+
+          <h3>Top-level directories</h3>
           <ul>
-            <li><code>/etc</code> — config files.</li>
-            <li><code>/var</code> — logs, spool, variable data.</li>
-            <li><code>/home</code> — user homes.</li>
-            <li><code>/usr</code> — userland binaries, libraries.</li>
-            <li><code>/bin</code>, <code>/sbin</code> — essential binaries.</li>
-            <li><code>/opt</code> — third-party packages.</li>
-            <li><code>/proc</code>, <code>/sys</code> — virtual kernel info.</li>
-            <li><code>/tmp</code> — ephemeral; cleared on reboot.</li>
+            <li><b><code>/</code></b> — root of the entire tree. Mount point for the root filesystem.</li>
+            <li><b><code>/bin</code></b> — essential user binaries needed in single-user mode (ls, cp, mv, cat, bash). On modern distros usually a symlink to <code>/usr/bin</code> (usrmerge).</li>
+            <li><b><code>/sbin</code></b> — essential system binaries for root (fsck, mount, ifconfig). Often symlink to <code>/usr/sbin</code>.</li>
+            <li><b><code>/usr</code></b> — Unix System Resources. Read-only userland (non-essential binaries, libraries, docs).
+              <ul>
+                <li><code>/usr/bin</code> — most user commands.</li>
+                <li><code>/usr/sbin</code> — additional admin binaries.</li>
+                <li><code>/usr/lib</code> — shared libraries.</li>
+                <li><code>/usr/local</code> — locally-installed software (separate from packages).</li>
+                <li><code>/usr/share</code> — architecture-independent data (man pages, docs, themes).</li>
+                <li><code>/usr/src</code> — kernel + program source.</li>
+              </ul>
+            </li>
+            <li><b><code>/etc</code></b> — system configuration files (text). Examples: <code>/etc/passwd</code>, <code>/etc/ssh/sshd_config</code>, <code>/etc/fstab</code>, <code>/etc/hosts</code>, <code>/etc/resolv.conf</code>, <code>/etc/sudoers</code>.</li>
+            <li><b><code>/home</code></b> — user home directories (<code>/home/alice</code>). Often a separate filesystem.</li>
+            <li><b><code>/root</code></b> — root user's home (NOT the same as <code>/</code>).</li>
+            <li><b><code>/var</code></b> — variable / changing data:
+              <ul>
+                <li><code>/var/log</code> — log files (syslog, auth, messages, journal, nginx, etc.).</li>
+                <li><code>/var/lib</code> — application state (DBs).</li>
+                <li><code>/var/cache</code> — cached data, can be regenerated.</li>
+                <li><code>/var/spool</code> — print, mail, cron queues.</li>
+                <li><code>/var/tmp</code> — temp that survives reboot (vs <code>/tmp</code>).</li>
+                <li><code>/var/www</code> — web content (common but not standardized).</li>
+              </ul>
+            </li>
+            <li><b><code>/tmp</code></b> — ephemeral; cleared on reboot in many distros. Often mounted as tmpfs (in RAM). Sticky bit set so only owners can delete their own files.</li>
+            <li><b><code>/opt</code></b> — third-party / commercial packages (e.g., <code>/opt/google/chrome</code>).</li>
+            <li><b><code>/srv</code></b> — site-specific service data (e.g., web/FTP served files).</li>
+            <li><b><code>/mnt</code></b> — temporary admin mount point.</li>
+            <li><b><code>/media</code></b> — auto-mounted removable media (USB, CD).</li>
+            <li><b><code>/dev</code></b> — device nodes (special files): <code>/dev/sda</code>, <code>/dev/null</code>, <code>/dev/zero</code>, <code>/dev/urandom</code>, <code>/dev/pts</code>, <code>/dev/loop0</code>.</li>
+            <li><b><code>/proc</code></b> — <b>procfs</b>, virtual filesystem exposing kernel + process info. <code>/proc/cpuinfo</code>, <code>/proc/meminfo</code>, <code>/proc/&lt;pid&gt;</code>, <code>/proc/self</code>.</li>
+            <li><b><code>/sys</code></b> — <b>sysfs</b>, virtual filesystem for kernel objects + hardware (devices, modules, power, network).</li>
+            <li><b><code>/run</code></b> — tmpfs for runtime data created early in boot (pid files, sockets, locks). Replaces <code>/var/run</code>.</li>
+            <li><b><code>/boot</code></b> — kernel images (vmlinuz), initramfs (initrd), bootloader (GRUB).</li>
+            <li><b><code>/lost+found</code></b> — fsck-recovered orphaned inodes (per-filesystem).</li>
           </ul>
-          <h2>Navigation</h2>
-          <pre><code>pwd
-cd /etc/nginx
-ls -la
-cp -r src dst
-mv old new
-rm -rf dir
-mkdir -p a/b/c
-ln -s target link
-find / -name "*.conf"
-locate sshd_config</code></pre>
+
+          <h2>Path types</h2>
+          <ul>
+            <li><b>Absolute path</b> — starts with <code>/</code>; full from root. <code>/etc/ssh/sshd_config</code>.</li>
+            <li><b>Relative path</b> — relative to current dir. <code>../config.yaml</code>, <code>./script.sh</code>.</li>
+            <li><b>Home shortcut:</b> <code>~</code> = current user's home; <code>~alice</code> = alice's home.</li>
+            <li><b>Special:</b>
+              <ul>
+                <li><code>.</code> — current directory.</li>
+                <li><code>..</code> — parent directory.</li>
+                <li><code>-</code> — (with <code>cd</code>) previous directory.</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h2>Navigation commands</h2>
+          <pre><code>pwd                          # print working directory
+cd /etc                      # change dir absolute
+cd ../var                    # relative
+cd ~                         # home
+cd -                         # previous dir
+ls                           # list
+ls -l                        # long format (perms, owner, size, mtime)
+ls -la                       # include hidden (dotfiles)
+ls -lh                       # human-readable sizes (KB, MB)
+ls -lt                       # sort by mtime (newest first)
+ls -lS                       # sort by size
+ls -lR                       # recursive
+ls --color=auto
+tree /etc/nginx              # recursive tree view (often needs install)</code></pre>
+
+          <h2>File operations</h2>
+          <pre><code>cp src dst                   # copy file
+cp -r src dst                # recursive (directories)
+cp -p src dst                # preserve perms + timestamps
+cp -a src dst                # archive mode (-dpR)
+mv old new                   # move / rename
+rm file                      # remove
+rm -i file                   # interactive (prompt)
+rm -rf dir                   # recursive force (DANGER)
+mkdir dir                    # make directory
+mkdir -p a/b/c               # make parents as needed
+rmdir empty-dir              # remove EMPTY directory
+touch file                   # create empty / update mtime
+truncate -s 0 file           # zero a file w/o removing
+shred -u file                # securely overwrite + delete (HDDs only)</code></pre>
+
+          <h2>Hidden files + dotfiles</h2>
+          <p>Files starting with <code>.</code> are hidden from default <code>ls</code>. Used for per-user config: <code>~/.bashrc</code>, <code>~/.ssh/</code>, <code>~/.config/</code>, <code>~/.vimrc</code>.</p>
+
+          <h2>File types</h2>
+          <p>First character of <code>ls -l</code> output reveals type:</p>
+          <ul>
+            <li><b>-</b> regular file</li>
+            <li><b>d</b> directory</li>
+            <li><b>l</b> symbolic link</li>
+            <li><b>c</b> character device (keyboard, tty)</li>
+            <li><b>b</b> block device (disk)</li>
+            <li><b>p</b> named pipe (FIFO)</li>
+            <li><b>s</b> socket</li>
+          </ul>
+          <p>Inspect with <code>file path</code> to identify content type. <code>stat path</code> for full metadata.</p>
+
+          <h2>Links</h2>
+          <ul>
+            <li><b>Hard link</b> — additional name pointing to the SAME inode. Same data. Cannot cross filesystems. Cannot link directories. Removing one name leaves data until ALL hard links removed.</li>
+            <li><b>Symbolic / soft link (symlink)</b> — pointer file that contains a path. Can cross filesystems, can link directories. Broken if target deleted. Created with <code>ln -s</code>.</li>
+            <li>Inspect with <code>ls -l</code> (shows <code>-&gt;</code> for symlink).</li>
+          </ul>
+          <pre><code>ln target hardlink           # hard link
+ln -s target symlink         # symbolic link
+readlink -f symlink          # resolve final target</code></pre>
+
+          <h2>Viewing file contents</h2>
+          <pre><code>cat file                     # print to stdout
+tac file                     # reverse (last line first)
+less file                    # pager (q to quit, / search, n next match)
+more file                    # simpler pager
+head file                    # first 10 lines
+head -n 50 file
+tail file                    # last 10 lines
+tail -n 50 file
+tail -f /var/log/syslog      # follow live
+nl file                      # numbered lines
+wc file                      # lines / words / bytes
+wc -l file                   # line count only</code></pre>
+
+          <h2>Searching for files</h2>
+          <pre><code>find / -name "*.conf"                # by name
+find / -iname "*.CONF"               # case-insensitive
+find /home -user alice -type f       # files owned by alice
+find /var -mtime -1                  # modified within 24h
+find /var -mtime +7                  # older than 7 days
+find /var -size +100M                # larger than 100 MB
+find /home -perm /u+s                # SUID bit set
+find / -name "*.log" -delete         # match + delete (CAREFUL)
+find / -name "*.log" -exec rm {} \\;  # alternative
+find / -name "*.log" -exec rm {} +    # batched (faster)
+
+locate sshd_config                    # uses prebuilt db
+sudo updatedb                         # refresh locate db
+
+which ls                              # path of an executable
+type ls                               # also shows alias / builtin
+whereis ls                            # binary + manpage + source paths
+command -v ls                         # POSIX equivalent</code></pre>
+
+          <h2>Searching inside files</h2>
+          <pre><code>grep "pattern" file
+grep -i "pattern" file              # case-insensitive
+grep -r "pattern" /etc              # recursive
+grep -v "pattern" file              # invert (lines NOT matching)
+grep -n "pattern" file              # show line numbers
+grep -E "regex"                     # extended regex
+grep -F "literal" file              # fixed string (faster)
+grep -c "pattern" file              # count of matches
+egrep / fgrep                       # legacy aliases
+zgrep "pattern" file.gz             # grep through gzip
+ripgrep (rg)                        # faster modern alternative</code></pre>
+
+          <h2>Standard streams + redirection</h2>
+          <ul>
+            <li><b>stdin</b> (0) — keyboard / piped input.</li>
+            <li><b>stdout</b> (1) — normal output.</li>
+            <li><b>stderr</b> (2) — error output.</li>
+          </ul>
+          <pre><code>cmd > file                   # stdout to file (overwrite)
+cmd >> file                  # append
+cmd 2> errors.log            # stderr to file
+cmd > out 2> err             # separate
+cmd > all 2>&1               # merge stderr into stdout
+cmd &> all                   # same, bash shortcut
+cmd < input.txt              # stdin from file
+cmd1 | cmd2                  # pipe stdout of cmd1 to stdin of cmd2
+cmd | tee file               # output AND save
+cmd > /dev/null 2>&1         # discard everything</code></pre>
+
+          <h2>Wildcards (globbing)</h2>
+          <ul>
+            <li><code>*</code> — zero or more characters.</li>
+            <li><code>?</code> — exactly one character.</li>
+            <li><code>[abc]</code> — any one of a, b, c.</li>
+            <li><code>[a-z]</code> — range.</li>
+            <li><code>{txt,log}</code> — brace expansion.</li>
+            <li><code>!(pattern)</code> — anything except (extended globbing).</li>
+          </ul>
+
+          <h2>Archives + compression</h2>
+          <pre><code>tar -cvf out.tar dir         # create tar archive
+tar -czvf out.tar.gz dir     # + gzip
+tar -cjvf out.tar.bz2 dir    # + bzip2
+tar -cJvf out.tar.xz dir     # + xz
+tar -tzf out.tar.gz          # list contents
+tar -xzf out.tar.gz          # extract
+tar -xzf out.tar.gz -C /opt  # extract to /opt
+
+gzip file                    # → file.gz (replaces original)
+gunzip file.gz
+bzip2 / bunzip2
+xz / unxz / xzcat
+zstd file                    # modern, fast
+
+zip out.zip file1 file2
+unzip out.zip
+7z a out.7z dir              # 7-Zip</code></pre>
+
+          <h2>Mount points + filesystems</h2>
+          <pre><code>mount                        # list mounted filesystems
+mount /dev/sdb1 /mnt/data
+umount /mnt/data
+findmnt /home                # tree-style mount info
+df -h                        # disk usage summary
+df -i                        # inode usage
+du -sh /var/log              # directory size summary
+du -ah /home | sort -h | tail -20
+lsblk                        # block device tree
+blkid /dev/sda1              # UUID + filesystem type
+fdisk -l                     # partitions on each disk
+parted /dev/sda print</code></pre>
+          <p><b>UUID</b> (Universally Unique Identifier) — preferred over <code>/dev/sdaX</code> in <code>/etc/fstab</code> because device names can shift across reboots.</p>
+
+          <h2>/etc/fstab — persistent mounts</h2>
+          <p>Each line:</p>
+          <pre><code># &lt;source&gt;     &lt;mount&gt;      &lt;fstype&gt;   &lt;options&gt;            &lt;dump&gt; &lt;pass&gt;
+UUID=abcd...   /            ext4       defaults             0     1
+UUID=efgh...   /home        xfs        defaults,nodev       0     2
+/swapfile      none         swap       sw                    0     0
+//server/share /mnt/share   cifs       credentials=/etc/...  0     0</code></pre>
+          <p><b>Options:</b> defaults, ro, rw, noexec, nosuid, nodev, noatime, sync, async, user, users, auto, noauto.<br>
+          <b>dump</b> field — for legacy dump(8) backup tool (0 = skip).<br>
+          <b>pass</b> field — fsck order (0 = no check, 1 = root, 2 = others).</p>
+          <p><b>Test fstab without reboot:</b> <code>sudo mount -a</code>. Use <code>findmnt --verify</code> in modern distros.</p>
+
+          <h2>Filesystem types</h2>
+          <ul>
+            <li><b>ext4</b> — default on most distros. Journaled. Good general-purpose.</li>
+            <li><b>XFS</b> — high-performance journaled fs; default on RHEL/CentOS Stream / Rocky.</li>
+            <li><b>btrfs</b> — copy-on-write, snapshots, subvolumes, native RAID. Default on openSUSE / Fedora Workstation root.</li>
+            <li><b>ZFS</b> — copy-on-write, integrity, snapshots, native RAID-Z. Default on TrueNAS, FreeBSD.</li>
+            <li><b>F2FS</b> — flash-friendly.</li>
+            <li><b>swap</b> — paging space (file or partition).</li>
+            <li><b>tmpfs</b> — RAM-backed temporary fs.</li>
+            <li><b>vfat / exFAT</b> — cross-platform removable.</li>
+            <li><b>NTFS / ntfs3</b> — Windows interop.</li>
+            <li><b>NFS</b> — network file share (Unix-style).</li>
+            <li><b>SMB / CIFS</b> — Windows share.</li>
+            <li><b>iso9660 / udf</b> — optical media.</li>
+            <li><b>squashfs</b> — read-only compressed (live USBs, snaps).</li>
+            <li><b>FUSE</b> — userspace filesystem framework (sshfs, encfs).</li>
+          </ul>
+
+          <h2>Editing files</h2>
+          <ul>
+            <li><b>nano</b> — beginner-friendly modeless editor. <code>nano file</code>. Ctrl+O save, Ctrl+X exit.</li>
+            <li><b>vi / vim</b> — modal. Esc to command mode; <code>:wq</code> save+quit; <code>:q!</code> quit-no-save. Universal on servers.</li>
+            <li><b>emacs</b> — heavyweight.</li>
+            <li><b>visudo</b> — safe editor for /etc/sudoers (locks + validates).</li>
+            <li><b>vipw / vigr</b> — safe editors for /etc/passwd + /etc/group.</li>
+            <li><b>sed</b> — stream editor for scripted edits.</li>
+            <li><b>awk</b> — column-oriented processing.</li>
+          </ul>
+
+          <h2>man + info + help</h2>
+          <pre><code>man ls                       # manual page (q to quit)
+man 5 passwd                 # section 5 = file formats
+man -k keyword               # apropos: find related man pages
+info coreutils
+ls --help
+help cd                      # bash builtin help</code></pre>
+          <p>Man page sections:</p>
+          <ol>
+            <li>User commands</li>
+            <li>System calls</li>
+            <li>Library functions</li>
+            <li>Special files / devices</li>
+            <li>File formats</li>
+            <li>Games</li>
+            <li>Miscellaneous</li>
+            <li>System administration commands</li>
+          </ol>
+
+          <h2>Environment + shell variables</h2>
+          <pre><code>echo $HOME
+echo $PATH
+env                          # all environment variables
+printenv USER
+export VAR=value             # add to environment (current shell + children)
+unset VAR
+. ~/.bashrc                  # source (rerun) bashrc
+set                          # all shell variables
+$?                           # exit code of last command
+$$                           # current shell PID
+$!                           # last background PID
+$#                           # number of args in script
+$0 $1 $2                     # script name + args</code></pre>
+
+          <h2>Inodes</h2>
+          <ul>
+            <li><b>Inode</b> = filesystem metadata block (perms, owner, timestamps, pointers to data blocks). Filename lives in the directory entry, NOT inode.</li>
+            <li><code>ls -i</code> shows inode numbers.</li>
+            <li>Filesystem can run out of inodes even with free space — common cause of "no space left" errors on heavily-fragmented + small-file systems.</li>
+          </ul>
+
+          <h2>Common navigation pitfalls</h2>
+          <ul>
+            <li><code>rm -rf /</code> — wipes the system. Some shells now refuse without <code>--no-preserve-root</code>.</li>
+            <li>Mismatched globbing — <code>rm -rf /tmp/*</code> vs <code>rm -rf /tmp/ *</code> (latter wipes current dir + /tmp).</li>
+            <li>Permission issues — use <code>sudo</code> only when needed; never run editors as root unnecessarily.</li>
+            <li>Filesystem full → check inodes too (<code>df -i</code>).</li>
+            <li>Symlink loops — <code>find -L</code> follows symlinks; can recurse forever.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Config files location" → <code>/etc</code>.</li>
+            <li>"Logs location" → <code>/var/log</code>.</li>
+            <li>"User home" → <code>/home/&lt;user&gt;</code>; root's home → <code>/root</code>.</li>
+            <li>"Virtual kernel filesystem" → <code>/proc</code> + <code>/sys</code>.</li>
+            <li>"Cleared on reboot" → <code>/tmp</code> (and <code>/run</code>).</li>
+            <li>"Third-party packaged software" → <code>/opt</code>.</li>
+            <li>"Persistent mount config" → <code>/etc/fstab</code> (UUID preferred).</li>
+            <li>"Same inode, multiple names" → hard link.</li>
+            <li>"Pointer file that contains a path" → symlink.</li>
+            <li>"Pager command" → less (or more).</li>
+            <li>"Recursive grep" → <code>grep -r</code> or <code>rg</code>.</li>
+            <li>"Find by name + delete" → <code>find ... -delete</code> or <code>-exec rm {} +</code>.</li>
+            <li>"Show inode usage" → <code>df -i</code>.</li>
+            <li>"Discover device UUID" → <code>blkid</code>.</li>
+          </ul>
         `
       },
       {
