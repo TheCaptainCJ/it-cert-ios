@@ -3282,19 +3282,236 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
       {
         title: '10. Safety & Documentation',
         body: `
-          <h2>ESD protection</h2>
-          <p>Anti-static wrist strap, ESD mat, equipotential bonding. Never wear on live AC (high-voltage component risk).</p>
-          <h2>MSDS / SDS</h2>
-          <p>Safety Data Sheet — handling, hazards, disposal of toner, batteries, chemicals.</p>
-          <h2>Change management</h2>
+          <p>The non-technical part of IT support: keep people + equipment safe, follow process, respect privacy + law. Exam will test ESD procedures, hazardous-material handling, change management workflow, and key privacy / licensing acronyms.</p>
+
+          <h2>Personal safety</h2>
           <ul>
-            <li>RFC, scope, risk analysis, sandbox testing.</li>
-            <li>End-user acceptance.</li>
-            <li>Change board approval, backout plan.</li>
-            <li>Document and notify.</li>
+            <li><b>Lift properly</b> — bend at knees, not waist. Heavy server rails + UPSes need 2 people or a lift cart.</li>
+            <li><b>Cable management</b> — secure cables; tripping hazard in racks + raised floors.</li>
+            <li><b>Power off + unplug</b> before opening cases. For CRT monitors, PSUs, laser printer fuser: leave it to qualified techs — capacitors hold lethal voltage even when unplugged.</li>
+            <li><b>Lockout / Tagout (LOTO)</b> — formal isolation of energy before work on electrical equipment. OSHA 29 CFR 1910.147.</li>
+            <li><b>Fire safety</b> — type ABC or Class C extinguisher for electrical fires. Halon / FM-200 / Inergen in datacenters.</li>
+            <li><b>First aid + emergency procedures</b> — know the AED location.</li>
+            <li><b>PPE</b> (Personal Protective Equipment) — safety glasses for compressed air / tone work, gloves when handling damaged batteries / sharp metal.</li>
           </ul>
-          <h2>Privacy & licensing</h2>
-          <p>PII, PHI, PCI-DSS, GDPR. EULA, open source, DRM, valid licenses per seat / per device.</p>
+
+          <h2>ESD — Electrostatic Discharge</h2>
+          <p><b>What:</b> Sudden static-electricity transfer that can fry sensitive components (CPU, RAM, NICs). Damage may be instantly fatal or latent (works now, fails in weeks).</p>
+          <p><b>Sensitive components:</b> CMOS / MOSFET ICs — CPUs, GPUs, RAM, SSDs, motherboards, expansion cards.</p>
+          <p><b>Prevention tools:</b></p>
+          <ul>
+            <li><b>Anti-static wrist strap</b> — clipped to chassis ground. Equalizes potential between you and the device.</li>
+            <li><b>ESD mat</b> on workbench; ESD-safe shoes / heel straps in production environments.</li>
+            <li><b>Anti-static bags</b> — store cards / RAM in original ESD bag until install.</li>
+            <li><b>Equipotential bonding</b> — make sure all involved equipment shares same ground reference.</li>
+            <li><b>Humidity control</b> — dry air increases static; keep room 40-60% RH.</li>
+            <li><b>Touch grounded metal</b> before reaching into a case if no wrist strap.</li>
+          </ul>
+          <p><b>DO NOT wear an anti-static wrist strap when:</b></p>
+          <ul>
+            <li>Working on a <b>CRT monitor</b>, <b>PSU</b>, <b>laser printer fuser</b>, or any device that may store high voltage — the strap could conduct that voltage through you.</li>
+            <li>Working on live mains-voltage equipment.</li>
+          </ul>
+
+          <h2>Environmental safety</h2>
+          <ul>
+            <li><b>Temperature</b> — server rooms typically 68-77 °F (20-25 °C). Hot/cold aisle separation. Monitor with sensors.</li>
+            <li><b>Humidity</b> — 40-60% RH. Too dry = static; too wet = condensation + corrosion.</li>
+            <li><b>Ventilation</b> — filtered intake; replace filters on schedule. Don't block vents in rack-mounted gear.</li>
+            <li><b>Dust + airflow</b> — dust kills fans; clean periodically with compressed air outdoors.</li>
+            <li><b>Surge / power protection</b> — surge protectors, line conditioners, UPS, generator.</li>
+            <li><b>Cable certifier ratings</b> + plenum-rated cable in air-handling spaces.</li>
+            <li><b>Electromagnetic interference (EMI)</b> — keep network cables away from fluorescent ballasts, motors. Use STP / fiber in heavy EMI.</li>
+          </ul>
+
+          <h2>SDS / MSDS — Safety Data Sheet</h2>
+          <p><b>What:</b> Standardized document describing a chemical / material's hazards, safe handling, storage, emergency response, and disposal.</p>
+          <p><b>Acronym history:</b> Previously <b>MSDS</b> (Material Safety Data Sheet). Globally Harmonized System (GHS) renamed to <b>SDS</b> (16 sections) starting 2015.</p>
+          <p><b>Why:</b> OSHA Hazard Communication Standard (HazCom, 29 CFR 1910.1200) requires employers to provide SDS for every hazardous chemical on site.</p>
+          <p><b>Where it shows up in IT:</b> Toner, ink, cleaning solvents, lithium batteries, lead-acid UPS batteries, isopropyl alcohol, denatured solvents. SDS tells you ventilation requirements, PPE, spill response, fire response, disposal.</p>
+          <p><b>16 SDS sections include:</b> identification, hazards, composition, first-aid, fire-fighting, accidental release, handling/storage, exposure controls + PPE, physical/chemical properties, stability, toxicology, ecological, disposal, transport, regulatory, other info.</p>
+
+          <h2>Toner / printer maintenance hazards</h2>
+          <ul>
+            <li>Toner is fine powder — keep out of vacuums (heat-generates → fire). Use a <b>toner-rated vacuum (HEPA + non-static)</b>.</li>
+            <li>Fuser units reach ~400 °F — let cool 15 min before touching.</li>
+            <li>Wear gloves + mask + safety glasses for spill cleanup.</li>
+            <li>Recycle cartridges per OEM program; SDS covers the toner composition.</li>
+          </ul>
+
+          <h2>Battery safety</h2>
+          <ul>
+            <li><b>Li-ion / LiPo</b> — swollen battery = fire hazard. Stop use, isolate in fireproof bag, dispose per local hazmat.</li>
+            <li><b>Lead-acid (UPS)</b> — sulfuric acid + heavy. Spill kit + neutralizer ready in UPS rooms.</li>
+            <li>Never throw batteries in regular trash — local hazmat or e-waste recycler.</li>
+            <li>Transport regulations: lithium cells classified DOT Class 9. Devices on planes must follow IATA rules.</li>
+          </ul>
+
+          <h2>Spills + cleanup</h2>
+          <ol>
+            <li>Stop the source.</li>
+            <li>Evacuate if hazardous fumes.</li>
+            <li>Consult SDS for that chemical.</li>
+            <li>Wear PPE.</li>
+            <li>Contain spill — absorbent pads, neutralizers.</li>
+            <li>Dispose per hazmat regulations.</li>
+            <li>Document incident.</li>
+          </ol>
+
+          <h2>Change management process</h2>
+          <p>Formal way to introduce changes to production while minimizing risk. ITIL-aligned. Exam testing topic.</p>
+          <ol>
+            <li><b>RFC</b> (Request For Change) submitted. Includes:
+              <ul>
+                <li>Scope + objective.</li>
+                <li>Affected systems / users.</li>
+                <li>Risk analysis (likelihood × impact).</li>
+                <li>Resource requirements.</li>
+                <li>Implementation plan + timeline.</li>
+                <li><b>Backout / rollback plan</b> if change fails.</li>
+                <li><b>End-user acceptance</b> criteria.</li>
+              </ul>
+            </li>
+            <li><b>CAB</b> (Change Advisory Board) reviews — stakeholders representing affected teams.</li>
+            <li><b>Test in lab / pilot</b> before broad rollout.</li>
+            <li><b>Schedule maintenance window</b> — communicate to users + downstream teams.</li>
+            <li><b>Execute</b> during window with monitoring.</li>
+            <li><b>Verify functionality.</b></li>
+            <li><b>Update CMDB</b> (Configuration Management Database) — record what changed.</li>
+            <li><b>Post-implementation review</b> — capture lessons.</li>
+          </ol>
+          <p><b>Change types:</b></p>
+          <ul>
+            <li><b>Standard</b> — low-risk, pre-approved (password reset, account add).</li>
+            <li><b>Normal</b> — goes through full CAB process.</li>
+            <li><b>Emergency</b> — incident-driven; abbreviated approval; post-implementation review mandatory.</li>
+          </ul>
+
+          <h2>Documentation types</h2>
+          <ul>
+            <li><b>Network topology diagrams</b> — physical (cabling, racks) + logical (subnets, VLANs).</li>
+            <li><b>Asset inventory</b> — what we own, where it is, who uses it. CMDB / IT asset management.</li>
+            <li><b>Runbooks</b> — step-by-step operational procedures.</li>
+            <li><b>Standard Operating Procedures (SOPs)</b>.</li>
+            <li><b>Knowledge base (KB) articles</b> — troubleshooting tips, common fixes, FAQ.</li>
+            <li><b>Incident reports + tickets</b>.</li>
+            <li><b>Acceptable Use Policy (AUP)</b>, <b>BYOD policy</b>, <b>password policy</b>, <b>data classification policy</b>.</li>
+            <li><b>Disaster Recovery Plan (DRP)</b> + <b>Business Continuity Plan (BCP)</b>.</li>
+            <li><b>License records</b> — software keys + entitlement.</li>
+            <li><b>Vendor contacts + warranty docs</b>.</li>
+            <li><b>Cable + port labels</b> — physical labels in racks + on patch panels.</li>
+          </ul>
+
+          <h2>Ticket lifecycle (ITIL flavor)</h2>
+          <ol>
+            <li><b>Open / register</b> — user reports issue.</li>
+            <li><b>Classify</b> — incident vs. service request vs. problem.</li>
+            <li><b>Prioritize</b> — severity × impact. SLA-driven.</li>
+            <li><b>Assign</b> — to right queue / tier.</li>
+            <li><b>Diagnose + resolve</b> — follow troubleshooting steps.</li>
+            <li><b>Close</b> — user confirms, KB updated.</li>
+            <li><b>Trend / analyze</b> — repeat tickets ⇒ problem management.</li>
+          </ol>
+
+          <h2>Privacy + sensitive data categories</h2>
+          <ul>
+            <li><b>PII</b> (Personally Identifiable Information) — name, SSN, address, DOB, email, fingerprint.</li>
+            <li><b>PHI</b> (Protected Health Information) — medical records, treatment, payment for care. Governed by HIPAA.</li>
+            <li><b>PCI data</b> — payment cardholder data — name, card number (PAN), expiration. Governed by PCI-DSS.</li>
+            <li><b>IP</b> (Intellectual Property) — trade secrets, source code, formulas.</li>
+            <li><b>Government-classified</b> — Confidential, Secret, Top Secret.</li>
+          </ul>
+
+          <h2>Data classification</h2>
+          <p>Tag data by sensitivity to drive controls (encryption, access, retention, destruction):</p>
+          <ul>
+            <li><b>Public</b> — fine to publish.</li>
+            <li><b>Internal</b> — staff only.</li>
+            <li><b>Confidential</b> — limited need-to-know.</li>
+            <li><b>Restricted / Highly Confidential</b> — most sensitive (PHI, PII, IP, financial).</li>
+          </ul>
+
+          <h2>Major privacy + compliance regulations</h2>
+          <ul>
+            <li><b>HIPAA</b> (Health Insurance Portability and Accountability Act) — US health data. Breach notice + safeguards.</li>
+            <li><b>HITECH</b> — strengthens HIPAA with enforcement + breach notification.</li>
+            <li><b>PCI-DSS</b> (Payment Card Industry Data Security Standard) — required by all card brands for orgs handling cards.</li>
+            <li><b>SOX</b> (Sarbanes-Oxley Act) — US financial reporting integrity for public companies.</li>
+            <li><b>GLBA</b> (Gramm-Leach-Bliley) — US financial customer info.</li>
+            <li><b>FERPA</b> — US student education records.</li>
+            <li><b>COPPA</b> — US children under 13.</li>
+            <li><b>GDPR</b> (General Data Protection Regulation) — EU personal data; data subject rights, 72-hour breach notice, fines up to 4% of global revenue.</li>
+            <li><b>CCPA / CPRA</b> — California consumer privacy.</li>
+            <li><b>PIPEDA</b> — Canada.</li>
+            <li><b>NIST CSF / 800-53 / 800-171</b> — US security frameworks (CSF = Cybersecurity Framework).</li>
+            <li><b>ISO 27001 / 27002</b> — international information security management standard.</li>
+          </ul>
+
+          <h2>Licensing + EULA</h2>
+          <ul>
+            <li><b>EULA</b> (End User License Agreement) — contract granting use rights. Click-through.</li>
+            <li><b>Per-seat license</b> — by user.</li>
+            <li><b>Per-device license</b> — by machine.</li>
+            <li><b>Concurrent license</b> — N users may run at the same time.</li>
+            <li><b>Subscription / SaaS</b> — pay periodically; revokable.</li>
+            <li><b>Volume licensing</b> — bulk corporate (Microsoft VLSC, Adobe ETLA).</li>
+            <li><b>OEM license</b> — sold with hardware; transfers with device.</li>
+            <li><b>Retail license</b> — transferable to a different device.</li>
+            <li><b>Personal use license</b> — non-commercial only.</li>
+            <li><b>Commercial license</b> — business use; usually paid.</li>
+            <li><b>Open source</b> — code freely available. Common licenses: MIT, Apache 2.0, BSD (permissive); GPL, LGPL, AGPL (copyleft); MPL (weak copyleft).</li>
+            <li><b>Copyleft</b> — derivative works must be released under the same license.</li>
+            <li><b>Freeware</b> — free to use, source closed.</li>
+            <li><b>Shareware</b> — limited trial then pay.</li>
+            <li><b>DRM</b> (Digital Rights Management) — anti-copy / activation tech.</li>
+            <li><b>License audits</b> — verify deployed counts match purchased entitlement. Use SAM (Software Asset Management) tooling.</li>
+          </ul>
+
+          <h2>Prohibited content + incident handling</h2>
+          <ul>
+            <li>If you discover illegal material (CSAM, threats) on a device:
+              <ol>
+                <li><b>Preserve evidence</b> — do not open / modify. Disconnect from network.</li>
+                <li>Notify management + legal + HR per policy.</li>
+                <li>Document chain of custody.</li>
+                <li>Cooperate with law enforcement.</li>
+              </ol>
+            </li>
+            <li>If you discover policy violations (porn, gambling, copyright):
+              <ol>
+                <li>Stop, document, escalate to manager + HR.</li>
+                <li>Do not confront the user yourself.</li>
+              </ol>
+            </li>
+          </ul>
+
+          <h2>Professionalism + soft skills</h2>
+          <ul>
+            <li><b>Cultural sensitivity</b> — use respectful titles, avoid slang.</li>
+            <li><b>Active listening</b> — let user finish, ask clarifying questions.</li>
+            <li><b>Avoid distractions</b> — no personal calls, social media while at the user's desk.</li>
+            <li><b>Maintain a positive attitude</b> + project confidence.</li>
+            <li><b>Avoid arguing</b> + be defensive.</li>
+            <li><b>Don't divulge confidential information</b> on social media or to friends.</li>
+            <li><b>Be on time</b> + contact ahead if delayed.</li>
+            <li><b>Set + meet realistic expectations</b> — give honest ETAs.</li>
+            <li><b>Deal appropriately with private materials</b> on a user's device.</li>
+            <li><b>Follow up</b> with user to verify satisfaction.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Document covering chemical handling + disposal" → SDS / MSDS.</li>
+            <li>"Tool for static control while working on a NIC" → anti-static wrist strap clipped to chassis ground.</li>
+            <li>"Do NOT wear wrist strap on" → CRT monitor / PSU / laser fuser (high-voltage components).</li>
+            <li>"Formal process for production changes" → RFC + CAB approval + backout plan.</li>
+            <li>"Acronym for medical privacy law" → HIPAA.</li>
+            <li>"EU personal data regulation, 72-hour notice" → GDPR.</li>
+            <li>"Payment card data standard" → PCI-DSS.</li>
+            <li>"License lets N users at once" → concurrent.</li>
+            <li>"Code-sharing requirement for derivatives" → copyleft (GPL).</li>
+            <li>"Discover prohibited content on a user's PC" → preserve evidence, document, escalate; do NOT investigate yourself.</li>
+          </ul>
         `
       }
     ],
