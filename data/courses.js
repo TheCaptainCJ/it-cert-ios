@@ -14443,15 +14443,312 @@ Bastion / SSM Session Manager replacing SSH bastion</code></pre>
       {
         title: '5. Identity & Access in Cloud',
         body: `
+          <p>Identity is the new perimeter. In cloud, every API call is authenticated + authorized. Misconfigured IAM is the #1 breach root cause. Exam tests AWS / Azure / GCP IAM models, federation, role assumption, secrets management, and least-privilege patterns.</p>
+
+          <h2>Core IAM concepts</h2>
           <ul>
-            <li><b>IAM users, groups, roles</b> — roles assumed temporarily; preferred over long-lived keys.</li>
-            <li><b>Policies</b> — JSON, allow/deny on actions + resources + conditions.</li>
-            <li><b>SCPs (AWS Org)</b> / <b>Azure Management Groups</b> — guardrails.</li>
-            <li><b>Federation</b> — SAML / OIDC to corporate IdP.</li>
-            <li><b>MFA + conditional access</b> mandatory for admins.</li>
-            <li><b>Secrets</b> — KMS / Key Vault / Secrets Manager.</li>
+            <li><b>Principal / Identity</b> — entity making a request (user, group, role, service account).</li>
+            <li><b>Authentication</b> — proves WHO. Credentials, MFA, certs.</li>
+            <li><b>Authorization</b> — what they're ALLOWED to do. Policy evaluation.</li>
+            <li><b>Audit / Accounting</b> — every API call logged (CloudTrail, Activity Log, Audit Logs).</li>
+            <li><b>Least privilege</b> — grant only what's needed; refine over time using access analyzers.</li>
+            <li><b>Just-in-time (JIT)</b> — temporary elevation; no standing admin.</li>
+            <li><b>Separation of duties</b> — split sensitive operations across people / roles.</li>
           </ul>
-          <p>Principle: <b>least privilege</b>, rotate credentials, use short-lived tokens (STS / managed identities).</p>
+
+          <h2>AWS IAM</h2>
+
+          <h3>Identity types</h3>
+          <ul>
+            <li><b>Root user</b> — account owner; full power. Lock down with MFA, never use day-to-day, no access keys.</li>
+            <li><b>IAM User</b> — long-lived identity in an account; has password + optionally access keys.</li>
+            <li><b>IAM Group</b> — collection of users; attach policies once.</li>
+            <li><b>IAM Role</b> — assumable identity with temporary credentials via STS. Preferred for services + cross-account access.</li>
+            <li><b>Federated user</b> — comes from external IdP (SAML / OIDC / SSO).</li>
+            <li><b>Service-linked role</b> — pre-defined role a service creates for itself.</li>
+          </ul>
+
+          <h3>Policies (JSON)</h3>
+          <pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Sid": "AllowS3Read",
+    "Effect": "Allow",
+    "Action": ["s3:GetObject", "s3:ListBucket"],
+    "Resource": [
+      "arn:aws:s3:::mybucket",
+      "arn:aws:s3:::mybucket/*"
+    ],
+    "Condition": {
+      "IpAddress": {"aws:SourceIp": "203.0.113.0/24"},
+      "Bool": {"aws:MultiFactorAuthPresent": "true"}
+    }
+  }]
+}</code></pre>
+          <ul>
+            <li><b>Identity-based policies</b> attached to users / groups / roles.</li>
+            <li><b>Resource-based policies</b> attached to resources (S3 bucket, SQS queue, KMS key, Lambda).</li>
+            <li><b>Permission boundaries</b> — max permissions a principal can have (delegation safety).</li>
+            <li><b>Session policies</b> — passed to AssumeRole, further narrowing temporary creds.</li>
+            <li><b>Managed vs Inline</b> — managed reusable; inline embedded per-identity.</li>
+            <li><b>Explicit Deny</b> always wins. Order: Deny → Org SCP → resource-based → identity-based → permission boundary → session policy.</li>
+          </ul>
+
+          <h3>STS — Security Token Service</h3>
+          <ul>
+            <li>Issues short-lived credentials (15 min - 12 hr).</li>
+            <li><b>AssumeRole</b> — sts:AssumeRole into a role you trust.</li>
+            <li><b>AssumeRoleWithWebIdentity</b> — federated via OIDC (e.g., from GitHub Actions, Kubernetes service account).</li>
+            <li><b>AssumeRoleWithSAML</b> — federated via corporate SAML IdP.</li>
+            <li><b>GetSessionToken</b> — temp creds (MFA enforcement).</li>
+            <li><b>GetFederationToken</b> — temp creds for federated users.</li>
+            <li>Returns Access Key ID + Secret + Session Token. Token MUST accompany requests.</li>
+          </ul>
+
+          <h3>AWS Organizations + guardrails</h3>
+          <ul>
+            <li><b>Organization</b> — manages multiple AWS accounts under one billing + central control.</li>
+            <li><b>OU</b> (Organizational Unit) — nested grouping.</li>
+            <li><b>SCP</b> (Service Control Policy) — max permissions for accounts in OU; <b>cannot grant</b> permissions, only restrict.</li>
+            <li><b>Tag policies</b>, <b>Backup policies</b>, <b>AI Services opt-out policies</b>.</li>
+            <li><b>AWS Control Tower</b> — opinionated landing zone w/ guardrails.</li>
+            <li><b>AWS IAM Identity Center</b> (formerly SSO) — single sign-on across accounts using AD / Azure AD / Okta / Google.</li>
+          </ul>
+
+          <h3>EC2 / workload identities</h3>
+          <ul>
+            <li><b>Instance profile</b> — wrapper around an IAM role for EC2.</li>
+            <li><b>IMDSv2</b> (Instance Metadata Service) — token-required; mitigates SSRF credential theft. Always enforce.</li>
+            <li><b>Lambda execution role</b> — role attached at function creation.</li>
+            <li><b>ECS task role</b>, <b>EKS IRSA</b> (IAM Roles for Service Accounts) / <b>EKS Pod Identity</b> — Kubernetes-native role assumption.</li>
+            <li><b>Cross-account roles</b> + <b>external ID</b> — defeat confused-deputy.</li>
+          </ul>
+
+          <h2>Azure IAM (Entra ID + Azure RBAC)</h2>
+
+          <h3>Microsoft Entra ID (formerly Azure AD)</h3>
+          <ul>
+            <li>Cloud identity directory + auth.</li>
+            <li>Manages users, groups, applications, devices, conditional access.</li>
+            <li><b>Tenant</b> = isolated directory per organization.</li>
+            <li>Supports SAML / OIDC / WS-Fed protocols.</li>
+            <li>Entra ID integrates with on-prem AD via <b>Entra Connect</b> (PHS / PTA / Federation).</li>
+            <li>External identities: B2B (guest invites) + B2C (customer-facing).</li>
+          </ul>
+
+          <h3>Azure RBAC</h3>
+          <ul>
+            <li>Authorization layer on Azure resources.</li>
+            <li><b>Role assignment</b> = Security Principal × Role Definition × Scope.</li>
+            <li><b>Scopes</b> (broad to narrow): Management Group → Subscription → Resource Group → Resource.</li>
+            <li><b>Built-in roles</b>: Owner, Contributor, Reader, User Access Administrator (manages access), plus hundreds of resource-specific (e.g., Storage Blob Data Reader).</li>
+            <li><b>Custom roles</b> — JSON with Actions / NotActions / DataActions / NotDataActions / AssignableScopes.</li>
+            <li>Inherited DOWN the scope tree.</li>
+            <li><b>Deny assignments</b> exist but are limited (used by Blueprints + Managed Apps).</li>
+          </ul>
+
+          <h3>Privileged Identity Management (PIM)</h3>
+          <ul>
+            <li>Just-in-time activation of privileged Entra + Azure roles.</li>
+            <li>Time-bound + approval workflow + MFA challenge.</li>
+            <li>Access reviews + audit logs of activations.</li>
+            <li>Eliminates standing global admin access.</li>
+          </ul>
+
+          <h3>Managed Identities</h3>
+          <ul>
+            <li>Azure-managed service principals for workloads.</li>
+            <li><b>System-assigned</b> — lifecycle tied to resource (VM, Function, App Service).</li>
+            <li><b>User-assigned</b> — standalone, attachable to multiple resources.</li>
+            <li>No client secrets to leak; Azure injects token automatically.</li>
+            <li>Access Azure APIs (Key Vault, Storage, SQL) without storing creds.</li>
+          </ul>
+
+          <h3>Conditional Access</h3>
+          <ul>
+            <li>Policy engine evaluates user + device + location + risk signals.</li>
+            <li><b>Signals:</b> User / group membership, app, device compliance, OS, IP location, sign-in risk, user risk (Identity Protection).</li>
+            <li><b>Actions:</b> Allow / Block / Require MFA / Require compliant device / Require Terms of Use / Require password change.</li>
+            <li>Examples: block sign-in from outside corporate IPs, force MFA for admins, require compliant device for sensitive apps.</li>
+          </ul>
+
+          <h2>GCP IAM</h2>
+          <ul>
+            <li><b>Members</b>: Google account, Service account, Workspace domain, Cloud Identity domain, External (Workforce Identity Federation).</li>
+            <li><b>Roles</b>: Primitive (Owner / Editor / Viewer — legacy, too broad), Predefined (per-service), Custom.</li>
+            <li><b>Resource hierarchy</b>: Organization → Folder → Project → Resource. Policies inherit DOWN.</li>
+            <li><b>Service accounts</b> — non-human identities for workloads.</li>
+            <li><b>Workload Identity Federation</b> — external workloads (AWS, GitHub Actions, on-prem K8s) impersonate GCP service accounts without long-lived keys.</li>
+            <li><b>Identity-Aware Proxy (IAP)</b> — gates HTTPS apps + SSH/TCP based on identity + context (BeyondCorp model).</li>
+            <li><b>VPC Service Controls</b> — perimeters around resources, prevent data exfiltration even with valid creds.</li>
+          </ul>
+
+          <h2>Federation patterns</h2>
+          <ul>
+            <li><b>SAML 2.0</b> — XML browser-based SSO. Common in corporate apps.</li>
+            <li><b>OIDC</b> (OpenID Connect) — modern JWT-based identity layer on OAuth 2.0.</li>
+            <li><b>OAuth 2.0</b> — authorization framework for delegated access.</li>
+            <li><b>WS-Federation</b> — legacy Microsoft-centric.</li>
+            <li><b>Kerberos</b> — on-prem AD; not direct cloud auth, but feeds it via federation.</li>
+            <li><b>Workload Identity Federation</b> — cloud-native, OIDC-based; replaces stored access keys for CI/CD, K8s, multi-cloud.</li>
+          </ul>
+
+          <h2>Single Sign-On (SSO) in cloud</h2>
+          <ul>
+            <li><b>AWS IAM Identity Center</b> — central SSO portal mapping users → multiple AWS account roles.</li>
+            <li><b>Entra ID Enterprise apps</b> — SSO into thousands of SaaS apps.</li>
+            <li><b>Google Workspace + Cloud Identity</b>.</li>
+            <li><b>Third-party:</b> Okta, Auth0, Ping, OneLogin, JumpCloud.</li>
+            <li>SAML for corporate apps; OIDC for modern web/mobile.</li>
+          </ul>
+
+          <h2>MFA + phishing-resistant auth</h2>
+          <ul>
+            <li><b>SMS / voice OTP</b> — vulnerable to SIM swap; avoid where possible.</li>
+            <li><b>TOTP authenticator</b> (Google Authenticator, Microsoft Authenticator) — better.</li>
+            <li><b>Push notification + number matching</b> — defeats MFA fatigue.</li>
+            <li><b>FIDO2 / WebAuthn / Passkeys</b> — phishing-resistant; bound to origin.</li>
+            <li><b>YubiKey / Titan / Feitian</b> — hardware security keys.</li>
+            <li><b>Smart card / PIV / CAC</b> — gov + regulated.</li>
+            <li><b>Certificate-based auth</b> — mTLS for service-to-service.</li>
+            <li><b>Conditional Access</b> can REQUIRE specific methods for specific apps.</li>
+          </ul>
+
+          <h2>Access reviews + governance</h2>
+          <ul>
+            <li><b>Entra ID Access Reviews</b> — quarterly recertification of group membership / role assignments.</li>
+            <li><b>AWS IAM Access Analyzer</b> — discovers unintended cross-account access + generates least-privilege policies from CloudTrail.</li>
+            <li><b>AWS Access Advisor</b> — shows last used services for refining policies.</li>
+            <li><b>GCP Recommender</b> — suggests removing unused roles.</li>
+            <li><b>Just-in-time (PIM, Cloud IAM Conditions, AWS IAM Identity Center session controls)</b>.</li>
+            <li><b>Service control policy preventive guardrails</b> (SCP, Azure Policy, GCP Organization Policy).</li>
+          </ul>
+
+          <h2>Secrets management</h2>
+          <ul>
+            <li><b>AWS Secrets Manager</b> — store + rotate (Lambda rotation functions) DB / API credentials.</li>
+            <li><b>AWS Systems Manager Parameter Store</b> — simpler key-value (free for standard).</li>
+            <li><b>Azure Key Vault</b> — secrets, keys, certificates; managed identities access without secrets stored in code.</li>
+            <li><b>GCP Secret Manager</b>.</li>
+            <li><b>HashiCorp Vault</b> — multi-cloud / on-prem; dynamic secrets (issue ephemeral DB creds).</li>
+            <li><b>External Secrets Operator</b> — sync secrets into Kubernetes from KV / Secrets Manager.</li>
+            <li><b>Sealed Secrets / SOPS</b> — git-storable encrypted secrets.</li>
+            <li><b>Never put secrets in:</b> environment variables that show in process listings; git history; image layers; CI logs.</li>
+            <li><b>Rotation:</b> automated, scheduled, with grace overlap.</li>
+            <li><b>Audit:</b> every retrieval logged.</li>
+          </ul>
+
+          <h2>Key Management Service (KMS)</h2>
+          <ul>
+            <li><b>AWS KMS</b> — symmetric / asymmetric customer-managed keys. <b>CMK</b> aliases (now CMK = AWS-managed/customer-managed). FIPS 140-2 L2 HSM (Level 3 with CloudHSM).</li>
+            <li><b>Azure Key Vault</b> — soft / HSM-backed keys; standard or premium SKU.</li>
+            <li><b>GCP Cloud KMS</b> — software / HSM (Cloud HSM) / EKM (External KMS).</li>
+            <li><b>Envelope encryption</b> — data key encrypted by master key; bulk encrypt with data key.</li>
+            <li><b>BYOK</b> (Bring Your Own Key) — import existing key.</li>
+            <li><b>HYOK</b> (Hold Your Own Key) — key never leaves on-prem HSM.</li>
+            <li><b>Key rotation</b> — automatic annual.</li>
+            <li><b>Audit</b> every encrypt / decrypt call.</li>
+          </ul>
+
+          <h2>Privileged Access Management (PAM)</h2>
+          <ul>
+            <li>Vault-checkout pattern for shared / break-glass credentials.</li>
+            <li>Session recording for shell + RDP.</li>
+            <li>Automatic password rotation.</li>
+            <li>Examples: CyberArk, BeyondTrust, Delinea (Thycotic), HashiCorp Boundary, Entra PIM, AWS IAM Identity Center for time-bound.</li>
+          </ul>
+
+          <h2>Workload identity patterns (no stored secrets)</h2>
+          <ul>
+            <li><b>EC2 / VM Managed Identity</b> — get token from metadata service.</li>
+            <li><b>EKS IRSA / Pod Identity</b> — K8s service account → IAM role.</li>
+            <li><b>Azure Managed Identity</b> — system / user assigned.</li>
+            <li><b>GKE Workload Identity Federation</b> — K8s service account → GCP service account.</li>
+            <li><b>OIDC federation for CI/CD</b> — GitHub Actions / GitLab / CircleCI mint short-lived OIDC tokens → cloud trusts them, no long-lived keys.</li>
+            <li><b>SPIFFE / SPIRE</b> — workload identity standard for service mesh.</li>
+          </ul>
+
+          <h2>Cross-account / cross-tenant patterns</h2>
+          <ul>
+            <li><b>Cross-account role + external ID</b> (AWS) — third-party access without sharing keys; external ID defeats confused-deputy.</li>
+            <li><b>Azure cross-tenant access settings</b> — B2B collaboration + cross-tenant sync.</li>
+            <li><b>Resource sharing</b>: AWS RAM (Resource Access Manager), Azure Lighthouse, GCP folder sharing.</li>
+            <li>Audit cross-account flows carefully — common breach vector.</li>
+          </ul>
+
+          <h2>Zero Trust application of IAM</h2>
+          <ol>
+            <li>Verify EVERY request — never trust based on network location.</li>
+            <li>Strong identity — MFA + Conditional Access + device compliance.</li>
+            <li>Least privilege via JIT + access reviews.</li>
+            <li>Identity-aware proxies replace VPN (ZTNA — Zscaler ZPA, Cloudflare Access, IAP).</li>
+            <li>Microsegment at IAM + network + workload layers.</li>
+            <li>Continuous monitoring + anomaly detection.</li>
+          </ol>
+
+          <h2>Compliance + audit</h2>
+          <ul>
+            <li><b>AWS CloudTrail</b> — every API call audited; multi-region trail + Lake.</li>
+            <li><b>Azure Activity Log + Microsoft Entra Sign-in Logs + Audit Logs</b>.</li>
+            <li><b>GCP Cloud Audit Logs</b> — Admin Activity (default), Data Access (opt-in), System, Policy Denied.</li>
+            <li>Ship to immutable storage / SIEM for retention + integrity.</li>
+            <li>Alert on root user activity, IAM policy changes, MFA disabled, key rotation.</li>
+          </ul>
+
+          <h2>IAM antipatterns (and fixes)</h2>
+          <ul>
+            <li><b>Root user with access keys</b> → delete keys; lock root with hardware MFA.</li>
+            <li><b>Long-lived IAM user access keys for apps</b> → use roles / managed identities / Workload Identity Federation instead.</li>
+            <li><b>* in policy Action or Resource</b> → narrow; use Access Analyzer to propose tighter policies.</li>
+            <li><b>Wildcard cross-account role trust</b> → require external ID + specific principal.</li>
+            <li><b>Public S3 bucket / blob container</b> → Block Public Access at account level.</li>
+            <li><b>No MFA on console</b> → enforce MFA via Conditional Access / SCP-style guardrails.</li>
+            <li><b>Standing admin</b> → JIT via PIM / IAM Identity Center session.</li>
+            <li><b>Service accounts with personal user names</b> → use dedicated service accounts.</li>
+            <li><b>Hard-coded secrets in code / git</b> → secrets manager + git-secrets / TruffleHog scanning in CI.</li>
+            <li><b>Shared admin password</b> → PAM vault + checkout + session recording.</li>
+            <li><b>Same role used by humans + automation</b> → split.</li>
+          </ul>
+
+          <h2>Cross-cloud equivalence</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Concept</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>User directory</td><td>IAM users + Identity Center</td><td>Entra ID</td><td>Cloud Identity / Workspace</td></tr>
+            <tr><td>Permission model</td><td>Identity + Resource policies</td><td>Azure RBAC</td><td>IAM Policy bindings</td></tr>
+            <tr><td>Org hierarchy</td><td>AWS Organizations / OUs</td><td>Management Group / Subscription / RG</td><td>Organization / Folder / Project</td></tr>
+            <tr><td>Guardrails</td><td>SCP</td><td>Azure Policy / Blueprints</td><td>Organization Policy</td></tr>
+            <tr><td>Temporary creds</td><td>STS (AssumeRole)</td><td>Managed Identity tokens</td><td>Service Account impersonation</td></tr>
+            <tr><td>JIT admin</td><td>IAM Identity Center session</td><td>PIM</td><td>Cloud IAM time-bound + Conditions</td></tr>
+            <tr><td>SSO</td><td>IAM Identity Center</td><td>Entra Enterprise Apps</td><td>Cloud Identity / Workspace SSO</td></tr>
+            <tr><td>Workload identity</td><td>IAM Role + IRSA + Workload Identity Federation</td><td>Managed Identity / Workload Identity Federation</td><td>Workload Identity Federation</td></tr>
+            <tr><td>Secrets</td><td>Secrets Manager / Parameter Store</td><td>Key Vault</td><td>Secret Manager</td></tr>
+            <tr><td>Keys / KMS</td><td>AWS KMS / CloudHSM</td><td>Key Vault (Standard / Premium HSM)</td><td>Cloud KMS / Cloud HSM / EKM</td></tr>
+            <tr><td>Conditional access</td><td>IAM Conditions + IDC policies</td><td>Conditional Access</td><td>Context-Aware Access</td></tr>
+            <tr><td>Audit log</td><td>CloudTrail</td><td>Activity Log + Sign-ins + Audit</td><td>Cloud Audit Logs</td></tr>
+            <tr><td>Access analyzer</td><td>IAM Access Analyzer</td><td>Entra Access Reviews + Microsoft Defender for Cloud</td><td>Recommender</td></tr>
+            <tr><td>Identity-aware proxy</td><td>IAM Identity Center + Verified Access</td><td>Entra App Proxy</td><td>Identity-Aware Proxy (IAP)</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Temporary credentials for EC2 to call S3" → IAM Role + instance profile (no access keys).</li>
+            <li>"Federate from corporate IdP" → SAML / OIDC; STS AssumeRoleWithSAML / WithWebIdentity.</li>
+            <li>"Restrict all accounts in OU from buying GPU instances" → SCP.</li>
+            <li>"Restrict resources to a single region" → Azure Policy / SCP / Organization Policy "Allowed Locations".</li>
+            <li>"Service running on Azure VM needs Key Vault access without storing secrets" → Managed Identity.</li>
+            <li>"Just-in-time admin elevation in Azure" → PIM.</li>
+            <li>"Phishing-resistant MFA" → FIDO2 / WebAuthn / Passkeys.</li>
+            <li>"Defeat MFA fatigue (push bombing)" → Number matching + risk-based blocks.</li>
+            <li>"Cross-account role from third-party requires" → External ID.</li>
+            <li>"Eliminate stored CI/CD secrets" → OIDC Workload Identity Federation.</li>
+            <li>"S3 bucket policy + IAM Identity policy + SCP conflict — what wins" → Explicit Deny anywhere.</li>
+            <li>"AWS service to manage + rotate DB credentials" → Secrets Manager.</li>
+            <li>"Audit log of every cloud API call" → CloudTrail / Activity Log / Cloud Audit Logs.</li>
+            <li>"Find unintended public S3 access" → IAM Access Analyzer + Macie.</li>
+            <li>"Encrypt data with customer-managed key with HSM backing" → CloudHSM / Key Vault Premium / Cloud HSM.</li>
+            <li>"Replace VPN with per-app identity access" → ZTNA / IAP / Verified Access.</li>
+            <li>"GCP perimeter preventing data exfiltration even with valid creds" → VPC Service Controls.</li>
+          </ul>
         `
       },
       {
