@@ -7648,22 +7648,282 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '7. Risk Management',
         body: `
-          <h2>Risk = Threat × Vulnerability × Impact</h2>
-          <h2>Responses</h2>
+          <p><b>Risk management</b> = the formal process of identifying, analyzing, prioritizing, treating, and monitoring threats to assets. Without risk management, security spending is random + measurement impossible. Exam expects you to define every term, run through quantitative + qualitative analysis, and pick the right response strategy.</p>
+
+          <h2>Core vocabulary</h2>
           <ul>
-            <li><b>Accept</b> — within tolerance.</li>
-            <li><b>Avoid</b> — eliminate activity.</li>
-            <li><b>Transfer</b> — insurance, contract.</li>
-            <li><b>Mitigate</b> — apply controls.</li>
+            <li><b>Asset</b> — anything of value: data, system, hardware, reputation, personnel.</li>
+            <li><b>Asset value (AV)</b> — monetary worth of the asset.</li>
+            <li><b>Threat</b> — anything that could harm an asset.</li>
+            <li><b>Threat actor / agent</b> — who or what realizes the threat (APT, insider, malware, flood).</li>
+            <li><b>Threat vector</b> — path the threat takes (email, web, USB, supply chain).</li>
+            <li><b>Vulnerability</b> — weakness an attack exploits (unpatched CVE, weak password, exposed port).</li>
+            <li><b>Exposure</b> — instance of being subject to loss from a threat.</li>
+            <li><b>Likelihood / probability</b> — chance the threat occurs.</li>
+            <li><b>Impact</b> — magnitude of harm if it does.</li>
+            <li><b>Risk</b> — combination of threat × vulnerability × impact.</li>
+            <li><b>Inherent risk</b> — risk BEFORE controls applied.</li>
+            <li><b>Residual risk</b> — risk that REMAINS after controls applied.</li>
+            <li><b>Risk appetite</b> — amount + type of risk the org is willing to accept to pursue objectives.</li>
+            <li><b>Risk tolerance</b> — allowable variation from risk appetite.</li>
+            <li><b>Risk capacity</b> — maximum risk the org could absorb before failing.</li>
+            <li><b>Control</b> — safeguard reducing risk.</li>
+            <li><b>Countermeasure</b> — specific control deployed against a threat.</li>
+            <li><b>Safeguard</b> — synonym for control.</li>
           </ul>
-          <h2>Metrics</h2>
+
+          <h2>The risk-management lifecycle (NIST SP 800-37, RMF)</h2>
+          <ol>
+            <li><b>Prepare</b> — context, stakeholders, appetite.</li>
+            <li><b>Categorize</b> — classify systems by impact (FIPS 199 low / moderate / high for CIA).</li>
+            <li><b>Select</b> — controls (NIST 800-53, ISO 27002).</li>
+            <li><b>Implement</b> — deploy + document.</li>
+            <li><b>Assess</b> — test effectiveness.</li>
+            <li><b>Authorize</b> — formal accreditation by authorizing official.</li>
+            <li><b>Monitor</b> — continuous monitoring + reauthorize.</li>
+          </ol>
+          <p><b>ISO 31000</b> + <b>ISO 27005</b> describe similar continuous cycles. <b>OCTAVE</b>, <b>FAIR</b>, <b>NIST 800-30</b> are common methodologies.</p>
+
+          <h2>Risk identification</h2>
           <ul>
-            <li><b>SLE</b> = Asset Value × Exposure Factor.</li>
-            <li><b>ARO</b> = annual rate of occurrence.</li>
-            <li><b>ALE</b> = SLE × ARO.</li>
-            <li><b>RTO</b> = max acceptable downtime.</li>
-            <li><b>RPO</b> = max acceptable data loss.</li>
-            <li><b>MTBF</b>, <b>MTTR</b>.</li>
+            <li><b>Asset inventory</b> — what we own (hardware, software, data, people, processes).</li>
+            <li><b>Data classification</b> — what is sensitive.</li>
+            <li><b>Threat intelligence</b> — relevant threats (industry-specific via ISAC).</li>
+            <li><b>Vulnerability scans + pen tests</b>.</li>
+            <li><b>Threat modeling</b> — STRIDE, PASTA, DREAD, attack trees.</li>
+            <li><b>Compliance gap analysis</b>.</li>
+            <li><b>Process review</b> + business interviews.</li>
+            <li><b>BIA</b> (Business Impact Analysis) input.</li>
+          </ul>
+
+          <h2>Risk analysis approaches</h2>
+
+          <h3>Quantitative</h3>
+          <p>Express risk in dollar / number terms. Requires data.</p>
+          <ul>
+            <li><b>AV</b> (Asset Value) — replacement cost / loss in $.</li>
+            <li><b>EF</b> (Exposure Factor) — % of asset lost when threat realized.</li>
+            <li><b>SLE</b> (Single Loss Expectancy) = AV × EF.</li>
+            <li><b>ARO</b> (Annual Rate of Occurrence) — frequency per year.</li>
+            <li><b>ALE</b> (Annualized Loss Expectancy) = SLE × ARO.</li>
+            <li><b>Cost-benefit:</b> compare ALE before control vs ALE after + cost of control. If ALE_reduction &gt; control_cost → invest.</li>
+          </ul>
+          <p>Pros: Objective + comparable + supports budget conversations.<br>
+          Cons: Hard to estimate accurate AV / EF / ARO for rare events.</p>
+
+          <h3>Qualitative</h3>
+          <p>Rank by descriptive scales (Low / Medium / High / Critical).</p>
+          <ul>
+            <li><b>Likelihood × Impact</b> matrix (typically 3×3 or 5×5).</li>
+            <li>Heat maps with color coding.</li>
+            <li>Subject-matter expert judgment.</li>
+          </ul>
+          <p>Pros: Fast, doesn't need precise data, good for many risks at once.<br>
+          Cons: Subjective, harder to compare cross-org.</p>
+
+          <h3>Semi-quantitative</h3>
+          <p>Mix — assign numeric values to qualitative categories. Common in practice.</p>
+
+          <h2>Risk-rating example (5×5)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th></th><th>Impact 1 (Insignificant)</th><th>2 (Minor)</th><th>3 (Moderate)</th><th>4 (Major)</th><th>5 (Catastrophic)</th></tr>
+            <tr><td><b>Likelihood 5 (Almost certain)</b></td><td>M</td><td>H</td><td>H</td><td>C</td><td>C</td></tr>
+            <tr><td><b>4 (Likely)</b></td><td>L</td><td>M</td><td>H</td><td>H</td><td>C</td></tr>
+            <tr><td><b>3 (Possible)</b></td><td>L</td><td>M</td><td>M</td><td>H</td><td>H</td></tr>
+            <tr><td><b>2 (Unlikely)</b></td><td>L</td><td>L</td><td>M</td><td>M</td><td>H</td></tr>
+            <tr><td><b>1 (Rare)</b></td><td>L</td><td>L</td><td>L</td><td>M</td><td>M</td></tr>
+          </table>
+
+          <h2>Risk responses (the FOUR strategies)</h2>
+          <ul>
+            <li><b>Avoid</b> — eliminate the activity that creates the risk. (Don't process credit cards → no PCI scope.)</li>
+            <li><b>Mitigate / Reduce</b> — apply controls to lower likelihood or impact. (Most cases.)</li>
+            <li><b>Transfer / Share</b> — pass to a third party. Insurance, outsource, contract terms.</li>
+            <li><b>Accept</b> — knowingly tolerate the residual risk. Document + sign off by authorized owner.</li>
+          </ul>
+          <p>Some frameworks add:</p>
+          <ul>
+            <li><b>Exploit</b> — for positive risks / opportunities.</li>
+            <li><b>Reject / Ignore</b> — NOT a valid response in mature frameworks; failing to manage risk.</li>
+          </ul>
+
+          <h2>Cyber insurance (transfer)</h2>
+          <ul>
+            <li>Covers incident-response, ransomware (limits), business interruption, legal costs, notification, regulatory fines (where allowed).</li>
+            <li>Increasingly requires: MFA, EDR, immutable backups, segmentation, IR plan, training. No coverage if lacking baseline.</li>
+            <li>Doesn't replace controls — supplements them.</li>
+          </ul>
+
+          <h2>Risk register</h2>
+          <p>Living document tracking every identified risk.</p>
+          <p><b>Typical columns:</b></p>
+          <ul>
+            <li>Risk ID</li>
+            <li>Description</li>
+            <li>Asset(s) affected</li>
+            <li>Threat / vulnerability</li>
+            <li>Likelihood + Impact + Inherent risk rating</li>
+            <li>Current controls</li>
+            <li>Residual risk rating</li>
+            <li>Risk response chosen</li>
+            <li>Owner + due date</li>
+            <li>Status</li>
+            <li>Review date</li>
+          </ul>
+          <p><b>Heat map</b> visualizes the register graphically.</p>
+
+          <h2>Risk reporting + governance</h2>
+          <ul>
+            <li><b>Board reporting</b> — risk dashboard for executives + board.</li>
+            <li><b>RACI</b> matrix — Responsible / Accountable / Consulted / Informed for each risk.</li>
+            <li><b>3 lines of defense</b> model:
+              <ol>
+                <li>Operational management owns + manages risk.</li>
+                <li>Risk + compliance functions monitor + advise.</li>
+                <li>Internal audit independently assures.</li>
+              </ol>
+            </li>
+            <li><b>CISO</b> — Chief Information Security Officer; typically owns enterprise risk program.</li>
+            <li><b>Risk committee</b> meets periodically.</li>
+          </ul>
+
+          <h2>Vulnerability management</h2>
+          <ul>
+            <li><b>CVE</b> — Common Vulnerabilities and Exposures (unique ID).</li>
+            <li><b>CVSS</b> — Common Vulnerability Scoring System (0-10).
+              <ul>
+                <li>9.0+ Critical, 7.0–8.9 High, 4.0–6.9 Medium, 0.1–3.9 Low.</li>
+              </ul>
+            </li>
+            <li><b>CWE</b> — Common Weakness Enumeration (vuln type).</li>
+            <li><b>EPSS</b> — Exploit Prediction Scoring System (likelihood of exploit).</li>
+            <li><b>KEV</b> — CISA Known Exploited Vulnerabilities catalog. Patch these FIRST.</li>
+            <li><b>SBOM</b> (Software Bill of Materials) — inventory of components in a product; key for Log4Shell-type response.</li>
+            <li><b>Scan types:</b> credentialed vs unauthenticated, network vs host-based, agent vs agentless, internal vs external.</li>
+            <li><b>Tools:</b> Tenable Nessus / IO, Qualys, Rapid7 InsightVM, OpenVAS / Greenbone, Microsoft Defender Vulnerability Management.</li>
+            <li><b>Prioritization:</b> CVSS × exploitability (EPSS / KEV) × asset criticality × exposure.</li>
+            <li><b>Remediation paths:</b> Patch, configuration change, compensating control, isolate, accept.</li>
+            <li><b>Patch management lifecycle:</b> Inventory → Identify → Test (lab) → Approve (CAB) → Deploy → Verify → Document.</li>
+            <li><b>Mean time to patch (MTTP)</b> — service-level metric.</li>
+          </ul>
+
+          <h2>Third-party / supply-chain risk</h2>
+          <ul>
+            <li>Vendors expand attack surface (SolarWinds, MOVEit, Kaseya, 3CX).</li>
+            <li><b>TPRM</b> (Third-Party Risk Management) program: due diligence + questionnaires + audits + continuous monitoring.</li>
+            <li><b>Assessments:</b> SOC 2 Type II report, ISO 27001 certificate, penetration test letters, security questionnaires (SIG, CAIQ).</li>
+            <li><b>Contracts:</b> MSA, NDA, BAA (HIPAA), DPA (GDPR), SLA, ISA (Interconnection Security Agreement).</li>
+            <li><b>4th-party risk</b> — vendor's vendors.</li>
+            <li><b>Continuous monitoring:</b> BitSight, SecurityScorecard.</li>
+            <li><b>SBOM</b> required for federal software (EO 14028).</li>
+            <li><b>Right-to-audit</b> + breach-notification clauses.</li>
+            <li><b>Vendor offboarding</b>: revoke access + retrieve data.</li>
+          </ul>
+
+          <h2>Risk in projects + change management</h2>
+          <ul>
+            <li>Every significant change should include a <b>risk assessment</b> + rollback plan.</li>
+            <li><b>RFC</b> + CAB review weighs likelihood + impact.</li>
+            <li>Emergency change → expedited risk review + post-implementation review.</li>
+          </ul>
+
+          <h2>Business Impact Analysis (BIA)</h2>
+          <p>Input to BCP / DRP. Identifies:</p>
+          <ul>
+            <li>Critical processes + dependencies.</li>
+            <li>Maximum Tolerable Downtime (<b>MTD</b>) / Maximum Allowable Outage (<b>MAO</b>).</li>
+            <li><b>RTO</b> (Recovery Time Objective) — target restore time. Must be ≤ MTD.</li>
+            <li><b>RPO</b> (Recovery Point Objective) — max data-loss window.</li>
+            <li><b>WRT</b> (Work Recovery Time) — time after restore before normal operations resume.</li>
+            <li><b>RTO + WRT ≤ MTD</b>.</li>
+          </ul>
+
+          <h2>Reliability + ops metrics</h2>
+          <ul>
+            <li><b>MTBF</b> (Mean Time Between Failures) — predicted reliability for repairable items.</li>
+            <li><b>MTTF</b> (Mean Time To Failure) — non-repairable.</li>
+            <li><b>MTTR</b> (Mean Time To Repair / Restore) — average recovery time.</li>
+            <li><b>MTTD</b> (Mean Time To Detect).</li>
+            <li><b>MTTC</b> (Mean Time To Contain).</li>
+            <li><b>SLA / OLA / UC</b> — agreement types.</li>
+          </ul>
+
+          <h2>Quantitative example (memorize the math)</h2>
+          <p>Asset = laptop, AV = $2,000. Theft destroys 100% of asset → EF = 1.0. Org loses 2 laptops/year → ARO = 2.</p>
+          <ul>
+            <li>SLE = AV × EF = $2,000 × 1.0 = <b>$2,000</b>.</li>
+            <li>ALE = SLE × ARO = $2,000 × 2 = <b>$4,000/yr</b>.</li>
+            <li>If a $1,500/yr tracking + encryption program reduces ARO to 0.5 → new ALE = $1,000. Saving = $3,000/yr − $1,500 cost = <b>$1,500 net benefit/yr</b>.</li>
+          </ul>
+
+          <h2>KRIs vs KPIs</h2>
+          <ul>
+            <li><b>KRI</b> (Key Risk Indicator) — leading metric that signals rising risk (failed login spikes, unpatched system count, employees clicking phishing simulations).</li>
+            <li><b>KPI</b> (Key Performance Indicator) — measures how well a process performs.</li>
+          </ul>
+
+          <h2>Common Sec+ risk-related concepts</h2>
+          <ul>
+            <li><b>Risk owner</b> — person accountable for managing a specific risk.</li>
+            <li><b>Control owner</b> — person ensuring a control operates.</li>
+            <li><b>Process owner</b> — person managing the business process.</li>
+            <li><b>Risk treatment plan</b> — chosen response + implementation steps + dates.</li>
+            <li><b>Risk acceptance memo</b> — formal documented sign-off.</li>
+            <li><b>Compensating control</b> — substitute when primary control infeasible.</li>
+            <li><b>Defense in depth</b> — multiple layers to manage residual risk.</li>
+            <li><b>Continuous monitoring</b> — automated controls + SIEM + posture tools.</li>
+          </ul>
+
+          <h2>Threat-modeling frameworks</h2>
+          <ul>
+            <li><b>STRIDE</b> (Microsoft): Spoofing / Tampering / Repudiation / Information disclosure / Denial of service / Elevation of privilege.</li>
+            <li><b>PASTA</b> — Process for Attack Simulation + Threat Analysis (7 stages, more business-driven).</li>
+            <li><b>DREAD</b> — Damage / Reproducibility / Exploitability / Affected users / Discoverability (1-10 each).</li>
+            <li><b>Attack trees</b> — root goal at top, branches = paths.</li>
+            <li><b>MITRE ATT&CK + ATT&CK Navigator</b> — TTP mapping during analysis.</li>
+            <li><b>Kill Chain</b>.</li>
+          </ul>
+
+          <h2>Compliance + audit angle</h2>
+          <ul>
+            <li><b>Internal audit</b> — independent assurance.</li>
+            <li><b>External audit</b> — third party (SOC 2 Type I/II, ISO 27001).</li>
+            <li><b>Regulatory audit</b> — HIPAA, PCI QSA, FedRAMP 3PAO.</li>
+            <li><b>Pen test</b> — point-in-time offensive test; required by many regs (PCI annual).</li>
+            <li><b>Findings</b> rated by risk severity + remediation timelines.</li>
+            <li><b>Letter of attestation / Bridge letter</b> — interim assurance.</li>
+          </ul>
+
+          <h2>Risk register sample row</h2>
+          <ul>
+            <li><b>Risk:</b> Ransomware encrypts file server.</li>
+            <li><b>Threat:</b> Criminal organization (RaaS affiliate).</li>
+            <li><b>Vulnerability:</b> RDP exposed to Internet on legacy server.</li>
+            <li><b>Likelihood:</b> 4 (Likely).</li>
+            <li><b>Impact:</b> 5 (Catastrophic — production outage).</li>
+            <li><b>Inherent rating:</b> Critical.</li>
+            <li><b>Controls:</b> Move RDP behind VPN + MFA; immutable backups; EDR.</li>
+            <li><b>Residual rating:</b> Medium.</li>
+            <li><b>Response:</b> Mitigate.</li>
+            <li><b>Owner:</b> Infrastructure Manager.</li>
+            <li><b>Status:</b> In progress; due 2026-06-30.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li><b>Risk = Threat × Vulnerability × Impact</b> (sometimes shown as Likelihood × Impact).</li>
+            <li><b>SLE = AV × EF</b>; <b>ALE = SLE × ARO</b>.</li>
+            <li>Four risk responses: <b>Accept, Avoid, Mitigate, Transfer</b>.</li>
+            <li>Insurance = transfer; outsourcing = transfer (shared).</li>
+            <li>"What's left after controls" → Residual risk.</li>
+            <li>"How much risk we'll accept" → Risk appetite.</li>
+            <li>"Max acceptable downtime" → RTO; "max data loss" → RPO; "ceiling of any outage" → MTD.</li>
+            <li>"Leading indicator of rising risk" → KRI.</li>
+            <li>"Patch list ordered by impact + exploit likelihood" → CVSS + EPSS + KEV.</li>
+            <li>"Inventory of software components" → SBOM.</li>
+            <li>"3 lines of defense" → ops / risk / audit.</li>
+            <li>"Document showing acceptance of residual risk" → risk acceptance memo / register entry signed by owner.</li>
+            <li>"Microsoft threat-modeling framework" → STRIDE.</li>
           </ul>
         `
       },
