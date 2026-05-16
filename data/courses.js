@@ -15090,18 +15090,349 @@ Bastion / SSM Session Manager replacing SSH bastion</code></pre>
       {
         title: '7. Automation & IaC',
         body: `
-          <h2>Infrastructure as Code</h2>
+          <p>Manual clicks in cloud consoles do not scale + create drift. <b>Automation</b> = code-driven provisioning, configuration, deployment, and operations. The discipline of declaring infrastructure in version-controlled files is <b>IaC</b> (Infrastructure as Code). Exam tests IaC tools, CI/CD pipelines, GitOps, configuration management, and policy-as-code.</p>
+
+          <h2>Why IaC</h2>
           <ul>
-            <li><b>Terraform / OpenTofu</b> — provider-agnostic, HCL.</li>
-            <li><b>CloudFormation</b> — AWS-native YAML/JSON.</li>
-            <li><b>ARM templates / Bicep</b> — Azure-native.</li>
-            <li><b>Pulumi</b> — real programming languages.</li>
-            <li><b>Ansible / Chef / Puppet</b> — config management.</li>
+            <li><b>Repeatable</b> — same code → same infrastructure.</li>
+            <li><b>Reviewable</b> — pull requests with peer review + comments.</li>
+            <li><b>Auditable</b> — every change tracked in git history.</li>
+            <li><b>Rollback</b> — git revert + redeploy.</li>
+            <li><b>Drift detection</b> — code is the desired state; reconcile reality to code.</li>
+            <li><b>Disaster recovery</b> — recreate entire stacks elsewhere in minutes.</li>
+            <li><b>Self-service</b> — devs provision via PR without ticket.</li>
+            <li><b>Compliance</b> — policy-as-code enforces guardrails at deploy time.</li>
           </ul>
-          <h2>CI/CD</h2>
-          <p>GitHub Actions, GitLab CI, Azure DevOps, Jenkins. Pipeline: lint → test → build → scan → deploy. Use environments + manual approvals for prod.</p>
+
+          <h2>Declarative vs imperative</h2>
+          <ul>
+            <li><b>Declarative</b> — describe DESIRED STATE; tool figures out steps (Terraform, CloudFormation, Bicep, Kubernetes manifests).</li>
+            <li><b>Imperative</b> — describe STEPS (Ansible tasks, AWS CLI scripts, shell). Older + brittler at infra scale.</li>
+            <li>Modern tools are mostly declarative; imperative used for once-off automation + config tasks.</li>
+          </ul>
+
+          <h2>Major IaC tools</h2>
+
+          <h3>Terraform (HashiCorp) + OpenTofu (community fork)</h3>
+          <ul>
+            <li><b>Language:</b> HCL (HashiCorp Configuration Language) — declarative.</li>
+            <li><b>Multi-cloud</b> via providers (AWS, Azure, GCP, Kubernetes, GitHub, Datadog, Cloudflare, etc.) — 3000+ providers.</li>
+            <li><b>State file</b> tracks managed resources; store in remote backend (S3 + DynamoDB lock, Azure Blob + lock, GCS, Terraform Cloud).</li>
+            <li><b>Workflow:</b> <code>terraform init → plan → apply → destroy</code>.</li>
+            <li><b>Modules</b> — reusable building blocks; publish to private / public registry.</li>
+            <li><b>Workspaces</b> — isolate state per environment (dev / staging / prod).</li>
+            <li><b>OpenTofu</b> — community fork after license change; CLI-compatible.</li>
+            <li>Drift detection: <code>terraform plan</code> shows diffs.</li>
+            <li><b>Terragrunt</b> — wrapper for DRY multi-env config.</li>
+          </ul>
+          <pre><code># Minimal Terraform example
+terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
+  backend "s3" {
+    bucket         = "tfstate-acme"
+    key            = "prod/vpc.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "tflocks"
+    encrypt        = true
+  }
+}
+
+provider "aws" { region = "us-east-1" }
+
+resource "aws_vpc" "main" {
+  cidr_block = "10.10.0.0/16"
+  tags = { Name = "prod-vpc", env = "prod" }
+}</code></pre>
+
+          <h3>AWS CloudFormation</h3>
+          <ul>
+            <li><b>Language:</b> YAML or JSON.</li>
+            <li><b>AWS-native</b>; deep integration with rollback, change sets, drift detection, StackSets for multi-account/region.</li>
+            <li><b>Nested stacks</b> + <b>cross-stack outputs</b> + <b>parameters</b>.</li>
+            <li><b>AWS CDK</b> (Cloud Development Kit) — TypeScript / Python / Go / Java that SYNTHESIZES to CloudFormation.</li>
+            <li><b>SAM</b> (Serverless Application Model) — CloudFormation extension for Lambda + API Gateway.</li>
+          </ul>
+
+          <h3>Azure ARM templates + Bicep</h3>
+          <ul>
+            <li><b>ARM templates</b> — JSON; verbose; original Azure IaC.</li>
+            <li><b>Bicep</b> — modern DSL transpiles to ARM; concise, IDE support, modules.</li>
+            <li>Tight integration with Azure resource providers; no state file (ARM tracks server-side).</li>
+            <li><b>Azure Blueprints (deprecated)</b> → <b>Azure Deployment Stacks</b>.</li>
+          </ul>
+          <pre><code>resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+  name: 'prod-vnet'
+  location: 'eastus'
+  properties: {
+    addressSpace: { addressPrefixes: [ '10.10.0.0/16' ] }
+  }
+}</code></pre>
+
+          <h3>GCP Deployment Manager + Config Connector</h3>
+          <ul>
+            <li><b>Deployment Manager</b> — YAML/Python; older.</li>
+            <li><b>Config Connector</b> — manage GCP via Kubernetes CRDs.</li>
+            <li><b>Terraform</b> is the most common IaC for GCP in practice.</li>
+          </ul>
+
+          <h3>Pulumi</h3>
+          <ul>
+            <li>Real programming languages: TypeScript, Python, Go, C#, Java, YAML.</li>
+            <li>Multi-cloud, state-backed (Pulumi Cloud or self-hosted).</li>
+            <li>Lets you use loops, conditionals, packages naturally.</li>
+            <li>Strong for engineers who already write code; weaker than Terraform for ops-only audiences.</li>
+          </ul>
+
+          <h3>AWS CDK / Azure Pulumi / Crossplane</h3>
+          <ul>
+            <li><b>AWS CDK</b> — typed L1 (CFN raw) / L2 (curated constructs) / L3 (opinionated patterns).</li>
+            <li><b>Crossplane</b> — Kubernetes-native multi-cloud provisioning; everything as CRD.</li>
+            <li>Trend: developer-friendly IaC that integrates with existing CI/CD + IDE tooling.</li>
+          </ul>
+
+          <h3>Kubernetes-as-IaC</h3>
+          <ul>
+            <li><b>YAML manifests</b> + <b>Helm charts</b> + <b>Kustomize overlays</b>.</li>
+            <li><b>Helm</b> — package manager + templating ("chart"). <code>helm install</code>, <code>helm upgrade --install</code>.</li>
+            <li><b>Kustomize</b> — overlay-based (no templating); built into kubectl.</li>
+            <li><b>Operator</b> + <b>CRD</b> — extend cluster API w/ custom controllers.</li>
+            <li><b>GitOps controllers</b> (Argo CD, Flux) sync git → cluster.</li>
+          </ul>
+
+          <h2>Configuration management</h2>
+          <p>For after a server / VM exists: keep its state consistent.</p>
+          <ul>
+            <li><b>Ansible</b> — agentless (SSH/WinRM), YAML playbooks, idempotent modules. Most popular.</li>
+            <li><b>Chef</b> — Ruby DSL, Chef Server pulls; "cookbooks + recipes".</li>
+            <li><b>Puppet</b> — declarative DSL, master+agent.</li>
+            <li><b>SaltStack</b> — fast event-driven; uses ZeroMQ.</li>
+            <li><b>Cloud-Init</b> — first-boot configuration on Linux VMs.</li>
+            <li><b>Azure DSC</b> (Desired State Configuration) + <b>AWS SSM State Manager</b>.</li>
+            <li>Use IaC to PROVISION resources; CM to CONFIGURE inside them. Or bake config into immutable images and skip CM.</li>
+          </ul>
+          <pre><code># Ansible playbook example
+- hosts: web
+  become: true
+  tasks:
+    - name: Install nginx
+      apt: { name: nginx, state: present, update_cache: yes }
+    - name: Deploy site config
+      copy: { src: nginx.conf, dest: /etc/nginx/nginx.conf, mode: '0644' }
+      notify: Reload nginx
+  handlers:
+    - name: Reload nginx
+      systemd: { name: nginx, state: reloaded }</code></pre>
+
+          <h2>Image building (golden images)</h2>
+          <ul>
+            <li><b>Packer</b> (HashiCorp) — build AMIs / VHDs / GCP images from a JSON/HCL template.</li>
+            <li><b>EC2 Image Builder</b>, <b>Azure VM Image Builder</b>, <b>GCP Cloud Build for VMs</b>.</li>
+            <li><b>Container images:</b> Dockerfile + BuildKit / Kaniko / buildah / nerdctl.</li>
+            <li><b>Bazel / Nix</b> — reproducible builds.</li>
+            <li>Immutable infrastructure pattern: bake → deploy fresh, never patch in place.</li>
+          </ul>
+
+          <h2>CI/CD pipelines</h2>
+          <p>CI = Continuous Integration (build + test). CD = Continuous Delivery / Deployment.</p>
+
+          <h3>Pipeline platforms</h3>
+          <ul>
+            <li><b>GitHub Actions</b> — YAML workflows, hosted runners, marketplace.</li>
+            <li><b>GitLab CI / CD</b> — built-in; GitLab Runners.</li>
+            <li><b>Azure DevOps Pipelines</b>.</li>
+            <li><b>Jenkins</b> — old guard; self-hosted; plugin-heavy.</li>
+            <li><b>CircleCI</b>, <b>Travis CI</b>, <b>Buildkite</b>, <b>Codefresh</b>, <b>Drone</b>, <b>Buddy</b>.</li>
+            <li><b>AWS CodePipeline + CodeBuild + CodeDeploy</b>.</li>
+            <li><b>Google Cloud Build</b> + <b>Cloud Deploy</b>.</li>
+            <li><b>Tekton</b> — Kubernetes-native CI/CD primitives.</li>
+            <li><b>Argo Workflows</b> — DAG workflow engine.</li>
+            <li><b>Harness</b>, <b>Spinnaker</b> — opinionated CD platforms.</li>
+          </ul>
+
+          <h3>Pipeline anatomy</h3>
+          <ol>
+            <li><b>Trigger</b> — push, PR, tag, schedule, webhook, manual.</li>
+            <li><b>Checkout + cache</b>.</li>
+            <li><b>Lint + format</b> (e.g., terraform fmt, eslint, black).</li>
+            <li><b>Unit tests</b> + <b>integration tests</b>.</li>
+            <li><b>SAST</b> + <b>secrets scan</b> + <b>SCA</b> + <b>IaC scan</b> + <b>container scan</b>.</li>
+            <li><b>Build</b> artifact (binary / container image / chart).</li>
+            <li><b>SBOM</b> generation + <b>image signing</b> (cosign / Sigstore).</li>
+            <li><b>Publish</b> to registry / artifact repo.</li>
+            <li><b>Deploy</b> to dev → run smoke tests → require approval → staging → prod.</li>
+            <li><b>Post-deploy</b> — DAST, performance test, health probes, observability checks.</li>
+            <li><b>Rollback</b> on failure (blue-green flip / Argo rollout / Spinnaker pipeline).</li>
+          </ol>
+
+          <h3>Deployment strategies</h3>
+          <ul>
+            <li><b>Rolling update</b> — replace pods/instances in batches.</li>
+            <li><b>Blue/green</b> — full duplicate stack; flip traffic at LB level.</li>
+            <li><b>Canary</b> — 1-5-25-50-100% traffic shift with metrics gating.</li>
+            <li><b>A/B testing</b> — traffic split for feature comparison.</li>
+            <li><b>Recreate</b> — destroy then create (downtime).</li>
+            <li><b>Shadow / Mirror</b> — copy traffic to new version without serving responses.</li>
+            <li><b>Feature flags</b> (LaunchDarkly, ConfigCat, Unleash) — decouple deploy from release.</li>
+          </ul>
+
           <h2>GitOps</h2>
-          <p>Git is source of truth; ArgoCD/Flux reconciles cluster state to repo.</p>
+          <ul>
+            <li>Principles: Git as source of truth, declarative state, automated reconciliation, observable diff.</li>
+            <li><b>Argo CD</b> — most popular K8s GitOps controller; UI + CLI; sync waves; ApplicationSets.</li>
+            <li><b>FluxCD</b> — toolkit-based; lightweight; GitOps Toolkit (source-controller, kustomize-controller, helm-controller, notification-controller, image-update).</li>
+            <li><b>Jenkins X</b>, <b>Werf</b>.</li>
+            <li><b>Pull-based</b> (controller in cluster reconciles to git) vs <b>push-based</b> (CI pushes to cluster).</li>
+            <li><b>Promotion</b> via separate environment branches / overlays / directories.</li>
+          </ul>
+
+          <h2>Policy-as-Code</h2>
+          <ul>
+            <li><b>OPA</b> (Open Policy Agent) — generic policy engine. Rego language.</li>
+            <li><b>Gatekeeper</b> — OPA as a Kubernetes admission controller.</li>
+            <li><b>Kyverno</b> — Kubernetes-native YAML policies (no Rego).</li>
+            <li><b>HashiCorp Sentinel</b> — for Terraform Cloud / Vault / Nomad.</li>
+            <li><b>Checkov / tfsec / KICS / Terrascan / Trivy IaC</b> — static IaC scanners.</li>
+            <li><b>Cloud-native policy:</b> AWS Service Control Policies + AWS Config rules; Azure Policy + Initiatives; GCP Organization Policy + Custom Constraints.</li>
+            <li><b>CIS Benchmarks + custom rules</b> automated.</li>
+            <li>Run at PR (lint), pre-apply (terraform plan + Sentinel/OPA), and runtime (admission + Config).</li>
+          </ul>
+
+          <h2>Secrets in pipelines</h2>
+          <ul>
+            <li><b>GitHub Actions Secrets / GitLab CI variables / Azure DevOps variable groups</b>.</li>
+            <li><b>HashiCorp Vault</b> dynamic secrets for short-lived DB creds.</li>
+            <li><b>OIDC Workload Identity Federation</b> — pipeline mints short-lived cloud creds without storing keys.</li>
+            <li><b>Sealed Secrets / SOPS</b> — encrypt secrets in git.</li>
+            <li><b>Pre-commit hooks + secrets scanning</b> (gitleaks, TruffleHog, detect-secrets).</li>
+            <li>NEVER store: AWS access keys, private RSA / EC keys, DB passwords, OAuth client secrets in plain code.</li>
+          </ul>
+
+          <h2>Testing infrastructure code</h2>
+          <ul>
+            <li><b>Linting:</b> <code>terraform fmt</code>, <code>tflint</code>, <code>cfn-lint</code>, <code>bicep build</code>, <code>kubectl --dry-run=client</code>.</li>
+            <li><b>Static analysis:</b> Checkov, tfsec, KICS, Trivy IaC, Terrascan, ARM-TTK.</li>
+            <li><b>Plan review:</b> <code>terraform plan</code> output posted to PR.</li>
+            <li><b>Unit tests for Terraform:</b> Terratest (Go), terraform test (HCL).</li>
+            <li><b>Ephemeral environments:</b> spin up real cloud sandbox per PR (Atlantis / Spacelift / Env0 / GitHub Codespaces).</li>
+            <li><b>Compliance tests:</b> InSpec, Open Policy Agent, Conftest.</li>
+            <li><b>Smoke + end-to-end tests post-deploy</b>.</li>
+          </ul>
+
+          <h2>Observability for automation</h2>
+          <ul>
+            <li>Pipeline metrics: DORA — Deployment Frequency, Lead Time, MTTR, Change Failure Rate.</li>
+            <li>Audit who applied what, when.</li>
+            <li>Alert on failed deploys, drift detected, policy violations.</li>
+            <li>Visualize via dashboards (Grafana, Datadog, Sleuth, LinearB).</li>
+          </ul>
+
+          <h2>State management (Terraform-specific deep dive)</h2>
+          <ul>
+            <li><b>Local state</b> — for learning only; never share.</li>
+            <li><b>Remote backends</b>: S3 + DynamoDB lock, Azure Blob (uses ETag for lock), GCS, Terraform Cloud, Spacelift.</li>
+            <li><b>State locking</b> prevents concurrent applies.</li>
+            <li><b>Workspaces</b> for per-env state isolation (use separate state files in production).</li>
+            <li><b>Drift</b>: <code>terraform plan</code> reveals; remediate via apply or import resource.</li>
+            <li><b>Import</b>: <code>terraform import resource.address aws_resource_id</code> brings unmanaged resources under TF.</li>
+            <li><b>State manipulation</b>: <code>terraform state mv / rm / show</code> — careful, no undo.</li>
+            <li><b>Sensitive data</b> in state — encrypt at rest + restrict bucket access.</li>
+          </ul>
+
+          <h2>Multi-account / multi-environment patterns</h2>
+          <ul>
+            <li><b>Account / subscription per environment</b> (dev / staging / prod) for blast-radius isolation.</li>
+            <li><b>Landing Zone</b> — pre-built secure account structure (AWS Control Tower, Azure Landing Zones, GCP Foundation).</li>
+            <li><b>Terragrunt</b> / <b>module composition</b> / <b>Stacks (Pulumi)</b> for DRY config across envs.</li>
+            <li><b>Promotion</b>: same code, different variable file / workspace / branch.</li>
+            <li><b>Approval gates</b> at staging → prod.</li>
+          </ul>
+
+          <h2>Drift detection + remediation</h2>
+          <ul>
+            <li>Run <code>terraform plan</code> nightly / on schedule.</li>
+            <li><b>AWS Config</b> + <b>Azure Resource Graph</b> + <b>GCP Asset Inventory</b> show actual state.</li>
+            <li><b>Driftctl</b>, <b>CloudQuery</b>, <b>Snyk IaC</b> — detect drift across many accounts.</li>
+            <li>Auto-remediate via reconciliation or alert humans.</li>
+          </ul>
+
+          <h2>Infrastructure observability</h2>
+          <ul>
+            <li>Tag resources via IaC for cost + ownership.</li>
+            <li>Emit CloudWatch / Azure Monitor / Cloud Monitoring metrics.</li>
+            <li>Centralize logs to SIEM.</li>
+            <li>Distributed tracing for app deployments.</li>
+            <li>Synthetic monitoring on deployed endpoints.</li>
+          </ul>
+
+          <h2>Disaster recovery via IaC</h2>
+          <ul>
+            <li>If everything is code + data backups, you can rebuild in another region in minutes.</li>
+            <li>Practice DR drills using IaC + restore from snapshot/backup.</li>
+            <li><b>Pilot light</b> = minimal IaC-provisioned baseline + scale on event.</li>
+            <li><b>Warm standby</b> = full IaC deployment running smaller.</li>
+            <li><b>Active-active</b> = duplicate IaC + global traffic management.</li>
+          </ul>
+
+          <h2>FinOps + automation</h2>
+          <ul>
+            <li>Tag policies enforced via IaC.</li>
+            <li>Schedule shutdowns (nights / weekends) for dev/test via Lambda / Functions / Cloud Scheduler.</li>
+            <li>Spot fleets defined in IaC.</li>
+            <li>Cost budgets + alerts as Terraform resources.</li>
+            <li>Right-sizing via Compute Optimizer / Azure Advisor / GCP Recommender outputs.</li>
+          </ul>
+
+          <h2>Common IaC antipatterns</h2>
+          <ul>
+            <li>Manual console changes overriding code (creates drift).</li>
+            <li>State file in S3 without encryption + locking.</li>
+            <li>Wildcard IAM in IaC defaults.</li>
+            <li>Hardcoding secrets in Terraform variables.</li>
+            <li>Single monolithic state file for everything (slow plan + huge blast radius).</li>
+            <li>No code review for prod applies.</li>
+            <li>No CI lint / scan / plan check before merge.</li>
+            <li>Same module for everything ("vending machine" antipattern without composition).</li>
+            <li>Mixed manual + IaC management of same resource ("dual-write").</li>
+            <li>Tight coupling to provider deprecated features.</li>
+          </ul>
+
+          <h2>Cross-cloud IaC equivalence</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tool</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Provider-native IaC</td><td>CloudFormation / CDK / SAM</td><td>ARM / Bicep / Deployment Stacks</td><td>Deployment Manager / Config Connector</td></tr>
+            <tr><td>Multi-cloud IaC</td><td colspan="3">Terraform / OpenTofu / Pulumi / Crossplane</td></tr>
+            <tr><td>Config mgmt</td><td colspan="3">Ansible / Chef / Puppet / Salt / Cloud-Init / Azure DSC / AWS SSM</td></tr>
+            <tr><td>Pipeline platform</td><td>CodePipeline / CodeBuild / CodeDeploy</td><td>Azure DevOps Pipelines / GitHub Actions</td><td>Cloud Build / Cloud Deploy</td></tr>
+            <tr><td>Image builder</td><td>EC2 Image Builder / Packer</td><td>VM Image Builder / Packer</td><td>Cloud Build / Packer</td></tr>
+            <tr><td>Policy-as-code</td><td>SCP + Config rules + Sentinel</td><td>Azure Policy + Initiatives</td><td>Organization Policy + Custom Constraints</td></tr>
+            <tr><td>Landing zone</td><td>Control Tower</td><td>Azure Landing Zones</td><td>Foundation</td></tr>
+            <tr><td>Drift visibility</td><td>Config + Drift Detection</td><td>Resource Graph</td><td>Asset Inventory</td></tr>
+            <tr><td>GitOps controller</td><td colspan="3">Argo CD / FluxCD / Crossplane</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Multi-cloud declarative IaC" → Terraform / OpenTofu.</li>
+            <li>"AWS native IaC, YAML/JSON" → CloudFormation.</li>
+            <li>"Modern Azure DSL transpiles to ARM" → Bicep.</li>
+            <li>"IaC in real programming languages" → Pulumi (or AWS CDK).</li>
+            <li>"Kubernetes-native multi-cloud provisioning via CRDs" → Crossplane.</li>
+            <li>"Agentless YAML configuration management" → Ansible.</li>
+            <li>"Build immutable AMI/VHD images" → Packer.</li>
+            <li>"K8s GitOps controllers" → Argo CD, FluxCD.</li>
+            <li>"Policy engine using Rego" → Open Policy Agent (OPA).</li>
+            <li>"K8s YAML-native policy alternative" → Kyverno.</li>
+            <li>"Static scan of IaC for misconfigs" → Checkov, tfsec, KICS, Trivy.</li>
+            <li>"DORA metrics" → Deployment Frequency, Lead Time, MTTR, Change Failure Rate.</li>
+            <li>"Replace manual cloud changes with auditable workflow" → IaC + PR review.</li>
+            <li>"Decouple deploy from release" → feature flags.</li>
+            <li>"Canary deployment goal" → gradual traffic shift with metrics gating.</li>
+            <li>"Pull-based GitOps" → controller in cluster reconciles to git (Argo / Flux).</li>
+            <li>"Eliminate stored cloud keys in CI/CD" → OIDC Workload Identity Federation.</li>
+            <li>"AWS pre-built secure multi-account setup" → Control Tower.</li>
+          </ul>
         `
       },
       {
