@@ -7930,18 +7930,344 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '8. Governance, Compliance, Privacy',
         body: `
-          <h2>Frameworks</h2>
-          <p>NIST CSF, NIST 800-53, ISO 27001/27002, CIS Controls, COBIT.</p>
-          <h2>Regs by data type</h2>
+          <p>Governance = how the org makes + enforces security decisions. Compliance = meeting external rules + standards. Privacy = protecting personal data + respecting individuals' rights. Together they form the non-technical backbone of every security program. Exam tests every framework + regulation by acronym + scope.</p>
+
+          <h2>Governance fundamentals</h2>
           <ul>
-            <li><b>HIPAA</b> — health info (PHI).</li>
-            <li><b>PCI-DSS</b> — payment card.</li>
-            <li><b>GDPR</b> — EU personal data; data subject rights.</li>
-            <li><b>SOX</b> — financial reporting integrity.</li>
-            <li><b>CCPA / CPRA</b> — California consumers.</li>
+            <li><b>Board of directors</b> — oversight, sets risk appetite, accountable to shareholders.</li>
+            <li><b>Executive sponsorship</b> — CISO / CTO / CEO formally back the program.</li>
+            <li><b>Steering committees</b> — cross-functional decision body.</li>
+            <li><b>Policy hierarchy</b> — Policy → Standard → Procedure → Guideline.</li>
+            <li><b>RACI</b> — Responsible / Accountable / Consulted / Informed.</li>
+            <li><b>Centralized vs decentralized vs hybrid</b> governance model.</li>
+            <li><b>3 lines of defense</b> — operations / risk-compliance / internal audit.</li>
           </ul>
-          <h2>Policies</h2>
-          <p>AUP, BYOD, data classification, retention, separation of duties, least privilege, job rotation, mandatory vacation.</p>
+
+          <h2>Policy hierarchy — definitions</h2>
+          <ul>
+            <li><b>Policy</b> — high-level statement of intent + rules. Mandatory. "Encrypt all sensitive data."</li>
+            <li><b>Standard</b> — specific mandatory implementation. "Use AES-256-GCM."</li>
+            <li><b>Procedure</b> — step-by-step "how to". "Issue cert: 1. Generate CSR, 2. Submit…"</li>
+            <li><b>Guideline</b> — recommended best practice, optional.</li>
+            <li><b>Baseline</b> — minimum acceptable configuration / security level.</li>
+          </ul>
+
+          <h2>Common policies every org needs</h2>
+          <ul>
+            <li><b>Information / Acceptable Use Policy (AUP)</b> — what users may/may not do with company resources.</li>
+            <li><b>BYOD policy</b> — personal-device rules.</li>
+            <li><b>Password / passphrase policy</b>.</li>
+            <li><b>Data classification + handling policy</b>.</li>
+            <li><b>Data retention + destruction policy</b>.</li>
+            <li><b>Access control policy</b> — RBAC roles, recertification.</li>
+            <li><b>Change management policy</b>.</li>
+            <li><b>Incident response policy</b>.</li>
+            <li><b>Backup + recovery policy</b>.</li>
+            <li><b>Encryption + key management policy</b>.</li>
+            <li><b>Remote work / VPN policy</b>.</li>
+            <li><b>Clean desk policy</b>.</li>
+            <li><b>Email + Internet usage policy</b>.</li>
+            <li><b>Mobile device + MDM policy</b>.</li>
+            <li><b>Vendor risk + due diligence policy</b>.</li>
+            <li><b>Social media policy</b>.</li>
+            <li><b>Code of conduct / Ethics policy</b>.</li>
+            <li><b>Onboarding + offboarding policy</b>.</li>
+            <li><b>Physical + environmental security policy</b>.</li>
+            <li><b>SDLC / secure-development policy</b>.</li>
+            <li><b>AI / acceptable AI use policy</b>.</li>
+            <li><b>Whistleblower policy</b>.</li>
+          </ul>
+
+          <h2>People practices</h2>
+          <ul>
+            <li><b>Background checks</b> — proportionate to role.</li>
+            <li><b>Security awareness training</b> — annually + role-specific. Tracked completion.</li>
+            <li><b>Phishing simulations</b> — KnowBe4, Cofense, Microsoft Attack Sim.</li>
+            <li><b>Separation of duties (SoD)</b>.</li>
+            <li><b>Job rotation</b>.</li>
+            <li><b>Mandatory vacation</b> — surfaces ongoing fraud.</li>
+            <li><b>Least privilege</b> + <b>need to know</b>.</li>
+            <li><b>NDA</b> — signed at hire + with vendors.</li>
+            <li><b>Acceptable Use</b> acknowledgement at hire + annually.</li>
+            <li><b>Offboarding</b> — same-day access revocation, return of property, exit interview.</li>
+          </ul>
+
+          <h2>Major frameworks</h2>
+
+          <h3>NIST Cybersecurity Framework (CSF) 2.0</h3>
+          <p>Voluntary US framework. Six functions:</p>
+          <ol>
+            <li><b>GV</b> — Govern (added in 2.0).</li>
+            <li><b>ID</b> — Identify.</li>
+            <li><b>PR</b> — Protect.</li>
+            <li><b>DE</b> — Detect.</li>
+            <li><b>RS</b> — Respond.</li>
+            <li><b>RC</b> — Recover.</li>
+          </ol>
+
+          <h3>NIST SP series</h3>
+          <ul>
+            <li><b>800-37</b> — RMF (Risk Management Framework).</li>
+            <li><b>800-30</b> — Risk Assessment.</li>
+            <li><b>800-53</b> — Control catalog (used in FedRAMP).</li>
+            <li><b>800-171</b> — CUI (Controlled Unclassified Info) for non-federal.</li>
+            <li><b>800-61</b> — Incident Response.</li>
+            <li><b>800-63</b> — Digital Identity Guidelines.</li>
+            <li><b>800-88</b> — Media sanitization.</li>
+            <li><b>800-145</b> — Cloud computing definitions.</li>
+            <li><b>800-207</b> — Zero Trust Architecture.</li>
+            <li><b>800-218</b> — Secure Software Development Framework (SSDF).</li>
+          </ul>
+
+          <h3>ISO/IEC standards</h3>
+          <ul>
+            <li><b>ISO/IEC 27001</b> — ISMS (Information Security Management System) — certifiable.</li>
+            <li><b>ISO/IEC 27002</b> — control catalog supporting 27001.</li>
+            <li><b>ISO/IEC 27005</b> — risk management.</li>
+            <li><b>ISO/IEC 27017</b> — cloud security.</li>
+            <li><b>ISO/IEC 27018</b> — PII in public cloud.</li>
+            <li><b>ISO/IEC 27701</b> — privacy information management extension to 27001.</li>
+            <li><b>ISO 31000</b> — risk management principles (broader than IT).</li>
+            <li><b>ISO 22301</b> — Business Continuity Management.</li>
+          </ul>
+
+          <h3>Other frameworks</h3>
+          <ul>
+            <li><b>CIS Critical Security Controls v8</b> — 18 prescriptive controls.</li>
+            <li><b>CIS Benchmarks</b> — hardening guides per OS/app/platform.</li>
+            <li><b>COBIT</b> — IT governance (ISACA).</li>
+            <li><b>ITIL 4</b> — IT service management.</li>
+            <li><b>COSO ERM</b> — enterprise risk (financial controls focus).</li>
+            <li><b>SOC 2</b> (Trust Services Criteria) — AICPA-defined common controls (Security, Availability, Processing Integrity, Confidentiality, Privacy).</li>
+            <li><b>OWASP Top 10</b> + <b>OWASP ASVS</b> + <b>OWASP SAMM</b>.</li>
+            <li><b>MITRE ATT&CK</b> — adversary TTPs reference.</li>
+            <li><b>CSA STAR + CCM</b> — Cloud Security Alliance Star registry + Cloud Controls Matrix.</li>
+            <li><b>FAIR</b> — quantitative risk analysis.</li>
+            <li><b>FFIEC Handbook</b> — US financial-sector cybersecurity.</li>
+            <li><b>HITRUST CSF</b> — healthcare-aligned framework crossing HIPAA + NIST + PCI.</li>
+            <li><b>CMMC</b> — Cybersecurity Maturity Model Certification (US defense).</li>
+            <li><b>PCI Secure Software Framework (SSF)</b>.</li>
+            <li><b>SLSA</b> — Supply-chain Levels for Software Artifacts.</li>
+          </ul>
+
+          <h2>US regulations</h2>
+          <ul>
+            <li><b>HIPAA</b> (Health Insurance Portability and Accountability Act) — PHI. Privacy Rule + Security Rule + Breach Notification.</li>
+            <li><b>HITECH</b> — strengthens HIPAA + enforces breach notification.</li>
+            <li><b>FERPA</b> — student education records.</li>
+            <li><b>COPPA</b> — children under 13.</li>
+            <li><b>GLBA</b> (Gramm-Leach-Bliley) — financial customer info; Safeguards Rule.</li>
+            <li><b>SOX</b> (Sarbanes-Oxley) — public-company financial reporting integrity; ICFR controls.</li>
+            <li><b>FISMA</b> — US federal info systems security; built on NIST RMF.</li>
+            <li><b>FedRAMP</b> — federal cloud authorization. Low / Moderate / High baselines.</li>
+            <li><b>CMMC</b> — defense contractor maturity (3 levels).</li>
+            <li><b>CIRCIA</b> — Cyber Incident Reporting for Critical Infrastructure Act (CISA).</li>
+            <li><b>NYDFS 23 NYCRR 500</b> — New York financial-sector security.</li>
+            <li><b>CCPA / CPRA</b> — California consumer privacy.</li>
+            <li><b>CalOPPA</b> — California Online Privacy Protection Act.</li>
+            <li><b>State breach-notification laws</b> — every US state has one (timing varies).</li>
+            <li><b>SEC cybersecurity disclosure rule (2023)</b> — public companies must disclose material cyber incidents within 4 business days.</li>
+          </ul>
+
+          <h2>Global / non-US privacy laws</h2>
+          <ul>
+            <li><b>GDPR</b> (General Data Protection Regulation, EU) — comprehensive. 72-hour breach notice, up to 4% of global annual revenue fine. Rights of access / rectification / erasure ("right to be forgotten") / portability / objection. <b>DPO</b> required for many orgs.</li>
+            <li><b>UK GDPR</b> + <b>Data Protection Act 2018</b>.</li>
+            <li><b>PIPEDA</b> (Canada).</li>
+            <li><b>LGPD</b> (Brazil).</li>
+            <li><b>POPIA</b> (South Africa).</li>
+            <li><b>PDPA</b> (Singapore, Thailand).</li>
+            <li><b>APPI</b> (Japan).</li>
+            <li><b>PIPL</b> (China) — data localization + cross-border transfer restrictions.</li>
+            <li><b>NIS2</b> (EU) — network + info security for critical sectors.</li>
+            <li><b>DORA</b> (Digital Operational Resilience Act, EU financial).</li>
+          </ul>
+
+          <h2>Industry standards</h2>
+          <ul>
+            <li><b>PCI-DSS</b> (Payment Card Industry Data Security Standard) — required by Visa/Mastercard/AmEx/Discover/JCB. 12 requirements + ~300 sub-controls.
+              <ul>
+                <li>Cardholder data: PAN, name, expiry, service code.</li>
+                <li>SAD: full track data, CVV, PIN/PIN block.</li>
+                <li>Tokenization + segmentation reduce scope.</li>
+                <li>Levels 1-4 by transaction volume; Level 1 → annual QSA audit + quarterly ASV scan.</li>
+              </ul>
+            </li>
+            <li><b>HITRUST CSF</b> — healthcare cross-mapping.</li>
+            <li><b>SOC 1 / SOC 2 / SOC 3</b> — AICPA. Type I = point in time; Type II = 6-12 month operational testing.</li>
+            <li><b>NERC CIP</b> — North American electric utility critical infrastructure.</li>
+            <li><b>IEC 62443</b> — industrial automation / OT security.</li>
+            <li><b>FERPA</b>, <b>FedRAMP</b>, <b>StateRAMP</b>.</li>
+            <li><b>CSA CCM / STAR</b> — cloud.</li>
+            <li><b>HIPAA Security Rule</b> implementation specs (administrative / physical / technical safeguards).</li>
+          </ul>
+
+          <h2>Sensitive data categories</h2>
+          <ul>
+            <li><b>PII</b> (Personally Identifiable Information) — name, SSN, DOB, email, biometrics, location, account #.</li>
+            <li><b>PHI</b> (Protected Health Information) — health + payment + provider info per HIPAA.</li>
+            <li><b>PCI / cardholder data</b> — PAN + linked data.</li>
+            <li><b>IP / trade secret</b> — competitive advantage info.</li>
+            <li><b>Customer data</b> — orders, preferences, support history.</li>
+            <li><b>Confidential business info</b> — financials, M&A plans.</li>
+            <li><b>Government-classified</b> — Confidential / Secret / Top Secret / SCI / SAP.</li>
+            <li><b>CUI</b> (Controlled Unclassified Information).</li>
+            <li><b>Biometric data</b> — often regulated separately (BIPA in Illinois).</li>
+            <li><b>Geolocation</b>, <b>genetic</b>, <b>financial account</b>.</li>
+          </ul>
+
+          <h2>Data classification</h2>
+          <p>Tag data by sensitivity to drive controls:</p>
+          <ul>
+            <li><b>Public</b> — safe to publish.</li>
+            <li><b>Internal</b> — staff only.</li>
+            <li><b>Confidential</b> — limited need-to-know.</li>
+            <li><b>Restricted / Highly Confidential</b> — most sensitive (PHI, PII, IP, classified).</li>
+          </ul>
+          <p>Tools: Microsoft Purview Information Protection (MIP) sensitivity labels, Boldon James, Titus.</p>
+
+          <h2>Privacy roles + concepts</h2>
+          <ul>
+            <li><b>Data Owner</b> — accountable executive for the data.</li>
+            <li><b>Data Custodian / Steward</b> — maintains + protects on a day-to-day basis.</li>
+            <li><b>Data Subject</b> — person the data describes (GDPR term).</li>
+            <li><b>Data Controller</b> — decides why + how data is processed (GDPR).</li>
+            <li><b>Data Processor</b> — handles data on behalf of controller.</li>
+            <li><b>Joint Controllers</b> — share purpose / means.</li>
+            <li><b>DPO</b> (Data Protection Officer) — required for many GDPR-covered orgs.</li>
+            <li><b>SCC / BCR</b> (Standard Contractual Clauses / Binding Corporate Rules) — legal mechanisms for cross-border transfers under GDPR.</li>
+            <li><b>Privacy Shield → DPF</b> (Data Privacy Framework) — US-EU + US-UK + US-Swiss data transfer frameworks.</li>
+            <li><b>Privacy notice / policy</b> — disclosed to data subjects.</li>
+            <li><b>Lawful basis for processing</b> (GDPR Art 6): consent, contract, legal obligation, vital interests, public task, legitimate interests.</li>
+          </ul>
+
+          <h2>Data lifecycle</h2>
+          <ol>
+            <li><b>Create / collect</b> — capture only what's necessary (data minimization).</li>
+            <li><b>Store</b> — encrypt at rest, classify, restrict access.</li>
+            <li><b>Use</b> — least-privilege access; mask / tokenize where possible.</li>
+            <li><b>Share</b> — controlled internal + external transfers.</li>
+            <li><b>Archive</b> — long-term retention.</li>
+            <li><b>Destroy</b> — secure deletion per retention policy + NIST SP 800-88.</li>
+          </ol>
+
+          <h2>Data states + relevant controls</h2>
+          <ul>
+            <li><b>At rest</b> — disk / DB / backup — encrypt (AES-XTS, TDE, BitLocker).</li>
+            <li><b>In transit</b> — TLS / IPsec / WireGuard.</li>
+            <li><b>In use</b> — processing in memory; protected by Confidential Computing (SGX, SEV-SNP, AMD Memory Encryption).</li>
+          </ul>
+
+          <h2>Privacy-enhancing techniques (PETs)</h2>
+          <ul>
+            <li><b>Pseudonymization</b> — replace identifiers with token; reversible with mapping.</li>
+            <li><b>Anonymization</b> — irreversible removal of identifiers.</li>
+            <li><b>Tokenization</b> — random token replaces sensitive value; vault holds mapping.</li>
+            <li><b>Masking</b> — partial reveal (last 4 of SSN).</li>
+            <li><b>Differential privacy</b> — add statistical noise to outputs.</li>
+            <li><b>Homomorphic encryption</b> — compute on encrypted data.</li>
+            <li><b>Federated learning</b> — train models without centralizing raw data.</li>
+            <li><b>Confidential computing</b> — TEE-based protection in-use.</li>
+            <li><b>Data minimization</b> — collect only what's needed.</li>
+            <li><b>Purpose limitation</b> — use only for stated purpose.</li>
+          </ul>
+
+          <h2>Breach notification</h2>
+          <ul>
+            <li><b>GDPR</b> — supervisory authority within <b>72 hours</b>; data subjects "without undue delay" if high risk.</li>
+            <li><b>HIPAA</b> — individuals + HHS within 60 days; over 500 affected = press release.</li>
+            <li><b>State laws (US)</b> — usually 30 / 45 / 60 days; varies.</li>
+            <li><b>SEC rule</b> — 4 business days from materiality determination.</li>
+            <li><b>PCI</b> — notify acquirer + brands immediately.</li>
+            <li><b>CIRCIA</b> — critical infrastructure 72-hr ransomware payment / 24-hr ransom payment.</li>
+            <li>Document: what + when + how + how many affected + remediation steps.</li>
+          </ul>
+
+          <h2>Vendor / contract instruments</h2>
+          <ul>
+            <li><b>NDA</b> — Non-Disclosure Agreement.</li>
+            <li><b>MSA</b> — Master Services Agreement.</li>
+            <li><b>SOW</b> — Statement of Work.</li>
+            <li><b>SLA</b> — Service Level Agreement (uptime, response times, penalties).</li>
+            <li><b>OLA</b> — Operational Level Agreement (internal teams).</li>
+            <li><b>UC</b> — Underpinning Contract.</li>
+            <li><b>BAA</b> — Business Associate Agreement (HIPAA-required for vendors handling PHI).</li>
+            <li><b>DPA</b> — Data Processing Addendum (GDPR processor obligations).</li>
+            <li><b>MOU / MOA</b> — Memorandum of Understanding / Agreement.</li>
+            <li><b>ISA</b> — Interconnection Security Agreement.</li>
+            <li><b>BPA</b> — Business Partnership Agreement.</li>
+            <li><b>SCC / BCR</b> — GDPR transfer instruments.</li>
+            <li><b>RFP / RFI / RFQ</b> — Request for Proposal / Information / Quote.</li>
+          </ul>
+
+          <h2>Audits + attestations</h2>
+          <ul>
+            <li><b>Internal audit</b> — independent assurance to management/board.</li>
+            <li><b>External audit</b> — third-party. SOC 1, SOC 2 (Type I / II), SOC 3 (general use).</li>
+            <li><b>Regulatory audit</b> — HIPAA OCR, PCI QSA, FedRAMP 3PAO, ISO 27001 certification body.</li>
+            <li><b>Penetration test</b> — annual or as required by reg.</li>
+            <li><b>Vulnerability scan</b> — quarterly + after major change (PCI ASV).</li>
+            <li><b>Bridge letter / Gap letter</b> — covers period between reports.</li>
+            <li><b>SOC 2 Type II</b> — operational testing over 6-12 months — gold standard for SaaS vendors.</li>
+            <li><b>Letter of Attestation (AoC)</b> — PCI summary.</li>
+          </ul>
+
+          <h2>Records management</h2>
+          <ul>
+            <li><b>Retention schedule</b> — minimum + maximum retention per data type.</li>
+            <li><b>Legal hold / litigation hold</b> — preserve relevant data when litigation likely.</li>
+            <li><b>eDiscovery</b> — collection + review for legal cases.</li>
+            <li><b>Disposition</b> — secure destruction per policy (NIST 800-88).</li>
+          </ul>
+
+          <h2>Ethics + acceptable use</h2>
+          <ul>
+            <li><b>Code of conduct</b> — behavioral expectations.</li>
+            <li><b>Conflicts of interest</b> disclosure.</li>
+            <li><b>Whistleblower</b> protections + reporting hotline.</li>
+            <li><b>Gifts + entertainment</b> limits (FCPA in US, UK Bribery Act).</li>
+            <li><b>Anti-money laundering (AML)</b>, <b>KYC</b>.</li>
+            <li><b>Insider trading</b> rules.</li>
+          </ul>
+
+          <h2>AI governance (new area)</h2>
+          <ul>
+            <li><b>EU AI Act</b> — risk-based tiers.</li>
+            <li><b>NIST AI RMF</b> — voluntary risk framework.</li>
+            <li><b>ISO/IEC 42001</b> — AI management system.</li>
+            <li>Acceptable-AI-use policy: data exposure, model bias, hallucination, IP, copyright.</li>
+            <li>Logging + auditability of model outputs.</li>
+            <li>Vendor due diligence for AI SaaS.</li>
+          </ul>
+
+          <h2>OT / ICS governance</h2>
+          <ul>
+            <li><b>IEC 62443</b>, <b>NERC CIP</b>, <b>NIST SP 800-82</b>.</li>
+            <li>Segregation from IT (Purdue model).</li>
+            <li>Patch carefully (uptime + safety).</li>
+            <li>Stricter change control.</li>
+          </ul>
+
+          <h2>Common exam tips</h2>
+          <ul>
+            <li>"EU comprehensive privacy law" → GDPR.</li>
+            <li>"US health data" → HIPAA + HITECH; need BAA with vendors.</li>
+            <li>"Payment cards" → PCI-DSS.</li>
+            <li>"US public-company financial controls" → SOX.</li>
+            <li>"US federal cloud authorization" → FedRAMP.</li>
+            <li>"Defense contractor maturity model" → CMMC.</li>
+            <li>"Voluntary US security framework with Identify/Protect/Detect/Respond/Recover" → NIST CSF.</li>
+            <li>"Certifiable ISMS standard" → ISO/IEC 27001.</li>
+            <li>"AICPA controls audit for SaaS" → SOC 2.</li>
+            <li>"GDPR breach notice timeline" → 72 hours to supervisory authority.</li>
+            <li>"GDPR controller vs processor" → Controller decides why+how; Processor acts on controller's behalf.</li>
+            <li>"BAA" → HIPAA contract with vendors handling PHI.</li>
+            <li>"DPA" → GDPR processor agreement.</li>
+            <li>"Policy hierarchy order" → Policy → Standard → Procedure → Guideline.</li>
+            <li>"Mandatory minimum config baseline" → Baseline / Standard.</li>
+            <li>"Bridge letter" → covers gap between SOC reports.</li>
+            <li>"Cross-border GDPR transfer mechanism" → SCC / BCR / adequacy decision / DPF.</li>
+          </ul>
         `
       },
       {
