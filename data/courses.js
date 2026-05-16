@@ -11705,40 +11705,40 @@ LITERAL='No $expansion'      # single-quotes literal
 
 # Use a variable
 echo "$NAME"
-echo "${NAME}_id"            # braces help when adjoined to text
+echo "\${NAME}_id"            # braces help when adjoined to text
 
 # Default values
-echo "${VAR:-default}"       # use default if unset OR empty
-echo "${VAR-default}"        # use default if UNSET only
-echo "${VAR:=default}"       # assign default if unset, then expand
-echo "${VAR:?must be set}"   # exit + error if unset
-echo "${VAR:+other}"         # use 'other' if VAR is set
+echo "\${VAR:-default}"       # use default if unset OR empty
+echo "\${VAR-default}"        # use default if UNSET only
+echo "\${VAR:=default}"       # assign default if unset, then expand
+echo "\${VAR:?must be set}"   # exit + error if unset
+echo "\${VAR:+other}"         # use 'other' if VAR is set
 
 # Length + substring
-echo "${#NAME}"              # length
-echo "${NAME:0:3}"           # substring from index 0, length 3
+echo "\${#NAME}"              # length
+echo "\${NAME:0:3}"           # substring from index 0, length 3
 
 # Pattern removal
 file="report.tar.gz"
-echo "${file%.gz}"           # report.tar — remove SHORTEST suffix match
-echo "${file%%.*}"           # report      — LONGEST suffix
-echo "${file#*.}"            # tar.gz      — remove SHORTEST prefix
-echo "${file##*.}"           # gz          — LONGEST prefix
+echo "\${file%.gz}"           # report.tar — remove SHORTEST suffix match
+echo "\${file%%.*}"           # report      — LONGEST suffix
+echo "\${file#*.}"            # tar.gz      — remove SHORTEST prefix
+echo "\${file##*.}"           # gz          — LONGEST prefix
 
 # Replace
 s="hello world"
-echo "${s/world/bash}"       # first match
-echo "${s//l/L}"             # all matches
+echo "\${s/world/bash}"       # first match
+echo "\${s//l/L}"             # all matches
 
 # Case
-echo "${NAME^^}"             # uppercase
-echo "${NAME,,}"             # lowercase
+echo "\${NAME^^}"             # uppercase
+echo "\${NAME,,}"             # lowercase
 
 # Arrays
 arr=(one two three)
-echo "${arr[0]}"             # one
-echo "${arr[@]}"             # all elements
-echo "${#arr[@]}"            # count
+echo "\${arr[0]}"             # one
+echo "\${arr[@]}"             # all elements
+echo "\${#arr[@]}"            # count
 arr+=(four)                  # append
 unset 'arr[1]'
 
@@ -11746,15 +11746,15 @@ unset 'arr[1]'
 declare -A cfg
 cfg[host]=example.com
 cfg[port]=443
-echo "${cfg[host]}"
-echo "${!cfg[@]}"            # keys</code></pre>
+echo "\${cfg[host]}"
+echo "\${!cfg[@]}"            # keys</code></pre>
 
           <h2>Quoting rules</h2>
           <ul>
             <li><b>Double quotes "..."</b> — variables + command substitution expand; preserves whitespace.</li>
             <li><b>Single quotes '...'</b> — literal; nothing expands. Use for regex / fixed strings.</li>
             <li><b>Backslash \\</b> — escape one character.</li>
-            <li><b>Backticks `cmd`</b> — legacy command substitution. Prefer <code>$(cmd)</code> (nestable + clearer).</li>
+            <li><b>Backticks \`cmd\`</b> — legacy command substitution. Prefer <code>$(cmd)</code> (nestable + clearer).</li>
             <li>ALWAYS quote variables: <code>"$var"</code>. Unquoted = word splitting + glob expansion (bugs + security issues).</li>
           </ul>
 
@@ -11846,7 +11846,7 @@ break 2                            # nested loops</code></pre>
 
           <h2>Functions</h2>
           <pre><code>greet() {
-  local name=${1:-world}
+  local name=\${1:-world}
   echo "hi $name"
   return 0                         # exit code 0-255
 }
@@ -12056,10 +12056,10 @@ echo "backup complete: etc-$ts.tar.gz"</code></pre>
           <h3>Wait for service ready</h3>
           <pre><code>#!/usr/bin/env bash
 set -euo pipefail
-HOST=${1:-localhost}; PORT=${2:-443}; TIMEOUT=${3:-60}
+HOST=\${1:-localhost}; PORT=\${2:-443}; TIMEOUT=\${3:-60}
 for ((i=0;i<TIMEOUT;i++)); do
   if (echo > /dev/tcp/$HOST/$PORT) 2>/dev/null; then
-    echo "$HOST:$PORT ready (after ${i}s)"; exit 0
+    echo "$HOST:$PORT ready (after \${i}s)"; exit 0
   fi
   sleep 1
 done
@@ -12069,7 +12069,7 @@ echo "timeout waiting on $HOST:$PORT" >&2; exit 1</code></pre>
           <pre><code>#!/usr/bin/env bash
 set -euo pipefail
 HOSTS=(srv01 srv02 srv03)
-for h in "${HOSTS[@]}"; do
+for h in "\${HOSTS[@]}"; do
   echo "=== $h ==="
   ssh -o BatchMode=yes -o ConnectTimeout=5 "$h" 'uptime'
 done</code></pre>
@@ -12087,13 +12087,13 @@ done < users.csv</code></pre>
           <pre><code>bash -n script.sh                  # syntax check, do NOT run
 bash -x script.sh                  # trace (set -x) each command
 bash -xv script.sh                 # also show source lines
-PS4='+ $(date +%T) ${BASH_SOURCE##*/}:$LINENO: ' bash -x script.sh
+PS4='+ $(date +%T) \${BASH_SOURCE##*/}:$LINENO: ' bash -x script.sh
 shellcheck script.sh               # static analyzer — every script should pass</code></pre>
 
           <h2>POSIX sh vs bash</h2>
           <ul>
             <li>POSIX <code>/bin/sh</code> is the lowest common denominator (dash on Debian/Ubuntu, ash on Alpine, ksh on some).</li>
-            <li>Bash adds: <code>[[ ]]</code>, arrays, brace expansion, <code>$()</code> (also POSIX in modern), process substitution <code>&lt;()</code>, <code>${var^^}</code> case mods.</li>
+            <li>Bash adds: <code>[[ ]]</code>, arrays, brace expansion, <code>$()</code> (also POSIX in modern), process substitution <code>&lt;()</code>, <code>\${var^^}</code> case mods.</li>
             <li>If portability matters, target POSIX + shellcheck with <code>--shell=sh</code>.</li>
           </ul>
 
@@ -12136,8 +12136,8 @@ shellcheck script.sh               # static analyzer — every script should pas
             <li>"Argument count" → <code>$#</code>; "all args quoted" → <code>"$@"</code>.</li>
             <li>"Last exit code" → <code>$?</code>.</li>
             <li>"Background job PID" → <code>$!</code>.</li>
-            <li>"Substring removal longest suffix" → <code>${var%%.*}</code>.</li>
-            <li>"Replace all" → <code>${var//pat/repl}</code>.</li>
+            <li>"Substring removal longest suffix" → <code>\${var%%.*}</code>.</li>
+            <li>"Replace all" → <code>\${var//pat/repl}</code>.</li>
             <li>"Heredoc literal" → quote the terminator: <code>&lt;&lt;'EOF'</code>.</li>
             <li>"Trace execution" → <code>bash -x</code> or <code>set -x</code>.</li>
             <li>"Static analyzer" → shellcheck.</li>
