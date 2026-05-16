@@ -17874,27 +17874,216 @@ Get-Help about_Pipelines              # read this conceptual help</code></pre>
       {
         title: '2. Variables, Types, Operators',
         body: `
+          <h2>Variables — the storage primitive</h2>
+          <p><b>What:</b> a <b>variable</b> in PowerShell is a typed slot in memory you name with a leading dollar sign. <b>Why:</b> store values, intermediate results, parameters, and pipeline captures. <b>How used:</b> assign with <code>=</code>; read with <code>$name</code>; introspect with <code>Get-Variable</code>; remove with <code>Remove-Variable name</code>.</p>
           <pre><code>$name = "Chris"
 $age  = 32
 $path = "C:\\Users"
 $list = 1,2,3,4,5
 $hash = @{ Name = "alice"; Role = "admin" }
+$null                     # the literal null
+$true / $false            # boolean literals</code></pre>
 
-# Strict type
-[int]$num = "42"
-
-# Interpolation
-"Hello $name, you are $age"
-
-# Expression in string
-"Sum: $($list.Count * 2)"</code></pre>
-          <h2>Operators</h2>
+          <h3>Naming rules</h3>
           <ul>
-            <li>Comparison: <code>-eq -ne -lt -gt -le -ge -like -match -contains</code></li>
-            <li>Logic: <code>-and -or -not -xor</code></li>
-            <li>Arithmetic: <code>+ - * / %</code></li>
+            <li>Start with <code>$</code> (sigil), then letters/digits/underscore.</li>
+            <li><b>Case-insensitive</b> for both variable and cmdlet names: <code>$Name</code> and <code>$name</code> are the same variable.</li>
+            <li>Spaces / special chars allowed if you wrap in braces: <code>\${My Var}</code> — but avoid in production code.</li>
+            <li><b>Convention:</b> <code>$camelCase</code> for locals; <code>$PascalCase</code> for parameters and exported names.</li>
           </ul>
-          <p><b>Note:</b> Use <code>-eq</code> NOT <code>==</code>. <code>=</code> is assignment only.</p>
+
+          <h3>Automatic (auto) variables — managed by the engine</h3>
+          <p>PowerShell pre-creates dozens. Top ones to memorize:</p>
+          <ul>
+            <li><b>$_ / $PSItem</b> — current pipeline object.</li>
+            <li><b>$args</b> — all unbound parameters passed to a script/function.</li>
+            <li><b>$PSVersionTable</b> — engine version + edition + OS.</li>
+            <li><b>$Host</b> — info about the hosting application (console / ISE / VS Code).</li>
+            <li><b>$Error</b> — array of recent errors; <code>$Error[0]</code> = newest.</li>
+            <li><b>$LASTEXITCODE</b> — exit code from the most recent <i>native</i> command.</li>
+            <li><b>$?</b> — boolean: did the last command succeed?</li>
+            <li><b>$PWD</b> — current working directory object.</li>
+            <li><b>$HOME</b> — user profile path.</li>
+            <li><b>$PSScriptRoot</b> — directory of the currently-running script.</li>
+            <li><b>$PSCommandPath</b> — full path of the running script.</li>
+            <li><b>$MyInvocation</b> — details of how the script was called.</li>
+            <li><b>$null</b> — the null literal (use <code>$null -eq $x</code>, not <code>$x -eq $null</code>).</li>
+          </ul>
+
+          <h3>Variable providers ("drives")</h3>
+          <p>Variables, environment vars, the registry, certificates, etc., are exposed as PSDrives. List them with <code>Get-PSDrive</code>. Examples:</p>
+          <ul>
+            <li><code>Variable:</code> — your variables (<code>dir variable:</code> lists them).</li>
+            <li><code>Env:</code> — environment variables (<code>$env:PATH</code>, <code>$env:USERNAME</code>).</li>
+            <li><code>HKLM: / HKCU:</code> — Windows registry hives.</li>
+            <li><code>Cert:</code> — certificate stores.</li>
+            <li><code>Function: / Alias:</code> — defined functions/aliases.</li>
+          </ul>
+
+          <h2>.NET type system — PowerShell sits on top</h2>
+          <p>Every value is a strongly-typed .NET object. Inspect type with <code>.GetType()</code>:</p>
+          <pre><code>(5).GetType().FullName             # System.Int32
+"hi".GetType().FullName            # System.String
+(1..5).GetType().FullName          # System.Object[]
+$h = @{a=1}; $h.GetType().FullName # System.Collections.Hashtable</code></pre>
+
+          <h3>Common types</h3>
+          <ul>
+            <li><b>[int] / [Int32]</b> — 32-bit integer.</li>
+            <li><b>[long] / [Int64]</b> — 64-bit integer.</li>
+            <li><b>[double]</b> — 64-bit floating point.</li>
+            <li><b>[decimal]</b> — precise decimal for money.</li>
+            <li><b>[string]</b> — UTF-16 string.</li>
+            <li><b>[char]</b> — single character.</li>
+            <li><b>[bool]</b> — <code>$true</code> / <code>$false</code>.</li>
+            <li><b>[datetime]</b> — date + time; <code>Get-Date</code> returns one.</li>
+            <li><b>[timespan]</b> — duration.</li>
+            <li><b>[guid]</b> — globally unique identifier.</li>
+            <li><b>[array]</b> — fixed-size ordered list.</li>
+            <li><b>[hashtable]</b> — unordered key/value (insertion order not guaranteed pre-PS5).</li>
+            <li><b>[ordered]</b> — ordered dictionary (use <code>[ordered]@{...}</code> when key order matters).</li>
+            <li><b>[pscustomobject]</b> — flexible object with named properties.</li>
+            <li><b>[scriptblock]</b> — block of code that can be passed and invoked.</li>
+            <li><b>[regex]</b> — compiled regular expression.</li>
+            <li><b>[xml]</b> — parsed XML document (accelerator).</li>
+          </ul>
+
+          <h3>Type accelerators + explicit casting</h3>
+          <p>A <b>type accelerator</b> is a short alias for a long .NET type name. List all with <code>[psobject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Get</code> (advanced) — but everyday accelerators you will use: <code>[int]</code>, <code>[string]</code>, <code>[bool]</code>, <code>[regex]</code>, <code>[xml]</code>, <code>[adsi]</code>, <code>[wmi]</code>.</p>
+          <pre><code>[int]$num = "42"                   # cast string to int (throws on bad input)
+[int]"42" + 3                       # 45 (numeric add)
+"42" + 3                            # "423" (string concat — left operand wins)
+[bool]"true"                        # $true
+[datetime]"2026-01-15"              # parses ISO date
+[guid]::NewGuid()                   # generate new GUID</code></pre>
+
+          <h3>Strict-typed parameters and variables</h3>
+          <p>Annotate the variable to constrain its type. Any later assignment of a wrong type either coerces (if possible) or throws.</p>
+          <pre><code>[int]$Count = 5
+$Count = "abc"     # throws: Cannot convert value "abc" to type "System.Int32"</code></pre>
+
+          <h2>Strings — single vs double quotes</h2>
+          <ul>
+            <li><b>Double-quoted</b> — interpolate <code>$variable</code> and <code>$(expression)</code>; interpret backslash escapes via backtick.</li>
+            <li><b>Single-quoted</b> — literal; no interpolation. Use for paths and regex.</li>
+          </ul>
+          <pre><code>$name = "alice"
+"Hello $name"                       # Hello alice
+'Hello $name'                       # Hello $name
+"Sum: $($list.Count * 2)"           # subexpression operator $(...)
+
+# Here-strings — multiline
+$msg = @"
+Hello $name
+this is line 2
+"@</code></pre>
+
+          <h2>Arrays + collections</h2>
+          <pre><code>$nums = 1,2,3,4,5
+$nums = @(1,2,3)                    # explicit array
+$nums[0]                            # first
+$nums[-1]                           # last
+$nums[1..3]                         # slice (2,3,4)
+$nums.Count                         # length
+$nums += 6                          # append (creates new array — O(n))
+$nums.Where({ $_ -gt 2 })           # filter via method
+$nums.ForEach({ $_ * 2 })           # transform via method
+
+# ArrayList / Generic.List for fast append
+$big = [System.Collections.Generic.List[int]]::new()
+$big.Add(1); $big.Add(2)</code></pre>
+
+          <h2>Hashtables + custom objects</h2>
+          <pre><code># Hashtable (unordered)
+$user = @{ Name = "alice"; Role = "admin"; Active = $true }
+$user.Name
+$user["Role"]
+$user.Add("Email", "a@b.com")
+
+# Ordered dictionary
+$cfg = [ordered]@{ Server="db1"; Port=5432; Pool=10 }
+
+# PSCustomObject (preferred for output objects)
+$obj = [pscustomobject]@{
+  Name = "alice"
+  Age  = 32
+  Tags = "admin","ops"
+}
+$obj.Name</code></pre>
+
+          <h2>Operators — categories</h2>
+
+          <h3>Assignment</h3>
+          <p><code>=</code> assign; <code>+=  -=  *=  /=  %=</code> compound; <code>??=</code> null-coalescing assign (PS7+).</p>
+
+          <h3>Arithmetic</h3>
+          <p><code>+  -  *  /  %  ..</code> (range). <code>1..10</code> produces 1,2,3,...,10. Works with letters: <code>'a'..'e'</code>.</p>
+
+          <h3>Comparison (case-insensitive by default; prefix <code>c</code> for case-sensitive, <code>i</code> for explicit insensitive)</h3>
+          <ul>
+            <li><code>-eq / -ne</code> — equal / not equal.</li>
+            <li><code>-lt / -le / -gt / -ge</code> — less than, etc.</li>
+            <li><code>-like / -notlike</code> — wildcard match (<code>*</code> and <code>?</code>).</li>
+            <li><code>-match / -notmatch</code> — regex match; populates <code>$Matches</code>.</li>
+            <li><code>-contains / -notcontains</code> — collection contains value (left = collection).</li>
+            <li><code>-in / -notin</code> — value in collection (left = value).</li>
+            <li><code>-is / -isnot</code> — type check (<code>$x -is [int]</code>).</li>
+            <li><code>-as</code> — try-cast; returns null on failure (vs <code>[int]</code> which throws).</li>
+          </ul>
+          <p><b>Critical:</b> NEVER use <code>==</code>. PowerShell does not have it; <code>=</code> is assignment. Use <code>-eq</code>.</p>
+          <p>When the <i>left</i> operand is a collection, comparison <i>filters</i>: <code>1,2,3,4 -gt 2</code> returns <code>3,4</code>.</p>
+
+          <h3>Logical</h3>
+          <p><code>-and  -or  -not  -xor</code>. Aliases: <code>!</code> for <code>-not</code>.</p>
+
+          <h3>Bitwise</h3>
+          <p><code>-band  -bor  -bxor  -bnot  -shl  -shr</code>.</p>
+
+          <h3>String</h3>
+          <p><code>-replace</code> regex replace; <code>-split</code> split into array; <code>-join</code> array → string; <code>+</code> concat; <code>*</code> repeat (<code>"-" * 30</code>).</p>
+
+          <h3>Type</h3>
+          <p><code>-is  -isnot  -as</code>.</p>
+
+          <h3>PS7+ additions</h3>
+          <ul>
+            <li><b>Ternary</b>: <code>condition ? whenTrue : whenFalse</code>.</li>
+            <li><b>Null-coalescing</b>: <code>$x ?? "default"</code>.</li>
+            <li><b>Null-conditional</b>: <code>$obj?.Property</code>, <code>$arr?[0]</code>.</li>
+            <li><b>Pipeline chain</b>: <code>&amp;&amp;</code> and <code>||</code> — run next command only on success / failure (like bash).</li>
+          </ul>
+
+          <h2>Comments</h2>
+          <pre><code># single-line
+&lt;# block
+   multi-line
+   comment #&gt;
+&lt;# .SYNOPSIS
+   Comment-based help block for functions/scripts
+   .DESCRIPTION
+   ...
+#&gt;</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>PSDrive</b> — PowerShell-provider drive (Variable:, Env:, HKLM:, Cert:).</li>
+            <li><b>PSObject / PSCustomObject</b> — wrapper for arbitrary properties; preferred output type.</li>
+            <li><b>$_ / $PSItem</b> — current pipeline object.</li>
+            <li><b>$Error / $LASTEXITCODE / $?</b> — error array / native exit code / success boolean.</li>
+            <li><b>[ordered]</b> — ordered dictionary accelerator.</li>
+            <li><b>Type accelerator</b> — short alias for a .NET type ([int], [regex], [datetime]).</li>
+          </ul>
+
+          <h2>Exam + interview gotchas</h2>
+          <ul>
+            <li><code>=</code> is assignment, <b>not</b> equality. Equality is <code>-eq</code>.</li>
+            <li>String + int — left-operand wins. <code>"5" + 1 = "51"</code>; <code>5 + "1" = 6</code>.</li>
+            <li>Compare with collection on LEFT = filter (<code>$nums -gt 5</code> returns matching elements).</li>
+            <li><code>$null -eq $x</code> is the recommended order (avoids null-array gotcha).</li>
+            <li><code>+=</code> on arrays creates a NEW array each time — O(n²) in loops. Use <code>[List[T]]</code> for hot loops.</li>
+            <li>Default hashtable enumeration order is insertion order in PS5+, but rely on <code>[ordered]</code> if you depend on it.</li>
+            <li>Comparison operators are case-insensitive by default; prefix <code>c</code> for case-sensitive (<code>-ceq</code>, <code>-cmatch</code>).</li>
+          </ul>
         `
       },
       {
