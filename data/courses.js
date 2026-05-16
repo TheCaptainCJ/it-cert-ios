@@ -3753,24 +3753,179 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
       {
         title: '2. IPv4 Addressing & Subnetting',
         body: `
-          <h2>Address classes (historical)</h2>
+          <p><b>IPv4</b> (Internet Protocol version 4) addresses are <b>32 bits</b> long, written in dotted decimal as four octets (e.g., <code>192.168.1.10</code>). Each octet is 8 bits → 0-255. ~4.3 billion total addresses (2³²), exhausted publicly in 2011 — driving IPv6, NAT, and CIDR.</p>
+
+          <h2>How an IPv4 address splits</h2>
+          <p>Every IPv4 address has TWO parts:</p>
           <ul>
-            <li><b>A</b> 1–126 /8</li>
-            <li><b>B</b> 128–191 /16</li>
-            <li><b>C</b> 192–223 /24</li>
+            <li><b>Network portion</b> — identifies the network (subnet).</li>
+            <li><b>Host portion</b> — identifies a specific device within that network.</li>
           </ul>
-          <h2>Private ranges</h2>
-          <p>10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16. <b>APIPA</b> = 169.254.0.0/16 (DHCP failed).</p>
-          <h2>CIDR cheat</h2>
-          <table style="font-size:14px;width:100%"><tr><th>CIDR</th><th>Mask</th><th>Hosts</th></tr>
-          <tr><td>/24</td><td>255.255.255.0</td><td>254</td></tr>
-          <tr><td>/25</td><td>255.255.255.128</td><td>126</td></tr>
-          <tr><td>/26</td><td>255.255.255.192</td><td>62</td></tr>
-          <tr><td>/27</td><td>255.255.255.224</td><td>30</td></tr>
-          <tr><td>/28</td><td>255.255.255.240</td><td>14</td></tr>
-          <tr><td>/30</td><td>255.255.255.252</td><td>2</td></tr>
+          <p>The <b>subnet mask</b> (or CIDR prefix) tells you where the split is.</p>
+
+          <h2>Subnet mask + CIDR notation</h2>
+          <p><b>Subnet mask</b> — 32-bit value where bits set to <b>1</b> mark the network portion, bits set to <b>0</b> mark the host portion. Always contiguous 1s followed by contiguous 0s.</p>
+          <p><b>CIDR</b> (Classless Inter-Domain Routing) — slash notation showing how many leading bits are network. <code>192.168.1.0/24</code> means 24 network bits + 8 host bits.</p>
+          <p>Common masks ↔ CIDR ↔ octet:</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">CIDR</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Dotted mask</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Last octet</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Block size</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Usable hosts</th></tr>
+            <tr><td>/24</td><td>255.255.255.0</td><td>0</td><td>256</td><td>254</td></tr>
+            <tr><td>/25</td><td>255.255.255.128</td><td>128</td><td>128</td><td>126</td></tr>
+            <tr><td>/26</td><td>255.255.255.192</td><td>192</td><td>64</td><td>62</td></tr>
+            <tr><td>/27</td><td>255.255.255.224</td><td>224</td><td>32</td><td>30</td></tr>
+            <tr><td>/28</td><td>255.255.255.240</td><td>240</td><td>16</td><td>14</td></tr>
+            <tr><td>/29</td><td>255.255.255.248</td><td>248</td><td>8</td><td>6</td></tr>
+            <tr><td>/30</td><td>255.255.255.252</td><td>252</td><td>4</td><td>2</td></tr>
+            <tr><td>/31</td><td>255.255.255.254</td><td>254</td><td>2</td><td>2 (RFC 3021)</td></tr>
+            <tr><td>/32</td><td>255.255.255.255</td><td>255</td><td>1</td><td>single host</td></tr>
           </table>
-          <p>Usable hosts = 2^(32-prefix) - 2.</p>
+          <p>For prefixes shorter than /24, the change moves into earlier octets:</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">CIDR</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Dotted mask</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Hosts</th></tr>
+            <tr><td>/16</td><td>255.255.0.0</td><td>65,534</td></tr>
+            <tr><td>/20</td><td>255.255.240.0</td><td>4,094</td></tr>
+            <tr><td>/22</td><td>255.255.252.0</td><td>1,022</td></tr>
+            <tr><td>/23</td><td>255.255.254.0</td><td>510</td></tr>
+          </table>
+          <p><b>Formulas:</b></p>
+          <ul>
+            <li>Number of subnets created when borrowing <code>n</code> bits = 2ⁿ.</li>
+            <li>Total addresses per subnet = 2^(32 - prefix).</li>
+            <li>Usable hosts = 2^(32 - prefix) − 2 (subtract network address + broadcast).</li>
+            <li>Exception: /31 carries 2 usable for point-to-point links (RFC 3021). /32 is a single-host route.</li>
+          </ul>
+
+          <h2>Network address vs broadcast vs host</h2>
+          <p>For 192.168.10.0/24:</p>
+          <ul>
+            <li><b>Network address</b> — all host bits = 0 → <code>192.168.10.0</code>. Not assigned to a device.</li>
+            <li><b>Broadcast address</b> — all host bits = 1 → <code>192.168.10.255</code>. Sends to every host in the subnet.</li>
+            <li><b>Usable hosts</b> — everything in between: <code>192.168.10.1</code> through <code>192.168.10.254</code> (254 of them).</li>
+          </ul>
+
+          <h2>Historical class-based addressing</h2>
+          <p>Pre-CIDR (before 1993), IPv4 was divided into classes by the first octet:</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Class</th><th align="left" style="padding:4px;border-bottom:1px solid #444">First octet range</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Default mask</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>A</td><td>1 – 126</td><td>/8 (255.0.0.0)</td><td>16.7M hosts per net. 127.x reserved for loopback.</td></tr>
+            <tr><td>B</td><td>128 – 191</td><td>/16 (255.255.0.0)</td><td>65,534 hosts per net.</td></tr>
+            <tr><td>C</td><td>192 – 223</td><td>/24 (255.255.255.0)</td><td>254 hosts per net.</td></tr>
+            <tr><td>D</td><td>224 – 239</td><td>—</td><td>Multicast.</td></tr>
+            <tr><td>E</td><td>240 – 255</td><td>—</td><td>Reserved / experimental.</td></tr>
+          </table>
+          <p>Classes are mostly trivia today; CIDR + VLSM replaced them. Exam still tests recognition.</p>
+
+          <h2>Reserved / special ranges (RFC 1918, etc.)</h2>
+          <ul>
+            <li><b>Private (RFC 1918)</b> — not routable on the public Internet:
+              <ul>
+                <li><code>10.0.0.0/8</code> (10.0.0.0 – 10.255.255.255).</li>
+                <li><code>172.16.0.0/12</code> (172.16.0.0 – 172.31.255.255).</li>
+                <li><code>192.168.0.0/16</code> (192.168.0.0 – 192.168.255.255).</li>
+              </ul>
+            </li>
+            <li><b>Loopback</b> — <code>127.0.0.0/8</code>, typically 127.0.0.1 (localhost).</li>
+            <li><b>APIPA</b> (Automatic Private IP Addressing) — <code>169.254.0.0/16</code>. Host self-assigns when DHCP fails (Microsoft default; some Linux too).</li>
+            <li><b>Multicast</b> — <code>224.0.0.0/4</code>.</li>
+            <li><b>Limited broadcast</b> — <code>255.255.255.255</code> (sent to local subnet only, not forwarded by routers).</li>
+            <li><b>CGNAT / Shared address space (RFC 6598)</b> — <code>100.64.0.0/10</code>. ISP-side carrier-grade NAT.</li>
+            <li><b>Documentation</b> — <code>192.0.2.0/24</code>, <code>198.51.100.0/24</code>, <code>203.0.113.0/24</code>.</li>
+            <li><b>Benchmarking</b> — <code>198.18.0.0/15</code>.</li>
+            <li><b>Default route / unspecified</b> — <code>0.0.0.0</code>.</li>
+          </ul>
+
+          <h2>NAT — Network Address Translation</h2>
+          <p><b>What:</b> Translates between private (RFC 1918) addresses and public IPs. Lets many internal hosts share fewer public IPs.</p>
+          <p><b>Variants:</b></p>
+          <ul>
+            <li><b>Static NAT</b> — one private ↔ one public, fixed.</li>
+            <li><b>Dynamic NAT</b> — many private → pool of public, first-come.</li>
+            <li><b>PAT</b> (Port Address Translation) / <b>NAT overload</b> — many private → one public, distinguished by source port. The home-router default.</li>
+            <li><b>NAT64</b> — translates IPv6 ↔ IPv4 (transition technology).</li>
+          </ul>
+
+          <h2>Subnetting workflow</h2>
+          <p>Given "Subnet 192.168.10.0/24 for 4 departments of ~50 hosts each":</p>
+          <ol>
+            <li>Determine hosts per subnet needed: 50 + network + broadcast → need at least 52 addresses → next power-of-2 = 64 → /26 (6 host bits → 64 addresses, 62 usable).</li>
+            <li>Borrow bits: /24 → /26 = +2 network bits = 2² = 4 subnets (perfect for 4 depts).</li>
+            <li>Increment = 256 − 192 = 64. Subnets start at .0, .64, .128, .192.</li>
+            <li>Each subnet:
+              <ul>
+                <li>192.168.10.0/26 → usable .1 – .62, broadcast .63.</li>
+                <li>192.168.10.64/26 → usable .65 – .126, broadcast .127.</li>
+                <li>192.168.10.128/26 → usable .129 – .190, broadcast .191.</li>
+                <li>192.168.10.192/26 → usable .193 – .254, broadcast .255.</li>
+              </ul>
+            </li>
+          </ol>
+
+          <h2>VLSM — Variable Length Subnet Masking</h2>
+          <p><b>What:</b> Using DIFFERENT prefix lengths within the same parent network, sizing each subnet to its actual needs.</p>
+          <p><b>Why:</b> Avoid waste. A point-to-point WAN link only needs /30 (or /31), but engineering may need /23.</p>
+          <p><b>Process (largest-first):</b></p>
+          <ol>
+            <li>List all subnets + host requirements.</li>
+            <li>Sort largest → smallest.</li>
+            <li>Assign each starting at the network base, advancing by its block size.</li>
+            <li>Document each subnet's network, mask, range, broadcast.</li>
+          </ol>
+          <p>Example: 192.168.0.0/24 needs subnets for 100, 50, 25, 2 hosts → assign /25, /26, /27, /30 in order.</p>
+
+          <h2>Supernetting / Route summarization</h2>
+          <p><b>What:</b> Combining multiple smaller networks into one shorter-prefix advertisement.</p>
+          <p><b>Why:</b> Smaller routing tables, faster lookup. ISPs aggregate customer prefixes.</p>
+          <p>Example: 192.168.0.0/24 + 192.168.1.0/24 + 192.168.2.0/24 + 192.168.3.0/24 → 192.168.0.0/22.</p>
+
+          <h2>Subnet-finder fast tricks</h2>
+          <ul>
+            <li><b>Block size</b> = 256 − last non-255 octet of mask. /26 → 256 − 192 = 64. Subnets start at multiples of 64.</li>
+            <li><b>Magic number</b> = block size. Move in increments of it.</li>
+            <li><b>Last usable</b> = broadcast − 1.</li>
+            <li><b>First usable</b> = network address + 1.</li>
+            <li>"How many subnets in a /22 broken into /24?" → 2^(24−22) = 4.</li>
+            <li>"How many /28 subnets in a /24?" → 2^(28−24) = 16.</li>
+          </ul>
+
+          <h2>IPv4 header fields (high-level)</h2>
+          <ul>
+            <li><b>Version</b> (4 bits) — always 4.</li>
+            <li><b>IHL</b> (Internet Header Length).</li>
+            <li><b>TOS / DSCP</b> — QoS marking.</li>
+            <li><b>Total Length</b>.</li>
+            <li><b>Identification + Flags + Fragment Offset</b> — fragmentation.</li>
+            <li><b>TTL</b> (Time to Live) — decremented each hop; 0 = drop. Used by traceroute.</li>
+            <li><b>Protocol</b> — 1 ICMP, 6 TCP, 17 UDP, 47 GRE, 50 ESP, 51 AH.</li>
+            <li><b>Header Checksum</b>.</li>
+            <li><b>Source IP / Destination IP</b>.</li>
+          </ul>
+
+          <h2>MTU + fragmentation</h2>
+          <p><b>MTU</b> (Maximum Transmission Unit) — largest L2 payload on an interface. Standard Ethernet = 1500 bytes. Jumbo frames = 9000.</p>
+          <p>IPv4 routers fragment oversized packets if DF (Don't Fragment) flag clear. IPv6 doesn't — sender uses Path MTU Discovery.</p>
+
+          <h2>Common test scenarios + answers</h2>
+          <ol>
+            <li><b>"Host has 169.254.x.x"</b> → APIPA → DHCP server unreachable.</li>
+            <li><b>"Need 14 usable hosts"</b> → /28 (16 total, 14 usable).</li>
+            <li><b>"Point-to-point WAN link"</b> → /30 (2 usable) or /31 (RFC 3021).</li>
+            <li><b>"How many subnets in 10.0.0.0/22 if split to /24"</b> → 2^(24−22) = 4.</li>
+            <li><b>"Broadcast address of 192.168.5.32/27"</b> → block size 32 → next net is .64 → broadcast = .63.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Memorize the CIDR ↔ mask ↔ hosts table. Be able to recite /24 → /30 cold.</li>
+            <li>Usable hosts = 2^(32−prefix) − 2 (except /31, /32).</li>
+            <li>Block size = 256 − mask octet.</li>
+            <li>Private ranges: 10/8, 172.16/12, 192.168/16.</li>
+            <li>APIPA: 169.254.0.0/16.</li>
+            <li>Loopback: 127.0.0.0/8.</li>
+            <li>Multicast: 224.0.0.0/4.</li>
+            <li>CGNAT: 100.64.0.0/10.</li>
+            <li>VLSM = right-sized subnets within one parent net.</li>
+            <li>PAT = many internal hosts behind one public IP, distinguished by source port.</li>
+          </ul>
         `
       },
       {
