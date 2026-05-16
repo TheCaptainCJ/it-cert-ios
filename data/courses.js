@@ -4140,14 +4140,217 @@ nslookup -type=AAAA example.com  # IPv6 DNS record</code></pre>
       {
         title: '4. Switching: VLANs, STP, Trunking',
         body: `
-          <h2>VLAN</h2>
-          <p>Logical L2 segmentation. Tagged on trunk ports (802.1Q). Untagged on access ports. Native VLAN = untagged on trunk.</p>
-          <h2>Spanning Tree (STP)</h2>
-          <p>Prevents loops. Elects root bridge (lowest ID). Port states: blocking → listening → learning → forwarding. <b>RSTP</b> = rapid (802.1w).</p>
-          <h2>Link aggregation</h2>
-          <p>LACP (802.3ad) bundles multiple links — higher BW + failover.</p>
-          <h2>PoE</h2>
-          <p>802.3af = 15.4W. 802.3at (PoE+) = 30W. 802.3bt (PoE++) = 60–100W.</p>
+          <p>Layer 2 switches forward frames by MAC address. Modern enterprise switching adds <b>VLANs</b> (logical segmentation), <b>STP</b> (loop prevention), <b>LACP</b> (link bundling), and <b>PoE</b> (powering devices over Ethernet). Exam tests VLAN tagging mechanics, STP states, trunk configuration, and which feature to use when.</p>
+
+          <h2>How a switch learns</h2>
+          <ol>
+            <li>Frame arrives on a port.</li>
+            <li>Switch records source MAC → port mapping in its <b>CAM</b> (Content-Addressable Memory) / <b>MAC address table</b>.</li>
+            <li>If destination MAC is in the table → forward to that one port (unicast).</li>
+            <li>If destination MAC unknown or broadcast → flood out every port in the same VLAN except source.</li>
+            <li>Entries time out (~300 sec default).</li>
+          </ol>
+          <p><b>Show on Cisco:</b> <code>show mac address-table</code>. On Linux bridge: <code>bridge fdb</code>. On Windows switch (Hyper-V vSwitch): <code>Get-VMSwitchExtensionPortFeature</code>.</p>
+
+          <h2>VLAN — Virtual LAN (IEEE 802.1Q)</h2>
+          <p><b>What:</b> Logical separation of a single physical switch (or interconnected switches) into multiple independent broadcast domains. Each VLAN is its own L2 network; hosts in different VLANs cannot talk without a Layer-3 router or L3 switch.</p>
+          <p><b>Why:</b></p>
+          <ul>
+            <li><b>Security</b> — segment finance, guest, IoT, voice into isolated domains.</li>
+            <li><b>Performance</b> — smaller broadcast domains = less broadcast traffic per host.</li>
+            <li><b>Flexibility</b> — group users logically without re-cabling.</li>
+            <li><b>Compliance</b> — required by PCI-DSS for cardholder data.</li>
+          </ul>
+          <p><b>VLAN ID range:</b> 1 – 4094 (12-bit field, 0 and 4095 reserved).</p>
+
+          <h3>VLAN port roles</h3>
+          <ul>
+            <li><b>Access port</b> — carries traffic for ONE VLAN only. Faces end hosts (PCs, printers, APs). Frames sent untagged.</li>
+            <li><b>Trunk port</b> — carries traffic for MULTIPLE VLANs between switches or to a router/firewall. Frames tagged with VLAN ID using 802.1Q.</li>
+            <li><b>Voice VLAN / Auxiliary VLAN</b> (Cisco) — combines access + voice tagging on the same port for IP phone + PC daisy-chain.</li>
+            <li><b>Hybrid port</b> — supports tagged + untagged together (vendor-specific).</li>
+          </ul>
+
+          <h3>802.1Q tagging mechanics</h3>
+          <p>A 4-byte tag inserted into the Ethernet header:</p>
+          <ul>
+            <li><b>TPID</b> (Tag Protocol Identifier) — 0x8100 marks the frame as 802.1Q.</li>
+            <li><b>PCP</b> (Priority Code Point) — 3-bit QoS / CoS (Class of Service) marking 0–7.</li>
+            <li><b>DEI</b> (Drop Eligible Indicator) — 1 bit.</li>
+            <li><b>VLAN ID (VID)</b> — 12 bits.</li>
+          </ul>
+          <p>Tag increases frame size from 1518 → 1522 bytes (or up to 1526 on Q-in-Q).</p>
+
+          <h3>Native VLAN</h3>
+          <p><b>What:</b> The single VLAN whose frames are sent UNTAGGED on a trunk. Default = VLAN 1.</p>
+          <p><b>Why it matters:</b> If both ends of a trunk disagree on the native VLAN, traffic leaks between them.</p>
+          <p><b>Security best practice:</b> Change native VLAN away from default 1 to an unused VLAN, and configure trunks to <code>switchport trunk native vlan tag</code> so it is forced tagged. Mitigates <b>VLAN hopping</b> (double-tagging attack).</p>
+
+          <h3>Cisco VLAN config example</h3>
+          <pre><code># Create + name VLAN
+vlan 10
+ name Engineering
+exit
+
+# Access port for VLAN 10
+interface Gi0/1
+ switchport mode access
+ switchport access vlan 10
+
+# Trunk to neighbor switch, allow only specific VLANs
+interface Gi0/24
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30
+ switchport trunk native vlan 99</code></pre>
+
+          <h3>VLAN management protocols</h3>
+          <ul>
+            <li><b>VTP</b> (VLAN Trunking Protocol, Cisco) — propagates VLAN database across switches. Versions 1/2/3. Powerful but dangerous (a new switch in server mode can wipe VLAN DB).</li>
+            <li><b>MVRP / GVRP</b> — open-standard equivalents.</li>
+            <li><b>Private VLAN (PVLAN)</b> — secondary VLANs within a primary; isolated / community / promiscuous ports. Used in hosting to keep customer servers separate.</li>
+          </ul>
+
+          <h2>Spanning Tree Protocol (STP)</h2>
+          <p><b>Why STP exists:</b> Ethernet has NO TTL at L2. Redundant links would loop forever — broadcast storms saturate CPU + bandwidth.</p>
+          <p><b>What STP does:</b> Builds a loop-free logical tree by electing a single root bridge and BLOCKING redundant paths. If active path fails, blocked port re-activates.</p>
+
+          <h3>STP variants</h3>
+          <ul>
+            <li><b>STP (802.1D, 1990)</b> — original. Slow convergence (~50 s).</li>
+            <li><b>PVST+</b> (Per-VLAN Spanning Tree, Cisco) — one STP instance per VLAN.</li>
+            <li><b>RSTP (802.1w, 2001)</b> — Rapid STP. Converges in seconds.</li>
+            <li><b>Rapid PVST+</b> — Cisco's per-VLAN rapid version.</li>
+            <li><b>MSTP (802.1s)</b> — Multiple STP. Map many VLANs to fewer STP instances; ideal at scale.</li>
+            <li><b>TRILL</b> + <b>SPB</b> — modern L2 alternatives using IS-IS instead of STP (datacenter).</li>
+          </ul>
+
+          <h3>STP elections + roles</h3>
+          <ul>
+            <li><b>Root Bridge</b> — switch with lowest <b>Bridge ID</b> (priority + MAC). Default priority 32768; lower wins. Manually set with <code>spanning-tree vlan 10 root primary</code>.</li>
+            <li><b>Root Port (RP)</b> — non-root switch's best port toward root.</li>
+            <li><b>Designated Port (DP)</b> — best port serving each network segment.</li>
+            <li><b>Blocking / Alternate / Backup Port</b> — redundant, listens for BPDUs but doesn't forward.</li>
+          </ul>
+
+          <h3>Classic STP port states</h3>
+          <ol>
+            <li><b>Blocking</b> — receives BPDUs, doesn't forward frames or learn MACs.</li>
+            <li><b>Listening</b> — preparing to participate; no MAC learning.</li>
+            <li><b>Learning</b> — populates MAC table but doesn't forward yet.</li>
+            <li><b>Forwarding</b> — passes traffic + learns.</li>
+            <li><b>Disabled</b> — admin shut.</li>
+          </ol>
+          <p>Convergence delays: 15 s listening + 15 s learning + initial 20 s max-age delay = ~50 s before traffic flows.</p>
+
+          <h3>RSTP port states (only 3)</h3>
+          <ul>
+            <li><b>Discarding</b> — replaces blocking + listening.</li>
+            <li><b>Learning</b>.</li>
+            <li><b>Forwarding</b>.</li>
+          </ul>
+          <p>RSTP also defines <b>Root</b>, <b>Designated</b>, <b>Alternate</b>, <b>Backup</b> port roles for faster failover (sub-second on point-to-point links).</p>
+
+          <h3>BPDU — Bridge Protocol Data Unit</h3>
+          <p>Multicast frames (dest <code>01:80:C2:00:00:00</code>) that switches exchange to build + maintain the spanning tree. Carry root ID, sender ID, root path cost, port ID.</p>
+
+          <h3>STP protective features (Cisco terms)</h3>
+          <ul>
+            <li><b>PortFast</b> — skip listening/learning on edge access ports. Hosts get link immediately.</li>
+            <li><b>BPDU Guard</b> — if a PortFast edge port receives a BPDU (someone plugged in a switch!), shut it down (err-disabled). Mandatory hardening.</li>
+            <li><b>BPDU Filter</b> — silently ignore BPDUs on a port. Use with caution.</li>
+            <li><b>Root Guard</b> — prevent a downstream switch from becoming root by blocking superior BPDUs.</li>
+            <li><b>Loop Guard</b> — protect against unidirectional links causing a port to transition to forwarding incorrectly.</li>
+            <li><b>UDLD</b> (Unidirectional Link Detection) — detect fiber strand failure where one direction is dead.</li>
+          </ul>
+
+          <h2>Trunking</h2>
+          <p><b>What:</b> A switch port configured to carry multiple VLANs between switches, routers, hypervisors, or APs.</p>
+          <p><b>Encapsulation:</b> <b>802.1Q (dot1q)</b> — universal. (Cisco <b>ISL</b> was proprietary; deprecated.)</p>
+          <p><b>DTP</b> (Dynamic Trunking Protocol, Cisco) — auto-negotiates trunk mode. Insecure if left at default — best practice is to manually set ports to access or trunk and disable DTP with <code>switchport nonegotiate</code>.</p>
+          <p><b>VLAN hopping attack:</b></p>
+          <ul>
+            <li><b>Switch-spoofing</b> — attacker negotiates trunk with DTP and accesses all VLANs.</li>
+            <li><b>Double-tagging</b> — attacker on access port sends a frame with two 802.1Q tags; outer tag stripped by first switch, second tag delivers to a different VLAN.</li>
+            <li><b>Defenses:</b> Disable DTP, change native VLAN, tag native VLAN, prune unused VLANs from trunks.</li>
+          </ul>
+
+          <h2>LACP — Link Aggregation Control Protocol (IEEE 802.3ad)</h2>
+          <p><b>What:</b> Bundle multiple physical links (typically 2–8) into one logical <b>EtherChannel</b> / <b>LAG</b> (Link Aggregation Group).</p>
+          <p><b>Why:</b></p>
+          <ul>
+            <li><b>Bandwidth</b> — aggregate throughput up to the sum of links (per-flow hashed).</li>
+            <li><b>Redundancy</b> — link failure doesn't break the bundle.</li>
+          </ul>
+          <p><b>Modes:</b></p>
+          <ul>
+            <li><b>LACP active</b> — actively negotiates.</li>
+            <li><b>LACP passive</b> — responds only.</li>
+            <li><b>PAgP</b> (Port Aggregation Protocol, Cisco-only).</li>
+            <li><b>Static / on</b> — no negotiation; both sides must match exactly.</li>
+          </ul>
+          <p><b>Load balancing:</b> Hash on src/dst MAC, IP, or L4 ports. Default varies by vendor.</p>
+          <p><b>MLAG / vPC / Stack</b> — modern features that let two physical switches present as one to a downstream LAG for chassis-level redundancy. <b>vPC</b> (Cisco virtual Port Channel), <b>MC-LAG</b> (Multi-Chassis LAG), or stack technologies (Cisco StackWise, Aruba VSF).</p>
+
+          <h2>PoE — Power over Ethernet (IEEE 802.3af / at / bt)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Standard</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Year</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max W (PSE)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td>802.3af</td><td>2003</td><td>PoE / Type 1</td><td>15.4 W</td><td>VoIP, basic AP</td></tr>
+            <tr><td>802.3at</td><td>2009</td><td>PoE+ / Type 2</td><td>30 W</td><td>PTZ cameras, Wi-Fi 5 APs</td></tr>
+            <tr><td>802.3bt</td><td>2018</td><td>PoE++ / Type 3</td><td>60 W</td><td>Wi-Fi 6/6E APs, video phones</td></tr>
+            <tr><td>802.3bt</td><td>2018</td><td>PoE++ / Type 4</td><td>100 W</td><td>Thin clients, displays, LED lighting</td></tr>
+          </table>
+          <p>Terms: <b>PSE</b> (Power Sourcing Equipment) — switch / injector. <b>PD</b> (Powered Device) — phone / camera / AP. Negotiation classifies the PD's power class before energizing pairs.</p>
+          <p><b>Verify on Cisco:</b> <code>show power inline</code>. Plan power budget per switch — a 24-port PoE+ switch may only have 370 W total, not 24 × 30 W.</p>
+
+          <h2>QoS — Quality of Service at L2</h2>
+          <ul>
+            <li><b>CoS</b> (Class of Service) — 3-bit 802.1p marking inside the 802.1Q tag.</li>
+            <li><b>DSCP</b> (Differentiated Services Code Point) — 6-bit L3 marking.</li>
+            <li><b>Trust boundaries</b> — switch trusts CoS/DSCP from IP phones / APs but re-marks from end hosts.</li>
+            <li>Used to prioritize voice + video over bulk file transfers.</li>
+          </ul>
+
+          <h2>Common switching troubleshooting</h2>
+          <ul>
+            <li><b>Slow / dropped traffic on a single port</b> — duplex mismatch (<code>show interface</code> CRC + late-collision counters), bad cable, dirty SFP.</li>
+            <li><b>VLAN problem</b> — port wrong access VLAN, trunk doesn't allow the VLAN, switch-side L3 SVI not up.</li>
+            <li><b>Broadcast storm</b> — STP disabled / loop. <code>show spanning-tree summary</code>, check for high CPU on switch.</li>
+            <li><b>Port stuck err-disabled</b> — usually BPDU Guard / port security violation. <code>show errdisable detect</code> + manual <code>shutdown</code> / <code>no shutdown</code> after fixing cause.</li>
+            <li><b>EtherChannel down</b> — config mismatch (mode, speed, duplex, VLAN allowed) on member ports.</li>
+            <li><b>VoIP audio glitching</b> — missing voice VLAN, QoS not applied.</li>
+          </ul>
+
+          <h2>Switching security baseline</h2>
+          <ol>
+            <li>Change default admin password + manage out-of-band.</li>
+            <li>Disable unused ports + put them into a "parking" VLAN.</li>
+            <li>Disable DTP; explicitly set access vs trunk on every port.</li>
+            <li>Native VLAN ≠ VLAN 1; tag it.</li>
+            <li>Enable PortFast + BPDU Guard on all edge access ports.</li>
+            <li>Enable Root Guard on ports facing other administrative domains.</li>
+            <li>Enable Storm Control on edge ports to cap broadcast / multicast / unknown unicast rate.</li>
+            <li>Enable Port Security (limit MACs per port).</li>
+            <li>Enable DHCP Snooping + Dynamic ARP Inspection + IP Source Guard to defeat rogue DHCP + ARP poisoning.</li>
+            <li>Restrict VLANs allowed on trunks to required ones only.</li>
+            <li>Use 802.1X for end-host network access control.</li>
+            <li>Log to SIEM + monitor STP topology changes.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Logical L2 segmentation" → VLAN (802.1Q).</li>
+            <li>"Trunk encapsulation" → dot1q (802.1Q).</li>
+            <li>"Untagged VLAN on a trunk" → Native VLAN.</li>
+            <li>"Prevent L2 loops" → STP.</li>
+            <li>"Sub-second STP failover" → RSTP / Rapid PVST+.</li>
+            <li>"Skip listening/learning on edge port" → PortFast.</li>
+            <li>"Shutdown port if it receives a BPDU" → BPDU Guard.</li>
+            <li>"Bundle multiple links into one logical channel" → LACP (802.3ad) — also called EtherChannel / LAG.</li>
+            <li>"Up to 30 W per port" → 802.3at PoE+.</li>
+            <li>"Up to 100 W per port" → 802.3bt Type 4 (PoE++).</li>
+            <li>"Defenses against VLAN hopping" → disable DTP, tag native VLAN, change native VLAN from 1.</li>
+          </ul>
         `
       },
       {
