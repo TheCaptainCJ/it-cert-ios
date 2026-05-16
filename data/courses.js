@@ -5251,13 +5251,225 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
       {
         title: '9. Network Operations & Documentation',
         body: `
+          <p>Daily operational work that keeps the network healthy + auditable: monitoring with SNMP/NetFlow/Syslog, time sync with NTP, change management, baselines, documentation, performance metrics, SLAs. Exam tests management protocol details, severity levels, and which document covers what.</p>
+
+          <h2>SNMP — Simple Network Management Protocol</h2>
+          <p><b>What:</b> Polling + notification protocol used by management systems (<b>NMS</b> — Network Management System) to read counters + receive alerts from network devices.</p>
+          <p><b>Architecture:</b></p>
           <ul>
-            <li><b>SNMP v2c vs v3</b> — v3 adds authentication/encryption.</li>
-            <li><b>Syslog</b> — UDP 514; severities 0 (emerg) to 7 (debug).</li>
-            <li><b>NetFlow / sFlow</b> — flow records for analytics.</li>
-            <li><b>NTP</b> — UDP 123; stratum 0 (atomic) → 15.</li>
-            <li><b>Change management</b> — RFC, peer review, maintenance window, rollback.</li>
-            <li><b>Documentation</b> — topology diagrams, IP scheme, asset inventory, runbooks, baselines.</li>
+            <li><b>SNMP manager / NMS</b> — server side (PRTG, SolarWinds, Zabbix, Nagios, LibreNMS, Observium, Cisco DNA Center).</li>
+            <li><b>SNMP agent</b> — runs on every monitored device.</li>
+            <li><b>MIB</b> (Management Information Base) — hierarchical database of values exposed by the agent (CPU, RAM, interface counters, temperature).</li>
+            <li><b>OID</b> (Object Identifier) — dotted-decimal path to a specific MIB variable (e.g., <code>1.3.6.1.2.1.2.2.1.10</code> = ifInOctets).</li>
+          </ul>
+          <p><b>Operations:</b></p>
+          <ul>
+            <li><b>Get</b> — manager → agent, "what is OID X?".</li>
+            <li><b>GetNext / GetBulk</b> — walk the tree efficiently.</li>
+            <li><b>Set</b> — manager → agent, "change OID X to value Y" (rarely allowed).</li>
+            <li><b>Trap / Inform</b> — agent → manager, unsolicited alert (link down, CPU high, etc.).</li>
+          </ul>
+          <p><b>Ports:</b> Polls + sets on <b>UDP 161</b>. Traps on <b>UDP 162</b>.</p>
+          <p><b>Versions:</b></p>
+          <ul>
+            <li><b>SNMPv1</b> — plaintext, no security. Obsolete.</li>
+            <li><b>SNMPv2c</b> — uses cleartext "community strings" (public / private) as a shared secret. Still common.</li>
+            <li><b>SNMPv3</b> — <b>USM</b> (User-based Security Model) adds authentication (HMAC-SHA / MD5) + encryption (AES). <b>Use v3</b> for production.</li>
+          </ul>
+          <p><b>Best practice:</b> Read-only community for monitoring; restrict via ACL; disable v1/v2c if v3 is supported.</p>
+
+          <h2>Syslog</h2>
+          <p><b>What:</b> Standard for forwarding log messages from devices to a central collector.</p>
+          <p><b>Port:</b> <b>UDP 514</b> (historically). <b>TCP 6514</b> for syslog over TLS (encrypted).</p>
+          <p><b>Severity levels</b> (lower number = more severe):</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Level</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Meaning</th></tr>
+            <tr><td>0</td><td>Emergency</td><td>System unusable.</td></tr>
+            <tr><td>1</td><td>Alert</td><td>Immediate action required.</td></tr>
+            <tr><td>2</td><td>Critical</td><td>Critical conditions.</td></tr>
+            <tr><td>3</td><td>Error</td><td>Errors.</td></tr>
+            <tr><td>4</td><td>Warning</td><td>Warnings.</td></tr>
+            <tr><td>5</td><td>Notice</td><td>Significant non-errors.</td></tr>
+            <tr><td>6</td><td>Informational</td><td>Routine messages.</td></tr>
+            <tr><td>7</td><td>Debug</td><td>Debug messages.</td></tr>
+          </table>
+          <p>Mnemonic: <b>"Every Awesome Cisco Engineer Will Need Ice (cream) Daily"</b> for 0–7.</p>
+          <p><b>Facility</b> — source category (kern, daemon, auth, mail, local0–7).</p>
+          <p><b>Collectors:</b> rsyslog, syslog-ng, Graylog, Splunk, Elastic Stack, Microsoft Sentinel.</p>
+          <p><b>Best practice:</b> Send to ≥ 2 collectors; retain per compliance; alert on Critical / Alert / Emergency.</p>
+
+          <h2>NetFlow / sFlow / IPFIX</h2>
+          <p><b>What:</b> Flow records exported by routers / switches summarizing traffic — who talked to whom, when, how much, on which ports.</p>
+          <ul>
+            <li><b>NetFlow</b> — Cisco-developed. Versions: v5 (fixed), v9 (templates), v10 = <b>IPFIX</b> standardized.</li>
+            <li><b>sFlow</b> — sampling-based; lighter, multi-vendor.</li>
+            <li><b>J-Flow</b> (Juniper), <b>NetStream</b> (Huawei) — vendor variants of NetFlow.</li>
+          </ul>
+          <p><b>Why:</b> Bandwidth analysis, top-talker reports, DDoS detection, capacity planning, security forensics.</p>
+          <p><b>Collectors:</b> ntopng, Plixer Scrutinizer, SolarWinds NTA, Elastiflow.</p>
+
+          <h2>NTP — Network Time Protocol</h2>
+          <p><b>What:</b> Synchronizes clocks across networked devices to within milliseconds.</p>
+          <p><b>Why:</b> Time-stamped logs must agree across devices for forensic correlation, Kerberos auth (5-min skew limit), TLS cert validation, cron / scheduled tasks.</p>
+          <p><b>Port:</b> <b>UDP 123</b>.</p>
+          <p><b>Stratum hierarchy</b> (smaller = closer to authoritative reference):</p>
+          <ul>
+            <li><b>Stratum 0</b> — physical reference clock (atomic clock, GPS).</li>
+            <li><b>Stratum 1</b> — server directly synced to a stratum 0 source.</li>
+            <li><b>Stratum 2</b> — synced from stratum 1, etc., up to <b>15</b>.</li>
+            <li><b>Stratum 16</b> = unsynchronized.</li>
+          </ul>
+          <p><b>Modes:</b> Client/server, symmetric peer, broadcast/multicast.</p>
+          <p><b>Public pools:</b> pool.ntp.org, time.cloudflare.com, time.google.com.</p>
+          <p><b>Secure variants:</b> <b>NTS</b> (Network Time Security, RFC 8915), <b>chrony</b> daemon (Linux modern default), <b>PTP</b> (Precision Time Protocol, IEEE 1588) for sub-microsecond datacenter precision.</p>
+
+          <h2>API + automation in network ops</h2>
+          <ul>
+            <li><b>NETCONF / RESTCONF</b> — model-driven device APIs (YANG models).</li>
+            <li><b>SSH / API</b> — push CLI config.</li>
+            <li><b>Ansible / Puppet / Chef / SaltStack</b> — config automation.</li>
+            <li><b>Terraform</b> — declarative infra as code.</li>
+            <li><b>gNMI</b> — modern streaming telemetry.</li>
+            <li><b>Webhooks</b> — push events from monitoring to ChatOps.</li>
+          </ul>
+
+          <h2>Change management process</h2>
+          <ol>
+            <li><b>RFC</b> (Request for Change) — scope, justification, risk, rollback plan, downtime window.</li>
+            <li><b>CAB</b> (Change Advisory Board) — stakeholders review + approve.</li>
+            <li><b>Test in lab / pilot</b>.</li>
+            <li><b>Communicate</b> the maintenance window to users + downstream teams.</li>
+            <li><b>Execute</b> within the window. Validate.</li>
+            <li><b>Backout</b> if needed.</li>
+            <li><b>Update CMDB</b> + documentation.</li>
+            <li><b>Post-implementation review</b>.</li>
+          </ol>
+          <p><b>Change types:</b> Standard (pre-approved low-risk), Normal (full CAB), Emergency (expedited, retrospective review).</p>
+
+          <h2>Configuration management</h2>
+          <ul>
+            <li><b>Baseline configuration</b> — known-good config + performance snapshot of every device.</li>
+            <li><b>Backup configs</b> — automatically pull running-config to TFTP/SCP server or Git repo nightly.</li>
+            <li><b>Version control</b> — Git tracks every change with author + timestamp.</li>
+            <li><b>Drift detection</b> — compare current config to baseline; alert on differences.</li>
+            <li><b>Golden image / template</b> — standardized config applied at provisioning.</li>
+            <li><b>Rancid, Oxidized</b> — open-source config archive tools.</li>
+            <li><b>Cisco Smart Software Manager / Catalyst Center</b> — vendor automation.</li>
+          </ul>
+
+          <h2>Documentation types</h2>
+          <ul>
+            <li><b>Physical topology diagram</b> — rack layout, cabling, ports, room locations.</li>
+            <li><b>Logical topology diagram</b> — VLANs, subnets, IP addressing, routing protocol, peering.</li>
+            <li><b>IP scheme / address plan</b> — which subnets where, gateway, DHCP scope, reserved blocks.</li>
+            <li><b>Wiring diagram</b> — patch panel ↔ wall jack ↔ switch port mapping.</li>
+            <li><b>Floor plan / heatmap</b> — wireless coverage.</li>
+            <li><b>Asset inventory</b> — every device by serial, location, owner, warranty, EOL.</li>
+            <li><b>CMDB</b> (Configuration Management Database) — relationships between assets.</li>
+            <li><b>Runbook / SOP</b> — step-by-step operations procedures.</li>
+            <li><b>Knowledge base</b> — common fix articles.</li>
+            <li><b>Disaster Recovery Plan</b> + <b>BCP</b>.</li>
+            <li><b>Network performance baseline</b> — reference for "normal".</li>
+            <li><b>Service catalog</b> — what IT offers.</li>
+            <li><b>SLA / OLA / UC</b> — Service Level Agreement (with customer), Operational Level Agreement (within org), Underpinning Contract (third-party).</li>
+            <li><b>Acceptable Use Policy</b> + <b>password policy</b> + <b>BYOD policy</b>.</li>
+            <li><b>Network change log</b> — every commit + reason.</li>
+          </ul>
+
+          <h2>Diagram standards + tools</h2>
+          <ul>
+            <li><b>Cisco icons</b> — universal vendor visual language.</li>
+            <li><b>draw.io / diagrams.net</b> — free.</li>
+            <li><b>Lucidchart, Visio, OmniGraffle</b> — paid.</li>
+            <li><b>NetBox, Netshot, Device42</b> — IPAM + DCIM + automation.</li>
+            <li><b>Mermaid</b> — text-based diagrams in Git.</li>
+          </ul>
+
+          <h2>Metrics + monitoring categories</h2>
+          <ul>
+            <li><b>Availability</b> — uptime % (Five 9s = 99.999% = 5 min/yr downtime).</li>
+            <li><b>Bandwidth utilization</b> — % of link capacity used.</li>
+            <li><b>Latency</b> — one-way or round-trip delay (ms).</li>
+            <li><b>Jitter</b> — variation in inter-packet delay (matters for VoIP / video). Target &lt; 30 ms.</li>
+            <li><b>Packet loss</b> — % of packets dropped. VoIP needs &lt; 1%.</li>
+            <li><b>Throughput</b> — actual measured bits/sec end to end.</li>
+            <li><b>Error rate</b> — CRC, runts, giants on interface counters.</li>
+            <li><b>CPU / memory utilization</b> of devices.</li>
+            <li><b>Temperature / fans / PSU status</b>.</li>
+          </ul>
+
+          <h2>Baselines</h2>
+          <p><b>Why:</b> Without a baseline you can't tell "abnormal" from normal. Collect at least:</p>
+          <ul>
+            <li>Interface utilization across business / off hours.</li>
+            <li>CPU / memory averages.</li>
+            <li>Typical latency between sites.</li>
+            <li>DNS / DHCP query volumes.</li>
+            <li>Average user count + login times.</li>
+          </ul>
+          <p>Refresh baseline whenever major topology changes.</p>
+
+          <h2>SLA / OLA / UC</h2>
+          <ul>
+            <li><b>SLA</b> — contractual uptime / response between provider and customer (e.g., 99.9% uptime, 1-hour response). Penalties / credits for breach.</li>
+            <li><b>OLA</b> — internal commitment between teams supporting an SLA.</li>
+            <li><b>UC</b> — agreement with a third-party vendor that contributes to SLA delivery.</li>
+            <li><b>MTBF</b> (Mean Time Between Failures) — predicted reliability metric.</li>
+            <li><b>MTTR</b> (Mean Time To Repair) — average recovery time.</li>
+            <li><b>MTTF</b> (Mean Time To Failure) — used for non-repairable components.</li>
+          </ul>
+
+          <h2>Capacity planning + lifecycle</h2>
+          <ul>
+            <li>Trend bandwidth + CPU + storage growth → forecast upgrades 12-18 months ahead.</li>
+            <li><b>EOL</b> (End of Life) / <b>EOS</b> (End of Sale) / <b>EOSL</b> (End of Service / Support) — track vendor dates; replace before maintenance ends.</li>
+            <li><b>Refresh cycles</b> — 3-5 yrs servers, 5-7 yrs network gear, 5+ yrs Wi-Fi APs.</li>
+            <li><b>Sparing</b> — keep on-shelf spares per critical SKU.</li>
+            <li><b>RMA</b> (Return Merchandise Authorization) — warranty replacement process.</li>
+          </ul>
+
+          <h2>Incident + ticketing</h2>
+          <ul>
+            <li><b>Ticket lifecycle</b> — open → triage → classify → assign → diagnose → resolve → close → review.</li>
+            <li><b>Severity / Priority</b> — combine impact × urgency. Sev 1 = outage, Sev 4 = informational.</li>
+            <li><b>Incident vs problem vs change</b> — incident = restore service ASAP; problem = root-cause; change = controlled modification.</li>
+            <li><b>Common platforms</b> — ServiceNow, Jira, Freshservice, Zendesk, Cherwell.</li>
+            <li><b>RCA</b> (Root Cause Analysis) — written for major incidents.</li>
+          </ul>
+
+          <h2>Data classification + retention</h2>
+          <ul>
+            <li>Public, Internal, Confidential, Restricted.</li>
+            <li>Logs retained per regulation (HIPAA 6 yrs, PCI-DSS 1 yr active, SOX 7 yrs).</li>
+            <li>Backups follow data classification.</li>
+          </ul>
+
+          <h2>Common ops automation use cases</h2>
+          <ul>
+            <li>Auto-backup configs nightly to Git.</li>
+            <li>Auto-create VLANs from a CSV.</li>
+            <li>Push standard ACL across all switches.</li>
+            <li>Bulk firmware upgrades on a maintenance window.</li>
+            <li>Validate post-deploy: ping, BGP up, OSPF neighbors, interface up.</li>
+            <li>ChatOps notifications on threshold breach.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"SNMP poll port" → UDP 161; "trap port" → UDP 162.</li>
+            <li>"Secure version of SNMP" → v3 (USM auth + privacy).</li>
+            <li>"Syslog port" → UDP 514 (or TCP 6514 over TLS).</li>
+            <li>"Syslog level 0" → Emergency (most severe).</li>
+            <li>"Flow records protocol invented by Cisco" → NetFlow.</li>
+            <li>"Multi-vendor sampling alternative" → sFlow.</li>
+            <li>"Standardized flow protocol" → IPFIX (NetFlow v10).</li>
+            <li>"Network time sync" → NTP, UDP 123.</li>
+            <li>"Network sub-microsecond time" → PTP (IEEE 1588).</li>
+            <li>"Document that lists every device with serial + warranty" → asset inventory / CMDB.</li>
+            <li>"Reference performance state" → baseline.</li>
+            <li>"Contractual uptime promise" → SLA.</li>
+            <li>"Statistical average recovery time" → MTTR.</li>
+            <li>"Stratum 0 in NTP" → reference clock (atomic / GPS).</li>
           </ul>
         `
       },
