@@ -16708,20 +16708,99 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '3. Azure Architecture — Regions, AZs, Resource Hierarchy',
         body: `
-          <h2>Physical</h2>
+          <h2>Why Azure architecture matters</h2>
+          <p>Every Azure resource you deploy lives at the intersection of a <b>physical location</b> (region/zone) and a <b>logical container</b> (subscription/resource group). AZ-900 expects you to know both stacks cold because they drive availability, latency, sovereignty, billing, and access control. Questions are usually scenarios — "highest availability inside one region" → AZ; "tightest billing isolation between dev and prod" → separate subscriptions.</p>
+
+          <h2>Physical architecture</h2>
+
+          <h3>Datacenter</h3>
+          <p><b>What:</b> a single Microsoft-owned building containing racks of servers, networking gear, generators, UPS, cooling. <b>Why you care:</b> the lowest unit of physical failure. Microsoft does not let you target a specific datacenter — that's the point of the higher-level abstractions (zones/regions). <b>Scale:</b> Microsoft operates 300+ datacenters globally.</p>
+
+          <h3>Availability Zone (AZ)</h3>
+          <p><b>What:</b> one or more physically separate datacenters within an Azure region, each with independent power, cooling, and networking. AZs in a region are interconnected by low-latency private fiber (&lt; 2 ms round trip) but engineered to fail independently. Most enabled regions have <b>3 zones</b>, labeled "1", "2", "3" — but those labels are scrambled per subscription so two customers' "Zone 1" may be different physical datacenters (prevents correlated risk).</p>
+          <p><b>Why:</b> protection against datacenter-level failure (power, fire, flood, network) without leaving the region. <b>How used:</b> deploy a workload <b>zone-redundantly</b> (e.g., zone-redundant Storage / SQL / App Gateway / Load Balancer) <i>or</i> pin instances to specific zones and spread them. SLA jumps to 99.99% for zonal VMs vs 99.9% for single-instance.</p>
+          <p><b>Two deployment styles:</b></p>
           <ul>
-            <li><b>Region</b> — set of datacenters in a geographic area (East US, West Europe).</li>
-            <li><b>Availability Zone</b> — physically separate DCs within a region. Most regions have 3.</li>
-            <li><b>Region pair</b> — paired regions for geo-replication (East US ↔ West US).</li>
-            <li><b>Sovereign regions</b> — Azure Government, Azure China.</li>
+            <li><b>Zonal</b> — pin resource to one zone (zone=1); you replicate across zones yourself.</li>
+            <li><b>Zone-redundant</b> — Azure spreads the resource across all zones automatically (ZRS storage, zone-redundant SQL, zone-redundant gateway).</li>
           </ul>
-          <h2>Resource hierarchy</h2>
-          <p><b>Management group → Subscription → Resource group → Resource</b>. Policies inherit down.</p>
+
+          <h3>Region</h3>
+          <p><b>What:</b> a set of datacenters deployed within a latency-defined perimeter and connected through a dedicated regional low-latency network. Examples: East US (Virginia), West US 3 (Arizona), West Europe (Netherlands), Australia East (NSW). Azure has 60+ regions worldwide — more than AWS or GCP.</p>
+          <p><b>Why:</b> regions are the primary unit for choosing <i>where</i> your data and compute live — driven by user latency, data residency law (GDPR, HIPAA), and disaster-recovery strategy. Pricing also varies by region.</p>
+          <p><b>Properties Microsoft tests:</b></p>
           <ul>
-            <li><b>Management group</b> — groups subscriptions for unified policy/RBAC.</li>
-            <li><b>Subscription</b> — billing + access boundary.</li>
-            <li><b>Resource group</b> — logical container; resources tied to one RG.</li>
-            <li><b>Resource</b> — VM, storage account, etc.</li>
+            <li>Not every service exists in every region. Check the "Products available by region" page.</li>
+            <li>Not every region has AZs (a few older/smaller regions are zone-less).</li>
+            <li>Special regions: <b>Azure Government</b> (US Gov clearance), <b>Azure China</b> (operated by 21Vianet, separate tenant), <b>Azure Government Secret/Top Secret</b> (air-gapped).</li>
+          </ul>
+
+          <h3>Region pair (paired region)</h3>
+          <p><b>What:</b> two regions Microsoft has pre-defined as a pair, usually within the same geography but ≥ 300 miles apart (e.g., East US ↔ West US, North Europe ↔ West Europe, Australia East ↔ Australia Southeast). <b>Why:</b> guarantees of <i>not-simultaneous</i> planned maintenance, prioritized recovery if a region-wide incident hits, and built-in cross-region replication for services like <b>GRS storage</b>, <b>Azure Site Recovery</b>, <b>SQL geo-replication</b>.</p>
+          <p><b>How used:</b> you don't choose the pair — Microsoft sets it. You opt-in by selecting a paired-region feature (GRS, geo-redundant SQL backup). <b>Note:</b> Microsoft introduced <b>"non-regional pairs"</b> for newer regions (Brazil South, UAE North) where you pick the partner.</p>
+
+          <h3>Sovereign clouds</h3>
+          <p>Isolated Azure instances for regulatory boundaries: <b>Azure Government</b> (FedRAMP High, IL5/IL6), <b>Azure China</b> (PRC law, separate sign-in), <b>Azure Government Secret/Top Secret</b> (classified workloads). They have their own portal URLs, separate tenants, and limited service availability.</p>
+
+          <h3>Azure datacenters fabric tier (no need to memorize granular terms, but recognize them)</h3>
+          <ul>
+            <li><b>Geography</b> — country/area boundary for compliance (US, Europe, Asia). Region pairs stay inside a geography.</li>
+            <li><b>Region</b> — the deployable unit you pick.</li>
+            <li><b>Availability Zone</b> — physically separate DC inside a region.</li>
+            <li><b>Datacenter</b> — single building.</li>
+          </ul>
+
+          <h2>Logical hierarchy (management scope)</h2>
+          <p>Inheritance flows top-down: a policy at the top applies to everything beneath. Top-to-bottom:</p>
+          <p><b>Tenant (Root Management Group) → Management Group → Subscription → Resource Group → Resource</b></p>
+
+          <h3>Tenant / Microsoft Entra ID</h3>
+          <p><b>What:</b> the identity boundary; the Entra ID directory that owns your subscriptions. One Microsoft account = one tenant by default; you can be a guest in others. <b>Why:</b> all RBAC, Conditional Access, and SSO start with the tenant. <b>How used:</b> every Azure subscription is bound to exactly one tenant; you can move a subscription between tenants with a transfer.</p>
+
+          <h3>Management Group (MG)</h3>
+          <p><b>What:</b> a container that holds subscriptions (or other management groups) so you can apply Azure Policy, RBAC, and budgets at scale. Forms a tree up to 6 levels deep below the root MG. <b>Why:</b> at scale you have dozens of subscriptions (one per workload, env, team); MGs let you say "all production subscriptions deny public IPs" once instead of repeating per subscription. <b>How used:</b> a common pattern is the <b>Cloud Adoption Framework (CAF) landing zone</b> hierarchy: <code>Tenant Root → Platform / Landing Zones / Sandbox / Decommissioned</code>, with environment-specific MGs below.</p>
+
+          <h3>Subscription</h3>
+          <p><b>What:</b> the billing and access boundary. A subscription has its own bill, its own quota limits (e.g., 25,000 vCPUs in East US), and its own RBAC inheritance. Each subscription belongs to one tenant and (optionally) one management group. <b>Why:</b> isolate cost reporting, separate billing owners, hit quotas independently, segregate access for prod vs dev. <b>How used:</b> common patterns — one subscription per environment (Prod/Dev/Test), per business unit, or per workload. Subscription types: <b>Free trial</b>, <b>Pay-as-you-go</b>, <b>Enterprise Agreement (EA)</b>, <b>Microsoft Customer Agreement (MCA)</b>, <b>CSP (Cloud Solution Provider)</b>, <b>Visual Studio / MSDN</b>.</p>
+
+          <h3>Resource Group (RG)</h3>
+          <p><b>What:</b> a logical container that holds related Azure resources for a single application, workload, or lifecycle. <b>Rules to memorize:</b> (1) every resource must live in exactly one RG; (2) the RG itself has a region (where its metadata lives) but its resources can span regions; (3) deleting the RG deletes every resource inside — clean, atomic cleanup; (4) you cannot nest RGs. <b>Why:</b> apply RBAC, tags, locks, and policies at the workload boundary; tear down an entire environment with one delete. <b>How used:</b> name them by workload + env, e.g. <code>rg-payments-prod-eastus</code>.</p>
+
+          <h3>Resource</h3>
+          <p><b>What:</b> any single Azure object — a VM, storage account, NIC, public IP, SQL database, App Service plan. Every resource has a globally unique <b>Resource ID</b> formatted: <code>/subscriptions/{subId}/resourceGroups/{rgName}/providers/{provider}/{type}/{name}</code>. <b>Why:</b> the ID is what Azure Resource Manager, RBAC, and tools reference — every audit log, every role assignment, every alert keys on it.</p>
+
+          <h2>Azure Resource Manager (ARM)</h2>
+          <p><b>Acronym:</b> Azure Resource Manager. <b>What:</b> the deployment + management layer that sits behind every Azure interface (Portal, CLI, PowerShell, REST). Every action — create/read/update/delete — flows through ARM. <b>Why:</b> consistent API across all services; unified RBAC; declarative templates (ARM JSON or <b>Bicep</b>) for repeatable deployments; transactional + idempotent. <b>How used:</b> when you author a Bicep file or call <code>az vm create</code>, ARM validates, places the request, and orchestrates the resource provider that owns that resource type.</p>
+
+          <h2>Policy + RBAC inheritance (huge exam theme)</h2>
+          <ul>
+            <li>Policies and role assignments <b>inherit downward</b> from scope: assigning Reader at Management Group X grants Reader on every subscription and resource under X.</li>
+            <li>You cannot apply a less-restrictive permission at a lower scope to override an upper-scope <i>deny</i>. RBAC is additive for <i>allow</i>; <b>Deny assignments</b> always win.</li>
+            <li>Azure Policy effects: <b>Audit</b>, <b>Deny</b>, <b>Append</b>, <b>Modify</b>, <b>DeployIfNotExists</b>, <b>AuditIfNotExists</b>.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>AZ</b> — Availability Zone. Physically separate DC inside a region.</li>
+            <li><b>MG</b> — Management Group. Container of subscriptions / sub-MGs.</li>
+            <li><b>RG</b> — Resource Group. Container of resources for one workload.</li>
+            <li><b>ARM</b> — Azure Resource Manager. The control plane API.</li>
+            <li><b>RBAC</b> — Role-Based Access Control. Permissions by role at a scope.</li>
+            <li><b>CAF</b> — Cloud Adoption Framework. Microsoft's enterprise landing-zone guidance.</li>
+            <li><b>EA / MCA / CSP</b> — Enterprise Agreement / Microsoft Customer Agreement / Cloud Solution Provider — billing/subscription types.</li>
+            <li><b>GRS / ZRS / LRS</b> — Geo / Zone / Locally Redundant Storage (covered next lesson).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Highest availability within a single region" → spread across <b>Availability Zones</b>.</li>
+            <li>"Recover from full region outage" → deploy to <b>paired region</b> + ASR or geo-redundant storage.</li>
+            <li>"Data must stay in Germany for GDPR" → pick a <b>Germany region</b>; geography boundary.</li>
+            <li>"Apply same Policy to all prod subscriptions once" → assign at a <b>Management Group</b> that contains them.</li>
+            <li>"Delete everything for an app in one click" → put it in its own <b>Resource Group</b>; delete the RG.</li>
+            <li>"Separate billing for dev vs prod" → separate <b>subscriptions</b>.</li>
+            <li>"Workload must run in a US government cleared environment" → <b>Azure Government</b> sovereign cloud.</li>
+            <li>"Two zonal VMs in same region" → SLA 99.99%; same region different AZs.</li>
           </ul>
         `
       },
