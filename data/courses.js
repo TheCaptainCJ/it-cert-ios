@@ -11258,23 +11258,397 @@ sudo sysctl --system                        # reload</code></pre>
       {
         title: '7. Storage & Filesystems',
         body: `
-          <pre><code>lsblk
-fdisk -l
-parted /dev/sdb mklabel gpt
-mkfs.ext4 /dev/sdb1
-mkfs.xfs  /dev/sdc1
-mount /dev/sdb1 /mnt/data
-umount /mnt/data
-df -h
-du -sh /var/log</code></pre>
-          <h2>Persist mounts</h2>
-          <p><code>/etc/fstab</code> — UUID, mountpoint, fs type, options, dump, pass.</p>
-          <h2>LVM</h2>
-          <p>Physical Volume → Volume Group → Logical Volume. Resize without unmount (with xfs/ext4).</p>
-          <pre><code>pvcreate /dev/sdb
-vgcreate vg0 /dev/sdb
-lvcreate -L 20G -n data vg0
-mkfs.xfs /dev/vg0/data</code></pre>
+          <p>Linux abstracts storage in clearly defined layers: <b>block device → partition table → filesystem → mount point</b>. Modern stacks add <b>LVM</b> (logical volumes), <b>RAID</b> (md), and <b>encryption</b> (LUKS). Exam tests every command for creating, mounting, resizing, monitoring, encrypting, and repairing storage.</p>
+
+          <h2>Storage stack overview</h2>
+          <ol>
+            <li><b>Physical device</b> — disk, SSD, NVMe, virtual disk (vda), iSCSI LUN, USB stick. Appears as <code>/dev/sdX</code> (SATA / USB), <code>/dev/nvme0n1</code> (NVMe), <code>/dev/vdX</code> (virtio), <code>/dev/sr0</code> (optical).</li>
+            <li><b>Partition table</b> — MBR or GPT. Slices the device.</li>
+            <li><b>Partition</b> — <code>/dev/sda1</code>, <code>/dev/nvme0n1p1</code>.</li>
+            <li><b>Optional layer</b>: LUKS encryption, RAID array, LVM physical volume, dm-cache.</li>
+            <li><b>Filesystem</b> — ext4, XFS, btrfs, ZFS, vfat, NTFS.</li>
+            <li><b>Mount point</b> — directory in the tree (e.g., <code>/home</code>).</li>
+          </ol>
+
+          <h2>Inspecting devices</h2>
+          <pre><code>lsblk                                # tree: device → partitions
+lsblk -f                             # + filesystem + UUID + LABEL
+lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT,UUID
+blkid                                # UUID + type for all
+blkid /dev/sda1
+ls -l /dev/disk/by-uuid/
+ls -l /dev/disk/by-label/
+ls -l /dev/disk/by-id/
+ls -l /dev/disk/by-partuuid/
+fdisk -l                             # all partition tables
+parted -l
+cat /proc/partitions
+cat /proc/mounts                     # actual current mounts
+findmnt                              # tree of mounts
+findmnt --verify                     # validate /etc/fstab</code></pre>
+
+          <h2>Partition tables</h2>
+          <ul>
+            <li><b>MBR</b> (Master Boot Record) — legacy. Max 4 primary partitions, or 3 primary + 1 extended w/ logical. Max 2 TB. Bootable on legacy BIOS.</li>
+            <li><b>GPT</b> (GUID Partition Table) — modern. 128 partitions default, effectively unlimited size, redundant header at end of disk for recovery. Required for UEFI boot.</li>
+            <li>Identify with <code>parted -l</code> or <code>lsblk -o PTTYPE</code>.</li>
+            <li>Common partition types in GPT: ESP (EFI System Partition, vfat), BIOS boot (1 MB unformatted on GPT+BIOS), Linux filesystem, Linux swap, Linux LVM, Linux RAID.</li>
+          </ul>
+
+          <h2>Partition tools</h2>
+          <pre><code>sudo fdisk /dev/sdb                  # interactive MBR/GPT editor
+sudo gdisk /dev/sdb                  # GPT-only equivalent
+sudo cfdisk /dev/sdb                 # ncurses TUI
+sudo parted /dev/sdb                 # scriptable
+
+# Parted batch example
+sudo parted /dev/sdb mklabel gpt
+sudo parted /dev/sdb mkpart primary ext4 1MiB 100%
+sudo parted /dev/sdb set 1 lvm on    # toggle flag
+sudo parted /dev/sdb print
+
+# Resize partition (data preserved if FS supports it)
+sudo growpart /dev/sda 1             # cloud-init grow helper
+sudo resize2fs /dev/sda1             # extend ext4 to fill partition
+sudo xfs_growfs /mountpoint          # extend XFS (can NOT shrink)
+
+# Sync partition table to kernel
+sudo partprobe /dev/sdb
+sudo kpartx -av /dev/sdb             # for loopback/disk-image mappings</code></pre>
+
+          <h2>Filesystem creation (mkfs)</h2>
+          <pre><code>sudo mkfs.ext4 /dev/sdb1 -L data -m 1
+sudo mkfs.xfs /dev/sdb1 -L data
+sudo mkfs.btrfs /dev/sdb1
+sudo mkfs.vfat -F 32 /dev/sdb1       # FAT32 for ESP / removable
+sudo mkfs.exfat /dev/sdb1            # exFAT cross-platform removable
+sudo mkfs.ntfs -Q /dev/sdb1          # quick NTFS format
+sudo mkswap /dev/sdc1                # swap signature
+sudo swapon /dev/sdc1
+sudo swapoff /dev/sdc1
+free -h                              # see swap status</code></pre>
+          <p><b>Tunables:</b></p>
+          <ul>
+            <li><code>-L</code> label, <code>-U</code> UUID, <code>-b</code> block size, <code>-I</code> inode size, <code>-m</code> reserved % for root (ext4 default 5%), <code>-E</code> extended options.</li>
+            <li>Tune existing ext4: <code>tune2fs -L NEW /dev/sdb1</code>; <code>tune2fs -c 100 /dev/sdb1</code> (max-mount-count); <code>tune2fs -m 0 /dev/sdb1</code> (clear root reserve).</li>
+            <li>XFS labels via <code>xfs_admin -L label /dev/sdb1</code> when unmounted.</li>
+          </ul>
+
+          <h2>Filesystem types — when to pick</h2>
+          <ul>
+            <li><b>ext4</b> — default on Debian / Ubuntu, broad compatibility, journaled. Up to 1 EiB volume / 16 TiB file.</li>
+            <li><b>XFS</b> — default on RHEL / CentOS / Rocky / Alma. Excellent for big files + parallel I/O. Cannot SHRINK online.</li>
+            <li><b>btrfs</b> — copy-on-write, snapshots, subvolumes, native RAID 0/1/10. Default for Fedora Workstation root, openSUSE.</li>
+            <li><b>ZFS</b> (zfs-on-linux, OpenZFS) — copy-on-write, checksums, RAID-Z, datasets, compression, dedup. Default on TrueNAS, popular on Proxmox/Ubuntu.</li>
+            <li><b>F2FS</b> — flash-friendly log-structured fs (Android, embedded).</li>
+            <li><b>swap</b> — paging space (file or partition). Modern recommendation: zram / zswap.</li>
+            <li><b>vfat / FAT32</b> — cross-platform removable, ESP for UEFI boot.</li>
+            <li><b>exFAT</b> — large removable media (videos, SD cards >32 GB).</li>
+            <li><b>NTFS</b> — Windows interop; kernel ntfs3 driver since Linux 5.15.</li>
+            <li><b>tmpfs</b> — RAM-backed, ephemeral. Used for <code>/tmp</code>, <code>/run</code>.</li>
+            <li><b>squashfs</b> — read-only compressed (Snap, live USBs).</li>
+            <li><b>overlayfs</b> — union mount (container layers).</li>
+            <li><b>FUSE</b> — userspace fs (sshfs, encfs, gocryptfs).</li>
+          </ul>
+
+          <h2>Mounting</h2>
+          <pre><code>sudo mkdir /mnt/data
+sudo mount /dev/sdb1 /mnt/data
+sudo mount -t ext4 /dev/sdb1 /mnt/data
+sudo mount -o noexec,nosuid /dev/sdb1 /mnt/data
+sudo mount UUID=... /mnt/data
+sudo mount LABEL=data /mnt/data
+sudo mount -o remount,rw /              # remount root read-write
+sudo mount -o remount,ro /mnt/data      # make read-only without unmount
+sudo mount --bind /var/log /mnt/log     # bind mount (same data, second path)
+sudo mount --rbind / /mnt/chroot        # recursive bind for chroot
+sudo umount /mnt/data
+sudo umount -l /mnt/data                # lazy unmount (when busy)
+sudo umount -f /mnt/data                # force (NFS)
+mountpoint /mnt/data                    # boolean test
+fuser -mv /mnt/data                     # who's using a mount?</code></pre>
+
+          <h2>/etc/fstab — persistent mounts</h2>
+          <p>Six fields per line:</p>
+          <pre><code># &lt;source&gt;         &lt;mount&gt;     &lt;fstype&gt;   &lt;options&gt;             &lt;dump&gt; &lt;pass&gt;
+UUID=abcd-1234     /          ext4       defaults              0      1
+UUID=efgh-5678     /home      xfs        defaults,nodev        0      2
+LABEL=data         /mnt/data  ext4       defaults,nofail       0      2
+/swapfile          none       swap       sw                    0      0
+//srv/share        /mnt/share cifs       credentials=/etc/...  0      0
+host:/export       /mnt/nfs   nfs4       _netdev,defaults      0      0
+tmpfs              /var/cache tmpfs      defaults,size=256m    0      0</code></pre>
+          <p><b>Common options:</b></p>
+          <ul>
+            <li><code>defaults</code> = rw, suid, dev, exec, auto, nouser, async.</li>
+            <li><code>ro / rw</code> — read-only / read-write.</li>
+            <li><code>noexec / nosuid / nodev</code> — hardening (typical for /tmp + /var).</li>
+            <li><code>noatime / relatime</code> — skip access-time updates (faster).</li>
+            <li><code>discard</code> — TRIM for SSDs (online).</li>
+            <li><code>nofail</code> — don't block boot if device missing.</li>
+            <li><code>_netdev</code> — network-dependent; wait for network.</li>
+            <li><code>user / users</code> — allow non-root mount.</li>
+            <li><code>auto / noauto</code> — mount at boot or not.</li>
+            <li><code>x-systemd.automount</code> — systemd auto-mount on first access.</li>
+          </ul>
+          <p><b>dump</b> field: legacy dump(8) backup flag — almost always 0.<br>
+          <b>pass</b> field: <code>fsck</code> order — 1 for root, 2 for others, 0 to skip.</p>
+          <p><b>Test fstab without reboot:</b> <code>sudo mount -a</code>; check <code>findmnt --verify</code>.</p>
+
+          <h2>Capacity + usage monitoring</h2>
+          <pre><code>df -h                           # filesystem free space
+df -i                           # inode usage
+df -hT                          # include type
+du -sh /var/log                 # one-level total
+du -ah /home | sort -h | tail   # biggest files
+du -sh --threshold=1G /*        # only > 1 GB
+ncdu /                          # interactive disk usage TUI
+baobab                          # GUI (GNOME)
+sudo du -shx /*  2>/dev/null    # stay on one filesystem</code></pre>
+
+          <h2>Filesystem repair</h2>
+          <pre><code># Always unmount or boot from rescue media first
+sudo fsck /dev/sda1              # picks correct fsck.* helper
+sudo fsck -y /dev/sda1           # auto-answer yes
+sudo fsck.ext4 -f /dev/sda1      # force even if clean
+sudo xfs_repair /dev/sda1        # XFS (must be unmounted; replay log first: -L destroys log)
+sudo btrfs check /dev/sda1       # btrfs
+sudo btrfs scrub start /mnt      # online scrub for checksums
+
+# Root filesystem repair → boot to single-user / rescue / live USB
+# Force fsck at next boot: touch /forcefsck
+# Read-only at boot: edit kernel cmdline + add ro init=/bin/bash</code></pre>
+
+          <h2>Swap management</h2>
+          <pre><code># Swap file
+sudo fallocate -l 4G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+# Persist in /etc/fstab: /swapfile none swap sw 0 0
+
+swapon --show
+free -h
+sudo swapoff /swapfile
+sudo swapoff -a                  # disable all swap
+
+# Tunables
+sudo sysctl vm.swappiness=10     # tend to RAM, swap less (default 60)
+sudo sysctl vm.vfs_cache_pressure=50</code></pre>
+          <p>Modern alternative: <b>zram</b> (compressed RAM swap) + <b>zswap</b> (compressed cache before disk swap). Common on resource-constrained systems.</p>
+
+          <h2>LVM — Logical Volume Manager</h2>
+          <p>Stack:</p>
+          <ol>
+            <li><b>PV</b> (Physical Volume) — entire disk or partition.</li>
+            <li><b>VG</b> (Volume Group) — pool aggregating one or more PVs.</li>
+            <li><b>LV</b> (Logical Volume) — slice of a VG used as a virtual block device.</li>
+          </ol>
+          <pre><code># Create LVM stack
+sudo pvcreate /dev/sdb /dev/sdc
+sudo vgcreate vg_data /dev/sdb /dev/sdc
+sudo lvcreate -L 20G -n web vg_data
+sudo lvcreate -l 100%FREE -n bulk vg_data
+sudo mkfs.xfs /dev/vg_data/web
+sudo mount /dev/vg_data/web /srv/web
+
+# Status
+sudo pvs / pvdisplay
+sudo vgs / vgdisplay
+sudo lvs / lvdisplay
+sudo lvscan
+
+# Extend (online for ext4/XFS)
+sudo lvextend -L +10G /dev/vg_data/web
+sudo lvextend -l +100%FREE /dev/vg_data/web
+sudo resize2fs /dev/vg_data/web      # ext4 grow
+sudo xfs_growfs /srv/web              # XFS grow (online)
+sudo lvextend -r -L +10G /dev/vg_data/web   # extend + resize fs in one step (-r)
+
+# Shrink (offline, ext4 only — XFS cannot shrink)
+sudo umount /srv/web
+sudo e2fsck -f /dev/vg_data/web
+sudo resize2fs /dev/vg_data/web 15G
+sudo lvreduce -L 15G /dev/vg_data/web
+sudo mount /dev/vg_data/web /srv/web
+
+# Add a disk to VG
+sudo pvcreate /dev/sdd
+sudo vgextend vg_data /dev/sdd
+
+# Remove a disk safely (move data off first)
+sudo pvmove /dev/sdb /dev/sdc
+sudo vgreduce vg_data /dev/sdb
+sudo pvremove /dev/sdb
+
+# Snapshots (copy-on-write)
+sudo lvcreate -L 5G -s -n snap_web /dev/vg_data/web
+sudo mount -o ro /dev/vg_data/snap_web /mnt/snap
+sudo lvremove /dev/vg_data/snap_web
+
+# Thin provisioning + thin pools
+sudo lvcreate -L 100G --thinpool tp1 vg_data
+sudo lvcreate -V 50G --thin -n thin1 vg_data/tp1
+sudo lvs -o +data_percent</code></pre>
+
+          <h2>RAID via mdadm</h2>
+          <p>Software RAID for block devices. Levels match hardware: 0/1/4/5/6/10/Linear.</p>
+          <pre><code>sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb /dev/sdc
+sudo mdadm --create /dev/md1 --level=5 --raid-devices=4 /dev/sd[bcde]
+sudo mdadm --detail /dev/md0
+cat /proc/mdstat                       # live status
+sudo mdadm --add /dev/md0 /dev/sdd     # add spare / replacement
+sudo mdadm --fail /dev/md0 /dev/sdb
+sudo mdadm --remove /dev/md0 /dev/sdb
+sudo mdadm --stop /dev/md0
+sudo mdadm --assemble --scan           # reassemble at boot
+
+# Persist
+sudo mdadm --detail --scan | sudo tee -a /etc/mdadm/mdadm.conf
+sudo update-initramfs -u               # Debian
+sudo dracut -f                         # RHEL</code></pre>
+          <p>Layer atop RAID: usually <code>mkfs.ext4 /dev/md0</code> or use as a PV for LVM.</p>
+
+          <h2>Encryption — LUKS</h2>
+          <p><b>LUKS</b> = Linux Unified Key Setup. Block-level encryption (AES-XTS) sitting BELOW the filesystem.</p>
+          <pre><code># Format (DESTRUCTIVE — backup first)
+sudo cryptsetup luksFormat /dev/sdb1
+# Open / unlock → maps as /dev/mapper/secret
+sudo cryptsetup open /dev/sdb1 secret
+sudo mkfs.ext4 /dev/mapper/secret
+sudo mount /dev/mapper/secret /mnt/secret
+# Close
+sudo umount /mnt/secret
+sudo cryptsetup close secret
+
+sudo cryptsetup luksDump /dev/sdb1         # header info
+sudo cryptsetup luksAddKey /dev/sdb1       # second passphrase / key file
+sudo cryptsetup luksHeaderBackup /dev/sdb1 --header-backup-file lukshdr.bin
+sudo cryptsetup luksHeaderRestore /dev/sdb1 --header-backup-file lukshdr.bin</code></pre>
+          <p><b>Auto-unlock at boot</b>: add a line to <code>/etc/crypttab</code> + corresponding entry in <code>/etc/fstab</code> referencing <code>/dev/mapper/&lt;name&gt;</code>. Key file kept in protected location or unlocked via TPM (<b>systemd-cryptenroll</b>) / Clevis / Tang.</p>
+          <p>Other encryption options: <b>eCryptfs</b> (per-directory userspace), <b>fscrypt</b> (ext4/F2FS native per-directory), <b>gocryptfs / EncFS</b> (FUSE).</p>
+
+          <h2>Snapshots + advanced features</h2>
+          <ul>
+            <li><b>LVM snapshots</b> — copy-on-write block-level. Useful for consistent backup of a running system.</li>
+            <li><b>btrfs subvolumes + snapshots</b> — instant CoW per-subvolume. Used by Snapper / Timeshift.</li>
+            <li><b>ZFS snapshots + zfs send/receive</b> — incremental replication.</li>
+            <li><b>VSS-like</b> kernel suspend + freeze: <code>fsfreeze -f /mountpoint</code>, <code>fsfreeze -u /mountpoint</code>.</li>
+          </ul>
+
+          <h2>Quotas</h2>
+          <pre><code># In /etc/fstab options: usrquota,grpquota (XFS uses uquota,gquota,pquota)
+sudo mount -o remount,usrquota,grpquota /home
+sudo quotacheck -cugm /home
+sudo quotaon /home
+sudo edquota -u alice                  # set soft/hard limits + grace
+sudo quota -u alice                    # report
+sudo repquota -a                       # all filesystems
+
+# XFS
+sudo xfs_quota -x -c 'limit bsoft=4g bhard=5g alice' /home
+sudo xfs_quota -x -c 'report' /home</code></pre>
+
+          <h2>Network filesystems</h2>
+          <ul>
+            <li><b>NFS</b> — Unix-style. Server exports <code>/etc/exports</code>; client mounts <code>host:/export</code>.</li>
+            <li><b>SMB / CIFS</b> — Windows shares; mount with <code>cifs-utils</code>.</li>
+            <li><b>SSHFS</b> — FUSE over SSH; <code>sshfs user@host:/path /mnt/sshfs</code>.</li>
+            <li><b>iSCSI</b> — block storage over IP; clients use <code>iscsiadm</code>.</li>
+            <li><b>Ceph / GlusterFS</b> — distributed clustered storage.</li>
+          </ul>
+
+          <h2>Block device tunables + I/O scheduler</h2>
+          <pre><code>cat /sys/block/sda/queue/scheduler            # show available; current in brackets
+echo none > /sys/block/nvme0n1/queue/scheduler  # NVMe: no scheduler (kernel multi-queue)
+echo mq-deadline > /sys/block/sda/queue/scheduler
+echo bfq > /sys/block/sda/queue/scheduler       # for desktop interactivity
+
+# Read-ahead
+sudo blockdev --getra /dev/sda
+sudo blockdev --setra 8192 /dev/sda
+
+# I/O scheduling helpers
+ionice -c 3 cmd                              # idle class
+nice -n 19 ionice -c 3 cmd                   # background work
+
+# SSD TRIM
+sudo fstrim -av                              # discard freed blocks
+sudo systemctl enable --now fstrim.timer     # weekly TRIM</code></pre>
+
+          <h2>Loop devices + disk images</h2>
+          <pre><code>truncate -s 1G img.bin
+sudo losetup -fP --show img.bin              # /dev/loop0
+sudo mkfs.ext4 /dev/loop0
+sudo mount /dev/loop0 /mnt/img
+sudo losetup -d /dev/loop0                   # detach
+losetup -a                                   # list loops</code></pre>
+
+          <h2>UUID + LABEL + WWN</h2>
+          <ul>
+            <li>Prefer <b>UUID</b> in /etc/fstab — device names can change across reboots.</li>
+            <li><b>LABEL</b> readable but you must keep them unique.</li>
+            <li><b>/dev/disk/by-id/</b> includes vendor + serial — useful for enterprise SAN paths.</li>
+            <li><b>WWN</b> (World Wide Name) — Fibre Channel / SAS persistent identifier.</li>
+          </ul>
+
+          <h2>Backups (storage perspective)</h2>
+          <ul>
+            <li><b>rsync</b> — file-level sync, incremental.</li>
+            <li><b>tar + ssh / scp</b> — classic.</li>
+            <li><b>BorgBackup / Restic / Duplicity</b> — deduplicated encrypted backups.</li>
+            <li><b>dd</b> — full block image (<code>dd if=/dev/sda of=/path/disk.img bs=4M status=progress</code>). Use sparingly; consume target size.</li>
+            <li><b>partclone / clonezilla</b> — partition image, smart about used space.</li>
+            <li><b>btrfs send/receive</b> + <b>zfs send/receive</b> — fast incremental snapshot replication.</li>
+            <li><b>LVM snapshot + dump</b> — consistent live backup.</li>
+            <li><b>Bacula / Bareos / Amanda</b> — enterprise backup suites.</li>
+            <li>Cloud: <b>restic + S3/Glacier</b>, AWS Backup, Azure Backup, Google Cloud Backup.</li>
+            <li><b>Test restores</b> regularly.</li>
+            <li><b>3-2-1</b> rule + immutability.</li>
+          </ul>
+
+          <h2>SMART monitoring</h2>
+          <pre><code>sudo smartctl -a /dev/sda            # all attributes
+sudo smartctl -H /dev/sda            # health PASSED/FAILED
+sudo smartctl -t short /dev/sda      # run short self-test
+sudo smartctl -t long /dev/sda
+sudo smartctl -l selftest /dev/sda
+# Service: sudo systemctl enable --now smartd
+# /etc/smartd.conf — alerts on bad attributes / reallocated sectors</code></pre>
+
+          <h2>Common storage troubleshooting</h2>
+          <ul>
+            <li><b>"No space left on device"</b> with df showing free → out of <b>inodes</b>. Check <code>df -i</code>; clean small-file dirs (e.g., session caches).</li>
+            <li><b>"Read-only filesystem"</b> after error → kernel remounted ro due to corruption. Inspect dmesg; reboot + fsck or live media.</li>
+            <li><b>Mount fails with "wrong fs type"</b> → wrong device, or fs uses a kernel module not loaded (NTFS, btrfs, ZFS).</li>
+            <li><b>I/O errors in dmesg</b> → check SMART; failing disk; replace before total failure.</li>
+            <li><b>Slow filesystem</b> → fragmentation (rare on ext4/XFS but possible on btrfs), heavy small-file workload, wrong I/O scheduler.</li>
+            <li><b>fstrim not running</b> on SSD → enable fstrim.timer.</li>
+            <li><b>LVM thin pool full</b> → expand or delete thin volumes (very fast filesystem-killer if you ignore alerts).</li>
+            <li><b>RAID degraded</b> → <code>/proc/mdstat</code> + email alerts via mdadm; rebuild with spare.</li>
+            <li><b>LUKS forgot passphrase</b> → unrecoverable unless second key slot saved; back up LUKS header.</li>
+          </ul>
+
+          <h2>Exam quick cheats</h2>
+          <ul>
+            <li>"Show partitions tree" → <code>lsblk</code>.</li>
+            <li>"Disk usage by FS" → <code>df -h</code>.</li>
+            <li>"Top folders by size" → <code>du -sh /*</code>.</li>
+            <li>"Mount at boot" → /etc/fstab w/ UUID.</li>
+            <li>"Resize ext4 online" → <code>resize2fs</code>.</li>
+            <li>"Resize XFS online" → <code>xfs_growfs</code> (XFS cannot shrink!).</li>
+            <li>"LVM stack" → PV → VG → LV.</li>
+            <li>"Extend LV + resize FS in one" → <code>lvextend -r -L +size</code>.</li>
+            <li>"LUKS unlock" → <code>cryptsetup open dev name</code>.</li>
+            <li>"Software RAID utility" → <code>mdadm</code>.</li>
+            <li>"Persistent mount UUID source" → <code>blkid</code> / <code>lsblk -f</code>.</li>
+            <li>"SSD TRIM" → <code>fstrim -av</code> or fstrim.timer.</li>
+            <li>"FS health check" → fsck (ext4); xfs_repair; btrfs check; btrfs scrub.</li>
+            <li>"Mount as read-only" → <code>mount -o remount,ro /mount</code>.</li>
+            <li>"Filesystem cannot shrink" → XFS.</li>
+            <li>"Copy-on-write snapshot for backup" → LVM snapshot / btrfs / ZFS.</li>
+            <li>"Network share Linux" → NFS; Windows → CIFS/SMB.</li>
+          </ul>
         `
       },
       {
