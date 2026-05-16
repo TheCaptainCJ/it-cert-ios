@@ -3084,21 +3084,198 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
       {
         title: '9. Backup & Disposal',
         body: `
-          <h2>Backup methods</h2>
+          <p>Two halves of the data lifecycle: keeping copies you can restore (backup) and making sure data is unrecoverable when hardware retires (disposal). Both are heavily tested. Wrong choice here = lost work, fines, or breach disclosure.</p>
+
+          <h2>Why back up?</h2>
           <ul>
-            <li><b>Full</b> — everything every time; longest, simplest restore.</li>
-            <li><b>Incremental</b> — changes since last backup (any kind). Long restore chain.</li>
-            <li><b>Differential</b> — changes since last full. Faster restore, larger over time.</li>
-            <li><b>Synthetic full</b> — server stitches a full from prior incrementals.</li>
+            <li><b>Hardware failure</b> — HDDs fail, SSDs wear out, controllers die.</li>
+            <li><b>Ransomware</b> — primary recovery path is restore from offline backup.</li>
+            <li><b>Accidental deletion / corruption</b> — user error, app bug, bad migration.</li>
+            <li><b>Theft / loss</b> — laptop disappears with the only copy.</li>
+            <li><b>Disaster</b> — fire, flood, power surge.</li>
+            <li><b>Compliance</b> — many regulations require backups + retention.</li>
           </ul>
-          <h2>3-2-1 rule</h2>
-          <p>3 copies, 2 different media, 1 offsite.</p>
-          <h2>Drive disposal</h2>
+
+          <h2>Key backup metrics</h2>
           <ul>
-            <li><b>Standard format</b> — does NOT wipe data (recoverable).</li>
-            <li><b>Low-level / overwrite</b> — DBAN / vendor utility.</li>
-            <li><b>Degaussing</b> — magnetic media only.</li>
-            <li><b>Shredding / incineration</b> — physical destruction.</li>
+            <li><b>RTO</b> (Recovery Time Objective) — max time the business can be offline before pain. Drives DR architecture.</li>
+            <li><b>RPO</b> (Recovery Point Objective) — max acceptable data loss measured in time (e.g., "no more than 1 hour of lost transactions"). Drives backup frequency.</li>
+            <li><b>MTBF</b> (Mean Time Between Failures) — predicted reliability metric.</li>
+            <li><b>MTTR</b> (Mean Time To Repair / Restore) — average time to recover after failure.</li>
+            <li><b>SLA</b> (Service Level Agreement) — contractual uptime / response guarantees.</li>
+            <li><b>Retention</b> — how long copies are kept; often tied to legal hold or regulation.</li>
+          </ul>
+
+          <h2>Backup methods</h2>
+
+          <h3>Full backup</h3>
+          <p><b>What:</b> Complete copy of all selected data, every time.</p>
+          <p><b>Pros:</b> Single-set restore — fastest recovery time. Self-contained.</p>
+          <p><b>Cons:</b> Largest storage footprint. Longest backup window.</p>
+          <p><b>How used:</b> Weekly fulls combined with daily incrementals / differentials.</p>
+
+          <h3>Incremental backup</h3>
+          <p><b>What:</b> Captures only data changed since the LAST backup of any kind (full or incremental).</p>
+          <p><b>Pros:</b> Smallest daily size + shortest backup window.</p>
+          <p><b>Cons:</b> Restore requires the full backup PLUS every subsequent incremental in order — slowest restore. One missing incremental breaks the chain.</p>
+          <p><b>Marker:</b> Clears the archive bit on each file.</p>
+
+          <h3>Differential backup</h3>
+          <p><b>What:</b> Captures everything changed since the last FULL backup. Each differential is independent of earlier ones.</p>
+          <p><b>Pros:</b> Restore needs only the latest full + latest differential — much faster than incremental.</p>
+          <p><b>Cons:</b> Each successive differential grows larger and slower until the next full.</p>
+          <p><b>Marker:</b> Does NOT clear the archive bit.</p>
+
+          <h3>Synthetic full backup</h3>
+          <p><b>What:</b> Backup server takes the last full + subsequent incrementals and stitches them server-side into a new "full" file — without re-reading source data.</p>
+          <p><b>Why:</b> Combines the small backup window of incrementals with the fast restore of fulls. Backup software does the heavy lifting offline.</p>
+
+          <h3>Mirror / image / clone</h3>
+          <p><b>Mirror</b> = 1:1 copy of a volume or folder (rsync, robocopy /MIR).<br>
+          <b>Image / snapshot</b> = bit-level capture, can recreate the original disk identically.<br>
+          <b>Bare-metal restore</b> = restore a system image to dissimilar hardware (driver injection by backup software).</p>
+
+          <h3>Continuous Data Protection (CDP)</h3>
+          <p><b>What:</b> Captures every write to a volume in near-real-time. RPO approaches zero.</p>
+          <p><b>How used:</b> Mission-critical databases. Examples: Zerto, AWS DRS, Azure Site Recovery (continuous mode).</p>
+
+          <h3>Snapshot</h3>
+          <p><b>What:</b> Filesystem / hypervisor / storage-array point-in-time view that references unchanged blocks + tracks new writes (copy-on-write).</p>
+          <p><b>Caveat:</b> Snapshots are NOT backups — they live on the same storage. Use to capture a consistent state THEN copy to backup target.</p>
+
+          <h2>Common rotation schemes</h2>
+          <ul>
+            <li><b>GFS</b> (Grandfather-Father-Son) — daily (Son), weekly (Father), monthly (Grandfather) rotations.</li>
+            <li><b>Tower of Hanoi</b> — geometric tape rotation.</li>
+            <li><b>FIFO</b> (First In First Out) — overwrite oldest.</li>
+            <li><b>D2D2T</b> (Disk-to-Disk-to-Tape) — fast disk backup followed by tape offload.</li>
+            <li><b>D2C</b> (Disk-to-Cloud) — backup to a cloud target (S3, Azure Blob, Glacier).</li>
+          </ul>
+
+          <h2>3-2-1 backup rule</h2>
+          <p>Industry baseline:</p>
+          <ul>
+            <li><b>3</b> copies of the data (original + 2 backups).</li>
+            <li><b>2</b> different media types (disk + tape, disk + cloud).</li>
+            <li><b>1</b> stored OFFSITE.</li>
+          </ul>
+          <p><b>3-2-1-1-0 extension</b> (modern ransomware-aware):</p>
+          <ul>
+            <li>3 copies, 2 media, 1 offsite, <b>1 offline / immutable</b>, <b>0 errors after verification</b>.</li>
+          </ul>
+
+          <h2>Backup integrity + testing</h2>
+          <ul>
+            <li>Hash files at backup time + verify on restore (SHA-256).</li>
+            <li><b>Test restores</b> regularly — a backup you never restored is a hope, not a backup.</li>
+            <li>Document restore procedures + RTO timing.</li>
+            <li>Pull a random month's backup quarterly and restore to a test environment.</li>
+            <li>Monitor backup job success / failures with alerts.</li>
+          </ul>
+
+          <h2>Immutable / WORM backups</h2>
+          <p><b>WORM</b> = Write Once, Read Many. Storage that cannot be overwritten or deleted within the retention window.</p>
+          <ul>
+            <li>S3 Object Lock, Azure Blob Immutable Storage, Veeam Hardened Repository, tape (inherently WORM-friendly).</li>
+            <li><b>Why critical:</b> Ransomware now actively hunts + deletes backups. Immutable storage defeats this.</li>
+          </ul>
+
+          <h2>Offsite + cloud backup options</h2>
+          <ul>
+            <li><b>Cloud backup</b> — AWS Backup, Azure Backup, Veeam Cloud Connect, Backblaze, Carbonite.</li>
+            <li><b>BaaS</b> (Backup as a Service) — managed offering.</li>
+            <li><b>DRaaS</b> (Disaster Recovery as a Service) — replicates VMs to cloud for failover.</li>
+            <li><b>Tape vault</b> — Iron Mountain offsite pickup.</li>
+            <li><b>Replicated to second datacenter</b> — corporate DR site.</li>
+          </ul>
+
+          <h2>Backup software / built-in tools</h2>
+          <ul>
+            <li><b>Windows</b>: File History (user docs), Backup and Restore (Windows 7), Reset/Image, OneDrive, Veeam Agent, Macrium Reflect, Acronis True Image.</li>
+            <li><b>macOS</b>: Time Machine, third-party (Carbon Copy Cloner, SuperDuper!).</li>
+            <li><b>Linux</b>: rsync, BorgBackup, Restic, Bacula, Bareos, Duplicity, Timeshift.</li>
+            <li><b>Server / enterprise</b>: Veeam, Commvault, Rubrik, Cohesity, Veritas NetBackup, Dell PowerProtect.</li>
+            <li><b>Cloud-native</b>: AWS Backup, Azure Backup, GCP Backup &amp; DR, Velero (Kubernetes).</li>
+          </ul>
+
+          <h2>Backup security</h2>
+          <ul>
+            <li>Encrypt backups at rest + in transit (AES-256 + TLS 1.2+).</li>
+            <li>Manage encryption keys separately from the backup repository.</li>
+            <li>MFA on the backup console — top ransomware target.</li>
+            <li>Separate backup admin role; no domain-admin equivalence.</li>
+            <li>Air-gap / immutable copy beyond reach of ransomware.</li>
+          </ul>
+
+          <h2>Drive disposal — DON'T just delete</h2>
+          <p><b>Recycle Bin / Empty / Shift+Delete / Format / Quick format</b> = files still recoverable with forensic tools. Adequate for non-sensitive consumer reuse only.</p>
+
+          <h3>NIST SP 800-88 sanitization tiers</h3>
+          <ol>
+            <li><b>Clear</b> — overwrite or reset to factory defaults. Resistant to standard recovery tools, NOT lab-level. Examples: full-disk overwrite (DBAN, vendor secure-erase, modern Windows "Remove everything → Clean drive").</li>
+            <li><b>Purge</b> — render data infeasible to recover even in a lab. Examples:
+              <ul>
+                <li>ATA Secure Erase command on HDD / SSD.</li>
+                <li><b>Cryptographic erase</b> on Self-Encrypting Drives (SED) — destroy the on-disk key, instantly making data unreadable.</li>
+                <li><b>Degaussing</b> — magnetic field randomization (HDD + tape ONLY; useless on SSDs).</li>
+              </ul>
+            </li>
+            <li><b>Destroy</b> — physical destruction so no media remains. Examples: shredding, disintegrating, pulverizing, incinerating, melting.</li>
+          </ol>
+          <p><b>Match method to data classification:</b> Public/internal = Clear; Confidential = Purge; Restricted / classified = Destroy.</p>
+
+          <h3>Why method matters by media type</h3>
+          <ul>
+            <li><b>HDD</b> — degaussing or multi-pass overwrite both work. Modern best: ATA Secure Erase + physical shred.</li>
+            <li><b>SSD / NVMe / flash</b> — overwriting is unreliable because of wear-leveling. Use vendor secure-erase / crypto-erase. Degaussing has NO effect. For high-security, physically shred (special SSD shredder cuts to ≤2 mm fragments).</li>
+            <li><b>Optical media (CD/DVD/Blu-ray)</b> — shredding / pulverizing.</li>
+            <li><b>Tape</b> — degaussing then incineration.</li>
+            <li><b>Paper</b> — cross-cut or micro-cut shredder; not strip-cut.</li>
+            <li><b>Mobile devices</b> — factory reset (encryption key destruction on modern OS = crypto erase) plus physical destroy for high-classification.</li>
+          </ul>
+
+          <h2>Chain of custody for disposal</h2>
+          <ul>
+            <li>Track every device from decommission → wipe → physical destruction with serial numbers + signatures.</li>
+            <li><b>Certificate of Destruction</b> from vendor (e.g., Iron Mountain, Sims Recycling) provides legal proof.</li>
+            <li>Match against asset management system (CMDB).</li>
+          </ul>
+
+          <h2>Recycling + environmental</h2>
+          <ul>
+            <li>Electronics often contain lead, mercury, lithium — not municipal trash.</li>
+            <li><b>e-Stewards</b> + <b>R2</b> (Responsible Recycling) certifications identify vetted recyclers.</li>
+            <li>Toner cartridges, batteries, fluorescent bulbs have separate disposal regulations.</li>
+            <li><b>EPA / WEEE</b> (Waste Electrical and Electronic Equipment Directive — EU) governs e-waste.</li>
+          </ul>
+
+          <h2>BIOS / firmware password reset before disposal</h2>
+          <ul>
+            <li>Clear CMOS jumper or pull CMOS battery on desktops to remove forgotten UEFI password.</li>
+            <li>Many laptops store firmware password in protected flash; only the OEM can reset (proof of ownership required).</li>
+          </ul>
+
+          <h2>Data destruction policy elements</h2>
+          <ol>
+            <li>Define classification tiers (Public, Internal, Confidential, Restricted).</li>
+            <li>Map classification → required sanitization method (Clear / Purge / Destroy).</li>
+            <li>Asset inventory tracks every device through retirement.</li>
+            <li>Approved tools + vendors.</li>
+            <li>Chain-of-custody log.</li>
+            <li>Certificate of Destruction retention.</li>
+            <li>Audits.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"3-2-1 rule" → 3 copies, 2 media types, 1 offsite.</li>
+            <li>"Fastest restore time" → Full backup; "Smallest daily window" → Incremental.</li>
+            <li>"Restore needs full + latest only" → Differential.</li>
+            <li>"Reset to factory + overwrite" → Clear; "Cryptographic erase on SED" → Purge; "Physical shred" → Destroy.</li>
+            <li>"Degaussing wipes magnetic but NOT flash" — SSDs need crypto-erase or shred.</li>
+            <li>"Backup stored where ransomware cannot touch" → immutable / air-gapped / offline copy.</li>
+            <li>"Proof a drive was destroyed" → Certificate of Destruction.</li>
+            <li>"E-waste compliance directive" → WEEE (EU) / RCRA (US).</li>
           </ul>
         `
       },
