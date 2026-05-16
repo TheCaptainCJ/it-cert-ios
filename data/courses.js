@@ -13381,21 +13381,468 @@ diff -r dir1 dir2 | grep -v '^Common subdirectories'</code></pre>
       {
         title: '2. Compute & Containers',
         body: `
-          <h2>Compute types</h2>
+          <p>Cloud "compute" = the layer that actually runs your code. Three dominant categories: <b>virtual machines (VMs)</b>, <b>containers</b>, <b>functions (serverless)</b>. Each has its own scaling model, isolation guarantee, and pricing. Exam tests instance families + pricing tiers + container basics + Kubernetes objects.</p>
+
+          <h2>Virtual machines (VMs / Instances)</h2>
+          <p><b>What:</b> Full OS running on shared hypervisor. Acts like a physical server. Customer manages OS up.</p>
+          <p><b>Examples:</b> AWS EC2, Azure Virtual Machines, GCP Compute Engine, Oracle OCI Compute, IBM VPC instance.</p>
+
+          <h3>Instance families (general capability)</h3>
           <ul>
-            <li>Reserved / committed-use instances — cheapest if you commit.</li>
-            <li>On-demand / pay-as-you-go.</li>
-            <li>Spot / preemptible — deep discount, can be reclaimed.</li>
-            <li>Dedicated host / bare metal — compliance, license-bound software.</li>
+            <li><b>General purpose</b> — balanced CPU + memory. AWS M-series, Azure D-series, GCP N-series.</li>
+            <li><b>Compute optimized</b> — high CPU. AWS C-series, Azure F-series, GCP C-series.</li>
+            <li><b>Memory optimized</b> — high RAM (databases, in-memory caches). AWS R / X / U series, Azure E / M series, GCP M-series.</li>
+            <li><b>Storage optimized</b> — high local NVMe IOPS. AWS I / D series, Azure L-series.</li>
+            <li><b>Accelerated / GPU</b> — NVIDIA + AMD GPUs for ML / rendering. AWS P / G series, Azure N-series, GCP A-series / G2.</li>
+            <li><b>Burstable</b> — low baseline + occasional bursts via credits. AWS T-series, Azure B-series, GCP e2-medium / N1.</li>
+            <li><b>Bare metal</b> — direct hardware access, no hypervisor. AWS .metal, Azure HBv3 + dedicated host, GCP sole-tenant nodes.</li>
+            <li><b>Arm-based</b> — cost / power efficient. AWS Graviton, Azure Cobalt, GCP Tau T2A.</li>
+            <li><b>Confidential VMs</b> — encrypted memory via SEV-SNP / TDX / Nitro.</li>
           </ul>
-          <h2>Containers</h2>
-          <p>OS-level virtualization. Image = read-only layers. Container = running instance. Engine: Docker, containerd.</p>
-          <h2>Orchestration (Kubernetes)</h2>
+
+          <h3>VM pricing tiers</h3>
           <ul>
-            <li>Control plane: kube-apiserver, scheduler, controller-manager, etcd.</li>
-            <li>Node: kubelet, container runtime, kube-proxy.</li>
-            <li>Workloads: Pod, Deployment, StatefulSet, DaemonSet, Job.</li>
-            <li>Service types: ClusterIP, NodePort, LoadBalancer, Ingress.</li>
+            <li><b>On-demand</b> — pay per hour / second / minute. No commitment.</li>
+            <li><b>Reserved Instances / Savings Plans / Committed Use Discounts</b> — 1-yr or 3-yr commitment for ~30-72% discount. AWS Standard / Convertible RIs, Savings Plans (Compute / EC2 Instance). Azure Reservations, Savings Plan for compute. GCP CUDs.</li>
+            <li><b>Spot / preemptible / low-priority</b> — deep discount (up to 90%). Provider can reclaim with ~2 min notice (AWS Spot), 30 sec (GCP), variable Azure. For stateless / fault-tolerant workloads (CI / batch / video transcoding).</li>
+            <li><b>Dedicated host</b> — entire physical server reserved. For BYOL compliance (Windows / SQL), regulatory isolation.</li>
+            <li><b>Dedicated instance</b> — VM physically isolated from other customers' VMs (different from dedicated host: provider still picks the box).</li>
+          </ul>
+
+          <h3>Provisioning + lifecycle</h3>
+          <pre><code># AWS CLI examples (conceptual)
+aws ec2 run-instances --image-id ami-xxxxxxxx \\
+    --instance-type t3.medium \\
+    --key-name my-keypair \\
+    --security-group-ids sg-xxxx \\
+    --subnet-id subnet-xxxx \\
+    --user-data file://bootstrap.sh
+
+aws ec2 stop-instances --instance-ids i-xxxx
+aws ec2 start-instances --instance-ids i-xxxx
+aws ec2 reboot-instances --instance-ids i-xxxx
+aws ec2 terminate-instances --instance-ids i-xxxx
+aws ec2 modify-instance-attribute --instance-id i-xxxx --instance-type "{\\"Value\\":\\"t3.large\\"}"</code></pre>
+          <p><b>States:</b> Pending → Running → Stopping → Stopped → Terminated. Stopped = billing for storage but not compute; Terminated = gone.</p>
+
+          <h3>Images (AMI / VHD / Image)</h3>
+          <ul>
+            <li><b>AMI</b> — Amazon Machine Image; pre-built OS + software.</li>
+            <li><b>Azure Image</b> / <b>VHD</b> — same concept.</li>
+            <li><b>GCP Image</b>.</li>
+            <li>Built from VMs (snapshot to image), Packer (HashiCorp), EC2 Image Builder, Azure Image Builder.</li>
+            <li>Custom AMI vs marketplace AMI; published in regions (must copy to use elsewhere).</li>
+          </ul>
+
+          <h3>Bootstrap / initialization</h3>
+          <ul>
+            <li><b>User data / Cloud-Init</b> — script that runs on first boot to configure the VM (install packages, set users, fetch secrets).</li>
+            <li>Cloud-Init is the dominant cross-cloud standard (Ubuntu, RHEL, etc.).</li>
+            <li>Azure also uses Custom Script Extension + DSC.</li>
+            <li>Best practice: keep bootstrap minimal; bake heavy config into image (golden image).</li>
+          </ul>
+
+          <h3>VM Scale Sets / Auto Scaling Groups / MIGs</h3>
+          <ul>
+            <li><b>AWS Auto Scaling Group (ASG)</b> + Launch Template.</li>
+            <li><b>Azure VM Scale Sets (VMSS)</b>.</li>
+            <li><b>GCP Managed Instance Group (MIG)</b> with instance template.</li>
+            <li>Pool of identical VMs sized by min / max / desired count.</li>
+            <li>Scaling triggers: CPU %, RAM, queue depth, custom metrics, schedule, predictive (ML).</li>
+            <li>Health checks replace failed VMs.</li>
+            <li>Combine w/ load balancer for stateless apps.</li>
+            <li><b>Spot fleet / Spot VMSS</b> for mixed on-demand + spot pricing.</li>
+          </ul>
+
+          <h2>Containers (OS-level virtualization)</h2>
+          <p><b>What:</b> Share host kernel; each container has its own filesystem view + process tree + network stack (via namespaces) + resource limits (via cgroups).</p>
+          <p><b>Why:</b> Faster start (seconds vs minutes for VMs), smaller image (MB vs GB), much higher density, immutable infrastructure.</p>
+          <p><b>Key abstractions:</b></p>
+          <ul>
+            <li><b>Image</b> — read-only template (layered filesystem). Stored in a <b>registry</b> (Docker Hub, GHCR, ECR, ACR, GAR).</li>
+            <li><b>Container</b> — running instance of an image, with a writable layer on top.</li>
+            <li><b>Tag</b> — version label (<code>v1.2</code>, <code>latest</code>).</li>
+            <li><b>Layer</b> — incremental change atop a base image (each Dockerfile instruction).</li>
+            <li><b>Dockerfile</b> — declarative build recipe.</li>
+          </ul>
+
+          <h3>OCI standards</h3>
+          <ul>
+            <li><b>OCI</b> = Open Container Initiative — standard for image format + runtime spec.</li>
+            <li>Modern runtimes implement OCI: <b>runc</b>, <b>crun</b>, <b>containerd</b>, <b>CRI-O</b>.</li>
+            <li>Image-spec defines layers + manifest; runtime-spec defines how to execute.</li>
+          </ul>
+
+          <h3>Container engines</h3>
+          <ul>
+            <li><b>Docker</b> — most familiar engine + CLI; uses containerd under the hood since 2017.</li>
+            <li><b>Podman</b> — Red Hat daemonless + rootless alternative; Docker-compatible CLI (<code>alias docker=podman</code>).</li>
+            <li><b>containerd</b> — runtime daemon (CNCF graduated); used by Docker, Kubernetes, AWS Bottlerocket.</li>
+            <li><b>CRI-O</b> — minimal Kubernetes runtime; default on OpenShift.</li>
+            <li><b>BuildKit</b>, <b>Kaniko</b>, <b>img</b>, <b>buildah</b> — build alternatives.</li>
+          </ul>
+
+          <h3>Dockerfile + image builds</h3>
+          <pre><code>FROM python:3.12-slim AS build
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+
+FROM python:3.12-slim
+WORKDIR /app
+COPY --from=build /app /app
+USER 10001:10001
+EXPOSE 8000
+ENTRYPOINT ["python","-m","gunicorn","--bind","0.0.0.0:8000","app:app"]</code></pre>
+          <p><b>Build:</b> <code>docker build -t myrepo/web:1.0 .</code><br>
+          <b>Push:</b> <code>docker push myrepo/web:1.0</code><br>
+          <b>Run:</b> <code>docker run -d --name web -p 8080:8000 myrepo/web:1.0</code></p>
+          <p><b>Best practices:</b> small base (distroless, alpine, slim), multi-stage builds (separate build + runtime), non-root USER, copy minimal files, COPY before RUN install for cache, pin versions, scan with Trivy / Grype, sign with cosign.</p>
+
+          <h3>Key Docker commands</h3>
+          <pre><code>docker pull image:tag
+docker images
+docker ps                          # running containers
+docker ps -a                       # all
+docker run -d --name web -p 80:8080 -v data:/data -e KEY=val image
+docker exec -it web /bin/sh
+docker logs -f web
+docker stop web / docker start web / docker restart web
+docker rm -f web
+docker rmi image
+docker inspect web
+docker stats                       # live resource usage
+docker volume ls / docker volume create
+docker network ls / docker network create
+docker compose up -d               # multi-container apps
+docker compose down
+docker system prune -af            # reclaim disk</code></pre>
+
+          <h3>Container storage</h3>
+          <ul>
+            <li><b>Bind mount</b> — host directory mounted inside container.</li>
+            <li><b>Named volume</b> — Docker-managed (preferred).</li>
+            <li><b>tmpfs</b> — RAM-backed.</li>
+            <li><b>Image layer</b> — read-only base.</li>
+            <li><b>CSI</b> (Container Storage Interface) — pluggable persistent volumes in Kubernetes.</li>
+          </ul>
+
+          <h3>Container networking</h3>
+          <ul>
+            <li><b>Bridge</b> (default) — virtual switch on host; containers NAT'd to outside.</li>
+            <li><b>Host</b> — share host's network stack (high perf, less isolation).</li>
+            <li><b>Overlay</b> — multi-host networking via VXLAN; Docker Swarm + K8s.</li>
+            <li><b>Macvlan</b> — container gets its own MAC + IP on the host LAN.</li>
+            <li><b>None</b> — no network.</li>
+            <li><b>CNI</b> (Container Network Interface) — plugin standard for Kubernetes (Calico, Cilium, Flannel, Weave, AWS VPC CNI).</li>
+          </ul>
+
+          <h2>Kubernetes (K8s)</h2>
+          <p><b>What:</b> CNCF-graduated container orchestrator. Deploys, scales, networks, heals containerized workloads across a cluster of nodes.</p>
+
+          <h3>Cluster architecture</h3>
+          <p><b>Control plane (master) components:</b></p>
+          <ul>
+            <li><b>kube-apiserver</b> — REST API; all components talk through it.</li>
+            <li><b>etcd</b> — distributed key-value store; ENTIRE cluster state. Back this up.</li>
+            <li><b>kube-scheduler</b> — assigns Pods to Nodes based on resource + constraint rules.</li>
+            <li><b>kube-controller-manager</b> — reconciliation loops (Deployment, Node, Endpoint controllers).</li>
+            <li><b>cloud-controller-manager</b> — cloud-specific integration (LBs, persistent volumes).</li>
+          </ul>
+          <p><b>Worker node components:</b></p>
+          <ul>
+            <li><b>kubelet</b> — agent on each node; runs Pods.</li>
+            <li><b>kube-proxy</b> — network rules for Services (iptables / IPVS / nftables).</li>
+            <li><b>Container runtime</b> — containerd, CRI-O, Docker (deprecated for K8s direct).</li>
+          </ul>
+
+          <h3>Managed Kubernetes</h3>
+          <ul>
+            <li><b>AWS EKS</b> — Elastic Kubernetes Service.</li>
+            <li><b>Azure AKS</b>.</li>
+            <li><b>Google GKE</b>.</li>
+            <li><b>OpenShift</b> — Red Hat distribution with extra controls.</li>
+            <li><b>Rancher / RKE / k3s</b> — multi-cluster + edge options.</li>
+            <li><b>Bare-metal:</b> kubeadm, k3s, MicroK8s, Talos Linux.</li>
+            <li>Managed services typically run + patch control plane for you; you manage worker nodes (or also managed via Fargate / serverless K8s).</li>
+          </ul>
+
+          <h3>Core Kubernetes objects</h3>
+          <ul>
+            <li><b>Pod</b> — smallest deployable unit; 1+ containers sharing network + storage. Usually 1 main container.</li>
+            <li><b>ReplicaSet</b> — keeps N Pods running. Rarely created directly.</li>
+            <li><b>Deployment</b> — declarative app + rolling updates. The common "I want N stateless replicas".</li>
+            <li><b>StatefulSet</b> — for stateful apps; stable network IDs + ordered start/stop + per-Pod persistent storage. Databases, Kafka.</li>
+            <li><b>DaemonSet</b> — one Pod per node. Logging agents, CNI agents, node exporters.</li>
+            <li><b>Job</b> — runs to completion (e.g., batch).</li>
+            <li><b>CronJob</b> — scheduled Job.</li>
+            <li><b>Service</b> — stable DNS + load-balanced virtual IP for a Pod selector.
+              <ul>
+                <li><b>ClusterIP</b> — in-cluster only (default).</li>
+                <li><b>NodePort</b> — opens a port on every node IP.</li>
+                <li><b>LoadBalancer</b> — provisions a cloud LB w/ external IP.</li>
+                <li><b>ExternalName</b> — DNS CNAME alias.</li>
+                <li><b>Headless</b> (clusterIP: None) — for stateful DNS.</li>
+              </ul>
+            </li>
+            <li><b>Ingress</b> — L7 HTTP/HTTPS routing into the cluster via an Ingress Controller (NGINX, Traefik, HAProxy, AWS ALB, GKE GLB).</li>
+            <li><b>Gateway API</b> — modern successor to Ingress.</li>
+            <li><b>ConfigMap</b> — non-secret configuration.</li>
+            <li><b>Secret</b> — base64 sensitive data; better secured via cloud KMS or external secrets operator.</li>
+            <li><b>Namespace</b> — logical partition + scope for RBAC + quotas.</li>
+            <li><b>ServiceAccount</b> — Pod identity for API + cloud IAM (workload identity).</li>
+            <li><b>Role / ClusterRole + RoleBinding / ClusterRoleBinding</b> — RBAC.</li>
+            <li><b>PersistentVolume (PV) + PersistentVolumeClaim (PVC) + StorageClass</b> — storage abstraction.</li>
+            <li><b>NetworkPolicy</b> — L3/L4 firewall rules between Pods.</li>
+            <li><b>HorizontalPodAutoscaler (HPA)</b> — scale Pods by CPU/mem/custom metric.</li>
+            <li><b>VerticalPodAutoscaler (VPA)</b> — adjust requests/limits.</li>
+            <li><b>Cluster Autoscaler / Karpenter</b> — add/remove Nodes.</li>
+            <li><b>CustomResourceDefinition (CRD)</b> + <b>Operator</b> — extend the API with app-specific controllers (Prometheus Operator, cert-manager).</li>
+            <li><b>PodDisruptionBudget (PDB)</b> — keep min available during drain/upgrade.</li>
+          </ul>
+
+          <h3>kubectl essentials</h3>
+          <pre><code>kubectl get nodes
+kubectl get pods -A                 # all namespaces
+kubectl get svc -n web
+kubectl describe pod web-abc -n web
+kubectl logs web-abc -n web -f
+kubectl exec -it web-abc -n web -- /bin/sh
+kubectl apply -f deploy.yaml
+kubectl delete -f deploy.yaml
+kubectl rollout status deployment/web -n web
+kubectl rollout undo deployment/web -n web
+kubectl scale deployment/web --replicas=10 -n web
+kubectl top pod -n web              # requires metrics-server
+kubectl top node
+kubectl port-forward svc/web 8080:80 -n web
+kubectl config get-contexts
+kubectl config use-context staging
+kubectl explain pod.spec.containers</code></pre>
+
+          <h3>Pod manifest example</h3>
+          <pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: hello
+  labels: {app: hello}
+spec:
+  containers:
+    - name: app
+      image: myrepo/hello:1.0
+      ports: [{containerPort: 8080}]
+      resources:
+        requests: {cpu: "100m", memory: "128Mi"}
+        limits:   {cpu: "500m", memory: "512Mi"}
+      readinessProbe:
+        httpGet: {path: /healthz, port: 8080}
+        initialDelaySeconds: 5
+      livenessProbe:
+        httpGet: {path: /live, port: 8080}
+      env:
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: cfg, key: db_host}}
+        - name: DB_PASS
+          valueFrom: {secretKeyRef: {name: db, key: pass}}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: {drop: ["ALL"]}</code></pre>
+
+          <h3>Deployment manifest example</h3>
+          <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata: {name: web, namespace: web}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: web}}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
+  template:
+    metadata: {labels: {app: web}}
+    spec:
+      containers:
+        - name: app
+          image: myrepo/web:1.0
+          ports: [{containerPort: 8080}]
+          readinessProbe: {httpGet: {path: /health, port: 8080}}
+          resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}</code></pre>
+
+          <h3>Service + Ingress example</h3>
+          <pre><code>apiVersion: v1
+kind: Service
+metadata: {name: web, namespace: web}
+spec:
+  selector: {app: web}
+  type: ClusterIP
+  ports: [{port: 80, targetPort: 8080}]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  namespace: web
+  annotations: {kubernetes.io/ingress.class: nginx}
+spec:
+  rules:
+    - host: app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: web, port: {number: 80}}}
+  tls: [{hosts: [app.example.com], secretName: app-tls}]</code></pre>
+
+          <h3>HPA example</h3>
+          <pre><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: {name: web}
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: web}
+  minReplicas: 3
+  maxReplicas: 30
+  metrics:
+    - type: Resource
+      resource: {name: cpu, target: {type: Utilization, averageUtilization: 70}}</code></pre>
+
+          <h2>Container security</h2>
+          <ul>
+            <li>Build minimal images (distroless, alpine, Wolfi).</li>
+            <li>Run as non-root, set <code>readOnlyRootFilesystem</code>, drop all capabilities, add only what's needed.</li>
+            <li>Sign + verify images (Sigstore / cosign / Notary v2).</li>
+            <li>Scan continuously (Trivy, Grype, Anchore, Snyk, Wiz).</li>
+            <li>Generate SBOM at build (syft, CycloneDX, SPDX).</li>
+            <li>Use admission controllers (OPA Gatekeeper, Kyverno) to enforce policy.</li>
+            <li><b>Pod Security Standards (PSS):</b> Privileged / Baseline / Restricted profiles. Enforce via Pod Security Admission.</li>
+            <li>NetworkPolicies for east-west firewalling.</li>
+            <li>Secrets via cloud KMS / External Secrets Operator / Vault — NOT in env vars or git.</li>
+            <li>Runtime threat detection (Falco, Sysdig, CrowdStrike, Microsoft Defender for Containers).</li>
+            <li>Update node OS + control plane regularly.</li>
+            <li>Restrict <code>hostNetwork</code>, <code>hostPID</code>, <code>hostIPC</code>, <code>privileged: true</code>.</li>
+          </ul>
+
+          <h2>Serverless containers + functions</h2>
+          <ul>
+            <li><b>AWS Fargate</b> — run containers without managing nodes (ECS / EKS launch type).</li>
+            <li><b>Azure Container Apps / Container Instances</b>.</li>
+            <li><b>GCP Cloud Run</b> — fully managed container HTTP service; scales to zero.</li>
+            <li><b>AWS Lambda</b> + container image support — package function as OCI image up to 10 GB.</li>
+            <li><b>Azure Functions / Google Cloud Functions</b> — code or container.</li>
+            <li><b>Knative</b> — open-source serverless on K8s.</li>
+            <li><b>OpenFaaS / Kubeless / Fission</b> — self-hosted FaaS.</li>
+            <li><b>Cloudflare Workers</b> — V8 isolates at edge, sub-ms cold start.</li>
+          </ul>
+
+          <h2>Service mesh</h2>
+          <ul>
+            <li><b>What:</b> Sidecar proxy (Envoy) injected into every Pod; handles mTLS, retries, traffic shifting, observability without app changes.</li>
+            <li><b>Examples:</b> Istio, Linkerd, Consul Connect, Cilium Service Mesh (eBPF, no sidecar).</li>
+            <li>Use when microservices grow + observability + zero-trust east-west traffic matter.</li>
+          </ul>
+
+          <h2>GitOps + delivery</h2>
+          <ul>
+            <li><b>GitOps</b> — Git is source of truth; controller in cluster reconciles to Git.</li>
+            <li><b>ArgoCD</b>, <b>FluxCD</b> — popular GitOps controllers.</li>
+            <li><b>Helm</b> — package manager + templating ("chart" = chartified app).</li>
+            <li><b>Kustomize</b> — overlay-based template-free customization.</li>
+            <li><b>Tekton / Jenkins X / GitHub Actions / GitLab CI / Azure DevOps</b> for pipelines.</li>
+            <li>Promotion: dev → staging → prod via Git PR / branch / environment-specific overlay.</li>
+          </ul>
+
+          <h2>Edge compute</h2>
+          <ul>
+            <li><b>AWS Outposts / Snowball Edge / Wavelength</b>.</li>
+            <li><b>Azure Stack Edge / Stack HCI</b>.</li>
+            <li><b>Google Distributed Cloud Edge</b>.</li>
+            <li><b>Cloudflare Workers</b> / <b>Fastly Compute@Edge</b> / <b>Akamai EdgeWorkers</b>.</li>
+            <li>For latency-sensitive IoT, AR/VR, 5G MEC, retail POS analytics.</li>
+          </ul>
+
+          <h2>Resource limits + autoscaling concepts</h2>
+          <ul>
+            <li><b>Requests</b> = guaranteed minimum the scheduler reserves.</li>
+            <li><b>Limits</b> = hard cap; exceeding CPU → throttle; exceeding memory → OOMKilled.</li>
+            <li><b>QoS classes</b>: Guaranteed (requests == limits), Burstable, BestEffort.</li>
+            <li>Horizontal scaling (more replicas) beats vertical when app is stateless.</li>
+            <li>Cluster Autoscaler vs Karpenter (AWS-native, faster + workload-aware).</li>
+            <li>VPA can clash with HPA on CPU; combine carefully.</li>
+            <li><b>KEDA</b> — event-driven autoscaler (queue depth, Prometheus, Kafka).</li>
+          </ul>
+
+          <h2>Common troubleshooting</h2>
+          <ul>
+            <li><b>Pending pod</b> — insufficient resources, node selector mismatch, taint blocking, PVC unbound. <code>kubectl describe pod</code> events.</li>
+            <li><b>CrashLoopBackOff</b> — container exits repeatedly. <code>kubectl logs --previous</code>; check entrypoint + env + probes.</li>
+            <li><b>ImagePullBackOff / ErrImagePull</b> — bad image name, missing registry credentials, network. <code>kubectl describe pod</code>.</li>
+            <li><b>OOMKilled</b> — exceeded memory limit. Increase limit or fix leak.</li>
+            <li><b>Readiness fail</b> — Service won't include the Pod; check probe spec + app health.</li>
+            <li><b>DNS resolution fail</b> — CoreDNS down, network policy blocking, search domain wrong.</li>
+            <li><b>Service has no endpoints</b> — selector + Pod labels mismatch.</li>
+            <li><b>Slow rolling update</b> — readiness too aggressive, low maxSurge, slow-start Pods.</li>
+            <li><b>Out of disk on node</b> — image / log accumulation; eviction signals.</li>
+            <li><b>Spot VM reclaim</b> — handle SIGTERM gracefully; replace pool members.</li>
+          </ul>
+
+          <h2>Cost optimization</h2>
+          <ul>
+            <li>Right-size instance families to actual workload (down-shift from xlarge if 20% CPU).</li>
+            <li>Use Reserved / Savings Plans for steady baseline + on-demand / spot for spikes.</li>
+            <li>Shut down dev/test nights + weekends.</li>
+            <li>Cluster Autoscaler + Spot mix for K8s.</li>
+            <li>Convert idle VMs to <b>committed-use</b> or migrate to <b>serverless</b>.</li>
+            <li>Image hygiene: small + few layers → faster pull + less storage.</li>
+            <li>Tag + chargeback by team/app/env.</li>
+            <li>Track egress costs; serve static via CDN.</li>
+            <li>Monitor unused EBS / Disks / IPs that still bill.</li>
+            <li>Use Compute Optimizer / Azure Advisor / GCP Recommender.</li>
+          </ul>
+
+          <h2>Exam pattern table</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Use case</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Compute</th></tr>
+            <tr><td>Steady 24/7 production VM</td><td>Reserved / Savings Plan</td></tr>
+            <tr><td>Stateless batch with checkpoints</td><td>Spot / Preemptible</td></tr>
+            <tr><td>License-bound BYOL with isolation</td><td>Dedicated host</td></tr>
+            <tr><td>GPU-heavy ML training</td><td>Accelerated / GPU family</td></tr>
+            <tr><td>Cheap dev box mostly idle</td><td>Burstable (T-series)</td></tr>
+            <tr><td>Event-driven, scale to zero</td><td>Serverless (FaaS / Cloud Run / Fargate)</td></tr>
+            <tr><td>Microservices at scale + mTLS + canaries</td><td>Kubernetes + service mesh</td></tr>
+            <tr><td>Logging agent per node</td><td>K8s DaemonSet</td></tr>
+            <tr><td>Stable network IDs for DB cluster</td><td>StatefulSet</td></tr>
+            <tr><td>Scheduled job</td><td>CronJob</td></tr>
+            <tr><td>Provision cluster-only access</td><td>ClusterIP Service</td></tr>
+            <tr><td>Expose service to Internet (HTTP)</td><td>Ingress / LoadBalancer</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Smallest deployable unit in Kubernetes" → Pod.</li>
+            <li>"Auto rolling update + replicas" → Deployment.</li>
+            <li>"Stable network identity + ordered start" → StatefulSet.</li>
+            <li>"One pod per node" → DaemonSet.</li>
+            <li>"Scheduled job" → CronJob.</li>
+            <li>"In-cluster service only" → ClusterIP.</li>
+            <li>"Cloud LB external IP" → LoadBalancer Service.</li>
+            <li>"L7 host/path routing" → Ingress / Gateway API.</li>
+            <li>"Distributed key-value store of cluster state" → etcd.</li>
+            <li>"Component that schedules Pods" → kube-scheduler.</li>
+            <li>"Node agent that runs Pods" → kubelet.</li>
+            <li>"Deepest discount, can be reclaimed" → Spot / Preemptible.</li>
+            <li>"Dedicated host" = whole physical server for BYOL.</li>
+            <li>"Container image standard body" → OCI.</li>
+            <li>"Per-Pod east-west firewall" → NetworkPolicy.</li>
+            <li>"Scale pods on CPU" → HPA.</li>
+            <li>"Scale nodes" → Cluster Autoscaler / Karpenter.</li>
+            <li>"Run containers without managing nodes (AWS)" → Fargate.</li>
+            <li>"Open-source serverless on K8s" → Knative.</li>
+            <li>"Sidecar proxy for mTLS + observability" → service mesh (Istio / Linkerd).</li>
+            <li>"Git = source of truth for cluster state" → GitOps (ArgoCD / Flux).</li>
+            <li>"Smallest cold-start latency at edge" → Cloudflare Workers / V8 isolates.</li>
           </ul>
         `
       },
