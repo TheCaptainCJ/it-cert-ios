@@ -18089,21 +18089,148 @@ $obj.Name</code></pre>
       {
         title: '3. The Pipeline & Common Cmdlets',
         body: `
+          <h2>What is the pipeline?</h2>
+          <p>The <b>pipeline</b> is PowerShell's mechanism to chain commands so the <i>output objects</i> of one become the <i>input objects</i> of the next, using the <code>|</code> character. Unlike Unix pipes (text), PowerShell pipes pass real .NET objects with their full property graph intact. <b>Why it matters:</b> every workhorse cmdlet (Where-Object, Sort-Object, ForEach-Object, Select-Object, Group-Object) operates on properties of the upstream object — no parsing, no fragility.</p>
           <pre><code>Get-Process |
   Where-Object { $_.CPU -gt 100 } |
   Sort-Object CPU -Descending |
   Select-Object -First 5 Name, CPU, Id</code></pre>
-          <h2>Workhorse cmdlets</h2>
+
+          <h2>Streaming vs batch</h2>
+          <p><b>What:</b> the pipeline is <i>streaming</i> — objects flow one at a time through every stage. <b>Why it matters:</b> you can pipe a million-row file through filter + transform stages without loading everything into memory. Each cmdlet has a <code>begin</code> (setup), <code>process</code> (per-object), <code>end</code> (teardown) block; <code>process</code> fires once per pipeline input.</p>
+
+          <h2>Parameter binding modes</h2>
+          <p>How does <code>Get-Service | Stop-Service</code> work without an explicit parameter? PowerShell tries two binding modes in order:</p>
           <ul>
-            <li><b>Where-Object</b> — filter (alias <code>?</code>).</li>
-            <li><b>Select-Object</b> — pick properties / first N (alias <code>select</code>).</li>
-            <li><b>Sort-Object</b> — order.</li>
-            <li><b>Group-Object</b> — count by property.</li>
-            <li><b>Measure-Object</b> — sum, avg, max, min, count.</li>
-            <li><b>ForEach-Object</b> — iterate (alias <code>%</code>).</li>
-            <li><b>Format-Table / Format-List</b> — output only; use at end.</li>
+            <li><b>ByValue</b> — if the upstream object's <i>type</i> matches the parameter type. Example: <code>ServiceController</code> object → <code>-InputObject</code> parameter.</li>
+            <li><b>ByPropertyName</b> — if the upstream object has a <i>property</i> whose name matches the parameter. Example: object with a <code>Name</code> property → <code>-Name</code> parameter.</li>
           </ul>
-          <p><code>$_</code> is the current pipeline object. In PS 5.1+ you can also use <code>$PSItem</code>.</p>
+          <p>Inspect with <code>Get-Help cmdlet -Parameter *</code> — look for "Accept pipeline input? true (ByValue / ByPropertyName)".</p>
+
+          <h2>The 8 workhorse cmdlets</h2>
+
+          <h3>Where-Object — filter</h3>
+          <p><b>Alias:</b> <code>?</code> (also <code>where</code>). <b>What:</b> keep only pipeline objects matching a condition. <b>Two syntaxes:</b></p>
+          <pre><code># Script-block syntax (any expression)
+Get-Process | Where-Object { $_.WorkingSet -gt 200MB -and $_.Name -like 'chrome*' }
+
+# Comparison syntax (PS3+; simpler, more readable)
+Get-Process | Where-Object WorkingSet -gt 200MB
+
+# Method form (PS4+; fastest)
+(Get-Process).Where({ $_.CPU -gt 100 })
+(Get-Process).Where({ $_.CPU -gt 100 }, 'First', 5)   # short-circuit after 5</code></pre>
+
+          <h3>Select-Object — pick properties / N items / unique</h3>
+          <p><b>Alias:</b> <code>select</code>. <b>Use cases:</b></p>
+          <pre><code>Get-Process | Select-Object Name, Id, CPU            # pick columns
+Get-Process | Select-Object -First 5                  # top N
+Get-Process | Select-Object -Last 5                   # bottom N
+Get-Process | Select-Object -Skip 10 -First 5         # paging
+Get-Service | Select-Object -Unique Status            # distinct values
+Get-Process | Select-Object -ExpandProperty Name      # unwrap to flat string array
+
+# Calculated properties (rename / compute)
+Get-Process | Select-Object Name,
+  @{ Name='MemMB'; Expression={ [math]::Round($_.WorkingSet/1MB,1) } }</code></pre>
+
+          <h3>Sort-Object — order</h3>
+          <pre><code>Get-Process | Sort-Object CPU -Descending
+Get-Service | Sort-Object Status, DisplayName            # multi-key
+Get-ChildItem | Sort-Object Length -Top 5                # PS6+ partial sort (faster)
+Get-Process | Sort-Object -Property @{ Expression='WS'; Descending=$true }</code></pre>
+
+          <h3>ForEach-Object — iterate / transform</h3>
+          <p><b>Aliases:</b> <code>%</code>, <code>foreach</code>. <b>What:</b> run a script block once per input object.</p>
+          <pre><code>1..5 | ForEach-Object { $_ * 10 }                     # 10,20,30,40,50
+Get-ChildItem *.log | ForEach-Object { $_.FullName }  # extract paths
+
+# Three-block form: begin / process / end
+Get-Service | ForEach-Object -Begin { $c=0 } -Process { $c++ } -End { "Saw $c services" }
+
+# PS7+ parallel
+1..20 | ForEach-Object -Parallel { Start-Sleep 1; $_ } -ThrottleLimit 5
+
+# Method form (faster, no Cmdlet overhead)
+(1..5).ForEach({ $_ * 10 })
+(Get-Service).ForEach('Stop')                          # invoke method on each</code></pre>
+
+          <h3>Group-Object — bucket by property</h3>
+          <pre><code>Get-Process | Group-Object -Property Company
+Get-Service | Group-Object Status -NoElement            # count only
+Get-ChildItem -Recurse | Group-Object Extension | Sort-Object Count -Descending</code></pre>
+
+          <h3>Measure-Object — aggregate stats</h3>
+          <pre><code>Get-ChildItem -File | Measure-Object Length -Sum -Average -Maximum
+Get-Process | Measure-Object CPU -Average                # average CPU
+Get-Content big.log | Measure-Object -Line -Word -Character</code></pre>
+
+          <h3>Compare-Object — diff two collections</h3>
+          <pre><code>Compare-Object (Get-Content a.txt) (Get-Content b.txt)
+# SideIndicator: =&gt; only in second, &lt;= only in first, == both (with -IncludeEqual)</code></pre>
+
+          <h3>Tee-Object — split pipeline</h3>
+          <pre><code>Get-Process | Tee-Object -FilePath procs.txt | Where-Object CPU -gt 100</code></pre>
+
+          <h2>Out-* and Format-* — terminate the pipeline</h2>
+          <p><b>Rule:</b> Format-* and Out-* cmdlets emit formatting objects, NOT real objects — put them at the END of the pipeline. Anything after them sees formatting records, not data.</p>
+          <ul>
+            <li><b>Format-Table (ft)</b> — tabular columns. <code>Get-Process | ft Name, CPU -AutoSize</code>.</li>
+            <li><b>Format-List (fl)</b> — vertical key:value list. Good for objects with many properties.</li>
+            <li><b>Format-Wide (fw)</b> — single-property multi-column view.</li>
+            <li><b>Format-Custom (fc)</b> — tree view with nested objects.</li>
+            <li><b>Out-Host</b> — write to console (default; PS adds it implicitly).</li>
+            <li><b>Out-File</b> — write to a file. <code>-Encoding utf8</code> recommended.</li>
+            <li><b>Out-GridView</b> — interactive grid (Windows PS 5.1 / PS7 on Windows only).</li>
+            <li><b>Out-Null</b> — discard. <code>$null = ...</code> or <code>| Out-Null</code>.</li>
+            <li><b>Out-String</b> — convert to a single string for logging.</li>
+          </ul>
+
+          <h2>Export / Import — persist objects</h2>
+          <pre><code>Get-Process | Export-Csv procs.csv -NoTypeInformation
+Import-Csv procs.csv | Where-Object CPU -gt 100
+
+Get-Service | ConvertTo-Json | Set-Content services.json
+Get-Content services.json | ConvertFrom-Json
+
+Get-Process | Export-Clixml procs.xml             # preserves full object graph
+Import-Clixml procs.xml                            # round-trip with types</code></pre>
+
+          <h2>Pipeline control + redirection</h2>
+          <ul>
+            <li><b>Streams:</b> 1 Output, 2 Error, 3 Warning, 4 Verbose, 5 Debug, 6 Information, * all.</li>
+            <li><b>Redirect:</b> <code>cmd 2&gt;errors.log</code>, <code>cmd *&gt;all.log</code>, <code>cmd 2&gt;&amp;1</code> merge stderr into stdout.</li>
+            <li><b>Discard:</b> <code>cmd | Out-Null</code> or <code>[void]( cmd )</code> or <code>$null = cmd</code>.</li>
+            <li><b>$PSDefaultParameterValues</b> — set default parameters across the session: <code>$PSDefaultParameterValues['Export-Csv:NoTypeInformation']=$true</code>.</li>
+          </ul>
+
+          <h2>Performance notes</h2>
+          <ul>
+            <li>Method <code>.Where()</code> / <code>.ForEach()</code> are 3–10× faster than the cmdlet equivalents — they skip pipeline plumbing.</li>
+            <li>Filter early: put <code>Where-Object</code> close to the source.</li>
+            <li>Use cmdlet-native filters when available (<code>-Filter</code> on <code>Get-ChildItem</code>, <code>Get-ADUser</code>) — pushed down to the provider, not done client-side.</li>
+            <li><code>Select-Object -First N</code> short-circuits the upstream pipeline — use it to cap expensive sources.</li>
+            <li>Avoid appending to arrays with <code>$arr += $x</code> in tight loops — quadratic. Use <code>[System.Collections.Generic.List[T]]</code>.</li>
+            <li>Format-* at the end only — anything piped after is operating on formatting tokens.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>$_ / $PSItem</b> — current pipeline object.</li>
+            <li><b>ft / fl / fw</b> — Format-Table / List / Wide.</li>
+            <li><b>?</b> / <b>%</b> — Where-Object / ForEach-Object aliases.</li>
+            <li><b>CSV / JSON / CLIXML</b> — export formats (CLIXML preserves types).</li>
+            <li><b>ByValue / ByPropertyName</b> — pipeline binding modes.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Format-* terminates the data pipeline. <b>Never pipe its output into Where-Object</b>.</li>
+            <li><code>Select-Object -ExpandProperty</code> returns the raw underlying values, not wrapped objects — useful for piping into commands that need strings.</li>
+            <li><code>Where-Object Name -eq 'foo'</code> (comparison syntax) does NOT accept multiple conditions — wrap in a scriptblock <code>{ ... -and ... }</code>.</li>
+            <li><code>ForEach-Object -Parallel</code> (PS7+) runs in <i>runspaces</i> — variables from the parent must be referenced via <code>$using:var</code>.</li>
+            <li>Empty pipelines yield nothing — <code>$null</code>-safe code is your responsibility.</li>
+          </ul>
         `
       },
       {
