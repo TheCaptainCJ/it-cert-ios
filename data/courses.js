@@ -5476,20 +5476,323 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
       {
         title: '10. Troubleshooting Tools',
         body: `
-          <pre><code>ping host
-traceroute / tracert host
-mtr host                       # combined
-arp -a                         # ARP cache
-ip a / ifconfig                # interfaces
-ip route / route print         # routes
-nslookup / dig host
-netstat -tunlp                 # listening sockets (Linux)
-ss -tunlp                      # modern replacement
-tcpdump -i eth0 host x port y  # packet capture
-nmap -sS -p- target            # port scan
-iperf3 -c server               # bandwidth test</code></pre>
-          <h2>Hardware tools</h2>
-          <p>Cable tester, tone generator/probe, TDR (copper distance to fault), OTDR (fiber), loopback plug, multimeter, spectrum analyzer, Wi-Fi analyzer.</p>
+          <p>Network problems are diagnosed with two tool families: <b>software / CLI utilities</b> (run on a host) and <b>hardware testers</b> (handheld units). Exam expects you to know which tool finds which problem, plus how to interpret common output.</p>
+
+          <h2>Software / CLI tools</h2>
+
+          <h3>ping — ICMP echo</h3>
+          <p><b>What:</b> Sends ICMP Echo Request packets, measures reachability + RTT.</p>
+          <pre><code>ping host                  # default 4 (Windows) / continuous (Linux)
+ping -c 100 host           # 100 packets (Linux/mac)
+ping -n 100 host           # 100 packets (Windows)
+ping -t host               # continuous (Windows)
+ping -i 0.2 host           # 0.2 sec interval (Linux)
+ping -s 1472 host          # 1472-byte payload (1500 MTU minus headers)
+ping -M do -s 1472 host    # test path MTU (DF set, Linux)
+ping6 host  /  ping -6 host
+ping -a 8.8.8.8            # resolve PTR</code></pre>
+          <p><b>Reads:</b></p>
+          <ul>
+            <li><b>Reply</b> — host alive + path works.</li>
+            <li><b>Request timed out</b> — no response (could be down, ICMP filtered, ACL).</li>
+            <li><b>Destination host unreachable</b> — router has no route.</li>
+            <li><b>TTL expired</b> — too few hops in TTL.</li>
+            <li><b>Pattern of loss</b> — sporadic = congestion / interference; steady = duplex / route flap.</li>
+          </ul>
+          <p><b>Limits:</b> Some firewalls drop ICMP; absence ≠ down. Try TCP probe.</p>
+
+          <h3>traceroute / tracert / pathping</h3>
+          <p><b>What:</b> Reveals each router hop along a path by sending packets with increasing TTL.</p>
+          <pre><code>tracert host             # Windows (uses ICMP by default)
+traceroute host          # Linux/mac (uses UDP by default)
+traceroute -n host       # don't resolve names (faster)
+traceroute -T -p 443 host  # TCP traceroute on 443 (firewall-friendly)
+mtr host                 # combined live ping + traceroute (Linux/mac)
+pathping host            # Windows; per-hop loss + latency over time</code></pre>
+          <p><b>Reads:</b> Hop where * * * starts often = first firewall dropping the probe. Latency JUMP between two hops = WAN link or congested hop.</p>
+
+          <h3>nslookup / dig / host / kdig</h3>
+          <pre><code>nslookup example.com                  # quick A
+nslookup example.com 8.8.8.8          # use specific server
+nslookup -type=MX example.com
+nslookup -type=TXT example.com        # SPF/DKIM/DMARC
+nslookup -type=AAAA example.com
+
+dig example.com                       # A
+dig +short example.com
+dig MX example.com
+dig @1.1.1.1 example.com              # specific server
+dig +trace example.com                # full resolver path
+dig -x 8.8.8.8                        # reverse PTR
+
+host example.com
+host -t MX example.com</code></pre>
+          <p><b>Reads:</b> Authoritative section, TTL, status (NOERROR / NXDOMAIN / SERVFAIL). Compare local resolver to authoritative — mismatch points to cache poisoning or stale record.</p>
+
+          <h3>ipconfig / ifconfig / ip / nmcli</h3>
+          <pre><code># Windows
+ipconfig
+ipconfig /all
+ipconfig /release
+ipconfig /renew
+ipconfig /flushdns
+ipconfig /displaydns
+ipconfig /registerdns
+
+# Linux modern
+ip a                                  # interfaces + addresses
+ip -br a                              # brief
+ip link set eth0 up
+ip route                              # routing table
+ip route get 8.8.8.8                  # which route applies
+ip neigh                              # ARP / ND cache
+nmcli device status                   # NetworkManager
+nmcli connection show
+
+# Legacy / macOS
+ifconfig
+route -n
+arp -a / ip neigh</code></pre>
+
+          <h3>arp / ip neigh</h3>
+          <pre><code>arp -a                         # Windows + macOS
+arp -d *                       # clear cache
+ip neigh                       # Linux modern</code></pre>
+          <p><b>Reads:</b> Each line = IP↔MAC mapping. <b>Two MACs claiming the same IP</b> = duplicate / spoofing.</p>
+
+          <h3>netstat / ss</h3>
+          <pre><code># Windows
+netstat -an                    # all connections + listening
+netstat -ano                   # adds PID
+netstat -anob                  # adds owning executable (admin)
+netstat -r                     # routing table
+
+# Linux modern
+ss -tunlp                      # TCP+UDP listeners + program
+ss -t state established        # established TCP only
+ss -plant                      # full info
+
+# Legacy Linux
+netstat -tunlp</code></pre>
+          <p><b>Reads:</b> LISTEN sockets = server. ESTABLISHED = active session. TIME_WAIT pileup = client connection churn. SYN_SENT stuck = remote not responding.</p>
+
+          <h3>nmap — Network Mapper</h3>
+          <pre><code>nmap host                              # default top-1000 TCP ports
+nmap -sS -p 1-65535 host               # SYN stealth, all TCP
+nmap -sU -p 53,67,123,161 host         # UDP scan
+nmap -sV host                          # service version detection
+nmap -O host                           # OS fingerprint
+nmap -A host                           # aggressive (version + OS + scripts)
+nmap --script vuln host                # NSE vuln scripts
+nmap -p 22 192.168.1.0/24              # subnet scan for SSH</code></pre>
+          <p><b>Use:</b> Discovery, security testing, validation post-deploy. Be aware of legal + acceptable-use boundaries.</p>
+
+          <h3>tcpdump + Wireshark</h3>
+          <pre><code># tcpdump CLI capture
+sudo tcpdump -i eth0                            # all on eth0
+sudo tcpdump -i eth0 host 10.0.0.5
+sudo tcpdump -i eth0 host 10.0.0.5 and port 443
+sudo tcpdump -i eth0 -nn -vv -w capture.pcap    # save to file
+sudo tcpdump -r capture.pcap                    # replay
+
+# Wireshark display filters
+tcp.port == 443
+ip.addr == 10.0.0.5 and tls.handshake
+http.request
+dns
+icmp</code></pre>
+          <p><b>Use:</b> See actual frames on the wire. Solves "is it on the network or on the host?" questions.</p>
+
+          <h3>iperf / iperf3 — bandwidth tester</h3>
+          <pre><code># Server
+iperf3 -s
+
+# Client
+iperf3 -c server                      # 10 sec TCP test
+iperf3 -c server -t 60                # 60 seconds
+iperf3 -c server -P 8                 # 8 parallel streams
+iperf3 -c server -u -b 1G             # UDP at 1 Gbps
+iperf3 -c server -R                   # reverse (server → client)</code></pre>
+          <p><b>Use:</b> Measure end-to-end throughput, jitter (UDP), loss. Validate that a link can actually deliver advertised speed.</p>
+
+          <h3>curl / wget — HTTP / TLS probe</h3>
+          <pre><code>curl -I https://example.com           # HEAD, see status + headers
+curl -v https://example.com           # verbose TLS handshake + headers
+curl -o /dev/null -w '%{time_namelookup} %{time_connect} %{time_starttransfer} %{time_total}\\n' https://example.com
+wget https://example.com/file</code></pre>
+
+          <h3>openssl s_client — TLS handshake debug</h3>
+          <pre><code>openssl s_client -connect example.com:443 -servername example.com -tls1_2 -showcerts
+openssl s_client -connect example.com:443 -alpn h2</code></pre>
+          <p><b>Use:</b> Inspect cert chain, expiration, cipher suite, supported protocols.</p>
+
+          <h3>nc (netcat) — Swiss-army knife</h3>
+          <pre><code>nc -vz host 443                       # port reachability test
+nc -l 4444                            # listen on port 4444
+nc host 25                            # talk to SMTP manually
+echo 'GET / HTTP/1.0\\r\\n\\r\\n' | nc host 80</code></pre>
+
+          <h3>Test-NetConnection (PowerShell modern replacement)</h3>
+          <pre><code>Test-NetConnection example.com -Port 443
+Test-NetConnection example.com -TraceRoute
+Resolve-DnsName example.com -Type AAAA</code></pre>
+
+          <h3>Other useful CLI</h3>
+          <ul>
+            <li><b>route print / route -n</b> — routing table.</li>
+            <li><b>getmac / Get-NetAdapter</b> — local MAC info.</li>
+            <li><b>Get-NetIPConfiguration / Get-DnsClientCache</b> — modern Windows.</li>
+            <li><b>ethtool eth0</b> — link speed / duplex / driver info (Linux).</li>
+            <li><b>iftop / nethogs / iotop</b> — per-interface / per-process bandwidth.</li>
+            <li><b>speedtest-cli / Ookla speedtest</b> — Internet throughput.</li>
+            <li><b>lldpctl / lldpd / show lldp neighbors</b> — what's connected to a switch port.</li>
+            <li><b>WireGuard / Tailscale CLI</b> — VPN status.</li>
+          </ul>
+
+          <h2>Cisco / network device show + debug commands</h2>
+          <pre><code>show ip interface brief             # quick port summary
+show interfaces gig0/1              # detail (errors, duplex, speed)
+show interfaces gig0/1 counters errors
+show mac address-table              # learned MACs
+show vlan brief
+show spanning-tree summary
+show ip route
+show ip route 8.8.8.8               # which route applies
+show ip ospf neighbor
+show ip bgp summary
+show ip arp
+show cdp neighbors detail           # Cisco
+show lldp neighbors detail
+show logging
+show running-config / startup-config
+show version                        # uptime, IOS, hardware
+debug ip routing                    # USE CAREFULLY in prod
+debug ip ospf events</code></pre>
+
+          <h2>Cable / RF hardware tools</h2>
+
+          <h3>Cable tester</h3>
+          <p><b>What:</b> Verifies continuity + pinout end to end. Confirms wiring.</p>
+          <p><b>Use:</b> Catch crossed pairs, opens, shorts.</p>
+
+          <h3>Cable certifier (TIA-568 standards)</h3>
+          <p>Higher-end tester that measures:</p>
+          <ul>
+            <li><b>Attenuation / Insertion loss</b> — signal drop in dB.</li>
+            <li><b>NEXT / FEXT / PSNEXT / ACR-N</b> — crosstalk metrics.</li>
+            <li><b>Return loss</b>.</li>
+            <li><b>Delay skew</b>.</li>
+            <li><b>Length</b>.</li>
+          </ul>
+          <p><b>Used for:</b> Certifying a cabling installation to Cat 6 / 6a / 8 spec. Fluke DSX series is industry standard.</p>
+
+          <h3>TDR — Time-Domain Reflectometer</h3>
+          <p><b>What:</b> Sends a pulse down COPPER cable; measures reflected signal to locate breaks / shorts / impedance mismatches by distance.</p>
+
+          <h3>OTDR — Optical Time-Domain Reflectometer</h3>
+          <p><b>What:</b> Same idea on FIBER. Pulses laser, measures backscatter to find bends, breaks, splice losses, distance.</p>
+
+          <h3>Tone generator + probe ("fox & hound")</h3>
+          <p><b>What:</b> Inject an audio tone on one end of a cable, follow it with a probe to identify which port in a closet matches a wall jack. Essential for un-labeled cabling.</p>
+
+          <h3>Loopback plug</h3>
+          <p><b>What:</b> RJ45 or fiber connector that loops TX back to RX. Tests NIC / port hardware in isolation.</p>
+
+          <h3>Multimeter</h3>
+          <p><b>What:</b> Volts / amps / continuity / resistance. Used for power tests, AC outlets, PSU rails.</p>
+
+          <h3>Fiber light meter / power meter</h3>
+          <p><b>What:</b> Measures dBm of light arriving at one end of a fiber. Compare to transceiver spec sheet — too low = dirty connector, broken strand, or wrong distance / mode.</p>
+
+          <h3>Fusion splicer</h3>
+          <p><b>What:</b> Melts two fiber strands together with an electric arc to create a low-loss permanent splice. Field repair tool.</p>
+
+          <h3>Spectrum analyzer</h3>
+          <p><b>What:</b> Visualizes RF energy across frequencies. Reveals non-Wi-Fi interferers (microwaves, Bluetooth, cordless phones, radar, jamming) that Wi-Fi tools alone miss.</p>
+          <p><b>Tools:</b> Cisco CleanAir, Ekahau Sidekick, MetaGeek Chanalyzer, RTL-SDR (cheap), HackRF.</p>
+
+          <h3>Wi-Fi analyzer</h3>
+          <p><b>What:</b> Sees Wi-Fi APs + channels + RSSI from a client perspective. Lightweight visibility; pair with spectrum analyzer for full picture. Examples: Ekahau Survey, NetSpot, inSSIDer, WiFi Analyzer (Android), WiFi Explorer (macOS).</p>
+
+          <h3>Punch-down tool</h3>
+          <p><b>What:</b> Seats wires into keystone jack / patch panel IDC slots using a 110 (or 66) blade. Half cuts the wire, half drives it into the contact.</p>
+
+          <h3>Crimper</h3>
+          <p><b>What:</b> Attaches RJ45 / RJ11 / coax connectors to cable.</p>
+
+          <h3>Network tap</h3>
+          <p><b>What:</b> Passive device inserted into a live link to make a perfect copy of traffic for capture / IDS. No packet loss vs SPAN port.</p>
+
+          <h3>Borescope / inspection scope</h3>
+          <p><b>What:</b> Inspect fiber end-face for dirt / scratches. Single dust spec at the wrong wavelength = ruined link.</p>
+
+          <h2>Choosing the right tool for the symptom</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Symptom</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Tool / command</th></tr>
+            <tr><td>No link light on NIC</td><td>Cable tester, swap cable, check switch port</td></tr>
+            <tr><td>Slow file copy</td><td>iperf3, Get-NetAdapter, ethtool (duplex)</td></tr>
+            <tr><td>Reachability across WAN</td><td>ping, tracert, pathping, mtr</td></tr>
+            <tr><td>"Can't browse" but ping works</td><td>nslookup, dig — likely DNS</td></tr>
+            <tr><td>Port unreachable</td><td>nc -vz, Test-NetConnection, nmap</td></tr>
+            <tr><td>Mystery traffic / DDoS</td><td>tcpdump, Wireshark, NetFlow</td></tr>
+            <tr><td>Unknown distance to fault in copper</td><td>TDR</td></tr>
+            <tr><td>Fiber link is dark</td><td>OTDR, fiber light meter, inspect end-face</td></tr>
+            <tr><td>Find which closet port is "Office 215"</td><td>Tone generator + probe</td></tr>
+            <tr><td>TLS handshake fails</td><td>openssl s_client, browser cert chain inspector</td></tr>
+            <tr><td>Wi-Fi flaky in one room</td><td>Wi-Fi analyzer + spectrum analyzer + survey</td></tr>
+            <tr><td>Switch port flapping</td><td>show interfaces counters, swap cable, check transceiver</td></tr>
+            <tr><td>BGP not establishing</td><td>show ip bgp summary, ping neighbor, check TCP/179 + auth</td></tr>
+          </table>
+
+          <h2>Reading interface counters (Cisco)</h2>
+          <ul>
+            <li><b>CRC errors</b> — bad cable / EMI / duplex mismatch.</li>
+            <li><b>Runts</b> — frames &lt; 64 bytes; usually collisions.</li>
+            <li><b>Giants</b> — frames &gt; MTU; rare.</li>
+            <li><b>Late collisions</b> — duplex mismatch (one side full, one side half).</li>
+            <li><b>Input drops</b> — overrun buffers.</li>
+            <li><b>Output drops</b> — egress congestion / QoS drops.</li>
+            <li><b>Pause frames</b> — flow control activity.</li>
+          </ul>
+
+          <h2>Common traceroute reading exam patterns</h2>
+          <p>Output line: <code>5  router5.isp.net (1.2.3.4)  18 ms  19 ms  17 ms</code></p>
+          <ul>
+            <li>All three * = no reply / filtered hop.</li>
+            <li>Sharp latency jump between hops = link with that distance / speed.</li>
+            <li>Loop showing same hop repeating = routing loop.</li>
+            <li>Final reply but with high loss = destination overloaded or rate-limiting ICMP.</li>
+          </ul>
+
+          <h2>Wireshark filters worth memorizing</h2>
+          <pre><code>ip.addr == 10.0.0.5
+ip.src == 10.0.0.5 && ip.dst == 8.8.8.8
+tcp.port == 443
+udp.port == 53
+http.request.method == "GET"
+dns.qry.name contains "example.com"
+tls.handshake.type == 1            # ClientHello
+icmp.type == 8                     # echo request
+!arp                                # exclude ARP noise
+tcp.analysis.retransmission</code></pre>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Verify reachability + measure RTT" → ping.</li>
+            <li>"See every hop along the path" → traceroute / tracert.</li>
+            <li>"Combined live ping per hop" → mtr or pathping.</li>
+            <li>"DNS lookup details" → nslookup or dig.</li>
+            <li>"Listening sockets + owning PID" → netstat -ano (Windows) / ss -tunlp (Linux).</li>
+            <li>"Bandwidth test between two endpoints" → iperf / iperf3.</li>
+            <li>"Capture frames" → tcpdump + Wireshark.</li>
+            <li>"Discover open ports + services" → nmap.</li>
+            <li>"Distance to a fiber break" → OTDR.</li>
+            <li>"Distance to copper break" → TDR.</li>
+            <li>"Find which jack is which in a closet" → tone generator + probe.</li>
+            <li>"Test NIC TX/RX hardware alone" → loopback plug.</li>
+            <li>"Identify non-Wi-Fi RF interference" → spectrum analyzer.</li>
+            <li>"Inspect TLS cert chain from CLI" → openssl s_client.</li>
+          </ul>
         `
       }
     ],
