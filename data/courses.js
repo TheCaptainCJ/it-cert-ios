@@ -15438,21 +15438,326 @@ resource "aws_vpc" "main" {
       {
         title: '8. Performance, Scaling, HA',
         body: `
-          <h2>Scaling</h2>
+          <p>Cloud workloads are graded on how well they <b>scale</b> with demand, <b>maintain availability</b> through failure, and <b>recover</b> from disaster. This lesson covers scaling patterns, multi-AZ + multi-region HA, DR strategies tied to RTO/RPO, performance tuning, and resilience engineering. Exam expects you to pick the right pattern for a given availability + cost target.</p>
+
+          <h2>Scaling concepts</h2>
+
+          <h3>Vertical scaling (scale up / scale down)</h3>
           <ul>
-            <li><b>Vertical</b> — bigger instance (limits, downtime).</li>
-            <li><b>Horizontal</b> — more instances behind LB. Stateless apps scale freely.</li>
-            <li><b>Auto-scaling groups</b> — track CPU, queue depth, custom metrics.</li>
+            <li>Bigger or smaller single instance (more CPU / RAM / IOPS).</li>
+            <li><b>Pros:</b> simple, no app re-architecture.</li>
+            <li><b>Cons:</b> hard ceiling per VM, usually requires restart (downtime), single point of failure remains.</li>
+            <li><b>Use cases:</b> single-instance DBs that don't shard easily, monoliths, legacy apps.</li>
           </ul>
-          <h2>HA design</h2>
+
+          <h3>Horizontal scaling (scale out / scale in)</h3>
           <ul>
-            <li>Multi-AZ within a region for failure isolation.</li>
-            <li>Multi-region for disaster recovery.</li>
-            <li>Stateless tier behind LB; stateful tier with replication (RDS Multi-AZ, Cosmos DB, etc.).</li>
-            <li>Health checks + circuit breakers + graceful degradation.</li>
+            <li>Add or remove instances behind a load balancer.</li>
+            <li><b>Pros:</b> near-linear capacity growth, no single point of failure, easy auto-scaling.</li>
+            <li><b>Cons:</b> requires stateless app or externalized state (sticky session is an anti-pattern).</li>
+            <li><b>Use cases:</b> web tier, API, microservices, batch workers.</li>
           </ul>
-          <h2>DR strategies</h2>
-          <p>Backup-restore → Pilot light → Warm standby → Multi-site active-active. Track <b>RTO</b> & <b>RPO</b>.</p>
+
+          <h3>Diagonal scaling</h3>
+          <p>Grow up to a sane VM size, then scale out. Common in practice.</p>
+
+          <h3>Auto Scaling Groups / VMSS / MIG</h3>
+          <ul>
+            <li>Pool of identical instances sized by min / max / desired.</li>
+            <li><b>Scaling triggers:</b></li>
+            <ul>
+              <li><b>Target tracking</b> — keep avg CPU at 60%.</li>
+              <li><b>Step / threshold</b> — add 2 instances at CPU&gt;70%, add 5 at CPU&gt;90%.</li>
+              <li><b>Schedule</b> — scale up at 8am, down at 8pm.</li>
+              <li><b>Predictive</b> — ML-based forward forecast (AWS Auto Scaling, Azure).</li>
+              <li><b>Custom metric</b> — queue depth, requests/sec, p95 latency.</li>
+            </ul>
+            <li><b>Cooldown / warmup</b> — prevent thrashing.</li>
+            <li>Health checks replace failed instances automatically.</li>
+            <li><b>Karpenter</b> (AWS) — node autoscaler for K8s; provisions workload-appropriate node types.</li>
+            <li><b>KEDA</b> — event-driven autoscaling for K8s (queue depth, Prometheus, Kafka, custom).</li>
+            <li><b>Cluster Autoscaler</b> — add/remove nodes by Pod pressure.</li>
+            <li><b>HPA</b> — scale Pods horizontally (CPU/mem/custom metric).</li>
+            <li><b>VPA</b> — adjust Pod requests/limits.</li>
+          </ul>
+
+          <h2>Load balancing</h2>
+          <ul>
+            <li><b>L4 (NLB / Standard LB / NetworkLB)</b> — TCP/UDP, preserves source IP, millions of pps.</li>
+            <li><b>L7 (ALB / Application Gateway / HTTPS LB)</b> — host/path routing, WAF, redirects.</li>
+            <li><b>Global LB</b> — anycast across regions (Front Door, GCP Global HTTPS LB, CloudFront + Global Accelerator).</li>
+            <li><b>Algorithms:</b> round robin, least connections, source IP hash, weighted, latency-based, geolocation.</li>
+            <li><b>Health checks:</b> TCP, HTTP, HTTPS path; remove unhealthy targets.</li>
+            <li><b>Sticky sessions</b> — usually anti-pattern; externalize session state (Redis, ElastiCache).</li>
+            <li><b>TLS termination</b> at the LB for offload + cert management.</li>
+          </ul>
+
+          <h2>Caching tiers</h2>
+          <ul>
+            <li><b>Client-side</b> — browser cache + ETag + Cache-Control headers.</li>
+            <li><b>CDN edge</b> — CloudFront / Front Door / Cloud CDN.</li>
+            <li><b>Application cache</b> — Redis / Memcached (ElastiCache, Azure Cache for Redis, Memorystore).</li>
+            <li><b>Database cache</b> — query cache, materialized views.</li>
+            <li><b>Read replicas</b> — offload read traffic from primary DB.</li>
+            <li><b>Edge cache invalidation</b> — bust on deploy, use cache-key strategies.</li>
+          </ul>
+
+          <h2>State + statelessness</h2>
+          <ul>
+            <li>Stateless app + externalized state → trivial horizontal scaling.</li>
+            <li>Externalize state to: managed DB, Redis cache, object storage, message queue.</li>
+            <li>Avoid sticky sessions; if needed, use cookie-based + short TTL.</li>
+            <li><b>12-factor</b> + cloud-native patterns: stateless processes, share-nothing.</li>
+          </ul>
+
+          <h2>Database HA + scaling</h2>
+          <ul>
+            <li><b>Read replicas</b> — async copy; scale reads horizontally. Eventually consistent.</li>
+            <li><b>Multi-AZ deployment</b> — synchronous standby in another AZ (RDS Multi-AZ, Azure SQL HA, Cloud SQL HA). Auto-failover.</li>
+            <li><b>Aurora / Cloud Spanner / Cosmos DB</b> — purpose-built distributed DBs with single-digit ms cross-region.</li>
+            <li><b>Sharding / partitioning</b> — split data across instances by key (range, hash).</li>
+            <li><b>Cross-region replication</b> — async; cross-region failover w/ data lag.</li>
+            <li><b>Multi-master / active-active</b> — Cosmos DB multi-region writes, Aurora Global Database write forwarding.</li>
+            <li><b>Database proxy / connection pooling</b> — RDS Proxy, PgBouncer; smooth failovers + connection reuse.</li>
+          </ul>
+
+          <h2>Resilience patterns</h2>
+          <ul>
+            <li><b>Retry with exponential backoff + jitter</b> — handle transient errors w/o stampede.</li>
+            <li><b>Circuit breaker</b> — open after N failures, half-open to probe, close when healthy (Hystrix, resilience4j, Polly, Istio).</li>
+            <li><b>Timeout</b> on every external call.</li>
+            <li><b>Bulkhead</b> — isolate resource pools per dependency so one slow dep doesn't drown the rest.</li>
+            <li><b>Graceful degradation</b> — partial response when dep fails (return cached or default).</li>
+            <li><b>Idempotency</b> — safe to retry.</li>
+            <li><b>Health checks</b> — liveness (still alive?), readiness (accept traffic?), startup (still booting?).</li>
+            <li><b>Chaos engineering</b> — intentionally fail dependencies to validate resilience (Netflix Simian Army, AWS FIS, Azure Chaos Studio, LitmusChaos).</li>
+          </ul>
+
+          <h2>Availability zones + regions</h2>
+          <ul>
+            <li><b>Availability Zone (AZ) / Zone</b> — physically separate datacenter inside a region with independent power, cooling, networking. Most regions have 3+.</li>
+            <li><b>Region</b> — geographic area with multiple AZs; typically &gt; 100 km apart.</li>
+            <li><b>Region pair</b> (Azure) — Microsoft-managed cross-region pair for GRS / GZRS.</li>
+            <li><b>Local Zone / Wavelength Zone</b> — metro + 5G carrier extensions.</li>
+          </ul>
+
+          <h3>Multi-AZ deployment</h3>
+          <ul>
+            <li>Spread workload across 2+ AZs within a region.</li>
+            <li>Survives single-AZ failure (datacenter outage, fiber cut, power event).</li>
+            <li>Inter-AZ latency single-digit ms; bandwidth + egress charge typically applies.</li>
+            <li>Required for production by most cloud SLAs.</li>
+            <li>Multi-AZ DB: synchronous replication to standby in 2nd AZ; automatic failover in seconds-minutes.</li>
+            <li>K8s: spread Pods across AZ via <code>topologySpreadConstraints</code>.</li>
+          </ul>
+
+          <h3>Multi-region deployment</h3>
+          <ul>
+            <li>For region-wide outage survival or geographic latency.</li>
+            <li>Adds complexity: cross-region replication, traffic management, data residency.</li>
+            <li>Patterns:
+              <ul>
+                <li><b>Active-passive</b> — failover via DNS / global LB.</li>
+                <li><b>Active-active</b> — both regions serve traffic; lowest RTO/RPO.</li>
+                <li><b>Read-local / write-primary</b> — reads served locally; writes routed to primary region.</li>
+              </ul>
+            </li>
+            <li><b>Traffic management:</b> Route 53 latency routing + health checks; Azure Traffic Manager / Front Door; GCP Cloud DNS + Cloud Load Balancing; anycast.</li>
+          </ul>
+
+          <h2>BIA + RTO / RPO</h2>
+          <ul>
+            <li><b>BIA</b> (Business Impact Analysis) — identify critical processes, dependencies, max tolerable downtime.</li>
+            <li><b>RTO</b> (Recovery Time Objective) — max acceptable downtime per service.</li>
+            <li><b>RPO</b> (Recovery Point Objective) — max acceptable data-loss window.</li>
+            <li><b>MTD</b> (Maximum Tolerable Downtime) — RTO + WRT (Work Recovery Time) ≤ MTD.</li>
+            <li><b>SLA</b>, <b>OLA</b>, <b>UC</b> — agreements.</li>
+            <li><b>MTBF</b> / <b>MTTR</b> — reliability + repair time.</li>
+          </ul>
+
+          <h2>DR strategies (in order of cost + complexity)</h2>
+          <ol>
+            <li><b>Backup &amp; Restore</b> — backups copied to DR region. Days RTO, hours RPO. Cheapest.</li>
+            <li><b>Pilot Light</b> — minimal core running in DR region (DB replicas, AMIs/images, IaC ready). Scale up on event. Hours RTO, minutes RPO.</li>
+            <li><b>Warm Standby</b> — scaled-down but full environment running; resize + cut over. Minutes RTO, minutes RPO.</li>
+            <li><b>Multi-site Active-Active</b> — both regions serving traffic; instant failover via traffic management. Seconds RTO/RPO. Highest cost.</li>
+            <li><b>Hot site</b> = full equivalent ready; <b>warm site</b> = partial; <b>cold site</b> = space + power only.</li>
+          </ol>
+
+          <h2>Backup strategies in cloud</h2>
+          <ul>
+            <li><b>3-2-1-1-0 rule</b> — 3 copies, 2 media, 1 offsite, 1 offline/immutable, 0 errors verified.</li>
+            <li><b>Snapshots</b> — block storage point-in-time (incremental).</li>
+            <li><b>Native backup services</b> — AWS Backup, Azure Backup, GCP Backup &amp; DR.</li>
+            <li><b>Immutable / WORM</b> — Object Lock, Immutable Blob, Bucket Lock against ransomware.</li>
+            <li><b>Cross-region copies</b> — replicate snapshots / images / objects.</li>
+            <li><b>Cross-account isolation</b> — backups in separate "backup" account so compromised prod can't delete.</li>
+            <li><b>MFA-Delete</b> on critical buckets.</li>
+            <li><b>Test restores</b> regularly — RTO measurement only happens during drills.</li>
+          </ul>
+
+          <h2>Resilience metrics</h2>
+          <ul>
+            <li><b>Availability</b> — uptime % (Five 9s = 99.999% ≈ 5 min/yr downtime; Four 9s ≈ 53 min/yr; Three 9s ≈ 8.8 hr/yr).</li>
+            <li><b>SLO</b> (Service Level Objective) — internal target.</li>
+            <li><b>SLA</b> — contractual.</li>
+            <li><b>SLI</b> (Service Level Indicator) — measurement (e.g., success rate).</li>
+            <li><b>Error budget</b> = 1 - SLO. Drives release velocity decisions.</li>
+            <li><b>Apdex</b> score — user satisfaction with response times.</li>
+            <li><b>p50 / p95 / p99 / p99.9</b> latency percentiles.</li>
+          </ul>
+
+          <h2>Composite SLA math</h2>
+          <p>Multiply SLAs of dependent components. E.g., 99.9% × 99.9% = 99.8%; 4 chained 99.9% services = 99.6%.</p>
+          <p>Reduce dependencies + add redundancy in parallel paths to combat compounding.</p>
+
+          <h2>Performance tuning patterns</h2>
+          <ul>
+            <li><b>Cache aggressively</b> — CDN, app cache, query cache.</li>
+            <li><b>Async + queue</b> — decouple slow operations (SQS, Service Bus, Pub/Sub).</li>
+            <li><b>CQRS</b> — separate read + write models.</li>
+            <li><b>Read replicas</b> for read-heavy DBs.</li>
+            <li><b>Partition / shard</b> hot keys.</li>
+            <li><b>Compress</b> payloads (gzip, brotli, zstd).</li>
+            <li><b>HTTP/2 + HTTP/3 (QUIC)</b>.</li>
+            <li><b>Connection pooling</b> — keep DB / HTTP connections alive.</li>
+            <li><b>Eager fetch + batch</b> — reduce N+1.</li>
+            <li><b>Edge compute</b> — Workers / Lambda@Edge for low-latency logic.</li>
+            <li><b>Pre-warm</b> caches + serverless containers before peak.</li>
+            <li><b>Profile</b> hotspots — perf, flame graphs, distributed traces.</li>
+            <li><b>Scale storage IOPS</b> — Provisioned IOPS, Hyperdisk Extreme, Ultra Disk.</li>
+            <li><b>Move closer</b> — multi-region + CDN for global users.</li>
+          </ul>
+
+          <h2>Storage HA patterns</h2>
+          <ul>
+            <li><b>Block storage</b> — RAID is provider-internal; you pick redundancy tier.</li>
+            <li><b>Object storage</b> — 11 nines durability across AZs; cross-region replication for region failure.</li>
+            <li><b>File storage</b> — multi-AZ (EFS), GRS (Azure Files), regional/zonal Filestore tiers.</li>
+            <li><b>Cross-region replication</b> for objects.</li>
+          </ul>
+
+          <h2>Networking for HA</h2>
+          <ul>
+            <li>NAT Gateway per AZ for HA (one NAT GW = single point of failure for that AZ's outbound).</li>
+            <li>Route tables per AZ pointing to local NAT GW.</li>
+            <li>Multi-AZ LBs deployed automatically when targets in multiple AZs.</li>
+            <li>VPN Gateways often need 2 tunnels for redundancy; GCP HA VPN = 4 tunnels.</li>
+            <li>Direct Connect / ExpressRoute redundancy — 2 connections to different colocations.</li>
+            <li>Global Accelerator / Front Door anycast IP for instant region failover.</li>
+          </ul>
+
+          <h2>Disaster recovery testing</h2>
+          <ul>
+            <li><b>Tabletop exercise</b> — discussion walkthrough.</li>
+            <li><b>Functional drill</b> — actually failover in a test env.</li>
+            <li><b>Full failover test</b> — production cutover.</li>
+            <li><b>Game day / chaos engineering</b> — random failure injection.</li>
+            <li>Schedule + document; capture lessons learned; update runbooks.</li>
+            <li>Untested DR is hope, not a plan.</li>
+          </ul>
+
+          <h2>Application architecture patterns for resilience</h2>
+          <ul>
+            <li><b>Microservices</b> — smaller blast radius per failure.</li>
+            <li><b>Message-driven / event-driven</b> — buffer load spikes via queues.</li>
+            <li><b>Idempotent APIs</b> — safe to retry; use idempotency keys.</li>
+            <li><b>Saga pattern</b> — distributed transaction via compensating actions.</li>
+            <li><b>CQRS + Event Sourcing</b> — separate read/write models + replayable event log.</li>
+            <li><b>Cell-based architecture</b> — isolated stacks (cells) each serving subset of users; one cell's failure doesn't take down others (used by AWS internally).</li>
+            <li><b>Bulkhead</b> — separate thread pools / pods per dependency.</li>
+            <li><b>Backpressure</b> — slow down upstream when downstream saturated (RxJS, reactive streams).</li>
+            <li><b>Throttling + rate limiting</b> — protect downstream + ensure fair use.</li>
+            <li><b>Service mesh</b> — retry policies, circuit breakers, mTLS, observability at infrastructure layer.</li>
+          </ul>
+
+          <h2>Observability tied to HA</h2>
+          <ul>
+            <li><b>SLO + error budget</b> drives release pace.</li>
+            <li><b>Burn rate alerts</b> — alert when error budget consumed too quickly.</li>
+            <li><b>Synthetic monitoring</b> — uptime / canary probes from outside.</li>
+            <li><b>Real User Monitoring (RUM)</b> — actual user perf.</li>
+            <li><b>Distributed tracing</b> (OpenTelemetry, X-Ray, Application Insights, Cloud Trace) — find slow hops.</li>
+            <li><b>Alerts on golden signals</b> — latency, traffic, errors, saturation (LTES from Google SRE).</li>
+            <li><b>USE</b> — Utilization, Saturation, Errors (Brendan Gregg).</li>
+            <li><b>RED</b> — Rate, Errors, Duration (Tom Wilkie).</li>
+          </ul>
+
+          <h2>Capacity planning</h2>
+          <ul>
+            <li>Project growth — forecast 12-18 months.</li>
+            <li><b>Load testing</b> — k6, JMeter, Gatling, Locust, AWS Distributed Load Testing.</li>
+            <li><b>Soak / endurance test</b> — 24-72h sustained load.</li>
+            <li><b>Spike test</b> — sudden 10x burst.</li>
+            <li>Identify bottleneck (CPU / mem / network / DB / cache / lock).</li>
+            <li>Right-size + reserve capacity ahead of known events.</li>
+            <li>Pre-warm Lambda concurrency or container instances if cold-start matters.</li>
+          </ul>
+
+          <h2>Cost vs availability trade-off</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tier</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RTO</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RPO</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Relative cost</th></tr>
+            <tr><td>Backup &amp; Restore</td><td>Hours-Days</td><td>Hours</td><td>$</td></tr>
+            <tr><td>Pilot Light</td><td>Tens of minutes</td><td>Minutes</td><td>$$</td></tr>
+            <tr><td>Warm Standby</td><td>Minutes</td><td>Minutes</td><td>$$$</td></tr>
+            <tr><td>Multi-site Active-Active</td><td>Seconds</td><td>Near-zero</td><td>$$$$</td></tr>
+          </table>
+          <p>Match the tier to the workload's business value; not every system needs active-active.</p>
+
+          <h2>Cross-cloud HA service equivalence</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Concept</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>VM autoscaler</td><td>Auto Scaling Group</td><td>VMSS</td><td>MIG</td></tr>
+            <tr><td>K8s pod autoscaler</td><td>HPA / KEDA</td><td>HPA / KEDA</td><td>HPA / KEDA</td></tr>
+            <tr><td>Node autoscaler</td><td>Cluster Autoscaler / Karpenter</td><td>Cluster Autoscaler</td><td>Cluster Autoscaler / NAP</td></tr>
+            <tr><td>Multi-AZ managed DB</td><td>RDS Multi-AZ / Aurora</td><td>Azure SQL Zone-redundant / Cosmos DB</td><td>Cloud SQL HA / Spanner</td></tr>
+            <tr><td>Global DB / multi-region writes</td><td>Aurora Global Database / DynamoDB Global Tables</td><td>Cosmos DB multi-region writes</td><td>Spanner / Firestore</td></tr>
+            <tr><td>Global anycast LB</td><td>Global Accelerator / CloudFront</td><td>Front Door / Traffic Manager</td><td>Global HTTPS LB</td></tr>
+            <tr><td>Backup service</td><td>AWS Backup</td><td>Azure Backup</td><td>Backup &amp; DR</td></tr>
+            <tr><td>DR replication</td><td>Elastic DR (CloudEndure)</td><td>Azure Site Recovery</td><td>Backup &amp; DR</td></tr>
+            <tr><td>Chaos engineering</td><td>Fault Injection Service (FIS)</td><td>Chaos Studio</td><td>—</td></tr>
+            <tr><td>Object cross-region replication</td><td>S3 CRR</td><td>GRS / GZRS / Object Replication</td><td>Cloud Storage Multi-region / Dual-region</td></tr>
+          </table>
+
+          <h2>Common HA antipatterns</h2>
+          <ul>
+            <li>Single AZ deployment for "production".</li>
+            <li>Sticky sessions for app-server state.</li>
+            <li>Synchronous chained calls without timeouts.</li>
+            <li>No circuit breaker → cascading failure.</li>
+            <li>Untested DR plan.</li>
+            <li>Backups in same account / same region as production.</li>
+            <li>No read replica + DB primary serves all reads.</li>
+            <li>Auto-scaling thresholds based only on CPU when bottleneck is something else.</li>
+            <li>Cold-cache after deploy → latency spike.</li>
+            <li>One huge instance vs many small ones.</li>
+            <li>Hard-coded region / endpoint.</li>
+            <li>Manual DNS failover (forgotten in middle-of-night incidents).</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Add more instances behind LB" → horizontal scaling.</li>
+            <li>"Bigger VM" → vertical scaling.</li>
+            <li>"Scale on queue depth or custom metric" → custom-metric auto scaling.</li>
+            <li>"Maintain target CPU utilization" → target tracking policy.</li>
+            <li>"Workload survives single datacenter failure" → multi-AZ.</li>
+            <li>"Workload survives region outage" → multi-region.</li>
+            <li>"Cheapest DR with hours RTO" → Backup &amp; Restore.</li>
+            <li>"Sub-minute RTO + RPO" → multi-site active-active.</li>
+            <li>"Max acceptable data loss window" → RPO.</li>
+            <li>"Max acceptable downtime" → RTO.</li>
+            <li>"Compounding SLAs" → multiply (4 × 99.9% ≈ 99.6%).</li>
+            <li>"Stop one failing dep from sinking the app" → circuit breaker + bulkhead.</li>
+            <li>"Test failure handling intentionally" → chaos engineering (AWS FIS / Azure Chaos Studio).</li>
+            <li>"K8s node autoscaler optimized for workload" → Karpenter (AWS).</li>
+            <li>"K8s event-driven autoscaler (Kafka / queue)" → KEDA.</li>
+            <li>"Sub-second region failover via anycast" → Global Accelerator / Front Door / Global HTTPS LB.</li>
+            <li>"Critical metric for cloud SLOs" → error budget burn rate.</li>
+            <li>"Idempotency key" — safe retries.</li>
+            <li>"Cell-based architecture" — limit blast radius.</li>
+            <li>"5 9's" → 99.999% (≈ 5 min/yr).</li>
+          </ul>
         `
       },
       {
