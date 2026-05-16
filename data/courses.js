@@ -16126,22 +16126,318 @@ resource "aws_vpc" "main" {
       {
         title: '10. Troubleshooting Cloud',
         body: `
-          <h2>Standard playbook</h2>
+          <p>Cloud troubleshooting blends classic systems debugging (logs, metrics, network) with cloud-specific concerns: provider outages, IAM policy evaluation, eventual consistency, quotas, hidden cross-region dependencies, billing surprises. The "what changed?" question is usually the fastest path to root cause.</p>
+
+          <h2>Standard playbook (in order)</h2>
           <ol>
-            <li>Check provider status page first.</li>
-            <li>Verify IAM/permissions if API errors.</li>
-            <li>Check security groups / NACLs / route tables for connectivity issues.</li>
-            <li>Inspect logs (Activity / CloudTrail) for recent changes.</li>
-            <li>Look at metrics — CPU, memory, latency, error rate.</li>
-            <li>Compare against a known-good baseline.</li>
+            <li><b>Provider status page</b> — is this a regional outage or service degradation? AWS Health Dashboard, Azure Service Health, GCP Status Dashboard.</li>
+            <li><b>Personal Health Dashboard</b> — events affecting YOUR account specifically.</li>
+            <li><b>Recent changes</b> — CloudTrail / Activity Log / Cloud Audit Logs filtered to last 1-24 hours; correlate w/ deploy timeline.</li>
+            <li><b>Reproduce</b> — confirm the issue + minimum repro.</li>
+            <li><b>Symptom layer</b> — pinpoint OSI / stack layer (DNS? L3 route? L4 SG? L7 app?).</li>
+            <li><b>Logs</b> — CloudWatch Logs Insights / KQL / Cloud Logging filtered to component + timeframe.</li>
+            <li><b>Metrics</b> — CPU / mem / network / disk / queue depth / latency / error rate; compare vs baseline.</li>
+            <li><b>Traces</b> — find slow / failing hop in distributed call chain.</li>
+            <li><b>Permissions</b> — IAM policy simulator / Access Analyzer.</li>
+            <li><b>Quotas + limits</b> — service quotas dashboard; throttling often silent.</li>
+            <li><b>Compare baseline</b> — was this working before deploy / config change?</li>
+            <li><b>Mitigate first</b> (rollback / scale / failover) <b>then</b> root-cause.</li>
+            <li><b>Document</b> in runbook + RCA.</li>
           </ol>
-          <h2>Common gotchas</h2>
+
+          <h2>Permission + IAM troubleshooting</h2>
           <ul>
-            <li>Missing public IP on subnet → no Internet.</li>
-            <li>Default routes pointing to NAT not IGW for private subnets.</li>
-            <li>DNS resolution between VPCs requires Route 53 resolver / private zones.</li>
-            <li>Service quotas / limits silently throttle.</li>
-            <li>IAM eventual consistency — newly granted permissions need a brief retry.</li>
+            <li><b>"Access Denied" / "403 Forbidden"</b> — most common cloud error.</li>
+            <li><b>AWS IAM Policy Simulator</b> — model a principal + action + resource; shows allow / deny.</li>
+            <li><b>AWS IAM Access Analyzer + Policy Generator</b> — generate least-privilege from CloudTrail.</li>
+            <li><b>Azure RBAC: Access control (IAM) → Check access</b>.</li>
+            <li><b>GCP Policy Troubleshooter</b> — shows why a principal can/can't do a thing.</li>
+            <li><b>Order of evaluation:</b> Explicit DENY anywhere → SCP / Org Policy → resource-based → identity-based → permission boundary → session policy. Explicit Deny ALWAYS wins.</li>
+            <li><b>STS AssumeRole</b> failures — trust policy doesn't trust the principal; check Principal + Condition (external ID, MFA).</li>
+            <li><b>Workload identity issues</b> — EC2 instance profile attached? IMDSv2 enforced + caller setting token? EKS IRSA — service account annotation correct?</li>
+            <li><b>IAM eventual consistency</b> — newly-created credentials / roles take seconds to propagate. Retry with backoff for 30-60 s.</li>
+            <li><b>Cross-account confused deputy</b> — missing <code>external ID</code>; tighten trust policy.</li>
+            <li><b>KMS key policy</b> — even with IAM allow, KMS uses key policies; <code>kms:Decrypt</code> often needs explicit grant.</li>
+          </ul>
+
+          <h2>Network connectivity troubleshooting</h2>
+          <p>Walk the stack:</p>
+          <ol>
+            <li><b>Is the target alive?</b> — instance state Running; health-checked targets healthy.</li>
+            <li><b>Public IP / DNS?</b> — Elastic IP attached? AAAA / A record correct?</li>
+            <li><b>Route table</b> — 0.0.0.0/0 route to IGW (public subnet) or NAT GW (private)?</li>
+            <li><b>NACL</b> (AWS only) — STATELESS: must allow both inbound + outbound.</li>
+            <li><b>Security Group / NSG</b> — STATEFUL: inbound rule allows source + port?</li>
+            <li><b>Host firewall</b> — iptables / Windows Defender Firewall blocking?</li>
+            <li><b>Application listening</b> — <code>ss -tunlp | grep :port</code> on instance.</li>
+            <li><b>VPC Reachability Analyzer / Network Watcher Connectivity / GCP Connectivity Tests</b> — model the path.</li>
+            <li><b>VPC Flow Logs / NSG Flow Logs / VPC Flow Logs</b> — check ACCEPT vs REJECT on the packet.</li>
+            <li><b>Internet vs private path</b> — PrivateLink / Private Endpoint / PSC needed?</li>
+            <li><b>BGP on Direct Connect / ExpressRoute / Interconnect</b> — session up + prefixes advertised?</li>
+            <li><b>DNS resolution</b> — public DNS works but private VPC zone missing or unassociated?</li>
+          </ol>
+          <p><b>Symptom hints:</b></p>
+          <ul>
+            <li><b>"Connection timed out"</b> — usually SG / NACL / route / firewall blocking.</li>
+            <li><b>"Connection refused"</b> — host reachable but no listener on that port (or app crashed).</li>
+            <li><b>"Host unreachable"</b> — no route to the destination.</li>
+            <li><b>"Name or service not known"</b> — DNS failure.</li>
+            <li><b>TLS handshake fails</b> — cert expired / wrong SAN / SNI / cipher mismatch / clock skew.</li>
+            <li><b>Asymmetric path</b> — stateless NACL allowed outbound but not inbound for return; check both directions.</li>
+          </ul>
+
+          <h2>DNS troubleshooting</h2>
+          <ul>
+            <li><b>Public DNS</b> — <code>dig +trace example.com</code>; check NS chain, TTL, propagation.</li>
+            <li><b>VPC private DNS</b> — Route 53 private hosted zone associated with VPC? VPC has <code>enableDnsSupport</code> + <code>enableDnsHostnames</code>?</li>
+            <li><b>Cross-VPC resolution</b> — Route 53 Resolver inbound / outbound endpoints + rules; Azure Private DNS resolver; GCP Cloud DNS forwarding zones.</li>
+            <li><b>DNSSEC validation failure</b> — fix signing chain.</li>
+            <li><b>Caching</b> — stale records; flush local resolver, check TTL.</li>
+            <li><b>DNS firewall</b> blocking domain? Whitelist if intentional.</li>
+            <li><b>Split-horizon</b> — same name resolves differently internal vs external; verify expected view.</li>
+          </ul>
+
+          <h2>Service quotas + throttling</h2>
+          <ul>
+            <li>Every cloud service has <b>quotas / limits</b> per region per account.</li>
+            <li><b>AWS Service Quotas console</b> — view + request increases.</li>
+            <li><b>Azure Quotas</b> + <b>Quotas blade per resource provider</b>.</li>
+            <li><b>GCP Quotas</b> per project + per region.</li>
+            <li><b>Throttling errors:</b> 429 Too Many Requests; AWS "RequestLimitExceeded" / "Throttling"; Azure "TooManyRequests".</li>
+            <li><b>Mitigation:</b> exponential backoff + jitter; batch API calls; SDK default retry.</li>
+            <li><b>Burst credits</b> on burstable VMs (T-series, B-series) — exhausted → throttled.</li>
+            <li><b>Burst credit on EBS gp2</b> — exhausted → 100 IOPS baseline; move to gp3.</li>
+            <li><b>Lambda concurrency limit</b> — account-wide default 1000; request increase.</li>
+            <li><b>NAT GW limit</b> — 55,000 simultaneous connections per IP; scale by adding IPs / NATs.</li>
+            <li><b>S3 prefix limit</b> — 5,500 GET / 3,500 PUT per partitioned prefix; spread across prefixes.</li>
+          </ul>
+
+          <h2>Cost spike / surprise bill troubleshooting</h2>
+          <ul>
+            <li>Open <b>Cost Explorer / Cost Management / Billing Reports</b>; filter by service + day + tag.</li>
+            <li><b>Cost anomaly detection</b> alerts likely already triggered — read the report.</li>
+            <li>Common culprits: NAT GW egress, cross-region replication, versioned S3 accumulating, idle Load Balancers, unattached EBS, Spot interrupted then on-demand replacement, sudden auto-scale, CloudWatch Logs ingest spike, BigQuery query without LIMIT, DynamoDB unexpected scale.</li>
+            <li><b>CloudTrail / Activity Log</b> — who created the resource? Was it intentional?</li>
+            <li><b>VPC Flow Logs</b> — who's generating the egress?</li>
+            <li><b>Tag audit</b> — find untagged or owner-less resources.</li>
+            <li><b>Stop / pause / scale-down</b> first; ask later.</li>
+          </ul>
+
+          <h2>VM / instance troubleshooting</h2>
+          <ul>
+            <li><b>Instance won't start</b> — check capacity in AZ; switch instance type; check root volume snapshot health; resize EBS.</li>
+            <li><b>"Stopped" but billed</b> — EBS still charged for storage; terminate if not needed.</li>
+            <li><b>Can't SSH/RDP</b> — SG inbound; key pair issue; user-data didn't complete; instance health 2/2 failing.</li>
+            <li><b>SSM Session Manager</b> as fallback — no SSH needed; agent + IAM role required.</li>
+            <li><b>Console screenshot / serial console</b> — see boot output; helpful for kernel panics, fstab issues.</li>
+            <li><b>EBS detached unexpectedly</b> — check IAM events; force-detach if hung.</li>
+            <li><b>Disk full</b> on root volume — extend EBS + grow filesystem (<code>growpart</code> + <code>resize2fs</code>).</li>
+            <li><b>Excessive CPU</b> on T-series — credits depleted; check baseline + burst behavior.</li>
+            <li><b>Network throughput low</b> — instance type's network cap (e.g., t3.medium ~5 Gbps); upgrade or use ENA / SR-IOV.</li>
+          </ul>
+
+          <h2>Container / Kubernetes troubleshooting</h2>
+          <ul>
+            <li><b>kubectl get pods -A</b> — overall status; <b>describe pod</b> for events; <b>logs --previous</b> for crash loop.</li>
+            <li><b>Pending</b> — no node has resources matching requests; node selector / taint blocks; PVC unbound.</li>
+            <li><b>CrashLoopBackOff</b> — container exits repeatedly; check probes, entrypoint, env, secrets.</li>
+            <li><b>ImagePullBackOff</b> — bad image / tag / registry credentials. <code>kubectl describe</code> shows pull error.</li>
+            <li><b>OOMKilled</b> — exceeded memory limit. Raise limit or fix leak; check <code>kubectl describe</code> last state.</li>
+            <li><b>Readiness probe failing</b> — Service shows 0 endpoints; check app health.</li>
+            <li><b>DNS resolution fails</b> — CoreDNS pods healthy? NetworkPolicy blocking egress to kube-dns? <code>nslookup kubernetes</code> inside Pod.</li>
+            <li><b>Service routing</b> — endpoints empty → label selector mismatch.</li>
+            <li><b>Ingress 502 / 503</b> — backend unhealthy; check pod readiness + ingress controller logs.</li>
+            <li><b>EKS IRSA failing</b> — service account annotation, trust policy, sts:AssumeRoleWithWebIdentity, OIDC provider.</li>
+            <li><b>Out of nodes</b> — Cluster Autoscaler hit max; Karpenter not provisioning; capacity in AZ.</li>
+            <li><b>Spot pod terminated</b> — handle SIGTERM gracefully; use Pod Disruption Budgets + AWS Node Termination Handler.</li>
+            <li><b>K8s upgrade broke API</b> — deprecated API removed; convert manifests; use <code>kubectl convert</code>; check release notes.</li>
+          </ul>
+
+          <h2>Storage troubleshooting</h2>
+          <ul>
+            <li><b>S3 / Blob "Access Denied"</b> — bucket policy, IAM, Block Public Access, encryption key permission, MFA-Delete.</li>
+            <li><b>S3 versioning + lifecycle</b> — old versions retained; expire noncurrent.</li>
+            <li><b>EBS slow</b> — gp2 burst credits exhausted; switch to gp3 / io2 / Provisioned IOPS.</li>
+            <li><b>EFS / Azure Files latency</b> — check performance mode (general purpose vs max I/O); increase throughput mode.</li>
+            <li><b>Snapshot "pending"</b> long time — large first snapshot; check service health.</li>
+            <li><b>Object Lock prevents delete</b> — Governance mode bypassable; Compliance mode cannot.</li>
+            <li><b>Cross-region replication lag</b> — async; check replication metrics; bandwidth limits.</li>
+            <li><b>KMS key revoked</b> — objects encrypted with that key unreadable; rotate / restore key carefully.</li>
+            <li><b>NAT GW connection limits</b> hit when transferring many small objects.</li>
+          </ul>
+
+          <h2>Database troubleshooting</h2>
+          <ul>
+            <li><b>Connection limit</b> — managed DB max connections; use proxy (RDS Proxy, PgBouncer) or pool.</li>
+            <li><b>Slow query</b> — Performance Insights / Query Insights / Cloud SQL Insights; add index, rewrite query.</li>
+            <li><b>Replication lag</b> — high write volume; throttle or scale primary.</li>
+            <li><b>Failover</b> on Multi-AZ — apps must reconnect; use endpoint not IP.</li>
+            <li><b>Storage autoscale</b> hit ceiling — increase max storage.</li>
+            <li><b>Cosmos DB / DynamoDB throttling</b> — partition hot key; increase RU / WCU+RCU or on-demand.</li>
+            <li><b>Aurora / Cloud SQL / Cosmos / DynamoDB</b> regions — global tables / multi-master writes when latency demands.</li>
+          </ul>
+
+          <h2>Function-as-a-Service troubleshooting</h2>
+          <ul>
+            <li><b>Cold start</b> — pre-warm w/ provisioned concurrency; lighter runtime; smaller package; reuse SDK clients outside handler.</li>
+            <li><b>Timeout</b> — increase Lambda timeout up to 15 min; or move long work to Step Functions / Workflows.</li>
+            <li><b>Throttling</b> — concurrency limit; request increase + reserve concurrency.</li>
+            <li><b>VPC-bound Lambda slow</b> — ENI creation pre-2019 was slow; now fast w/ Hyperplane.</li>
+            <li><b>Permission errors</b> — execution role missing service permission.</li>
+            <li><b>Trigger not firing</b> — event source mapping wrong; permission on bucket / queue.</li>
+            <li><b>Memory tuning</b> — Lambda CPU scales with memory; right-size both.</li>
+            <li><b>Concurrent execution limits</b> — account-wide 1000 default.</li>
+          </ul>
+
+          <h2>Cross-cloud equivalence in troubleshooting tooling</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Need</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Service health</td><td>AWS Health Dashboard</td><td>Azure Service Health</td><td>GCP Status Dashboard</td></tr>
+            <tr><td>Personal health</td><td>Personal Health Dashboard</td><td>Service Health Personal</td><td>Personalized Service Health</td></tr>
+            <tr><td>Path connectivity tester</td><td>Reachability Analyzer</td><td>Network Watcher Connection Troubleshoot</td><td>Connectivity Tests</td></tr>
+            <tr><td>Network packet capture</td><td>Traffic Mirroring</td><td>NW Packet Capture</td><td>Packet Mirroring</td></tr>
+            <tr><td>Flow logs</td><td>VPC Flow Logs</td><td>NSG / VNet Flow Logs</td><td>VPC Flow Logs</td></tr>
+            <tr><td>IAM simulation</td><td>IAM Policy Simulator</td><td>Azure Check Access</td><td>Policy Troubleshooter</td></tr>
+            <tr><td>Audit log</td><td>CloudTrail (+ Lake)</td><td>Activity Log + Sign-ins + Audit</td><td>Cloud Audit Logs</td></tr>
+            <tr><td>Resource history</td><td>AWS Config</td><td>Resource Graph + Change Analysis</td><td>Asset Inventory + Change History</td></tr>
+            <tr><td>Quotas</td><td>Service Quotas</td><td>Quotas blade</td><td>IAM &amp; Admin → Quotas</td></tr>
+            <tr><td>Cost analysis</td><td>Cost Explorer + Anomaly Detection</td><td>Cost Management + Anomaly</td><td>Billing Reports + Smart Suggestions</td></tr>
+            <tr><td>Web console SSH fallback</td><td>SSM Session Manager + EC2 Serial Console</td><td>Azure Bastion / Run Command / Serial Console</td><td>IAP TCP forwarding / Serial Console</td></tr>
+            <tr><td>Container debug</td><td>kubectl + Container Insights</td><td>kubectl + Container Insights</td><td>kubectl + GKE Logging</td></tr>
+            <tr><td>Tracing</td><td>X-Ray</td><td>Application Insights</td><td>Cloud Trace</td></tr>
+            <tr><td>Threat detection</td><td>GuardDuty + Detective</td><td>Defender for Cloud</td><td>Security Command Center</td></tr>
+          </table>
+
+          <h2>Most common cloud gotchas (memorize)</h2>
+          <ol>
+            <li><b>Missing public IP</b> on instance in public subnet → no Internet (instance has only private IP).</li>
+            <li><b>Default route mis-set</b> — private subnet using IGW (no public IP) or public subnet using NAT GW.</li>
+            <li><b>NACL deny on return traffic</b> — stateless; allow ephemeral port range outbound (1024-65535).</li>
+            <li><b>DNS not resolving cross-VPC</b> — need Route 53 Resolver / private DNS / forwarding zone.</li>
+            <li><b>Service quotas silently throttling</b> — request increase ahead of time.</li>
+            <li><b>IAM eventual consistency</b> — retry with backoff for 30-60s after creation.</li>
+            <li><b>Encryption key permissions missing</b> — IAM allow + KMS key policy allow + grant.</li>
+            <li><b>Cross-account requires external ID</b> + Principal in trust policy + IAM allow on caller side.</li>
+            <li><b>S3 Block Public Access overrides bucket policy</b>.</li>
+            <li><b>SCP / Org Policy denying</b> something resource policy would otherwise allow — explicit Deny wins.</li>
+            <li><b>SG references other SG, not CIDR</b> — easier; auto-update on scale.</li>
+            <li><b>Multi-AZ deploy actually single-AZ</b> — verify subnet selection.</li>
+            <li><b>Auto-scaling failed to launch</b> — capacity in AZ; switch instance types; mixed instances policy.</li>
+            <li><b>Cold start latency</b> on first request to scaled-to-zero serverless.</li>
+            <li><b>Spot interrupted</b> mid-job — design for resumability + checkpoint state.</li>
+            <li><b>Region eventual replication</b> for global services (Route 53 changes, IAM users) — propagation takes seconds-minutes.</li>
+            <li><b>NAT GW per-AZ</b> — single NAT GW in one AZ is a single point of failure.</li>
+            <li><b>Service deprecation</b> — Lambda runtime EOL, EKS version EOL, deprecated APIs in K8s upgrades.</li>
+            <li><b>Region-specific service availability</b> — not every service in every region.</li>
+            <li><b>Account-level Block Public Access</b> can override a per-bucket setting.</li>
+          </ol>
+
+          <h2>Provider issue vs your issue</h2>
+          <p>Steps to decide:</p>
+          <ol>
+            <li>Status page shows incident in your region + service? — provider issue, ride it out or fail over to other region.</li>
+            <li>Does the issue affect only YOUR account? — likely IAM / network / config.</li>
+            <li>Other accounts in same org affected? — possibly SCP / Org Policy / shared service.</li>
+            <li>Issue began right after deploy? — your deploy; rollback.</li>
+            <li>Issue began at midnight? — auto-scale event, scheduled job, cron, certificate expiry.</li>
+            <li>Issue scales with load? — quota / throttle / autoscaler max.</li>
+            <li>File a support case with evidence: timestamp, region, service, error code, request ID, account ID.</li>
+          </ol>
+
+          <h2>Useful "what changed?" commands</h2>
+          <pre><code># AWS CloudTrail recent IAM changes
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreatePolicy --max-results 10
+
+# AWS Config — resources changed in last day
+aws configservice get-resource-config-history --resource-type AWS::EC2::SecurityGroup --resource-id sg-...
+
+# Azure Activity Log recent
+az monitor activity-log list --offset 1h
+
+# GCP Audit Log recent
+gcloud logging read 'protoPayload.methodName=...' --freshness=1h</code></pre>
+
+          <h2>Working with cloud support</h2>
+          <ul>
+            <li><b>Support tiers</b>: AWS Basic / Developer / Business / Enterprise; Azure Basic / Developer / Standard / Professional Direct; GCP Standard / Enhanced / Premium.</li>
+            <li>Production workloads should have at least Business / Standard tier.</li>
+            <li><b>Open case with:</b> service name, region, account ID, exact timestamp(s), error message + Request ID, IAM principal, sample reproducer command.</li>
+            <li><b>TAM</b> (Technical Account Manager) on Enterprise tier — ongoing relationship.</li>
+            <li>Cloud providers also publish <b>Well-Architected reviews</b>, <b>Trusted Advisor</b> recommendations, <b>FastTrack</b> programs.</li>
+          </ul>
+
+          <h2>Useful general debugging commands (cloud-aware)</h2>
+          <pre><code># Test endpoint reachability + TLS
+curl -v https://api.example.com
+openssl s_client -connect api.example.com:443 -servername api.example.com
+
+# DNS chain trace
+dig +trace api.example.com
+nslookup api.example.com 1.1.1.1
+
+# Trace network path
+mtr api.example.com
+traceroute -T -p 443 api.example.com
+
+# AWS CLI verbose
+aws s3 ls s3://bucket --debug
+
+# Azure CLI verbose
+az group list --debug
+
+# GCP CLI verbose
+gcloud compute instances list --log-http
+
+# Kubernetes shell into pod
+kubectl exec -it pod -- sh
+kubectl logs -f pod
+kubectl debug node/node-name -it --image=busybox</code></pre>
+
+          <h2>Post-incident review</h2>
+          <ul>
+            <li><b>Blameless postmortem</b> — focus on systems + process, not individuals.</li>
+            <li>Document <b>timeline</b> + <b>root cause</b> + <b>contributing factors</b> + <b>action items</b>.</li>
+            <li>Update runbooks + alerts + tests so it can't recur silently.</li>
+            <li>Track action-item completion.</li>
+            <li>Share lessons across teams (internal incident review meetings).</li>
+            <li>Map to MITRE ATT&amp;CK / Cyber Kill Chain for security incidents.</li>
+          </ul>
+
+          <h2>Best practices to PREVENT troubleshooting in the first place</h2>
+          <ul>
+            <li>Everything in IaC + version control.</li>
+            <li>Mandatory tagging + linting + policy-as-code.</li>
+            <li>SLOs + error-budget-driven rollouts.</li>
+            <li>Canary deploys + auto-rollback.</li>
+            <li>Pre-prod / staging environment matching prod.</li>
+            <li>Chaos drills + game days.</li>
+            <li>Tabletop DR drills.</li>
+            <li>Continuous CSPM + posture monitoring.</li>
+            <li>Quarterly access reviews + cleanup.</li>
+            <li>Runbooks per service.</li>
+            <li>Centralized logging + alerting.</li>
+            <li>Cost guardrails + anomaly detection.</li>
+            <li>Documentation + onboarding playbooks.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Cannot reach instance in public subnet" → check SG + NACL + route table + IGW + public IP.</li>
+            <li>"Cannot reach instance in private subnet from public Internet" → not designed to be reachable; use bastion / load balancer / Session Manager.</li>
+            <li>"NAT Gateway in only one AZ" → single AZ outage breaks egress; deploy per-AZ NAT GW.</li>
+            <li>"Throttling errors increasing" → backoff + service quota request.</li>
+            <li>"Just created IAM role, role assumption fails" → eventual consistency; retry briefly.</li>
+            <li>"S3 access denied despite IAM allow" → Block Public Access + bucket policy + KMS key policy + SCP — find the deny.</li>
+            <li>"Cross-region failover test" → DR strategy with traffic management (Route 53 health checks / Front Door / Cloud Load Balancing).</li>
+            <li>"Detect drift between IaC and reality" → terraform plan / AWS Config drift detection / Azure Resource Graph.</li>
+            <li>"Bill spiked overnight" → NAT GW egress / Spot interruption / log ingest / cross-region replication / DDoS / leaked credential running miner.</li>
+            <li>"Pod stuck Pending" → no node fits; check resources, taints, PVC.</li>
+            <li>"Logs aren't appearing" → log group retention / sampling / pipeline broken / agent not running.</li>
+            <li>"Compare current state to known-good baseline" → drift detection + change history.</li>
+            <li>"Pre-deploy validation that prevents misconfig" → policy-as-code at pipeline gate.</li>
+            <li>"K8s upgrade broke deployments" → deprecated API; convert manifests; check release notes.</li>
+            <li>"Provider region outage" → status page + multi-region DR + traffic shift.</li>
+            <li>"Increase Lambda concurrency" → request quota increase + reserved concurrency on critical functions.</li>
           </ul>
         `
       }
