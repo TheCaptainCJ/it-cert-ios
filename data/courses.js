@@ -12151,20 +12151,474 @@ shellcheck script.sh               # static analyzer — every script should pas
       {
         title: '9. Security Hardening',
         body: `
+          <p>A standard Linux install is functional but NOT hardened. Hardening = applying layered controls to reduce attack surface, enforce least privilege, prevent + detect compromise, + meet compliance benchmarks. This lesson consolidates every Linux+ hardening topic into a single playbook. Exam tests SSH, sudo, firewall, MAC layers (SELinux / AppArmor), audit + integrity, patching, and CIS-style baselines.</p>
+
+          <h2>Hardening checklist (TL;DR)</h2>
+          <ol>
+            <li>Patch promptly — automate security updates.</li>
+            <li>Minimal install — remove packages + services not needed.</li>
+            <li>Strong authentication — keys + MFA; disable root login; lock service accounts.</li>
+            <li>Sudo + least privilege.</li>
+            <li>Host firewall enabled + default-deny inbound.</li>
+            <li>MAC enabled — SELinux (RHEL) or AppArmor (Ubuntu) enforcing.</li>
+            <li>Audit + central logging.</li>
+            <li>File integrity monitoring (AIDE, Tripwire).</li>
+            <li>Disk encryption (LUKS) for sensitive systems.</li>
+            <li>Time sync (NTP/chrony) + accurate logs.</li>
+            <li>Backups + tested restores.</li>
+            <li>Apply a CIS Benchmark / DISA STIG.</li>
+            <li>Vulnerability + compliance scanning (OpenSCAP, Lynis).</li>
+          </ol>
+
+          <h2>Patching</h2>
           <ul>
-            <li>Disable root SSH (<code>PermitRootLogin no</code>), use key auth.</li>
-            <li>Use <code>sudo</code> + groups; avoid generic privileged accounts.</li>
-            <li>Enable firewall; close unused ports.</li>
-            <li>Apply updates: <code>unattended-upgrades</code> / <code>dnf-automatic</code>.</li>
-            <li>SELinux (RHEL): <code>getenforce</code>, contexts (<code>ls -Z</code>), <code>setsebool</code>.</li>
-            <li>AppArmor (Ubuntu): <code>aa-status</code>.</li>
-            <li>fail2ban for brute-force protection.</li>
-            <li>Audit with <code>auditd</code> / <code>ausearch</code>.</li>
-            <li>File integrity: <code>aide</code> / Tripwire.</li>
+            <li><b>Debian / Ubuntu:</b> <code>unattended-upgrades</code> for security-only auto patch. Config: <code>/etc/apt/apt.conf.d/50unattended-upgrades</code>.</li>
+            <li><b>RHEL / Fedora:</b> <code>dnf-automatic.timer</code>. Config: <code>/etc/dnf/automatic.conf</code>.</li>
+            <li><b>Live kernel patching:</b> <code>kpatch</code> (RHEL), <code>livepatch</code> (Ubuntu/Canonical) — apply security fixes without reboot.</li>
+            <li><b>Reboot detection:</b> <code>needs-restarting -r</code> (yum-utils) or <code>checkrestart</code> (debian-goodies). Plan maintenance.</li>
+            <li><b>Inventory:</b> <code>dpkg -l</code> / <code>rpm -qa</code> piped to SBOM tools (<code>syft</code>), vuln-scanned with <code>grype</code> / <code>trivy</code> / <code>oscap</code>.</li>
+            <li><b>Stage</b> updates: dev → staging → prod. Pin versions with <code>apt-mark hold</code> / <code>dnf versionlock</code> when needed.</li>
           </ul>
-          <h2>SSH keys</h2>
-          <pre><code>ssh-keygen -t ed25519 -C "me@host"
-ssh-copy-id user@host</code></pre>
+
+          <h2>Minimal install + service inventory</h2>
+          <ul>
+            <li>Use server / minimal install ISO; skip GUI on servers.</li>
+            <li>Remove unused packages: <code>apt purge</code>, <code>dnf remove</code>.</li>
+            <li>List listening services: <code>ss -tunlp</code>; disable anything you don't need.</li>
+            <li>Disable + mask unused systemd units: <code>systemctl disable --now name</code>, <code>systemctl mask name</code>.</li>
+            <li>Common candidates to disable: <code>cups</code>, <code>avahi-daemon</code>, <code>rpcbind</code>, <code>nfs-server</code>, Bluetooth, X if unused.</li>
+            <li>Strip kernel modules: blacklist unused drivers in <code>/etc/modprobe.d/blacklist.conf</code> (e.g., <code>blacklist bluetooth</code>, USB storage on locked-down kiosks).</li>
+          </ul>
+
+          <h2>SSH hardening</h2>
+          <p>SSH is the #1 remote-management protocol and #1 brute-force target. Edit <code>/etc/ssh/sshd_config</code>:</p>
+          <pre><code>Port 22                                # consider non-standard if Internet-exposed (security by obscurity ONLY)
+AddressFamily inet                     # restrict to IPv4 if needed
+ListenAddress 0.0.0.0                  # bind to specific IP
+Protocol 2                             # SSHv1 long-disabled
+LoginGraceTime 30
+PermitRootLogin no                     # or 'prohibit-password' for key-only root
+MaxAuthTries 3
+MaxSessions 2
+PubkeyAuthentication yes
+PasswordAuthentication no              # disable after keys deployed
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KbdInteractiveAuthentication no
+UsePAM yes
+AllowUsers alice bob
+AllowGroups ssh-users
+DenyUsers daemon
+Banner /etc/issue.net
+ClientAliveInterval 300                # disconnect idle clients
+ClientAliveCountMax 0
+LoginGraceTime 60
+X11Forwarding no
+AllowTcpForwarding no                  # unless needed for tunneling
+GatewayPorts no
+PermitTunnel no
+PermitUserEnvironment no
+UseDNS no                              # avoid slow reverse-DNS lookups
+PrintMotd yes
+Subsystem sftp internal-sftp           # built-in SFTP, chroot-friendly
+HostKey /etc/ssh/ssh_host_ed25519_key  # prefer ed25519, plus rsa for compat
+KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp521
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com
+HostKeyAlgorithms ssh-ed25519,rsa-sha2-512,rsa-sha2-256
+RekeyLimit 1G 1h</code></pre>
+          <pre><code>sudo sshd -t                           # test config syntax
+sudo systemctl restart sshd
+# CRITICAL: keep an existing SSH session open while testing — avoid lockout
+ssh -v user@host                       # client verbose to debug</code></pre>
+
+          <h3>SSH keys</h3>
+          <pre><code>ssh-keygen -t ed25519 -C "alice@laptop"
+ssh-keygen -t rsa -b 4096              # fallback for old servers
+ssh-copy-id -i ~/.ssh/id_ed25519.pub alice@host
+# Manual: append public key to ~/.ssh/authorized_keys on server
+# Perms must be: ~/.ssh = 700, authorized_keys = 600, home dir NOT group/other writable</code></pre>
+
+          <h3>Per-key restrictions (authorized_keys options)</h3>
+          <pre><code>from="10.0.0.0/8" command="/usr/local/bin/run-job.sh" no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA... user@laptop</code></pre>
+          <p>Restricts the key to source subnet + forces a specific command (no shell access). Used for backup / CI keys.</p>
+
+          <h3>Certificate-based SSH (scalable for large fleets)</h3>
+          <ul>
+            <li>Run an internal SSH CA; sign user + host certs with short TTL.</li>
+            <li>Configure <code>TrustedUserCAKeys</code> in sshd_config.</li>
+            <li>Tools: <b>HashiCorp Vault SSH</b>, <b>Smallstep CA</b>, <b>Teleport</b>.</li>
+          </ul>
+
+          <h3>SSH MFA</h3>
+          <ul>
+            <li><b>Google Authenticator PAM</b> module — TOTP.</li>
+            <li><b>YubiKey FIDO2</b> via <code>pam_u2f</code> or OpenSSH 8.2+ native sk-ed25519 keys.</li>
+            <li><b>Duo</b> / Okta Verify integration via PAM.</li>
+            <li>Combine: <code>AuthenticationMethods publickey,keyboard-interactive:pam</code>.</li>
+          </ul>
+
+          <h3>SSH brute-force protection</h3>
+          <ul>
+            <li><b>fail2ban</b> — watches auth.log / journal; bans offending IPs via firewall.</li>
+            <li><b>sshguard</b> — alternative.</li>
+            <li><b>CrowdSec</b> — community blocklists + agent.</li>
+            <li>Move SSH off TCP 22 if Internet-exposed — reduces noise (NOT a real defense alone).</li>
+          </ul>
+
+          <h2>sudo + privilege separation</h2>
+          <p>Edit only via <code>visudo</code> (locks + syntax-checks).</p>
+          <pre><code># /etc/sudoers + /etc/sudoers.d/*
+Defaults    env_reset
+Defaults    secure_path="/sbin:/bin:/usr/sbin:/usr/bin"
+Defaults    timestamp_timeout=5
+Defaults    log_input,log_output
+Defaults    logfile="/var/log/sudo.log"
+Defaults    use_pty                            # session recording works
+Defaults    requiretty                         # require real terminal
+
+# Allowing a group
+%wheel ALL=(ALL) ALL
+%sudo  ALL=(ALL:ALL) ALL
+
+# Allowing specific commands
+opsuser ALL=(www-data) /usr/bin/systemctl restart nginx
+deploy  ALL= NOPASSWD: /usr/local/bin/deploy.sh    # only this command without password
+
+# Block dangerous commands explicitly
+%developers ALL= NOPASSWD: ALL, !/usr/bin/passwd, !/usr/sbin/visudo</code></pre>
+          <ul>
+            <li><b>Avoid <code>NOPASSWD: ALL</code></b> wherever possible.</li>
+            <li>Avoid <code>su -</code> and instead grant scoped sudo commands.</li>
+            <li>Enable <code>log_input,log_output</code> on bastion/admin hosts for full session capture.</li>
+            <li>Disable direct root SSH login (<code>PermitRootLogin no</code>).</li>
+            <li>For Ansible / automation, prefer purpose-built service accounts with key + tight sudoers.</li>
+          </ul>
+
+          <h2>Mandatory Access Control — SELinux + AppArmor</h2>
+
+          <h3>SELinux</h3>
+          <p>Kernel <b>MAC</b> using <b>type enforcement</b> + RBAC + MLS. Default on RHEL / Fedora / CentOS / Rocky / Alma / Amazon Linux 2023.</p>
+          <pre><code>getenforce                             # Enforcing | Permissive | Disabled
+sudo setenforce 0                      # runtime permissive (debug)
+sudo setenforce 1                      # back to enforcing
+# Persistent: /etc/selinux/config — SELINUX=enforcing
+
+ls -Z file                              # show context
+ps -auxZ                                # process context
+
+# Change context (temporary)
+sudo chcon -t httpd_sys_content_t /var/www/html/file
+# Persistent file context
+sudo semanage fcontext -a -t httpd_sys_content_t '/srv/www(/.*)?'
+sudo restorecon -Rv /srv/www
+
+# Ports
+sudo semanage port -a -t http_port_t -p tcp 8080
+sudo semanage port -l | grep http
+
+# Booleans (feature toggles)
+getsebool -a | grep httpd
+sudo setsebool -P httpd_can_network_connect on
+
+# Modes per process
+ps -eZ | grep nginx
+sudo runcon -t unconfined_t cmd        # run with specific context
+
+# Audit + generate policy
+sudo ausearch -m AVC -ts recent
+sudo audit2allow -a -M mypolicy        # generate module from denials
+sudo semodule -i mypolicy.pp
+
+# Diagnostics
+sealert -a /var/log/audit/audit.log    # human-readable AVC report (setroubleshoot-server)</code></pre>
+
+          <h3>AppArmor</h3>
+          <p>Pathname-based MAC. Default on Ubuntu, openSUSE, SLES.</p>
+          <pre><code>sudo aa-status                          # loaded profiles + modes
+sudo aa-enforce /etc/apparmor.d/usr.sbin.nginx
+sudo aa-complain /etc/apparmor.d/usr.sbin.nginx
+sudo aa-disable /etc/apparmor.d/usr.sbin.foo
+sudo apparmor_parser -r /etc/apparmor.d/usr.sbin.nginx
+sudo aa-logprof                         # auto-update profile from denials
+sudo aa-genprof program                 # interactive profile gen
+sudo journalctl -k -g apparmor</code></pre>
+
+          <h3>Capabilities</h3>
+          <p>Fine-grained alternative to SUID-root.</p>
+          <pre><code>getcap /usr/bin/ping
+sudo setcap cap_net_raw+ep /usr/local/bin/mytool
+sudo setcap cap_net_bind_service=+ep /opt/web/server     # bind ports <1024 without root
+sudo setcap -r /usr/local/bin/mytool                       # clear
+capsh --print                                              # current process caps
+filecap -a                                                 # alternative listing</code></pre>
+
+          <h2>Firewall + network exposure</h2>
+          <ul>
+            <li><b>firewalld</b> (RHEL): zones + services + rich rules. Default deny except listed services.</li>
+            <li><b>ufw</b> (Ubuntu): <code>ufw default deny incoming</code>; <code>ufw allow ssh/tcp</code>; <code>ufw limit ssh/tcp</code> (rate-limit).</li>
+            <li><b>nftables</b>: modern kernel rule engine; use <code>/etc/nftables.conf</code>.</li>
+            <li>Drop ICMP redirects + accept-source-route; harden in <code>sysctl</code>.</li>
+            <li>IPv6 firewalled the same as IPv4 (don't forget).</li>
+          </ul>
+
+          <h2>sysctl kernel hardening</h2>
+          <pre><code># Persistent: /etc/sysctl.d/99-hardening.conf
+kernel.dmesg_restrict = 1                  # only root reads dmesg
+kernel.kptr_restrict = 2                   # hide kernel pointers
+kernel.kexec_load_disabled = 1
+kernel.unprivileged_bpf_disabled = 1
+kernel.yama.ptrace_scope = 2               # restrict ptrace (anti-debugger)
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+fs.suid_dumpable = 0
+net.ipv4.conf.all.rp_filter = 1            # reverse-path filter (anti-spoof)
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.all.log_martians = 1
+net.ipv4.tcp_syncookies = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.icmp_ignore_bogus_error_responses = 1
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.all.accept_ra = 0
+# Apply
+sudo sysctl --system</code></pre>
+
+          <h2>Account + login hardening</h2>
+          <ul>
+            <li><b>Password complexity:</b> <code>/etc/security/pwquality.conf</code> (minlen=12, dcredit=-1, ucredit=-1, lcredit=-1, ocredit=-1).</li>
+            <li><b>Password aging:</b> <code>chage -M 90 user</code>, <code>chage -m 1 user</code>, <code>chage -W 7 user</code>.</li>
+            <li><b>Account lockout</b> via <code>pam_faillock.so</code> (RHEL) or <code>pam_tally2.so</code>: 5 attempts → 15 min lock.</li>
+            <li><b>Disable unused accounts:</b> <code>usermod -L</code> + <code>chage -E 0 user</code>; set shell to <code>/usr/sbin/nologin</code>.</li>
+            <li><b>Default umask 027</b> in <code>/etc/login.defs</code> + <code>/etc/profile</code>.</li>
+            <li><b>MFA</b> via FIDO2 / TOTP for SSH and console; integrate with PAM.</li>
+            <li><b>Centralize auth</b> with SSSD + AD / LDAP / Kerberos for consistent policy.</li>
+            <li><b>Limit login times / TTYs</b> via <code>/etc/security/access.conf</code> + <code>pam_access.so</code>.</li>
+            <li><b>Resource limits:</b> <code>/etc/security/limits.conf</code> (e.g., max processes, file descriptors).</li>
+          </ul>
+
+          <h2>File integrity monitoring</h2>
+          <ul>
+            <li><b>AIDE</b> (Advanced Intrusion Detection Environment) — baseline + diff hash database.
+              <pre><code>sudo aide --init
+sudo cp /var/lib/aide/aide.db.new /var/lib/aide/aide.db
+sudo aide --check                    # run periodically (cron)
+sudo aide --update                   # accept legit changes
+# Config: /etc/aide.conf</code></pre>
+            </li>
+            <li><b>Tripwire</b> — commercial / open-source FIM.</li>
+            <li><b>OSSEC</b> / <b>Wazuh</b> — agent-based HIDS + FIM + log analysis + central manager.</li>
+            <li><b>auditd watches</b> — <code>auditctl -w /etc/shadow -p wa -k shadow</code>.</li>
+            <li>Store baseline DB on read-only media OR sign + ship offsite to detect tampering.</li>
+          </ul>
+
+          <h2>auditd — Linux audit framework</h2>
+          <pre><code># Rules: /etc/audit/rules.d/*.rules
+-a always,exit -F arch=b64 -S execve -k execve
+-w /etc/passwd -p wa -k id-mgmt
+-w /etc/shadow -p wa -k id-mgmt
+-w /var/log/sudo.log -p wa -k sudo
+-w /etc/ssh/sshd_config -p wa -k ssh-config
+
+# Reload + query
+sudo augenrules --load
+sudo auditctl -l
+sudo ausearch -k id-mgmt -ts today
+sudo aureport --summary
+sudo aureport --auth --start today
+sudo systemctl status auditd</code></pre>
+          <p>Ship audit + journal logs to SIEM (rsyslog → remote, or Wazuh / Filebeat / Vector).</p>
+
+          <h2>SCAP + benchmarks</h2>
+          <ul>
+            <li><b>OpenSCAP</b> — open-source compliance scanner.</li>
+            <li><b>SCAP Security Guide (SSG)</b> — ships profiles for CIS, DISA STIG, PCI-DSS, HIPAA, ANSSI.</li>
+            <li><b>oscap-anaconda-addon</b> — apply profile during install.</li>
+            <li><b>CIS Benchmarks</b> — published step-by-step hardening for every major OS / distro.</li>
+            <li><b>DISA STIG</b> — US Department of Defense hardening guides.</li>
+            <li><b>Lynis</b> — open-source automated host audit. <code>lynis audit system</code>.</li>
+            <li><b>ClamAV</b> — open-source AV (mainly for mail/server scanning).</li>
+          </ul>
+          <pre><code># OpenSCAP scan example
+sudo dnf install scap-security-guide openscap-scanner
+sudo oscap xccdf eval \\
+    --profile xccdf_org.ssgproject.content_profile_cis \\
+    --results scan.xml --report scan.html \\
+    /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml
+sudo oscap xccdf generate fix --profile xccdf_org.ssgproject.content_profile_cis \\
+    /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml > remediate.sh</code></pre>
+
+          <h2>Disk + data protection</h2>
+          <ul>
+            <li><b>LUKS full-disk encryption</b> on laptops + sensitive servers (see Storage lesson).</li>
+            <li><b>fscrypt</b> / <b>eCryptfs</b> per-directory encryption.</li>
+            <li><b>Mount-option hardening:</b> <code>noexec,nodev,nosuid</code> on <code>/tmp</code>, <code>/var/tmp</code>, <code>/dev/shm</code>, <code>/home</code> where compatible.</li>
+            <li><b>Secure boot</b> with signed bootloader + signed kernel; UEFI + TPM-bound LUKS via <code>systemd-cryptenroll --tpm2-device=auto</code>.</li>
+            <li><b>Module signing</b> — enforce signed kernel modules.</li>
+            <li><b>shred / wipe</b> drives before disposal (NIST SP 800-88).</li>
+          </ul>
+
+          <h2>Cron + scheduled tasks</h2>
+          <ul>
+            <li>Restrict who can write cron: <code>/etc/cron.allow</code>, <code>/etc/cron.deny</code> (allow trumps deny).</li>
+            <li>Audit scheduled tasks: <code>ls /etc/cron.{d,daily,hourly,weekly,monthly}</code>, <code>crontab -l</code>, <code>systemctl list-timers</code>.</li>
+            <li>Permissions: cron files 640 / cron dirs 750.</li>
+            <li>Watch for suspicious systemd timers + cron jobs — common attacker persistence.</li>
+          </ul>
+
+          <h2>Service hardening with systemd</h2>
+          <p>Modern services should run with strict sandboxing. Add to <code>[Service]</code>:</p>
+          <pre><code>User=app
+Group=app
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+NoNewPrivileges=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+MemoryDenyWriteExecute=yes
+ReadOnlyPaths=/etc /usr
+ReadWritePaths=/var/lib/myapp /var/log/myapp
+DynamicUser=yes
+StateDirectory=myapp
+RuntimeDirectory=myapp</code></pre>
+          <p>Check what's enabled per service: <code>systemd-analyze security &lt;unit&gt;</code> — produces a 0-10 exposure score.</p>
+
+          <h2>Container security on Linux hosts</h2>
+          <ul>
+            <li>Run containers <b>rootless</b> (Podman + user namespaces) where possible.</li>
+            <li>Drop capabilities (<code>--cap-drop=ALL</code>), grant only what's needed (<code>--cap-add</code>).</li>
+            <li><code>--no-new-privileges</code>, <code>--read-only</code>, <code>--security-opt seccomp=...</code>.</li>
+            <li>Use minimal / distroless base images.</li>
+            <li>Scan images: <code>trivy</code>, <code>grype</code>, <code>clair</code>.</li>
+            <li>Sign + verify (<b>cosign</b>, Sigstore).</li>
+            <li>Limit CPU/memory via cgroups.</li>
+            <li>Use a network policy (Kubernetes NetworkPolicy, Calico, Cilium).</li>
+            <li>Run runtime detection (Falco, Tracee, CrowdStrike).</li>
+          </ul>
+
+          <h2>Logging + centralization</h2>
+          <ul>
+            <li><b>rsyslog</b>: <code>*.* @@logserver.example.com:6514</code> in <code>/etc/rsyslog.d/forward.conf</code>; encrypted RELP / TLS.</li>
+            <li><b>systemd-journald</b>: persistent at <code>/var/log/journal/</code>; forward via <code>journal-upload</code> or rsyslog.</li>
+            <li><b>Filebeat / Fluent Bit / Vector / Promtail</b> — modern log shippers to Elastic / Loki / Splunk.</li>
+            <li>Time sync (chrony / systemd-timesyncd / ntpd) so correlations make sense.</li>
+            <li>Encrypt logs in transit; retain per policy.</li>
+            <li>Set immutable flag (<code>chattr +a</code>) on local log files for tamper resistance.</li>
+          </ul>
+
+          <h2>Backup + recovery for hardened systems</h2>
+          <ul>
+            <li>3-2-1 + immutable copies.</li>
+            <li>Test restores quarterly.</li>
+            <li>Encrypted backups w/ separate keys.</li>
+            <li>Document RTO / RPO per system.</li>
+            <li>Hold a CLEAN baseline image to redeploy compromised hosts.</li>
+          </ul>
+
+          <h2>Vulnerability + compliance scanners</h2>
+          <ul>
+            <li><b>OpenSCAP</b> — SCAP-driven config + vuln scan.</li>
+            <li><b>Lynis</b> — host audit script.</li>
+            <li><b>Tenable Nessus / Rapid7 InsightVM / Qualys</b> — commercial.</li>
+            <li><b>Trivy / Grype</b> — package + container vuln scanners.</li>
+            <li><b>Wazuh / OSSEC</b> — host IDS + FIM + SCAP.</li>
+            <li><b>ClamAV</b> — file AV for mail / shared servers.</li>
+            <li><b>chkrootkit / rkhunter</b> — rootkit scanners.</li>
+            <li><b>debsums / rpm -V</b> — verify package integrity.</li>
+          </ul>
+
+          <h2>Common hardening pitfalls</h2>
+          <ul>
+            <li>Disabling SELinux instead of fixing contexts → makes the box LESS secure.</li>
+            <li>Putting <code>NOPASSWD: ALL</code> in sudoers for convenience.</li>
+            <li>SSH key with no passphrase + agent-forwarding enabled to bastion → lateral movement risk.</li>
+            <li>Same SSH key reused across machines/users.</li>
+            <li>Logging to a writable local file the attacker can edit (no central / append-only).</li>
+            <li>Ignoring kernel updates because "reboots take downtime" — use live patching.</li>
+            <li>One-shot benchmarks then never re-running — config drift returns.</li>
+            <li>Forgetting IPv6 firewall rules.</li>
+            <li>Backup process accessible from prod — ransomware reaches backups.</li>
+          </ul>
+
+          <h2>Incident response readiness</h2>
+          <ul>
+            <li>Pre-stage forensic tooling: <code>chkrootkit</code>, <code>rkhunter</code>, <code>volatility</code>, <code>KAPE</code>-equivalent collectors.</li>
+            <li>Document IR playbook: detect → triage → contain (cut network) → preserve evidence (RAM image first) → eradicate → recover → review.</li>
+            <li>Maintain known-good baseline (image + AIDE DB) to compare against.</li>
+            <li>Out-of-band access (console / IPMI / iLO) for response.</li>
+            <li>Tabletop annually.</li>
+          </ul>
+
+          <h2>Compliance frameworks worth recognizing</h2>
+          <ul>
+            <li><b>CIS Benchmarks</b>.</li>
+            <li><b>DISA STIG</b>.</li>
+            <li><b>NIST SP 800-53 / 800-171</b>.</li>
+            <li><b>PCI-DSS</b>.</li>
+            <li><b>HIPAA Security Rule</b>.</li>
+            <li><b>FedRAMP</b>.</li>
+            <li><b>ISO 27001</b>.</li>
+            <li><b>SOC 2</b>.</li>
+          </ul>
+
+          <h2>Putting it together — sample baseline</h2>
+          <ol>
+            <li>Install minimal server profile + apply latest updates.</li>
+            <li>Enable unattended security updates.</li>
+            <li>Create admin account + sudo group; remove direct root login.</li>
+            <li>Deploy SSH key + disable password + key-only PermitRootLogin + MFA via PAM.</li>
+            <li>Enable firewall default-deny inbound; allow only required ports.</li>
+            <li>SELinux enforcing (RHEL) or AppArmor enforce (Ubuntu).</li>
+            <li>Apply CIS Level 1 profile via OpenSCAP / Ansible.</li>
+            <li>Install + configure auditd + AIDE; baseline DBs taken before exposing service.</li>
+            <li>Encrypt disks; tune mount options (noexec / nodev / nosuid).</li>
+            <li>Enable fail2ban for SSH + key services.</li>
+            <li>Centralize logs to SIEM; alert on critical events.</li>
+            <li>Backup + tested restore.</li>
+            <li>Document the baseline + ship via configuration management (Ansible / Puppet / Chef / Terraform).</li>
+            <li>Monthly Lynis / OpenSCAP report; track drift.</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Disable root SSH login" → <code>PermitRootLogin no</code> in <code>/etc/ssh/sshd_config</code> + restart sshd.</li>
+            <li>"Disable password SSH" → <code>PasswordAuthentication no</code>.</li>
+            <li>"Force MFA for SSH" → AuthenticationMethods publickey,keyboard-interactive:pam + Google Authenticator / U2F PAM.</li>
+            <li>"Brute-force defense" → fail2ban / sshguard / CrowdSec.</li>
+            <li>"SELinux mode switch (runtime)" → <code>setenforce 0|1</code>; <code>getenforce</code>.</li>
+            <li>"Allow service on non-default port in SELinux" → <code>semanage port -a -t http_port_t -p tcp 8080</code>.</li>
+            <li>"Restore default SELinux contexts" → <code>restorecon -Rv /path</code>.</li>
+            <li>"AppArmor profile to enforce" → <code>aa-enforce</code>.</li>
+            <li>"Auto-patch security on Ubuntu" → unattended-upgrades.</li>
+            <li>"Live kernel patches" → kpatch (RHEL) / livepatch (Ubuntu).</li>
+            <li>"File integrity DB" → AIDE / Tripwire.</li>
+            <li>"Linux audit framework" → auditd + auditctl / ausearch / aureport.</li>
+            <li>"Open-source compliance scanner" → OpenSCAP.</li>
+            <li>"Host hardening audit script" → Lynis.</li>
+            <li>"Restrict cron access" → <code>/etc/cron.allow</code>.</li>
+            <li>"Bind privileged port without SUID" → capability <code>cap_net_bind_service</code>.</li>
+            <li>"Sandbox a service" → systemd security directives + <code>systemd-analyze security</code>.</li>
+            <li>"Mount-option hardening" → noexec, nodev, nosuid.</li>
+            <li>"Encrypt FDE" → LUKS.</li>
+            <li>"Out-of-band recovery access" → iDRAC / iLO / IPMI / serial console.</li>
+          </ul>
         `
       },
       {
