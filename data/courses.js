@@ -5868,18 +5868,320 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '1. CIA Triad & Core Concepts',
         body: `
-          <h2>CIA</h2>
+          <p>Security+ starts with the conceptual vocabulary every other domain leans on. Memorize the triads, the control types, the principles, and the policy / governance terms. Exam absolutely tests this. Real-world security architecture is built from these building blocks.</p>
+
+          <h2>CIA Triad</h2>
+          <p>The three foundational goals of every security control. Every safeguard supports one or more.</p>
+
+          <h3>Confidentiality</h3>
+          <p><b>What:</b> Information is accessible only to authorized parties.</p>
+          <p><b>Why:</b> Protects privacy, trade secrets, regulated data (PII / PHI / PCI), competitive advantage.</p>
+          <p><b>How achieved:</b></p>
           <ul>
-            <li><b>Confidentiality</b> — only authorized see data. Tools: encryption, access controls.</li>
-            <li><b>Integrity</b> — data not altered. Tools: hashes, digital signatures.</li>
-            <li><b>Availability</b> — accessible when needed. Tools: redundancy, DDoS protection, backups.</li>
+            <li>Encryption at rest (BitLocker, FileVault, LUKS, TDE, S3 SSE) + in transit (TLS, IPsec, WireGuard, SSH).</li>
+            <li>Access control (NTFS perms, RBAC, ABAC).</li>
+            <li>Data masking / tokenization (PCI environments).</li>
+            <li>Data classification + labels (e.g., MIP, Purview).</li>
+            <li>Steganography / secure deletion.</li>
+            <li>Non-disclosure agreements (administrative control).</li>
           </ul>
-          <h2>AAA</h2>
-          <p><b>Authentication</b> (prove who), <b>Authorization</b> (what allowed), <b>Accounting</b> (logged).</p>
-          <h2>Non-repudiation</h2>
-          <p>Can't deny action. Digital signatures + audit logs.</p>
-          <h2>Defense in depth</h2>
-          <p>Layered controls — preventive, detective, corrective; technical, administrative, physical.</p>
+
+          <h3>Integrity</h3>
+          <p><b>What:</b> Data is not modified by unauthorized parties or corrupted in transit.</p>
+          <p><b>Why:</b> Catches tampering + accidental corruption. Trust depends on knowing data is unchanged.</p>
+          <p><b>How achieved:</b></p>
+          <ul>
+            <li>Cryptographic hashes (SHA-256, SHA-3).</li>
+            <li>Digital signatures (RSA / ECDSA / Ed25519).</li>
+            <li>MAC / HMAC (Message Authentication Code).</li>
+            <li>Version control, configuration baselines, file-integrity monitoring (Tripwire, AIDE, OSSEC).</li>
+            <li>Database transactions + checksums.</li>
+            <li>Code signing.</li>
+          </ul>
+
+          <h3>Availability</h3>
+          <p><b>What:</b> Authorized users can access data + services when needed.</p>
+          <p><b>Why:</b> Outages = lost revenue, missed SLA, safety risk (medical / industrial).</p>
+          <p><b>How achieved:</b></p>
+          <ul>
+            <li>Redundancy — N+1 power, multi-AZ, RAID, clustered storage.</li>
+            <li>Load balancing + auto-scaling.</li>
+            <li>Backups + tested restores.</li>
+            <li>DDoS protection.</li>
+            <li>Patch management to prevent downtime exploits.</li>
+            <li>Disaster Recovery + Business Continuity planning.</li>
+            <li>Geo-distribution + anycast routing.</li>
+          </ul>
+
+          <h3>Sometimes added: Non-repudiation</h3>
+          <p><b>What:</b> A party cannot deny having performed an action.</p>
+          <p><b>How:</b> Digital signatures + audit logs + chain of custody.</p>
+
+          <h3>Sometimes added: Authenticity</h3>
+          <p><b>What:</b> A message / file truly comes from the claimed sender.</p>
+          <p><b>How:</b> Digital signatures + PKI certs.</p>
+
+          <h2>The opposite of CIA — DAD</h2>
+          <p>If something breaks each leg, you get:</p>
+          <ul>
+            <li><b>D</b>isclosure — confidentiality lost.</li>
+            <li><b>A</b>lteration — integrity lost.</li>
+            <li><b>D</b>estruction / <b>D</b>enial — availability lost.</li>
+          </ul>
+
+          <h2>AAA framework</h2>
+          <p>Triad governing access:</p>
+          <ul>
+            <li><b>Authentication</b> — prove WHO you are (password, MFA, cert, biometric).</li>
+            <li><b>Authorization</b> — what you're allowed to DO (RBAC, ACL).</li>
+            <li><b>Accounting / Auditing</b> — record what you did (logs, SIEM).</li>
+          </ul>
+          <p><b>Protocols:</b> RADIUS (UDP 1812/1813), TACACS+ (TCP 49, Cisco), Diameter, Kerberos, SAML, OAuth 2.0 + OIDC.</p>
+
+          <h2>Authentication factors</h2>
+          <ol>
+            <li><b>Something you know</b> — password, PIN.</li>
+            <li><b>Something you have</b> — token, smart card, FIDO2 key, phone authenticator.</li>
+            <li><b>Something you are</b> — biometric (fingerprint, face, iris, voice).</li>
+            <li><b>Something you do</b> — behavioral (typing cadence, mouse pattern).</li>
+            <li><b>Somewhere you are</b> — geolocation / IP.</li>
+          </ol>
+          <p><b>MFA</b> = 2+ DIFFERENT factor categories. Two passwords = not MFA. <b>Strongest:</b> phishing-resistant MFA (FIDO2 hardware key, passkey).</p>
+
+          <h2>Access control models</h2>
+          <ul>
+            <li><b>DAC</b> (Discretionary Access Control) — owner decides perms. NTFS files default.</li>
+            <li><b>MAC</b> (Mandatory Access Control) — system-enforced labels/clearances (Confidential / Secret / Top Secret). Military / SELinux.</li>
+            <li><b>RBAC</b> (Role-Based Access Control) — perms attached to a role; users get the role. Most enterprises.</li>
+            <li><b>ABAC</b> (Attribute-Based Access Control) — policy engine evaluates user attrs + resource attrs + environment (NIST 800-162).</li>
+            <li><b>Rule-Based</b> — fixed rules (firewall ACLs).</li>
+            <li><b>Time-of-day</b> — restricted hours.</li>
+          </ul>
+
+          <h2>Defense in depth + layered security</h2>
+          <p>No single control stops everything. Stack multiple so a failure doesn't breach the whole stack.</p>
+          <ul>
+            <li><b>Physical</b> — locks, cameras, guards, mantraps.</li>
+            <li><b>Network</b> — firewall, segmentation, IDS/IPS, NAC, WAF.</li>
+            <li><b>Endpoint</b> — patching, AV/EDR, host firewall, disk encryption.</li>
+            <li><b>Application</b> — secure coding, WAF, code signing.</li>
+            <li><b>Data</b> — encryption, DLP, classification.</li>
+            <li><b>Identity</b> — MFA, conditional access, PIM/PAM.</li>
+            <li><b>Administrative</b> — policies, training, change management.</li>
+          </ul>
+
+          <h2>Control types — by function</h2>
+          <ul>
+            <li><b>Preventive</b> — stops an attack before it happens (firewall rule, MFA, training, access list).</li>
+            <li><b>Detective</b> — identifies it in progress / after (IDS, SIEM, cameras, log review).</li>
+            <li><b>Corrective</b> — fixes damage after (patch, restore from backup, incident response).</li>
+            <li><b>Deterrent</b> — discourages an attempt (signs, visible camera, warning banner).</li>
+            <li><b>Recovery</b> — restore operations (DR plan, backups).</li>
+            <li><b>Compensating</b> — substitute when primary not feasible (e.g., extra logging when an old system can't enforce MFA).</li>
+            <li><b>Directive</b> — policy / procedural guidance (AUP, SOP).</li>
+          </ul>
+
+          <h2>Control types — by category (NIST 800-53)</h2>
+          <ul>
+            <li><b>Administrative / Managerial</b> — policies, awareness training, RFCs, risk assessments.</li>
+            <li><b>Technical / Logical</b> — firewalls, encryption, MFA, IPS.</li>
+            <li><b>Physical / Operational</b> — locks, fencing, CCTV, fire suppression, guards.</li>
+          </ul>
+
+          <h2>Core security principles</h2>
+          <ul>
+            <li><b>Least Privilege</b> — give the minimum permissions required.</li>
+            <li><b>Separation of Duties (SoD)</b> — no single person can complete a sensitive transaction alone.</li>
+            <li><b>Two-Person Integrity / Dual Control</b> — both must act (e.g., nuclear, root key).</li>
+            <li><b>Job Rotation</b> — periodic role swap; surfaces fraud + cross-trains.</li>
+            <li><b>Mandatory Vacation</b> — same — exposes ongoing fraud.</li>
+            <li><b>Need to Know</b> — access tied to job duty, not clearance level alone.</li>
+            <li><b>Defense in Depth</b> — covered above.</li>
+            <li><b>Fail-Safe / Fail-Secure / Fail-Open</b>:
+              <ul>
+                <li><b>Fail-safe</b> — protects people (door unlocks during fire).</li>
+                <li><b>Fail-secure</b> — protects assets (door stays locked).</li>
+                <li><b>Fail-open</b> — service continues if security check fails (sometimes intentional, sometimes risky).</li>
+              </ul>
+            </li>
+            <li><b>Zero Trust</b> — never trust, always verify. Identity-centric + per-request authorization.</li>
+            <li><b>KISS</b> — Keep It Simple (complexity invites bugs).</li>
+            <li><b>Open Design / Kerckhoffs's Principle</b> — security through algorithm strength, not secrecy of design. (Keep KEYS secret, not designs.)</li>
+            <li><b>Compartmentalization</b> — sensitive info partitioned.</li>
+            <li><b>Resilience / Anti-fragility</b> — system gracefully degrades.</li>
+          </ul>
+
+          <h2>Risk fundamentals</h2>
+          <ul>
+            <li><b>Asset</b> — anything valuable (data, system, reputation).</li>
+            <li><b>Threat</b> — anything that could harm an asset.</li>
+            <li><b>Threat agent / actor</b> — who or what realizes the threat.</li>
+            <li><b>Vulnerability</b> — weakness an attack exploits.</li>
+            <li><b>Exposure</b> — instance of being subject to loss.</li>
+            <li><b>Risk = Threat × Vulnerability × Impact</b>.</li>
+            <li><b>Likelihood</b> — probability the threat happens.</li>
+            <li><b>Impact</b> — magnitude of loss if it does.</li>
+            <li><b>Residual Risk</b> — what remains after controls applied.</li>
+            <li><b>Inherent Risk</b> — before controls.</li>
+          </ul>
+
+          <h2>Risk responses</h2>
+          <ul>
+            <li><b>Accept</b> — tolerate it (within appetite).</li>
+            <li><b>Avoid</b> — don't do the activity.</li>
+            <li><b>Mitigate</b> — apply controls to reduce.</li>
+            <li><b>Transfer / Share</b> — insurance, contract, outsource.</li>
+          </ul>
+
+          <h2>Risk metrics</h2>
+          <ul>
+            <li><b>SLE</b> (Single Loss Expectancy) = Asset Value × Exposure Factor.</li>
+            <li><b>ARO</b> (Annualized Rate of Occurrence) — expected events per year.</li>
+            <li><b>ALE</b> (Annualized Loss Expectancy) = SLE × ARO.</li>
+            <li><b>RTO</b> (Recovery Time Objective) — max acceptable downtime.</li>
+            <li><b>RPO</b> (Recovery Point Objective) — max acceptable data-loss window.</li>
+            <li><b>MTBF</b> (Mean Time Between Failures), <b>MTTR</b> (Mean Time To Repair), <b>MTTF</b>.</li>
+            <li><b>Risk appetite</b> — how much risk an org is willing to accept.</li>
+            <li><b>Risk tolerance</b> — variation acceptable around appetite.</li>
+          </ul>
+
+          <h2>Vulnerability scoring</h2>
+          <ul>
+            <li><b>CVE</b> (Common Vulnerabilities and Exposures) — unique ID per known vuln.</li>
+            <li><b>CVSS</b> (Common Vulnerability Scoring System) — 0–10 score. 9.0+ = Critical, 7.0–8.9 High.</li>
+            <li><b>CWE</b> (Common Weakness Enumeration) — categories of weakness types.</li>
+            <li><b>EPSS</b> (Exploit Prediction Scoring System) — likelihood of exploitation.</li>
+            <li><b>KEV</b> (CISA Known Exploited Vulnerabilities) — actively exploited list to patch first.</li>
+          </ul>
+
+          <h2>Policies + governance basics</h2>
+          <ul>
+            <li><b>Policy</b> — high-level "what we do".</li>
+            <li><b>Standard</b> — mandatory specifics (must use AES-256).</li>
+            <li><b>Procedure</b> — step-by-step "how".</li>
+            <li><b>Guideline</b> — recommended best practice.</li>
+            <li><b>AUP</b> (Acceptable Use Policy).</li>
+            <li><b>BYOD policy</b>, <b>password policy</b>, <b>data classification policy</b>, <b>incident response policy</b>.</li>
+            <li><b>SLA, OLA, MOU, NDA, MSA, ISA, BPA</b> — agreement types.</li>
+            <li><b>Code of Conduct / Ethics policy</b>.</li>
+          </ul>
+
+          <h2>Major frameworks + standards</h2>
+          <ul>
+            <li><b>NIST CSF</b> (Cybersecurity Framework) — Identify, Protect, Detect, Respond, Recover, Govern.</li>
+            <li><b>NIST SP 800-53</b> — control catalog for US federal.</li>
+            <li><b>NIST SP 800-171</b> — controlled unclassified info (CUI).</li>
+            <li><b>ISO 27001 / 27002 / 27005</b> — international ISMS standard.</li>
+            <li><b>CIS Critical Security Controls (top 18)</b>.</li>
+            <li><b>COBIT</b> — IT governance.</li>
+            <li><b>ITIL</b> — service management.</li>
+            <li><b>OWASP Top 10</b> — web app risks.</li>
+            <li><b>MITRE ATT&CK</b> — adversary TTPs.</li>
+            <li><b>Cyber Kill Chain</b> (Lockheed Martin) — 7 attack stages.</li>
+            <li><b>Diamond Model</b> — adversary / capability / infrastructure / victim.</li>
+          </ul>
+
+          <h2>Regulations + privacy laws</h2>
+          <ul>
+            <li><b>HIPAA</b> — US health data.</li>
+            <li><b>HITECH</b> — strengthens HIPAA.</li>
+            <li><b>PCI-DSS</b> — payment cards.</li>
+            <li><b>SOX</b> — US financial reporting integrity.</li>
+            <li><b>GLBA</b> — US financial customer info.</li>
+            <li><b>FERPA</b> — US student records.</li>
+            <li><b>COPPA</b> — children under 13.</li>
+            <li><b>GDPR</b> — EU personal data, 72-hr breach notice, up to 4% global revenue fines.</li>
+            <li><b>CCPA / CPRA</b> — California consumers.</li>
+            <li><b>PIPEDA</b> — Canada.</li>
+            <li><b>NYDFS 23 NYCRR 500</b> — NY financial sector.</li>
+            <li><b>FedRAMP</b> — US federal cloud authorization.</li>
+            <li><b>CMMC</b> — defense contractors.</li>
+          </ul>
+
+          <h2>Data states + categories</h2>
+          <ul>
+            <li><b>Data at rest</b> — stored on disk / DB / backup.</li>
+            <li><b>Data in transit</b> — moving over network.</li>
+            <li><b>Data in use</b> — actively processed in memory / by app.</li>
+            <li><b>Sensitive data types:</b> PII, PHI, PCI cardholder data, intellectual property, classified.</li>
+          </ul>
+
+          <h2>Privacy + data handling roles</h2>
+          <ul>
+            <li><b>Data Owner</b> — accountable for data.</li>
+            <li><b>Data Steward / Custodian</b> — implements + maintains.</li>
+            <li><b>Data Subject</b> — person the data describes.</li>
+            <li><b>Data Controller</b> (GDPR) — decides why + how data is processed.</li>
+            <li><b>Data Processor</b> — handles data on behalf of controller.</li>
+            <li><b>DPO</b> (Data Protection Officer) — GDPR-mandated role for many orgs.</li>
+          </ul>
+
+          <h2>Business continuity + disaster recovery</h2>
+          <ul>
+            <li><b>BCP</b> (Business Continuity Plan) — keep business operating during disruption.</li>
+            <li><b>DRP</b> (Disaster Recovery Plan) — restore IT systems.</li>
+            <li><b>BIA</b> (Business Impact Analysis) — identifies critical processes + dependencies + acceptable downtime.</li>
+            <li><b>Recovery site types:</b>
+              <ul>
+                <li><b>Hot</b> — fully equipped, running. Lowest RTO.</li>
+                <li><b>Warm</b> — partially equipped.</li>
+                <li><b>Cold</b> — space + power only, no equipment. Cheapest.</li>
+                <li><b>Cloud DR</b> — on-demand via DRaaS.</li>
+              </ul>
+            </li>
+            <li><b>Tabletop exercise</b> — discussion walkthrough.</li>
+            <li><b>Functional / simulation drill</b> — actual failover test.</li>
+            <li><b>Full interruption test</b> — real cutover.</li>
+          </ul>
+
+          <h2>Incident response phases (NIST SP 800-61)</h2>
+          <ol>
+            <li><b>Preparation</b> — policies, tooling, training, runbooks.</li>
+            <li><b>Detection &amp; Analysis</b>.</li>
+            <li><b>Containment, Eradication, Recovery</b>.</li>
+            <li><b>Post-Incident Activity</b> — lessons learned + report.</li>
+          </ol>
+
+          <h2>Common security acronyms (quick reference)</h2>
+          <ul>
+            <li><b>CIA</b> — Confidentiality / Integrity / Availability.</li>
+            <li><b>AAA</b> — Authentication / Authorization / Accounting.</li>
+            <li><b>RBAC / ABAC / DAC / MAC</b> — access control models.</li>
+            <li><b>SoD</b> — Separation of Duties.</li>
+            <li><b>PoLP</b> — Principle of Least Privilege.</li>
+            <li><b>MFA / 2FA</b> — Multi/Two-Factor Auth.</li>
+            <li><b>PKI</b> — Public Key Infrastructure.</li>
+            <li><b>CA</b> — Certificate Authority.</li>
+            <li><b>CRL / OCSP</b> — cert revocation methods.</li>
+            <li><b>HSM</b> — Hardware Security Module.</li>
+            <li><b>KMS</b> — Key Management Service.</li>
+            <li><b>SIEM / SOAR / EDR / XDR / MDR</b> — security ops tools.</li>
+            <li><b>NIST / ISO / CIS / OWASP / MITRE</b> — frameworks.</li>
+            <li><b>SLE / ARO / ALE / RTO / RPO / MTBF / MTTR</b> — risk metrics.</li>
+            <li><b>CVE / CVSS / CWE / EPSS / KEV</b> — vuln tracking.</li>
+            <li><b>BIA / BCP / DRP</b> — continuity planning.</li>
+            <li><b>SOC</b> — Security Operations Center.</li>
+            <li><b>CSIRT / CERT</b> — Computer Security Incident Response Team.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Detect tampering" → integrity → hash / digital signature.</li>
+            <li>"Backup + redundancy" → availability.</li>
+            <li>"Encrypt to prevent reading" → confidentiality.</li>
+            <li>"Sign so you can't deny" → non-repudiation.</li>
+            <li>"AAA accounting" = logging / audit trail.</li>
+            <li>"Different categories of factors required" → MFA.</li>
+            <li>"Owner sets perms" → DAC.</li>
+            <li>"Labels + clearances enforced by system" → MAC.</li>
+            <li>"Visible camera + warning sign" → Deterrent control.</li>
+            <li>"Patch to fix damage" → Corrective control.</li>
+            <li>"Extra log when MFA can't be applied" → Compensating control.</li>
+            <li>"Door unlocks during fire" → Fail-safe.</li>
+            <li>"ALE = SLE × ARO" — memorize.</li>
+            <li>"Identify critical processes + RTO/RPO" → BIA.</li>
+            <li>"Most expensive recovery site, lowest RTO" → Hot site.</li>
+          </ul>
         `
       },
       {
