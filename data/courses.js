@@ -9677,19 +9677,319 @@ Defaults log_input,log_output                   # session recording</code></pre>
       {
         title: '3. Users & Groups',
         body: `
-          <pre><code>useradd -m -s /bin/bash alice
-passwd alice
-usermod -aG sudo alice          add to group (append!)
-userdel -r alice
-groupadd devs
-id alice
-who / w / last</code></pre>
-          <h2>Key files</h2>
+          <p>Linux uses numeric <b>UIDs</b> + <b>GIDs</b> to identify users + groups; the names are just labels mapped by <code>/etc/passwd</code> + <code>/etc/group</code>. Every file is owned by exactly one user + one group. Every process runs as a user. Mastering user management = mastering Linux security.</p>
+
+          <h2>UID / GID number ranges</h2>
           <ul>
-            <li><code>/etc/passwd</code> — accounts.</li>
-            <li><code>/etc/shadow</code> — hashed passwords.</li>
-            <li><code>/etc/group</code>, <code>/etc/gshadow</code>.</li>
-            <li><code>/etc/sudoers</code> — edited via <code>visudo</code>.</li>
+            <li><b>UID 0</b> — root (superuser).</li>
+            <li><b>1-99</b> — historical reserved system accounts.</li>
+            <li><b>100-999</b> (or up to 999 on RHEL) — system / service accounts (sshd, nginx, postgres).</li>
+            <li><b>1000+</b> — regular human users (Ubuntu default starts at 1000; RHEL also 1000+).</li>
+            <li><b>65534</b> — <b>nobody</b> (NFS squash / unmapped).</li>
+            <li>Range is defined in <code>/etc/login.defs</code> (UID_MIN, UID_MAX, SYS_UID_MIN, SYS_UID_MAX).</li>
+          </ul>
+
+          <h2>Key files</h2>
+
+          <h3><code>/etc/passwd</code> — user accounts</h3>
+          <p>Colon-separated. Format:</p>
+          <pre><code>alice:x:1001:1001:Alice Anderson,,,,:/home/alice:/bin/bash
+^^^^^ ^ ^^^^ ^^^^ ^^^^^^^^^^^^^^^^^ ^^^^^^^^^^^ ^^^^^^^^^^
+ user  | UID  GID  GECOS comment      home dir    login shell
+       password placeholder ('x' = stored in /etc/shadow)</code></pre>
+          <ul>
+            <li><b>x</b> — password field placeholder. Real hash lives in /etc/shadow.</li>
+            <li><b>!</b> or <b>*</b> — account disabled / no password set.</li>
+            <li><b>Shell</b> — full path; <code>/usr/sbin/nologin</code> or <code>/bin/false</code> denies interactive login for service accounts.</li>
+          </ul>
+
+          <h3><code>/etc/shadow</code> — password hashes + aging</h3>
+          <p>Root-readable only (perms 640 or 000). Colon-separated:</p>
+          <pre><code>alice:$6$salt$hash:19720:0:99999:7:::
+^^^^^ ^^^^^^^^^^^^ ^^^^^ ^ ^^^^^ ^ ^^^
+ user  pwd hash    lastchg min max warn inactive expire reserved</code></pre>
+          <ul>
+            <li><b>Last change</b> — days since epoch.</li>
+            <li><b>Min</b> — min days before password can be changed again.</li>
+            <li><b>Max</b> — max days password valid.</li>
+            <li><b>Warn</b> — days before expiry to warn user.</li>
+            <li><b>Inactive</b> — days after expiry before account locked.</li>
+            <li><b>Expire</b> — account expires on this date.</li>
+            <li><b>$6$</b> in hash = SHA-512. <b>$y$</b> = yescrypt (modern). <b>$2y$</b> = bcrypt. <b>$5$</b> = SHA-256. <b>$1$</b> = MD5 (legacy).</li>
+            <li><b>!</b> or <b>!!</b> prefix on hash = locked account.</li>
+          </ul>
+
+          <h3><code>/etc/group</code> — groups</h3>
+          <pre><code>developers:x:1100:alice,bob,carol
+^^^^^^^^^^ ^ ^^^^ ^^^^^^^^^^^^^^^
+group      pwd GID member list (comma-separated)</code></pre>
+
+          <h3><code>/etc/gshadow</code> — group passwords + admins</h3>
+          <p>Rarely used in practice; locks group passwords.</p>
+
+          <h3><code>/etc/skel</code> — new-user template</h3>
+          <p>Files here are copied into every new user's home dir. Place defaults like <code>.bashrc</code>, <code>.profile</code>, README.</p>
+
+          <h3><code>/etc/login.defs</code> — login defaults</h3>
+          <p>Defines UMASK, password aging (PASS_MAX_DAYS, PASS_MIN_DAYS, PASS_WARN_AGE), UID/GID ranges, mail dir, encryption method (ENCRYPT_METHOD), etc.</p>
+
+          <h3><code>/etc/default/useradd</code></h3>
+          <p>Defaults applied by <code>useradd</code>: SHELL, HOME, INACTIVE, EXPIRE, GROUP.</p>
+
+          <h3><code>/etc/nsswitch.conf</code></h3>
+          <p>Tells the resolver where to look up users + groups (files, sss, ldap, nis):</p>
+          <pre><code>passwd: files sss
+group:  files sss
+shadow: files sss
+hosts:  files dns</code></pre>
+
+          <h3><code>/etc/sudoers</code> + <code>/etc/sudoers.d/</code></h3>
+          <p>Always edit via <code>visudo</code>. Drop-in fragments in /etc/sudoers.d/ for cleaner per-team config.</p>
+
+          <h2>Account types</h2>
+          <ul>
+            <li><b>Root</b> (UID 0) — full privilege. Don't use directly; sudo instead.</li>
+            <li><b>System / service accounts</b> — used by daemons (sshd, nginx, postgres). Usually no shell, no home, locked password, low UID.</li>
+            <li><b>Regular users</b> — humans (UID 1000+).</li>
+            <li><b>Disabled accounts</b> — password locked or expired but data preserved.</li>
+            <li><b>Domain / directory users</b> — sourced from SSSD + LDAP / AD via Kerberos.</li>
+          </ul>
+
+          <h2>Creating + modifying users</h2>
+
+          <h3>useradd</h3>
+          <pre><code>useradd alice                                       # minimal (some distros don't create home by default!)
+useradd -m alice                                    # create home dir
+useradd -m -s /bin/bash -c "Alice Anderson" alice   # full
+useradd -m -s /bin/bash -G developers,docker alice  # supplementary groups
+useradd -r -s /usr/sbin/nologin -d /var/lib/foo foo # system account
+useradd -e 2026-12-31 alice                         # expire date
+useradd -u 1500 alice                               # specific UID</code></pre>
+          <p><b>Flags:</b> <code>-m</code> create home, <code>-s</code> shell, <code>-c</code> GECOS comment, <code>-g</code> primary group, <code>-G</code> supplementary, <code>-d</code> home dir, <code>-u</code> UID, <code>-r</code> system, <code>-e</code> expire, <code>-f</code> inactive days, <code>-k</code> skel dir.</p>
+
+          <p><b>Debian alternative:</b> <code>adduser</code> — interactive, friendlier wrapper.</p>
+
+          <h3>Set password</h3>
+          <pre><code>passwd alice                  # interactive
+echo 'newpass' | passwd alice --stdin   # RHEL non-interactive
+chpasswd                      # bulk: stdin lines of "user:pass"
+passwd -l alice               # LOCK account (prefix hash with !)
+passwd -u alice               # UNLOCK
+passwd -d alice               # remove password (passwordless)
+passwd -e alice               # force user to change at next login
+passwd -S alice               # status</code></pre>
+
+          <h3>usermod</h3>
+          <pre><code>usermod -l newname alice               # rename login
+usermod -d /new/home -m alice          # change + move home
+usermod -s /usr/sbin/nologin alice     # lock out interactive login
+usermod -u 1500 alice                  # change UID (existing files keep old UID!)
+usermod -aG docker,sudo alice          # ADD to supplementary groups (the -a is critical)
+usermod -G docker,sudo alice           # REPLACE supplementary groups (DANGEROUS without -a)
+usermod -e 2026-12-31 alice            # expire date
+usermod -L alice                       # lock password
+usermod -U alice                       # unlock
+usermod -c "Alice Anderson, Eng" alice # change comment</code></pre>
+          <p><b>Critical:</b> Always use <code>-a</code> with <code>-G</code> when adding groups. Without <code>-a</code> you REPLACE all supplementary groups.</p>
+
+          <h3>userdel</h3>
+          <pre><code>userdel alice                # remove account; keeps home + mail
+userdel -r alice             # also remove home + mail
+userdel -f alice             # force even if logged in</code></pre>
+          <p>Many shops PREFER lock + archive rather than delete — preserves audit trail + ownership.</p>
+
+          <h2>Groups</h2>
+
+          <h3>Primary vs supplementary</h3>
+          <ul>
+            <li><b>Primary group</b> — listed in <code>/etc/passwd</code> field 4 (GID). Used as default group for new files created by the user.</li>
+            <li><b>Supplementary / secondary groups</b> — additional memberships listed in <code>/etc/group</code>.</li>
+            <li><b>User Private Group (UPG)</b> — many distros create a group per user with same name + GID. Limits accidental sharing via primary group.</li>
+          </ul>
+
+          <h3>Group commands</h3>
+          <pre><code>groupadd devs                          # create
+groupadd -g 1200 ops                   # specific GID
+groupadd -r app                        # system group
+groupmod -n newname devs               # rename
+groupmod -g 1300 devs                  # change GID
+groupdel devs                          # remove (must have no members)
+gpasswd -a alice devs                  # add user
+gpasswd -d alice devs                  # delete from group
+gpasswd -A alice devs                  # set group admin
+gpasswd -M alice,bob,carol devs        # replace member list
+
+newgrp devs                            # switch CURRENT shell's primary group to devs
+sg devs -c "command"                   # run command as if devs is primary group</code></pre>
+
+          <h3>Show membership</h3>
+          <pre><code>id alice                      # uid, gid, groups
+id -u alice                   # UID only
+id -g alice                   # primary GID
+id -G alice                   # all GIDs
+groups alice                  # names
+getent passwd alice           # passwd entry (also queries LDAP/SSSD)
+getent group devs             # group entry
+who                           # who's logged in now
+w                             # + what they're running
+users                         # space-separated names
+last                          # past logins (reads /var/log/wtmp)
+last -i                       # with IPs
+lastb                         # FAILED logins (/var/log/btmp)
+lastlog                       # last logon time per user
+finger alice                  # detailed (often not installed)</code></pre>
+
+          <h2>Password aging</h2>
+          <pre><code>chage -l alice                       # show aging info
+chage -M 90 alice                    # max 90 days
+chage -m 7 alice                     # min 7 days between changes
+chage -W 14 alice                    # warn 14 days before expiry
+chage -I 30 alice                    # inactive lockout 30 days after expiry
+chage -E 2026-12-31 alice            # account expires
+chage -d 0 alice                     # force password change at next login</code></pre>
+          <p><b>Defaults</b> for new accounts come from <code>/etc/login.defs</code> (PASS_MAX_DAYS, PASS_MIN_DAYS, PASS_WARN_AGE).</p>
+          <p><b>NIST 800-63B note:</b> Modern guidance discourages mandatory rotation (causes weak patterns); focus on length + breach screening + MFA.</p>
+
+          <h2>PAM — Pluggable Authentication Modules</h2>
+          <p>PAM is the framework that pluggable authentication uses. Almost every auth-handling app (login, sshd, sudo, su, gdm) calls PAM.</p>
+          <ul>
+            <li><b>Config dir:</b> <code>/etc/pam.d/</code> — one file per service.</li>
+            <li><b>Stack types:</b> <code>auth</code>, <code>account</code>, <code>password</code>, <code>session</code>.</li>
+            <li><b>Control flags:</b> <code>required</code>, <code>requisite</code>, <code>sufficient</code>, <code>optional</code>, <code>include</code>.</li>
+            <li><b>Common modules:</b>
+              <ul>
+                <li><code>pam_unix.so</code> — classic /etc/passwd + /etc/shadow.</li>
+                <li><code>pam_sss.so</code> — SSSD (AD / LDAP integration).</li>
+                <li><code>pam_ldap.so</code>.</li>
+                <li><code>pam_krb5.so</code> — Kerberos.</li>
+                <li><code>pam_winbind.so</code>.</li>
+                <li><code>pam_faillock.so</code> / <code>pam_tally2.so</code> — lockout on failed attempts.</li>
+                <li><code>pam_pwquality.so</code> — password complexity rules.</li>
+                <li><code>pam_google_authenticator.so</code> / <code>pam_oath.so</code> / <code>pam_yubico.so</code> / <code>pam_u2f.so</code> — MFA.</li>
+                <li><code>pam_limits.so</code> — apply <code>/etc/security/limits.conf</code>.</li>
+                <li><code>pam_motd.so</code> / <code>pam_lastlog.so</code> / <code>pam_mail.so</code> — info at login.</li>
+              </ul>
+            </li>
+            <li><b>Test changes</b> with a NEW SSH session before closing existing one. Bad PAM changes can lock out everyone.</li>
+          </ul>
+
+          <h2>Centralized directory: SSSD / AD / LDAP</h2>
+          <ul>
+            <li><b>SSSD</b> (System Security Services Daemon) — caches + brokers identity from LDAP / AD / Kerberos.</li>
+            <li><b>realmd</b> + <b>adcli</b> — join RHEL/Ubuntu to AD.</li>
+            <li><b>nslcd</b> — older nss-pam-ldap daemon.</li>
+            <li>Common stack: <code>realm join contoso.com</code> → SSSD runs → PAM uses pam_sss → users available with <code>getent</code>.</li>
+            <li>Allows password policy + MFA + group membership from corporate IdP.</li>
+          </ul>
+
+          <h2>Default shell + skeleton</h2>
+          <ul>
+            <li><code>/etc/shells</code> — list of valid login shells (chsh checks against it).</li>
+            <li><code>chsh -s /bin/zsh alice</code> — change a user's shell.</li>
+            <li><code>/etc/skel/</code> — template files copied to new homes.</li>
+            <li><code>~/.bashrc</code>, <code>~/.bash_profile</code>, <code>~/.profile</code>, <code>~/.bash_logout</code>.</li>
+            <li>System-wide: <code>/etc/profile</code> + <code>/etc/profile.d/*.sh</code> + <code>/etc/bashrc</code> (or <code>/etc/bash.bashrc</code>).</li>
+          </ul>
+
+          <h2>Locking + disabling accounts</h2>
+          <ul>
+            <li><code>passwd -l alice</code> / <code>usermod -L alice</code> — lock password (prefix <code>!</code>).</li>
+            <li><code>passwd -u alice</code> / <code>usermod -U alice</code> — unlock.</li>
+            <li><code>usermod -s /usr/sbin/nologin alice</code> — lock interactive login.</li>
+            <li><code>chage -E 0 alice</code> — expire immediately.</li>
+            <li><code>passwd -e alice</code> — force change at next login.</li>
+            <li>For service accounts: combine locked password + nologin shell + zero login attempts.</li>
+          </ul>
+
+          <h2>Session limits</h2>
+          <ul>
+            <li><code>/etc/security/limits.conf</code> + <code>/etc/security/limits.d/*.conf</code> — set per-user resource limits (nofile, nproc, memlock).</li>
+            <li><code>ulimit -a</code> — show shell's limits.</li>
+            <li>Used by databases, web servers needing many file descriptors.</li>
+          </ul>
+
+          <h2>SSH key management for users</h2>
+          <ul>
+            <li>User's authorized keys: <code>~/.ssh/authorized_keys</code> (mode 600, dir 700).</li>
+            <li>System-wide trusted CAs: <code>/etc/ssh/sshd_config</code> + <code>TrustedUserCAKeys</code>.</li>
+            <li>Generate: <code>ssh-keygen -t ed25519 -C "alice@laptop"</code>.</li>
+            <li>Distribute: <code>ssh-copy-id alice@host</code>.</li>
+            <li>Restrict per-key: prepend <code>command="..."</code>, <code>from="ip"</code>, <code>no-port-forwarding</code>, etc.</li>
+          </ul>
+
+          <h2>Audit + accountability</h2>
+          <ul>
+            <li><b>/var/log/auth.log</b> (Debian) / <b>/var/log/secure</b> (RHEL) — login attempts, sudo, SSH events.</li>
+            <li><b>journalctl -u sshd</b>.</li>
+            <li><b>last</b>, <b>lastb</b>, <b>lastlog</b>.</li>
+            <li><b>aulast</b> — auditd-based last replacement.</li>
+            <li><b>w</b>, <b>who</b> for real-time.</li>
+            <li><b>auditd</b> rules for granular tracking: file access, command exec, network.</li>
+            <li><b>Centralize logs</b> to SIEM (rsyslog → remote, journald → forwarder).</li>
+          </ul>
+
+          <h2>Quotas</h2>
+          <p>Limit disk usage per user / group on a filesystem.</p>
+          <pre><code># Enable in fstab: usrquota,grpquota
+quotacheck -cugm /home
+quotaon /home
+edquota -u alice                    # set soft + hard limits + grace
+quota -u alice                      # report
+repquota -a                         # all filesystems summary</code></pre>
+          <p>Modern alternative: <code>setquota</code> CLI, or filesystem-native quotas (XFS: <code>xfs_quota</code>; ZFS / btrfs have their own).</p>
+
+          <h2>Group-collaboration recipe</h2>
+          <ol>
+            <li>Create group: <code>groupadd projx</code>.</li>
+            <li>Add users: <code>usermod -aG projx alice bob carol</code>.</li>
+            <li>Create shared dir: <code>mkdir /srv/projx</code>.</li>
+            <li>Set ownership: <code>chown :projx /srv/projx</code>.</li>
+            <li>Mode + SGID: <code>chmod 2770 /srv/projx</code> (group rwx, SGID so new files inherit group).</li>
+            <li>Set default ACL for consistent perms: <code>setfacl -d -m g:projx:rwx /srv/projx</code>.</li>
+            <li>Users log out / back in to acquire new group, OR run <code>newgrp projx</code>.</li>
+          </ol>
+
+          <h2>Offboarding checklist (Linux)</h2>
+          <ol>
+            <li>Disable login + lock password (<code>usermod -L alice</code>, <code>chage -E 0 alice</code>).</li>
+            <li>Remove SSH keys (<code>~/.ssh/authorized_keys</code>).</li>
+            <li>Revoke certs / kill running sessions (<code>pkill -KILL -u alice</code>).</li>
+            <li>Reassign owned files (<code>chown -R newowner /home/alice</code>) per policy.</li>
+            <li>Archive home + mail (<code>tar -czf /backups/alice.tar.gz /home/alice</code>).</li>
+            <li>Remove or keep account based on retention policy.</li>
+            <li>Audit cron + systemd timers under their name.</li>
+          </ol>
+
+          <h2>Troubleshooting</h2>
+          <ul>
+            <li><b>"Permission denied (publickey)"</b> on SSH — check perms on <code>~/.ssh</code> (700), <code>authorized_keys</code> (600), home dir not group-writable; check sshd_config <code>PubkeyAuthentication yes</code> + <code>AuthorizedKeysFile</code>.</li>
+            <li><b>"User not found"</b> — confirm in /etc/passwd or SSSD with <code>getent passwd alice</code>; check nsswitch.conf.</li>
+            <li><b>sudo not asking for password</b> — NOPASSWD set in /etc/sudoers; remove unless intentional.</li>
+            <li><b>New group not taking effect</b> — user must log out + back in OR run <code>newgrp</code>; <code>id</code> in CURRENT shell still shows old.</li>
+            <li><b>Password reset failing</b> — pam_pwquality rules; <code>pwhistory</code> blocking reuse.</li>
+            <li><b>Account auto-locked</b> — too many failed logins triggered <code>pam_faillock</code>; reset with <code>faillock --reset --user alice</code>.</li>
+            <li><b>Cannot remove user</b> — currently logged in; <code>pkill -u alice</code> first.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Add user to group keeping existing memberships" → <code>usermod -aG group user</code> (the -a is critical).</li>
+            <li>"Create user with home dir" → <code>useradd -m user</code>.</li>
+            <li>"Delete user + their files" → <code>userdel -r user</code>.</li>
+            <li>"Hashed passwords file" → <code>/etc/shadow</code>.</li>
+            <li>"User account file" → <code>/etc/passwd</code>.</li>
+            <li>"Force password change next login" → <code>passwd -e user</code> or <code>chage -d 0 user</code>.</li>
+            <li>"Lock account" → <code>passwd -l user</code> (or <code>usermod -L</code>).</li>
+            <li>"Modern hash prefix in shadow" → <code>$6$</code> (SHA-512) / <code>$y$</code> (yescrypt) / <code>$2y$</code> (bcrypt).</li>
+            <li>"Disable interactive login but keep service" → set shell to <code>/usr/sbin/nologin</code>.</li>
+            <li>"Show user's UID + groups" → <code>id user</code>.</li>
+            <li>"Show last logins" → <code>last</code>; "failed logins" → <code>lastb</code>.</li>
+            <li>"Centralized auth daemon" → SSSD.</li>
+            <li>"Edit sudoers safely" → <code>visudo</code>.</li>
+            <li>"Set password aging max 90 days" → <code>chage -M 90 user</code>.</li>
+            <li>"PAM file location" → <code>/etc/pam.d/</code>.</li>
+            <li>"Default UID for first regular user (Ubuntu/RHEL modern)" → 1000.</li>
+            <li>"New-user home template" → <code>/etc/skel/</code>.</li>
           </ul>
         `
       },
