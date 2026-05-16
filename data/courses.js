@@ -16594,19 +16594,115 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '2. Cloud Service Models',
         body: `
-          <h2>IaaS, PaaS, SaaS in Azure</h2>
+          <h2>What is a cloud service model?</h2>
+          <p>A <b>cloud service model</b> defines how much of the stack the cloud provider operates and how much you operate. The three classic models — <b>IaaS</b>, <b>PaaS</b>, and <b>SaaS</b> — are points on a spectrum from "rent the hardware, do everything else yourself" to "rent the finished application, do nothing but log in." Microsoft adds two more flavors AZ-900 expects you to recognize: <b>FaaS</b> (serverless) and <b>DaaS</b> (Desktop-as-a-Service). The exam tests your ability to map a scenario to the right model.</p>
+
+          <h2>IaaS — Infrastructure as a Service</h2>
+          <p><b>Acronym:</b> Infrastructure as a Service.</p>
+          <p><b>What:</b> the provider gives you virtualized compute, storage, and networking — raw infrastructure. You bring the operating system, runtime, middleware, application, data, and patches. Conceptually equivalent to "renting a server in someone else's datacenter," except provisioning takes minutes instead of weeks and you pay per-second.</p>
+          <p><b>Why use it:</b> maximum control. You can run any OS, any kernel module, any legacy app that demands specific OS versions, and any storage configuration. Best fit for lift-and-shift migrations, custom Linux distros, GPU workloads, license-bound software (your DBA's old SQL Server image), or anything PaaS does not cover.</p>
+          <p><b>How used in Azure (services that are IaaS):</b></p>
           <ul>
-            <li><b>IaaS</b> — Azure Virtual Machines, Virtual Networks. You manage OS+ up.</li>
-            <li><b>PaaS</b> — Azure App Service, Azure SQL Database. Microsoft manages OS, runtime; you manage app + data.</li>
-            <li><b>SaaS</b> — Microsoft 365, Dynamics 365. Microsoft manages everything; you manage data + users.</li>
+            <li><b>Azure Virtual Machines (VM)</b> — Windows/Linux VMs in any of dozens of SKU families (B-series burstable, D-series general, E-series memory-optimized, F-series compute-optimized, M-series huge memory, N-series GPU). You pick CPU, RAM, disk, OS image.</li>
+            <li><b>Azure Virtual Network (VNet)</b> — your private network in the cloud: subnets, route tables, Network Security Groups, peering, gateways.</li>
+            <li><b>Azure Managed Disks</b> — block storage attached to VMs: Standard HDD, Standard SSD, Premium SSD, Ultra Disk.</li>
+            <li><b>Azure Load Balancer</b> (L4) — distributes traffic across IaaS VMs.</li>
+            <li><b>VM Scale Sets (VMSS)</b> — set of identical VMs that scale together; IaaS with auto-scaling.</li>
           </ul>
-          <h2>Shared responsibility</h2>
-          <table style="width:100%;font-size:13px"><tr><th>Layer</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr>
-          <tr><td>Data / Identity</td><td>You</td><td>You</td><td>You</td></tr>
-          <tr><td>App</td><td>You</td><td>You</td><td>MS</td></tr>
-          <tr><td>OS</td><td>You</td><td>MS</td><td>MS</td></tr>
-          <tr><td>Hypervisor / HW / DC</td><td>MS</td><td>MS</td><td>MS</td></tr>
+          <p><b>Your responsibilities:</b> OS patching, antivirus, OS hardening, application installation + updates, app config, identity, data, backup configuration, network ACLs. Microsoft handles only the host, hypervisor, network fabric, and physical datacenter.</p>
+
+          <h2>PaaS — Platform as a Service</h2>
+          <p><b>Acronym:</b> Platform as a Service.</p>
+          <p><b>What:</b> the provider gives you a managed runtime/platform on which you deploy your code or schema. The OS, patches, runtime version, scaling, load balancing, and infrastructure are all Microsoft's job; you just push your code or queries.</p>
+          <p><b>Why use it:</b> faster delivery, less ops toil. No OS patching, no installing .NET/Node/Python runtimes, no setting up load balancers. Best fit for greenfield web apps, microservices, APIs, mobile backends, and databases where you want managed backup/HA without standing up SQL Server yourself.</p>
+          <p><b>How used in Azure (services that are PaaS):</b></p>
+          <ul>
+            <li><b>Azure App Service</b> — managed web/API/mobile app hosting; supports .NET, Java, Node, Python, PHP, Ruby, containers; built-in autoscale, SSL, deployment slots.</li>
+            <li><b>Azure SQL Database</b> — managed SQL Server engine; Microsoft handles backups, patching, HA, geo-replication; you control schema + queries.</li>
+            <li><b>Azure Cosmos DB</b> — managed multi-model NoSQL with global distribution and SLA-backed single-digit-ms latency.</li>
+            <li><b>Azure Database for PostgreSQL / MySQL / MariaDB</b> — managed open-source database engines.</li>
+            <li><b>Azure Kubernetes Service (AKS)</b> — managed K8s control plane (Microsoft runs the masters for free; you pay for worker nodes).</li>
+            <li><b>Azure Service Bus, Event Grid, Event Hubs</b> — managed messaging / event streaming.</li>
+            <li><b>Azure Cache for Redis</b> — managed Redis.</li>
+            <li><b>Azure Logic Apps</b> — visual workflow PaaS.</li>
+          </ul>
+          <p><b>Your responsibilities:</b> the app code, data, config, identity, and choosing the right SKU/tier. Microsoft owns OS, runtime, scaling primitives, patching, and physical layers.</p>
+
+          <h2>SaaS — Software as a Service</h2>
+          <p><b>Acronym:</b> Software as a Service.</p>
+          <p><b>What:</b> the provider gives you a finished application accessed over the web; you sign in and use it. No code to deploy, no schema to manage; usually licensed per-user per-month.</p>
+          <p><b>Why use it:</b> zero infrastructure ownership, instant provisioning, predictable subscription cost, automatic updates pushed by the vendor.</p>
+          <p><b>How used in Microsoft's ecosystem (SaaS examples):</b></p>
+          <ul>
+            <li><b>Microsoft 365</b> (Exchange Online, SharePoint Online, OneDrive, Teams, Word/Excel/PowerPoint web).</li>
+            <li><b>Dynamics 365</b> — CRM/ERP suite.</li>
+            <li><b>Power Platform</b> — Power BI, Power Apps, Power Automate, Power Virtual Agents.</li>
+            <li><b>GitHub</b>, <b>LinkedIn</b> — Microsoft-owned SaaS.</li>
+            <li>Third-party SaaS reachable via Entra ID SSO: Salesforce, ServiceNow, Workday, Adobe, Slack.</li>
+          </ul>
+          <p><b>Your responsibilities:</b> identity + access (who logs in, with what MFA), data classification, user training, and license assignment. Microsoft owns literally everything else — code, OS, hardware, datacenters.</p>
+
+          <h2>Shared responsibility model — the diagonal table to memorize</h2>
+          <p><b>Universal rule, every model:</b> the customer always owns <b>data</b>, <b>information</b>, <b>devices</b> (mobile/PC), and <b>accounts and identities</b>. The provider always owns the <b>physical datacenter</b>, <b>physical network</b>, and <b>physical hosts</b>. Everything in between shifts.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>Layer</th><th>On-prem</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr>
+            <tr><td>Data &amp; access</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>Devices/Accounts</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>Identity directory</td><td>You</td><td>Shared</td><td>Shared</td><td>Microsoft</td></tr>
+            <tr><td>Applications</td><td>You</td><td>You</td><td>Shared</td><td>Microsoft</td></tr>
+            <tr><td>Network controls</td><td>You</td><td>You</td><td>Shared</td><td>Microsoft</td></tr>
+            <tr><td>Operating system</td><td>You</td><td>You</td><td>Microsoft</td><td>Microsoft</td></tr>
+            <tr><td>Hosts (hypervisor)</td><td>You</td><td>Microsoft</td><td>Microsoft</td><td>Microsoft</td></tr>
+            <tr><td>Physical network</td><td>You</td><td>Microsoft</td><td>Microsoft</td><td>Microsoft</td></tr>
+            <tr><td>Physical datacenter</td><td>You</td><td>Microsoft</td><td>Microsoft</td><td>Microsoft</td></tr>
           </table>
+          <p><b>Why this matters:</b> Microsoft tests scenarios like "your storage account had a public blob and was scraped — whose responsibility?" Answer: yours (data/access is always customer). "A datacenter HVAC failed and rebooted hosts — whose responsibility?" Answer: Microsoft (physical infrastructure).</p>
+
+          <h2>FaaS — Function/Serverless (subset of PaaS)</h2>
+          <p><b>Acronym:</b> Function as a Service.</p>
+          <p><b>What:</b> you upload a function (small unit of code); the platform runs it on demand in response to an event (HTTP request, queue message, timer, blob upload). No servers, VMs, or containers to manage; you pay per execution + per-GB-second of memory.</p>
+          <p><b>Why use it:</b> event-driven workloads with unpredictable or sparse traffic — you pay nothing when idle. Best fit for image-processing pipelines, webhooks, scheduled cleanup jobs, simple APIs.</p>
+          <p><b>How used in Azure:</b> <b>Azure Functions</b> (Consumption / Premium / Dedicated plans), <b>Azure Logic Apps</b> (visual), <b>Azure Container Apps</b> with KEDA-based scale-to-zero.</p>
+          <p><b>Trade-offs:</b> <i>cold start</i> latency on first invocation; max execution time limits (10 min on Consumption); harder to debug than long-running services.</p>
+
+          <h2>DaaS — Desktop as a Service</h2>
+          <p><b>Acronym:</b> Desktop as a Service.</p>
+          <p><b>What:</b> provider hosts virtual Windows desktops that users stream to any device (PC, Mac, iPad, browser).</p>
+          <p><b>Why:</b> remote/hybrid workforce, contractor access, BYOD security, regulated data that must not leave the cloud.</p>
+          <p><b>How used in Azure:</b> <b>Azure Virtual Desktop (AVD)</b> — multi-session Windows 10/11 Enterprise; <b>Windows 365 Cloud PC</b> — per-user fixed-spec cloud PC subscription.</p>
+
+          <h2>Choosing the right model — decision logic</h2>
+          <ul>
+            <li>Need root/admin access, custom kernel, or weird legacy software → <b>IaaS</b>.</li>
+            <li>Building a web app/API and want to ship fast → <b>PaaS</b> (App Service or Container Apps).</li>
+            <li>Event-driven, sparse, sub-10-min workload → <b>FaaS</b> (Functions).</li>
+            <li>Need a SQL database without running SQL Server → <b>PaaS</b> (Azure SQL Database).</li>
+            <li>Need email + file sharing + Teams for a company → <b>SaaS</b> (Microsoft 365).</li>
+            <li>Need to give 500 call-center agents a Windows desktop → <b>DaaS</b> (AVD / Windows 365).</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>IaaS</b> — Infrastructure as a Service. Rent virtual hardware.</li>
+            <li><b>PaaS</b> — Platform as a Service. Rent a managed runtime/platform.</li>
+            <li><b>SaaS</b> — Software as a Service. Rent the finished app.</li>
+            <li><b>FaaS</b> — Function as a Service. Event-driven, per-execution billing.</li>
+            <li><b>DaaS</b> — Desktop as a Service. Streamed Windows desktops.</li>
+            <li><b>SLA</b> — Service Level Agreement; tier differs per service and SKU.</li>
+            <li><b>SKU</b> — Stock Keeping Unit; a specific tier/size of an Azure service.</li>
+            <li><b>BYOL</b> — Bring Your Own License (Windows Server / SQL Server / RHEL via Azure Hybrid Benefit).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Want most control over OS and patching" → <b>IaaS</b>.</li>
+            <li>"Want Microsoft to handle OS patching but I write the code" → <b>PaaS</b>.</li>
+            <li>"Want to use Outlook and Teams without managing servers" → <b>SaaS</b>.</li>
+            <li>"Pay only when code runs in response to an event" → <b>FaaS</b> / Azure Functions Consumption plan.</li>
+            <li>"Storage account was set public by an admin; data leaked" → customer responsibility (data + access always customer).</li>
+            <li>"Datacenter cooling failure causes outage" → provider (Microsoft) responsibility (physical layer always provider).</li>
+            <li>"Need Windows desktop for 500 contractors on iPads" → <b>DaaS</b> (Azure Virtual Desktop / Windows 365).</li>
+          </ul>
         `
       },
       {
