@@ -13849,18 +13849,287 @@ spec:
       {
         title: '3. Cloud Storage',
         body: `
-          <h2>Storage classes</h2>
+          <p>Cloud storage comes in three primary <b>access patterns</b> — block, file, object — plus specialty services for archive, databases, and analytics. Each has its own consistency, IOPS, latency, durability, replication, and pricing profile. Exam tests pattern selection, tiers, replication models, encryption, and ransomware defenses.</p>
+
+          <h2>Three access patterns</h2>
+
+          <h3>Block storage</h3>
+          <p><b>What:</b> Raw disk; OS sees a block device. Filesystem (ext4, XFS, NTFS) lives on top. Attached to ONE VM at a time (single-attach), unless multi-attach features used.</p>
+          <p><b>Examples:</b> AWS <b>EBS</b> (Elastic Block Store), Azure <b>Managed Disks</b>, GCP <b>Persistent Disk</b> + <b>Hyperdisk</b>, OCI Block Volume.</p>
+          <p><b>Tiers:</b></p>
           <ul>
-            <li><b>Block</b> — like a disk; attach to VMs (EBS, Azure Disk, Persistent Disk).</li>
-            <li><b>File</b> — shared mountable filesystem (EFS, Azure Files).</li>
-            <li><b>Object</b> — key-based, HTTP API, virtually unlimited (S3, Blob, GCS).</li>
+            <li><b>HDD-backed</b> — cheapest, low IOPS (st1 throughput-optimized HDD, sc1 cold HDD, Azure HDD Standard).</li>
+            <li><b>General-purpose SSD</b> — gp3 / gp2 (AWS), Premium SSD v2 / Standard SSD (Azure), pd-balanced (GCP). Default for boot + most workloads.</li>
+            <li><b>Provisioned IOPS / Ultra Disk / Hyperdisk Extreme</b> — high-throughput, latency-sensitive DBs. io2 Block Express, Ultra Disk, Hyperdisk Extreme.</li>
+            <li><b>Local NVMe instance storage</b> — physically attached to the host; very fast but DISAPPEARS when VM stops. Used for scratch / temp / Redis caches.</li>
           </ul>
-          <h2>Tiers</h2>
-          <p>Hot → Cool → Archive. Trade access latency for cost. Lifecycle policies move objects automatically.</p>
-          <h2>Replication & durability</h2>
-          <p>LRS, ZRS (zone), GRS / cross-region. Object storage often 11 nines (99.999999999%) durability.</p>
-          <h2>Snapshots & backups</h2>
-          <p>Snapshots are point-in-time, incremental, fast restore. Immutable / WORM buckets defend against ransomware.</p>
+          <p><b>Pricing:</b> Per-GB-month for provisioned size + optionally per-IOPS or per-MB/s throughput. You pay even when VM is stopped.</p>
+          <p><b>Use cases:</b> Boot volumes, DB engines, transactional workloads, anything that wants a filesystem you own.</p>
+
+          <h3>File storage</h3>
+          <p><b>What:</b> Shared filesystem mountable by many clients (NFS / SMB / CIFS).</p>
+          <p><b>Examples:</b> AWS <b>EFS</b> (Elastic File System, NFS v4), <b>FSx for NetApp ONTAP / Windows / Lustre / OpenZFS</b>; Azure <b>Files</b> (SMB + NFS); GCP <b>Filestore</b>.</p>
+          <p><b>Use cases:</b> Lift-and-shift NFS shares, home directories, content management, HPC scratch (Lustre), Windows file servers (FSx Windows / Azure Files w/ AD).</p>
+          <p><b>Performance modes:</b> Provisioned vs Bursting (EFS); Premium vs Standard (Azure); Basic vs High Scale (Filestore).</p>
+
+          <h3>Object storage</h3>
+          <p><b>What:</b> Flat namespace of objects identified by KEY, accessed via HTTP/S API. Objects are immutable; versioning + metadata supported.</p>
+          <p><b>Examples:</b> AWS <b>S3</b>, Azure <b>Blob Storage</b>, GCP <b>Cloud Storage (GCS)</b>, Backblaze B2, Cloudflare R2, MinIO (self-hosted).</p>
+          <p><b>Why dominant:</b></p>
+          <ul>
+            <li>Effectively infinite scale.</li>
+            <li>Extreme durability (often <b>11 nines</b> — 99.999999999%).</li>
+            <li>Pay only for stored bytes + requests + egress.</li>
+            <li>Integrates with every analytics, ML, backup, data-lake stack.</li>
+          </ul>
+          <p><b>Buckets</b> = top-level container (region-scoped). Globally-unique name in S3; per-storage-account in Azure.</p>
+          <p><b>Object</b> = data + metadata + key. Up to TB-scale per object (5 TB S3).</p>
+          <p><b>Access:</b> REST API (S3 API has become de-facto standard), SDKs, CLI, browser. <b>No POSIX semantics</b> — you can't append-write or partial-update without rewriting.</p>
+
+          <h2>Object-storage tiers (hot → cold → archive)</h2>
+          <p>Trade access latency + retrieval fee for lower storage cost.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tier (concept)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS S3</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure Blob</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Retrieval</th></tr>
+            <tr><td>Hot frequent</td><td>Standard</td><td>Hot</td><td>Standard</td><td>ms</td></tr>
+            <tr><td>Infrequent / Cool</td><td>Standard-IA / One Zone-IA</td><td>Cool</td><td>Nearline</td><td>ms</td></tr>
+            <tr><td>Cold</td><td>Glacier Instant Retrieval</td><td>Cold</td><td>Coldline</td><td>ms</td></tr>
+            <tr><td>Archive (cheaper, slower)</td><td>Glacier Flexible (minutes-hours)</td><td>Archive (hours)</td><td>Archive (hours)</td><td>minutes–hours</td></tr>
+            <tr><td>Deep archive</td><td>Glacier Deep Archive (~12h)</td><td>—</td><td>—</td><td>~12 hours</td></tr>
+            <tr><td>Auto-tiering</td><td>S3 Intelligent-Tiering</td><td>Lifecycle / Hot↔Cool tier</td><td>Autoclass</td><td>—</td></tr>
+          </table>
+          <p><b>Pricing trade-off:</b> Lower tier = cheaper $/GB-month BUT higher per-GB retrieval + minimum storage duration penalties (e.g., 90 days IA, 180 days Glacier). Don't bounce objects through tiers without a plan — early-delete fees add up.</p>
+
+          <h2>Lifecycle policies</h2>
+          <pre><code># S3 lifecycle JSON (conceptual)
+{
+  "Rules": [{
+    "ID": "logs-to-archive",
+    "Filter": {"Prefix": "logs/"},
+    "Status": "Enabled",
+    "Transitions": [
+      {"Days": 30,  "StorageClass": "STANDARD_IA"},
+      {"Days": 90,  "StorageClass": "GLACIER"},
+      {"Days": 365, "StorageClass": "DEEP_ARCHIVE"}
+    ],
+    "Expiration": {"Days": 2555}
+  }]
+}</code></pre>
+          <p>Azure: lifecycle-management policy in storage account. GCP: lifecycle rules per bucket. All apply on per-prefix or per-tag filters.</p>
+
+          <h2>Durability vs Availability</h2>
+          <ul>
+            <li><b>Durability</b> — probability data ISN'T LOST. S3 Standard = 11 nines (99.999999999%) annual.</li>
+            <li><b>Availability</b> — probability data is ACCESSIBLE when requested. S3 Standard = 99.99%; Standard-IA 99.9%; One Zone-IA 99.5%.</li>
+            <li>Provider SLAs only cover availability; durability is built-in math from replication.</li>
+          </ul>
+
+          <h2>Replication / Redundancy options</h2>
+
+          <h3>Azure storage redundancy levels</h3>
+          <ul>
+            <li><b>LRS</b> (Locally-Redundant Storage) — 3 copies in 1 datacenter. Cheapest, weakest.</li>
+            <li><b>ZRS</b> (Zone-Redundant) — 3 copies across 3 AZs in 1 region.</li>
+            <li><b>GRS</b> (Geo-Redundant) — LRS + async copy to paired region (3 + 3 = 6 copies).</li>
+            <li><b>GZRS</b> (Geo-Zone-Redundant) — ZRS in primary + LRS in paired region.</li>
+            <li><b>RA-GRS / RA-GZRS</b> — Read-Access variants; secondary region readable directly.</li>
+          </ul>
+
+          <h3>AWS S3 replication</h3>
+          <ul>
+            <li><b>S3 Standard</b> — replicated across 3+ AZs.</li>
+            <li><b>S3 One Zone-IA</b> — single AZ (cheaper, lower availability).</li>
+            <li><b>Cross-Region Replication (CRR)</b> — async copy to different region.</li>
+            <li><b>Same-Region Replication (SRR)</b> — copy to another bucket in same region (for log aggregation, compliance separation).</li>
+            <li><b>Multi-Region Access Points</b> — global endpoint with active-active replication + routing.</li>
+          </ul>
+
+          <h3>GCP Cloud Storage location types</h3>
+          <ul>
+            <li><b>Region</b> — single region (lowest cost).</li>
+            <li><b>Dual-region</b> — synchronous across two named regions.</li>
+            <li><b>Multi-region</b> — geographic group (us, eu, asia) for highest availability + global reach.</li>
+          </ul>
+
+          <h2>Snapshots</h2>
+          <ul>
+            <li><b>Block snapshot</b> — point-in-time, incremental, COW-style. Stored in object storage; very fast to create.</li>
+            <li><b>EBS snapshot</b>, <b>Azure Managed Disk snapshot</b>, <b>GCP Persistent Disk snapshot</b>.</li>
+            <li>First snapshot = full; subsequent only changed blocks.</li>
+            <li>Can copy across regions for DR.</li>
+            <li>Many providers offer <b>snapshot lifecycle policies</b> + <b>snapshot lock</b>.</li>
+            <li>Snapshots used to create new volumes / AMIs.</li>
+            <li><b>Application-consistent</b> snapshots — quiesce app first (VSS on Windows, fsfreeze on Linux) before snapshot.</li>
+          </ul>
+
+          <h2>Backups</h2>
+          <ul>
+            <li><b>AWS Backup</b> — central service across EBS / RDS / DynamoDB / EFS / FSx / S3 / VMware.</li>
+            <li><b>Azure Backup</b> — VMs, files, SQL, Files share, M365 workloads.</li>
+            <li><b>GCP Backup &amp; DR</b> — Actifio-based.</li>
+            <li><b>Third party:</b> Veeam, Commvault, Rubrik, Cohesity, Druva.</li>
+            <li>Retention policies + multi-region copies + immutable vaults.</li>
+            <li>Test restores regularly — backup you've never restored is hope, not a backup.</li>
+            <li><b>3-2-1-1-0</b> rule applies in cloud too.</li>
+          </ul>
+
+          <h2>Immutability + WORM</h2>
+          <ul>
+            <li><b>S3 Object Lock</b> — WORM lock per object or bucket. Modes: <b>Governance</b> (override w/ permission) vs <b>Compliance</b> (cannot override during retention).</li>
+            <li><b>Azure Immutable Blob Storage</b> — time-based + legal hold.</li>
+            <li><b>GCS Bucket Lock</b> — retention policy + Bucket Lock (irrevocable).</li>
+            <li>Critical defense against <b>ransomware</b> + insider deletion.</li>
+            <li>Combine with <b>MFA-Delete</b> + versioning.</li>
+          </ul>
+
+          <h2>Versioning + soft delete</h2>
+          <ul>
+            <li>Object versioning keeps every PUT / DELETE as a new version → DELETE just inserts a delete marker.</li>
+            <li><b>Soft delete</b> (Azure Blob, M365): retains deleted blobs for N days.</li>
+            <li>Combine with MFA-Delete to prevent permanent destruction.</li>
+          </ul>
+
+          <h2>Encryption</h2>
+          <ul>
+            <li><b>At rest</b> — almost always ENABLED BY DEFAULT (AES-256). Variants:
+              <ul>
+                <li><b>SSE-S3 / Microsoft-managed</b> — provider keys.</li>
+                <li><b>SSE-KMS / CMK / customer-managed in cloud KMS</b> — you control key lifecycle + audit.</li>
+                <li><b>SSE-C / customer-supplied keys</b> — you provide key per request.</li>
+                <li><b>BYOK</b> (Bring Your Own Key) — import existing key to cloud KMS.</li>
+                <li><b>HYOK</b> (Hold Your Own Key) — keys never leave on-prem HSM.</li>
+                <li><b>Envelope encryption</b> — data key encrypted by master key in KMS.</li>
+              </ul>
+            </li>
+            <li><b>In transit</b> — TLS to API; private endpoint paths skip public internet.</li>
+            <li><b>Client-side encryption</b> — encrypt before upload using SDK (e.g., S3 Encryption Client).</li>
+          </ul>
+
+          <h2>Access control</h2>
+          <ul>
+            <li><b>IAM policies</b> — primary identity-based controls (allow/deny).</li>
+            <li><b>Bucket policies</b> — resource-based; cross-account access patterns.</li>
+            <li><b>ACLs</b> — legacy per-object; AWS prefers Bucket Owner Enforced (disables ACLs).</li>
+            <li><b>Block Public Access</b> — account-level guardrail; mandatory in any sane config.</li>
+            <li><b>Presigned URLs</b> — short-lived signed URL grants temporary upload/download.</li>
+            <li><b>Private endpoint / VPC endpoint / Private Service Connect</b> — access object storage via private IPs only.</li>
+          </ul>
+
+          <h2>Networking + performance</h2>
+          <ul>
+            <li><b>S3 Transfer Acceleration</b> — CloudFront edge upload paths.</li>
+            <li><b>Multipart upload</b> — split large objects (≥100 MB suggestion); resumable + parallel.</li>
+            <li><b>Range GET</b> — fetch part of an object.</li>
+            <li><b>Strong read-after-write consistency</b> — AWS S3 (since 2020), Azure Blob, GCS. Older systems were eventual-consistent.</li>
+            <li><b>CDN integration</b> — CloudFront + S3, Azure Front Door + Blob, Cloud CDN + GCS. Edge cache eliminates egress + reduces latency.</li>
+            <li><b>Request rate prefixes</b> — S3 supports 5,500 GET + 3,500 PUT per prefix; spread across prefixes to parallelize.</li>
+          </ul>
+
+          <h2>Event-driven storage workflows</h2>
+          <ul>
+            <li><b>S3 Event Notifications</b> → Lambda / SQS / SNS / EventBridge.</li>
+            <li><b>Azure Blob events</b> → Event Grid → Functions / Logic Apps.</li>
+            <li><b>GCS Pub/Sub notifications</b> → Cloud Functions / Run.</li>
+            <li>Common pattern: upload file → trigger processing pipeline (image resize, ETL, virus scan).</li>
+          </ul>
+
+          <h2>Cost optimization for storage</h2>
+          <ul>
+            <li>Use the right tier — Intelligent-Tiering / Autoclass for unpredictable access.</li>
+            <li>Apply lifecycle rules — move logs older than 30d → archive.</li>
+            <li>Delete incomplete multipart uploads (silent cost leak).</li>
+            <li>Enable lifecycle expiration on noncurrent versions if versioning enabled.</li>
+            <li>Compress + dedup before upload.</li>
+            <li>Avoid cross-region egress; co-locate compute + storage.</li>
+            <li>Use CDN for repeated reads.</li>
+            <li>Right-size block volumes; don't provision IOPS you don't measure using.</li>
+            <li>Snapshots — keep only what retention requires; copy across region with care.</li>
+            <li>Convert long-lived archives to Glacier Deep Archive / Azure Archive.</li>
+          </ul>
+
+          <h2>Other specialty cloud storage</h2>
+          <ul>
+            <li><b>Managed databases</b> — RDS / Aurora, SQL DB, Cloud SQL, Cosmos DB, Spanner, DynamoDB, Bigtable. Storage abstracted; you tune throughput + redundancy.</li>
+            <li><b>Data warehouses</b> — Redshift, Synapse, BigQuery, Snowflake. Columnar + separation of storage + compute.</li>
+            <li><b>Data lakes</b> — object storage organized for analytics; combined w/ Glue / Lake Formation / Synapse Spark / BigQuery external tables.</li>
+            <li><b>Cache</b> — ElastiCache (Redis/Memcached), Azure Cache for Redis, Memorystore.</li>
+            <li><b>Search</b> — OpenSearch / Elastic Cloud, Azure Cognitive Search, Vertex AI Search.</li>
+            <li><b>Time-series</b> — Timestream, Azure Data Explorer (ADX), BigQuery TS.</li>
+            <li><b>Graph</b> — Neptune, Cosmos DB Gremlin.</li>
+            <li><b>HPC + parallel</b> — FSx for Lustre, Azure HPC Cache, GCS w/ Cloud Filestore High Scale.</li>
+            <li><b>Tape-like</b> — AWS Snowball + Snowmobile / Azure Data Box / Google Transfer Appliance for moving PBs offline.</li>
+          </ul>
+
+          <h2>Hybrid / on-prem connectivity</h2>
+          <ul>
+            <li><b>AWS Storage Gateway</b> — appliance presenting S3 / EBS / Tape over NFS / SMB / iSCSI / VTL to on-prem.</li>
+            <li><b>Azure StorSimple / File Sync</b> — cloud-tier on-prem file servers.</li>
+            <li><b>NetApp Cloud Volumes</b> on AWS / Azure / GCP.</li>
+            <li><b>S3-compatible storage</b> on-prem (MinIO, Cloudian, Pure FlashBlade).</li>
+            <li><b>Snowball / Snowmobile</b> for one-time bulk transfer.</li>
+            <li><b>DataSync / Azure Data Box / Storage Migration Service</b> for ongoing sync.</li>
+          </ul>
+
+          <h2>Compliance + regulatory features</h2>
+          <ul>
+            <li><b>WORM / Object Lock</b> for SEC 17a-4 + similar regulators.</li>
+            <li><b>Data residency</b> — choose specific region; provider may guarantee data stays in region.</li>
+            <li><b>Audit logs</b> — bucket / object-level access logs to S3 access logs / CloudTrail / Blob diagnostic logs / Cloud Audit Logs.</li>
+            <li><b>Encryption with CMK</b> for HIPAA / PCI / FedRAMP.</li>
+            <li><b>Macie / Defender for Storage / DLP API</b> — detect PII in stored objects.</li>
+            <li><b>Customer Lockbox</b> (Azure) / similar in AWS — explicit approval before provider engineers access tenant data.</li>
+          </ul>
+
+          <h2>Common storage troubleshooting</h2>
+          <ul>
+            <li><b>"Access Denied" on S3</b> — check bucket policy, IAM, Block Public Access, encryption-key permission.</li>
+            <li><b>Slow EBS throughput</b> — burst credits exhausted (gp2); switch to gp3 or io2.</li>
+            <li><b>Unexpected cost spike</b> — versioning kept old objects; incomplete multipart uploads; cross-region replication; high egress to Internet.</li>
+            <li><b>"Object retrieval pending"</b> on Glacier — initiate restore + wait per tier.</li>
+            <li><b>Concurrent writes lost</b> — last-writer-wins on object storage; use conditional headers (If-Match) or DB for coordination.</li>
+            <li><b>Volume cannot detach</b> — instance has it mounted; unmount inside OS first.</li>
+            <li><b>Snapshot stuck "pending"</b> — large volume + first snapshot; check for AWS service health.</li>
+            <li><b>File share locked</b> — SMB lease; check active sessions.</li>
+            <li><b>Encryption key revoked</b> — CMK disabled / deleted → objects unreadable; rotate carefully.</li>
+          </ul>
+
+          <h2>Storage selection cheatsheet</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Need</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Pick</th></tr>
+            <tr><td>Boot volume / database disk for one VM</td><td>Block storage (gp3 / Premium SSD / pd-ssd)</td></tr>
+            <tr><td>Predictable high IOPS (RDBMS)</td><td>Provisioned IOPS (io2 / Ultra Disk / Hyperdisk Extreme)</td></tr>
+            <tr><td>Cheap throughput for bulk write</td><td>Throughput-optimized HDD (st1) or Standard HDD</td></tr>
+            <tr><td>Many clients share files via NFS/SMB</td><td>File storage (EFS / Azure Files / Filestore)</td></tr>
+            <tr><td>Globally accessible, virtually unlimited blobs</td><td>Object storage (S3 / Blob / GCS)</td></tr>
+            <tr><td>Logs older than 30 days, rarely accessed</td><td>Object cool tier + lifecycle to archive</td></tr>
+            <tr><td>Legal hold / immutable backups</td><td>Object Lock (Governance / Compliance) + versioning + MFA-Delete</td></tr>
+            <tr><td>Multi-region disaster recovery</td><td>Cross-region replication (CRR / GRS / Dual-region)</td></tr>
+            <tr><td>Move 100 TB from on-prem fast</td><td>Snowball / Data Box / Transfer Appliance + DataSync</td></tr>
+            <tr><td>HPC parallel I/O</td><td>FSx for Lustre / HPC Cache / Filestore High Scale</td></tr>
+            <tr><td>Customer-controlled encryption key + audit</td><td>CMK in KMS + Key Vault + Cloud KMS</td></tr>
+            <tr><td>Cheap deep archive, hours to retrieve</td><td>Glacier Deep Archive / Azure Archive / GCS Archive</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Like a disk attached to a single VM" → block storage.</li>
+            <li>"Shared filesystem across many VMs" → file storage (NFS / SMB).</li>
+            <li>"Virtually unlimited, key-based, HTTP API" → object storage.</li>
+            <li>"11 nines durability" → object storage (S3 Standard, equivalent).</li>
+            <li>"Lowest cost, hours to retrieve" → Glacier Deep Archive / Azure Archive.</li>
+            <li>"Move objects through tiers automatically" → lifecycle policy.</li>
+            <li>"Replication across paired region (Azure)" → GRS / GZRS.</li>
+            <li>"Three copies across 3 AZs in one region" → ZRS.</li>
+            <li>"Cannot delete until retention expires" → S3 Object Lock Compliance mode.</li>
+            <li>"Versioning + MFA-Delete + Object Lock" → ransomware defense trinity.</li>
+            <li>"Point-in-time incremental copy of block volume" → snapshot.</li>
+            <li>"Encrypts blob with provider-managed key" → SSE-S3 / Microsoft-managed keys.</li>
+            <li>"Customer holds + manages key in KMS" → SSE-KMS / CMK.</li>
+            <li>"Provider never holds the key" → HYOK.</li>
+            <li>"Generate temporary URL to share an object" → presigned URL.</li>
+            <li>"Strong read-after-write consistency in S3" → enabled since 2020 (all object storage now strong).</li>
+            <li>"Hybrid appliance presenting S3 as NFS" → AWS Storage Gateway.</li>
+            <li>"Bulk transfer 80 TB to cloud" → Snowball / Data Box / Transfer Appliance.</li>
+          </ul>
         `
       },
       {
