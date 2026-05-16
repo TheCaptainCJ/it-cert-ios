@@ -15763,21 +15763,363 @@ resource "aws_vpc" "main" {
       {
         title: '9. Monitoring & Cost',
         body: `
-          <h2>Observability pillars</h2>
+          <p>Two ops disciplines tightly coupled in cloud: <b>observability</b> (knowing what your systems are doing + why) and <b>FinOps</b> (knowing what they cost + why). Cloud bills surprise teams that don't measure both. Exam tests metrics + logs + traces + alerts, SLO-based alerting, tagging + budgets + reservations + egress optimization.</p>
+
+          <h2>Three pillars of observability</h2>
+
+          <h3>Metrics</h3>
+          <p>Numeric time-series. Cheap to store, fast to query. Use for dashboards + SLOs + alerts.</p>
           <ul>
-            <li><b>Metrics</b> — CloudWatch, Azure Monitor, Stackdriver, Prometheus.</li>
-            <li><b>Logs</b> — central log groups, queries (CloudWatch Insights, KQL).</li>
-            <li><b>Traces</b> — X-Ray, App Insights, OpenTelemetry.</li>
+            <li><b>AWS CloudWatch Metrics</b> — built-in for every service + custom metrics via PutMetricData.</li>
+            <li><b>Azure Monitor Metrics</b> — platform + custom via API.</li>
+            <li><b>GCP Cloud Monitoring (Stackdriver)</b>.</li>
+            <li><b>Prometheus</b> — pull-based, time-series DB; standard in Kubernetes (kube-state-metrics, node-exporter). Federated with Thanos / Cortex / VictoriaMetrics / Mimir for long-term storage.</li>
+            <li><b>OpenMetrics</b> — standardized exposition format (Prometheus-compatible).</li>
+            <li><b>Managed Prometheus:</b> AWS Managed Prometheus (AMP), Azure Managed Prometheus, Google Managed Prometheus.</li>
+            <li><b>Push-based</b>: StatsD, InfluxDB line protocol, OpenTelemetry exporters.</li>
+            <li><b>SaaS:</b> Datadog, New Relic, Dynatrace, Honeycomb, Splunk Observability Cloud, Grafana Cloud, Lightstep.</li>
+            <li><b>Dashboards:</b> Grafana (open-source standard), CloudWatch Dashboards, Azure Workbooks, Cloud Monitoring dashboards.</li>
           </ul>
-          <h2>Alerting</h2>
-          <p>SLO-driven (e.g., 99.9% availability); page only on actionable events. Runbooks linked.</p>
-          <h2>FinOps</h2>
+
+          <h3>Logs</h3>
+          <p>Discrete event records — request, error, decision. High-cardinality + searchable + queryable.</p>
           <ul>
-            <li>Tag resources by app/owner/env.</li>
-            <li>Use budgets and anomaly detection.</li>
-            <li>Right-size, schedule shutdowns, use spot + reservations.</li>
-            <li>Lifecycle policies on object storage.</li>
-            <li>Egress is the silent killer — design to keep traffic in-region.</li>
+            <li><b>AWS CloudWatch Logs</b> + <b>CloudWatch Logs Insights</b> (query DSL).</li>
+            <li><b>Azure Monitor Logs / Log Analytics</b> with <b>KQL</b> (Kusto Query Language).</li>
+            <li><b>GCP Cloud Logging</b> + Log Explorer (filters + LogQL-style).</li>
+            <li><b>OpenSearch / Elasticsearch + Kibana / OpenSearch Dashboards</b>.</li>
+            <li><b>Loki</b> (Grafana) — log aggregation indexing only labels, content stored compressed.</li>
+            <li><b>Splunk</b> — SPL query language, enterprise standard.</li>
+            <li><b>Datadog Logs / Sumo Logic / New Relic Logs / Better Stack</b>.</li>
+            <li><b>Structured logs (JSON)</b> + correlation IDs critical for distributed systems.</li>
+            <li><b>Log retention</b> per regulation; tiered hot → cool → archive.</li>
+            <li><b>Log shippers:</b> Fluent Bit, Fluentd, Vector, Filebeat, Promtail, Logstash.</li>
+          </ul>
+
+          <h3>Traces</h3>
+          <p>Distributed-system breadcrumbs that follow one request through many services.</p>
+          <ul>
+            <li><b>AWS X-Ray</b> — service maps + segments + sub-segments.</li>
+            <li><b>Azure Application Insights</b> — distributed tracing built on Monitor.</li>
+            <li><b>GCP Cloud Trace</b>.</li>
+            <li><b>OpenTelemetry (OTel)</b> — vendor-neutral standard for metrics + logs + traces. Replaces OpenTracing + OpenCensus.</li>
+            <li><b>Jaeger</b> + <b>Zipkin</b> — open-source trace backends.</li>
+            <li><b>Tempo</b> (Grafana) — large-scale trace storage.</li>
+            <li><b>Honeycomb</b> — high-cardinality event analysis pioneered "observability 2.0".</li>
+            <li>Trace IDs propagate via W3C Trace Context headers (<code>traceparent</code>, <code>tracestate</code>).</li>
+            <li>Use traces to find slow hop in microservice call chain, identify N+1 DB calls, exotic timeouts.</li>
+          </ul>
+
+          <h3>Bonus: events + profiles</h3>
+          <ul>
+            <li><b>Events</b> — significant changes (deploys, scale ops, config changes). Annotate dashboards.</li>
+            <li><b>Continuous profiling</b> — CPU + memory flamegraphs in production (Pyroscope, Pixie, Datadog Profiler).</li>
+            <li><b>eBPF</b>-based observability (Cilium Hubble, Pixie) — no agent / sidecar required.</li>
+          </ul>
+
+          <h2>Golden signals (Google SRE)</h2>
+          <ul>
+            <li><b>Latency</b> — time to serve a request (success vs error latency separately).</li>
+            <li><b>Traffic</b> — req/s, queries/s.</li>
+            <li><b>Errors</b> — % failed (5xx, dropped, timeouts).</li>
+            <li><b>Saturation</b> — how full each resource is.</li>
+          </ul>
+          <p><b>USE</b> (Brendan Gregg) — Utilization, Saturation, Errors per resource.<br>
+          <b>RED</b> (Tom Wilkie) — Rate, Errors, Duration per service.</p>
+
+          <h2>SLI / SLO / SLA / error budget</h2>
+          <ul>
+            <li><b>SLI</b> (Service Level Indicator) — measurement (e.g., 99.97% success rate).</li>
+            <li><b>SLO</b> (Service Level Objective) — internal target (e.g., 99.9% over 28 days).</li>
+            <li><b>SLA</b> (Service Level Agreement) — contract (e.g., 99.5%; refund 10% credit if missed).</li>
+            <li><b>Error budget</b> = 1 - SLO. If your SLO is 99.9% over 30 days, you have 43 min of allowed downtime / errors per month.</li>
+            <li><b>Burn rate alerts</b> — page when consuming budget faster than acceptable (e.g., 14.4× burn = budget depleted in 2 hours; common multi-window multi-burn-rate setup: 2% in 1h + 5% in 6h alerts).</li>
+            <li><b>Error budget policy</b>: when budget exhausted, freeze releases + focus on reliability.</li>
+          </ul>
+
+          <h2>Alerting best practices</h2>
+          <ul>
+            <li>Alert on <b>symptoms</b> users feel, not causes.</li>
+            <li>Page only on <b>actionable</b> events — no noise alerts.</li>
+            <li>Every alert links to a runbook.</li>
+            <li><b>Severity levels</b> — Sev 1 (page), Sev 2 (ticket), Sev 3 (info).</li>
+            <li>Use <b>multi-window multi-burn-rate</b> alerts for SLOs.</li>
+            <li>Alert routing (PagerDuty, Opsgenie, Splunk On-Call, Better Stack) with rotation + escalation.</li>
+            <li>Suppress flapping; deduplicate; correlate.</li>
+            <li>Track <b>MTTR / MTTD</b> per alert; tune for fewer false positives.</li>
+            <li>Post-incident review + blameless postmortem.</li>
+          </ul>
+
+          <h2>Synthetic monitoring + RUM</h2>
+          <ul>
+            <li><b>Synthetic</b> — bot probes (CloudWatch Synthetics, Azure Application Insights Standard tests, GCP Uptime checks, Pingdom, Datadog Synthetic). Detect outages BEFORE users.</li>
+            <li><b>RUM</b> (Real User Monitoring) — JavaScript / mobile SDK captures actual user perf (Core Web Vitals — LCP, INP, CLS).</li>
+            <li><b>Pulled metrics:</b> success rate, time to first byte, time to interactive, region-by-region perf.</li>
+          </ul>
+
+          <h2>Cloud-native monitoring services</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Category</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Metrics</td><td>CloudWatch Metrics + Managed Prometheus</td><td>Azure Monitor + Managed Prometheus</td><td>Cloud Monitoring + Managed Prometheus</td></tr>
+            <tr><td>Logs</td><td>CloudWatch Logs + Logs Insights</td><td>Log Analytics + KQL</td><td>Cloud Logging</td></tr>
+            <tr><td>Traces</td><td>X-Ray</td><td>Application Insights</td><td>Cloud Trace</td></tr>
+            <tr><td>APM</td><td>CloudWatch Application Signals</td><td>App Insights</td><td>Cloud Trace + Cloud Profiler</td></tr>
+            <tr><td>Synthetic</td><td>CloudWatch Synthetics</td><td>App Insights availability tests</td><td>Uptime Checks</td></tr>
+            <tr><td>RUM</td><td>CloudWatch RUM</td><td>App Insights JavaScript SDK</td><td>Firebase Performance Monitoring</td></tr>
+            <tr><td>Service health</td><td>Personal Health Dashboard</td><td>Service Health</td><td>Personalized Service Health</td></tr>
+            <tr><td>Alerts</td><td>CloudWatch Alarms + EventBridge</td><td>Azure Monitor Alerts</td><td>Cloud Monitoring Alerts</td></tr>
+            <tr><td>Dashboards</td><td>CloudWatch Dashboards / Grafana</td><td>Azure Workbooks / Grafana</td><td>Cloud Monitoring Dashboards / Grafana</td></tr>
+            <tr><td>Container observability</td><td>Container Insights</td><td>Container Insights</td><td>GKE Workload metrics</td></tr>
+            <tr><td>SIEM</td><td>Security Lake + 3rd party</td><td>Microsoft Sentinel</td><td>Chronicle / SecOps</td></tr>
+          </table>
+
+          <h2>OpenTelemetry (OTel)</h2>
+          <ul>
+            <li>CNCF project — vendor-neutral standard for telemetry signals.</li>
+            <li><b>SDKs</b> in every major language.</li>
+            <li><b>Collector</b> agent (otelcol-contrib) — receive, process, export to any backend.</li>
+            <li><b>Auto-instrumentation</b> for popular frameworks.</li>
+            <li>One pipeline → multiple backends (Datadog, Honeycomb, Tempo, Jaeger, Prometheus, etc.) avoids vendor lock-in.</li>
+            <li>Defines semantic conventions for resource + span attributes.</li>
+          </ul>
+
+          <h2>Logging best practices</h2>
+          <ul>
+            <li><b>Structured JSON</b> — keys parseable by tools.</li>
+            <li><b>Include trace + request IDs</b> for correlation.</li>
+            <li>Levels: ERROR / WARN / INFO / DEBUG / TRACE; configurable per env.</li>
+            <li>Never log secrets / PII; mask before emit (e.g., Vector, Fluent Bit pipelines).</li>
+            <li>Sample debug logs in high-volume services.</li>
+            <li>Centralize via shipper → backend.</li>
+            <li>Retention by compliance + cost (S3 lifecycle tier).</li>
+            <li>Index only what you'll search; archive the rest.</li>
+            <li>Use queries (CloudWatch Logs Insights / KQL / SPL / Loki / Elastic) for ad-hoc investigation.</li>
+          </ul>
+
+          <h2>Distributed tracing patterns</h2>
+          <ul>
+            <li><b>Span</b> = unit of work; <b>Trace</b> = tree of spans.</li>
+            <li><b>Parent span ID</b> + <b>trace ID</b> propagated through every hop via headers.</li>
+            <li>Each span has duration + status + attributes.</li>
+            <li><b>Sampling</b> — head (random %), tail (export only errored / slow traces), adaptive.</li>
+            <li>Cost-aware sampling reduces ingest while preserving rare-event detail.</li>
+          </ul>
+
+          <h2>Incident management workflow</h2>
+          <ol>
+            <li><b>Detect</b> via alert / monitoring / user report.</li>
+            <li><b>Triage</b> — severity classification + page.</li>
+            <li><b>Engage</b> — IC + responder + comms lead.</li>
+            <li><b>Mitigate</b> — quickest fix (rollback, scale up, traffic shift).</li>
+            <li><b>Resolve</b>.</li>
+            <li><b>Post-incident review</b> — RCA, timeline, action items.</li>
+            <li><b>Track repeats</b> — problem management.</li>
+            <li>Tools: PagerDuty, Opsgenie, Splunk On-Call, FireHydrant, Incident.io, Rootly.</li>
+          </ol>
+
+          <h2>Audit + compliance logging</h2>
+          <ul>
+            <li><b>CloudTrail / Activity Log / Cloud Audit Logs</b> — every API call.</li>
+            <li>Multi-region trail + Log Lake or Sentinel for retention.</li>
+            <li>Alert on: root activity, IAM policy changes, MFA disabled, KMS key delete, public bucket created.</li>
+            <li>Retention per HIPAA (6y), PCI (1y active), SOX (7y).</li>
+            <li>Immutable / WORM storage for forensic integrity.</li>
+          </ul>
+
+          <h2>FinOps — Financial Operations</h2>
+          <p><b>FinOps</b> = engineering + finance + ops collaboration on cloud spend. Continuous discipline, not one-time project.</p>
+
+          <h3>Three FinOps phases (FinOps Foundation)</h3>
+          <ol>
+            <li><b>Inform</b> — visibility into spend, allocation, anomalies.</li>
+            <li><b>Optimize</b> — right-size, reservations, savings plans, lifecycle.</li>
+            <li><b>Operate</b> — continuous + automated; embed in CI/CD.</li>
+          </ol>
+
+          <h3>Cost visibility tools</h3>
+          <ul>
+            <li><b>AWS Cost Explorer</b> + <b>Cost Anomaly Detection</b> + <b>Cost &amp; Usage Reports (CUR)</b> + <b>Billing Conductor</b>.</li>
+            <li><b>Azure Cost Management + Billing</b> + Cost Analysis + Budgets + Anomaly alerts.</li>
+            <li><b>GCP Billing Reports</b> + Budgets + BigQuery Billing export + Recommender.</li>
+            <li><b>Third-party:</b> CloudHealth, Cloudability, Apptio, Vantage, Kubecost, Spot.io, ProsperOps.</li>
+            <li><b>FOCUS</b> (FinOps Open Cost &amp; Usage Specification) — emerging standard for cross-cloud cost data.</li>
+          </ul>
+
+          <h3>Tagging strategy</h3>
+          <ul>
+            <li>Mandatory tags: <code>owner</code>, <code>app</code>, <code>environment</code>, <code>cost-center</code>, <code>data-classification</code>.</li>
+            <li>Enforce via IaC + policy (SCP "deny if no tag", Azure Policy modify+deny, GCP Org Policy).</li>
+            <li>Tag inheritance for OUs / Management Groups / Folders.</li>
+            <li>Cost allocation reports rely on tags.</li>
+            <li>Periodic tag audit + cleanup.</li>
+          </ul>
+
+          <h3>Account / project structure for cost</h3>
+          <ul>
+            <li>Per-environment account / subscription / project.</li>
+            <li>Per-team or per-product accounts ease chargeback.</li>
+            <li>Consolidated billing (AWS Organizations, Azure EA / MCA, GCP Billing Account).</li>
+            <li><b>Reservation sharing</b> across accounts (RI sharing in AWS, Azure scope-wide reservations, GCP committed-use sharing).</li>
+            <li>Landing Zone provides standard secure account structure.</li>
+          </ul>
+
+          <h3>Pricing models recap</h3>
+          <ul>
+            <li><b>On-demand</b> — flexible, expensive.</li>
+            <li><b>Reserved / Savings Plans / CUDs</b> — 1- or 3-yr commitment for 30-72% discount.</li>
+            <li><b>Spot / preemptible</b> — up to 90% discount; can be reclaimed.</li>
+            <li><b>Free tier</b> — limited resources for learning.</li>
+            <li><b>BYOL / Hybrid Benefit</b> — apply existing Windows / SQL / SLES licenses.</li>
+            <li><b>Negotiated EDP / EA</b> — enterprise discount programs.</li>
+            <li><b>Marketplace</b> — third-party software billed through cloud invoice.</li>
+          </ul>
+
+          <h3>Commitment optimization</h3>
+          <ul>
+            <li>Track baseline (always-on) usage → commit to that with Reserved / Savings Plans.</li>
+            <li>Use Spot / on-demand for spiky workloads.</li>
+            <li><b>Convertible RIs / Compute Savings Plans</b> — more flexible than instance-specific.</li>
+            <li>Centralize reservation management for org-wide sharing.</li>
+            <li>Reservations sometimes <b>auto-managed</b> via tools (ProsperOps, Zesty).</li>
+            <li>Avoid committing to obsolete instance families.</li>
+          </ul>
+
+          <h3>Right-sizing</h3>
+          <ul>
+            <li>Compare CPU / mem actual vs allocated.</li>
+            <li><b>AWS Compute Optimizer</b>, <b>Azure Advisor</b>, <b>GCP Recommender</b> — automated recommendations.</li>
+            <li>Down-shift instance class, or move to Graviton / Cobalt / Tau (Arm) for cheaper performance/$.</li>
+            <li>Move 24/7 dev VMs to schedule (nights off, weekends off — typical 70% savings).</li>
+            <li>Use burstable T-series / B-series for low-baseline workloads.</li>
+            <li>Convert idle VMs to serverless (scales to zero).</li>
+          </ul>
+
+          <h3>Storage optimization</h3>
+          <ul>
+            <li>Lifecycle policies — move objects to cool / archive tiers.</li>
+            <li>Delete incomplete multipart uploads (silent waste).</li>
+            <li>Expire noncurrent versions on versioned buckets.</li>
+            <li>Compress before upload.</li>
+            <li>De-duplicate.</li>
+            <li>Right-size EBS / disks — gp3 is usually cheaper + faster than gp2.</li>
+            <li>Delete unattached EBS / snapshots / old AMIs.</li>
+            <li>Snapshot retention policies.</li>
+          </ul>
+
+          <h3>Network optimization (egress is the silent killer)</h3>
+          <ul>
+            <li><b>Cache at CDN</b> — far cheaper than origin egress.</li>
+            <li><b>Keep traffic in-region</b> — cross-AZ + cross-region cost adds up.</li>
+            <li><b>Use Gateway endpoints</b> (S3 / DynamoDB) — free, save NAT GW costs.</li>
+            <li><b>Use PrivateLink / Private Endpoint</b> for SaaS instead of Internet egress.</li>
+            <li><b>Direct Connect / ExpressRoute / Interconnect</b> — usually cheaper egress than public Internet.</li>
+            <li><b>Compress responses</b> (gzip / brotli).</li>
+            <li><b>Use AZ-affinity</b> when possible to minimize cross-AZ.</li>
+            <li>NAT GW per AZ but careful: NAT GW also has hourly + per-GB fees.</li>
+          </ul>
+
+          <h3>Database optimization</h3>
+          <ul>
+            <li>Reserved instances for managed DB engines.</li>
+            <li>Aurora I/O-Optimized vs Standard mode tradeoff.</li>
+            <li>Pause / stop dev DBs nights + weekends.</li>
+            <li>Move infrequently accessed data to colder tiers (BigQuery long-term storage automatically).</li>
+            <li>Use Serverless DB tiers for variable workloads (Aurora Serverless, Azure SQL Hyperscale serverless, BigQuery on-demand).</li>
+            <li>Right-size IOPS provisioning.</li>
+          </ul>
+
+          <h3>Kubernetes cost optimization (Kubecost / OpenCost)</h3>
+          <ul>
+            <li><b>Kubecost / OpenCost</b> — per-namespace / per-deployment cost breakdown.</li>
+            <li>Right-size requests + limits.</li>
+            <li>Use Spot / preemptible nodes for fault-tolerant workloads.</li>
+            <li>Use Karpenter / NAP for workload-aware node provisioning.</li>
+            <li>HPA + VPA tuning.</li>
+            <li>Bin-pack with affinity / anti-affinity / taints + tolerations.</li>
+            <li>Use cluster autoscaler thresholds aggressively.</li>
+          </ul>
+
+          <h3>Budget + anomaly detection</h3>
+          <ul>
+            <li>Set hard + soft budgets per team / project / account.</li>
+            <li>Alert at 50% / 80% / 100% / forecast 110%.</li>
+            <li><b>Cost anomaly detection</b> (AWS / Azure / GCP) — ML-based flag unusual spend.</li>
+            <li>Stop services automatically when budget exceeded (advanced, careful).</li>
+            <li>Required for sandbox accounts to prevent runaway costs.</li>
+          </ul>
+
+          <h3>Showback vs chargeback</h3>
+          <ul>
+            <li><b>Showback</b> — visibility only; team sees their cost but doesn't pay.</li>
+            <li><b>Chargeback</b> — team gets billed internally; strongest incentive.</li>
+            <li>Tag-based allocation; reconcile via consolidated billing.</li>
+          </ul>
+
+          <h3>Common cost surprises + fixes</h3>
+          <ul>
+            <li><b>Egress to Internet</b> from large dataset → CDN + region-local serving.</li>
+            <li><b>Cross-region replication</b> — set ONLY for required prefixes.</li>
+            <li><b>NAT GW running idle</b> — consolidate, use Gateway Endpoint, remove if private subnet truly doesn't need it.</li>
+            <li><b>EBS / disk snapshots accumulating</b> — lifecycle policy.</li>
+            <li><b>Unattached EBS / unused EIPs</b> — billed; cleanup periodically.</li>
+            <li><b>Versioned S3</b> retaining old versions forever — expire noncurrent.</li>
+            <li><b>Idle Load Balancers</b>.</li>
+            <li><b>Auto-scaled spike</b> overshooting + not scaling down — tune cooldown.</li>
+            <li><b>Forgotten dev VMs / DBs</b> — schedule shutdown or destroy weekly.</li>
+            <li><b>Excessive CloudWatch / Logs ingestion</b> — drop debug logs in prod, sample.</li>
+            <li><b>NAT GW egress for noisy app</b> → optimize calls, cache.</li>
+            <li><b>Large dataset transfer</b> across regions for analytics → centralize data lake in one region.</li>
+            <li><b>Spot instance interruption thrashing</b> in production — mix on-demand + Spot.</li>
+            <li><b>Marketplace AMI bundled licensing</b> — sometimes much cheaper to BYOL.</li>
+          </ul>
+
+          <h2>SRE practices for monitoring + cost</h2>
+          <ul>
+            <li><b>SLO + error budget</b> tradeoff between reliability + velocity.</li>
+            <li><b>Toil reduction</b> — automate repetitive ops; track % toil per engineer.</li>
+            <li><b>Blameless postmortems</b>.</li>
+            <li><b>Capacity planning</b> + load testing — predict demand.</li>
+            <li><b>On-call rotation</b> with fair burden, runbooks, sustainable hours.</li>
+            <li><b>Game days</b> + chaos engineering.</li>
+            <li><b>Error budget burn rate alerting</b>.</li>
+          </ul>
+
+          <h2>Cross-cloud cost service equivalence</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Category</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Cost portal</td><td>Cost Explorer + CUR</td><td>Cost Management + Billing</td><td>Billing Reports</td></tr>
+            <tr><td>Budgets</td><td>AWS Budgets</td><td>Azure Budgets</td><td>Cloud Billing Budgets</td></tr>
+            <tr><td>Anomaly detection</td><td>Cost Anomaly Detection</td><td>Cost anomaly alerts</td><td>Smart Recommendations</td></tr>
+            <tr><td>Commitment</td><td>Savings Plans / RIs</td><td>Azure Reservations + Savings Plan</td><td>CUDs</td></tr>
+            <tr><td>Right-sizing</td><td>Compute Optimizer</td><td>Azure Advisor</td><td>Recommender</td></tr>
+            <tr><td>Container cost</td><td>EKS + Kubecost</td><td>AKS + Kubecost</td><td>GKE + Kubecost</td></tr>
+            <tr><td>Marketplace billing</td><td>AWS Marketplace</td><td>Azure Marketplace</td><td>GCP Marketplace</td></tr>
+            <tr><td>Tag policy</td><td>SCP / Resource Tagging API</td><td>Azure Policy tags</td><td>Org Policy / Labels</td></tr>
+            <tr><td>Billing export</td><td>CUR → S3 / Athena</td><td>Cost exports → Blob</td><td>Billing export → BigQuery</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Three pillars of observability" → Metrics, Logs, Traces.</li>
+            <li>"Vendor-neutral telemetry standard" → OpenTelemetry.</li>
+            <li>"Latency / Traffic / Errors / Saturation" → Google SRE golden signals.</li>
+            <li>"Internal reliability target" → SLO.</li>
+            <li>"Contractual uptime promise" → SLA.</li>
+            <li>"Allowed unreliability budget" → 1 - SLO = error budget.</li>
+            <li>"Alert when budget consumed too fast" → burn-rate alert.</li>
+            <li>"Bot probe outages from outside" → synthetic monitoring.</li>
+            <li>"JavaScript captures actual user perf" → RUM.</li>
+            <li>"Audit every cloud API call" → CloudTrail / Activity Log / Cloud Audit Logs.</li>
+            <li>"FinOps phases" → Inform → Optimize → Operate.</li>
+            <li>"Commit 1- or 3-yr for discount" → Reserved / Savings Plan / CUD.</li>
+            <li>"Up to 90% discount + can be reclaimed" → Spot / preemptible.</li>
+            <li>"Move objects to cheaper tier automatically" → lifecycle policy.</li>
+            <li>"Tag-based internal billing" → chargeback.</li>
+            <li>"Per-namespace cost in Kubernetes" → Kubecost / OpenCost.</li>
+            <li>"Apply on-prem Windows license to cloud VM" → BYOL / Hybrid Benefit.</li>
+            <li>"S3 free private path saves NAT GW cost" → Gateway VPC Endpoint.</li>
+            <li>"Cross-cloud cost data standard" → FOCUS.</li>
+            <li>"Detect unusual spend automatically" → cost anomaly detection.</li>
           </ul>
         `
       },
