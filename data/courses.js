@@ -6187,16 +6187,258 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '2. Threat Actors & Motivation',
         body: `
+          <p>Understanding WHO attacks and WHY shapes defenses. Different actors have different skill, funding, persistence, and goals — your control set should match the threats most likely to target your environment.</p>
+
+          <h2>Actor attribute framework</h2>
+          <p>Each actor type is profiled by:</p>
           <ul>
-            <li><b>Nation-state / APT</b> — well-funded, persistent, espionage / disruption.</li>
-            <li><b>Organized crime</b> — financial gain (ransomware, fraud).</li>
-            <li><b>Hacktivist</b> — ideology.</li>
-            <li><b>Insider</b> — current/former staff; access misuse.</li>
-            <li><b>Script kiddie</b> — low-skill, available tools.</li>
-            <li><b>Unskilled / shadow IT user</b> — accidental risk.</li>
+            <li><b>Sophistication / capability</b> — low to nation-state-grade.</li>
+            <li><b>Resources / funding</b> — none, modest, well-resourced.</li>
+            <li><b>Intent / motivation</b> — money, ideology, espionage, disruption, revenge.</li>
+            <li><b>Internal vs external</b>.</li>
+            <li><b>Persistence</b> — opportunistic vs long-term.</li>
+            <li><b>Risk tolerance</b> — willing to be detected?</li>
           </ul>
-          <h2>Attack vectors</h2>
-          <p>Email, web, removable media, supply chain, cloud misconfig, wireless, social engineering, physical.</p>
+
+          <h2>Nation-state / APT</h2>
+          <p><b>APT</b> = Advanced Persistent Threat. State-sponsored or state-affiliated groups conducting long-term espionage, sabotage, IP theft, or influence ops.</p>
+          <ul>
+            <li><b>Sophistication:</b> Highest. Custom malware, 0-days, supply-chain compromise.</li>
+            <li><b>Resources:</b> Effectively unlimited.</li>
+            <li><b>Motivation:</b> Espionage (intel), strategic disruption (critical infrastructure), economic IP theft, election / influence ops.</li>
+            <li><b>Persistence:</b> Years — stay hidden in target environments.</li>
+            <li><b>Detection appetite:</b> Strongly avoid attribution.</li>
+            <li><b>Examples by country/group:</b>
+              <ul>
+                <li><b>China:</b> APT1 (Comment Crew), APT10 (Stone Panda), APT41 (financially-mixed).</li>
+                <li><b>Russia:</b> APT28 (Fancy Bear / GRU), APT29 (Cozy Bear / SVR), Sandworm (NotPetya).</li>
+                <li><b>North Korea:</b> Lazarus Group (SWIFT heists, WannaCry, crypto theft).</li>
+                <li><b>Iran:</b> APT33 (Refined Kitten), APT34 (OilRig), APT35 (Charming Kitten).</li>
+                <li><b>USA / allies:</b> Equation Group, Tailored Access Operations.</li>
+                <li><b>Israel:</b> Stuxnet (with US) against Iranian nuclear.</li>
+              </ul>
+            </li>
+            <li><b>Targets:</b> Government, defense contractors, energy / utilities, telecom, finance, dissidents.</li>
+          </ul>
+
+          <h2>Organized crime</h2>
+          <p>Professional criminal syndicates running cybercrime as a business.</p>
+          <ul>
+            <li><b>Sophistication:</b> Moderate to high; some rival nation-states.</li>
+            <li><b>Motivation:</b> Financial — ransomware, fraud, banking trojans, business email compromise, crypto theft, sale of stolen data on dark markets.</li>
+            <li><b>Persistence:</b> Smash-and-grab to multi-month dwell.</li>
+            <li><b>Detection appetite:</b> Will take chances; sometimes brag (REvil, LockBit).</li>
+            <li><b>Examples:</b> LockBit, ALPHV/BlackCat, Clop, Conti (defunct), REvil/Sodinokibi, Akira, Royal, FIN7, Carbanak.</li>
+            <li><b>Business models:</b> <b>RaaS</b> (Ransomware-as-a-Service) — operators license malware to affiliates for a cut.</li>
+          </ul>
+
+          <h2>Hacktivist</h2>
+          <ul>
+            <li><b>Sophistication:</b> Variable; usually mid.</li>
+            <li><b>Motivation:</b> Ideology, protest, political/social activism, vigilante justice.</li>
+            <li><b>Tactics:</b> DDoS, website defacement, leak campaigns, doxing.</li>
+            <li><b>Persistence:</b> Spiky — event-driven.</li>
+            <li><b>Detection appetite:</b> Often wants publicity (it's the point).</li>
+            <li><b>Examples:</b> Anonymous, LulzSec, IT Army of Ukraine, KillNet (pro-Russia), GhostSec.</li>
+          </ul>
+
+          <h2>Insider threat</h2>
+          <p>Current or former employees, contractors, business partners with legitimate access who misuse it.</p>
+          <ul>
+            <li><b>Malicious insider</b> — intentionally exfiltrates / sabotages.
+              <ul>
+                <li>Motivation: revenge (recent firing / passed over), money, ideology, espionage.</li>
+                <li>Examples: Edward Snowden (NSA), Vault 7 leaker (CIA).</li>
+              </ul>
+            </li>
+            <li><b>Negligent insider</b> — accidentally exposes data via misconfiguration, lost device, sharing creds.</li>
+            <li><b>Compromised insider</b> — legitimate account taken over by an external attacker (credential phish).</li>
+            <li><b>Defenses:</b>
+              <ul>
+                <li><b>Least privilege</b> + <b>need to know</b>.</li>
+                <li><b>Separation of duties</b>, dual control.</li>
+                <li><b>UEBA</b> (User and Entity Behavior Analytics).</li>
+                <li><b>DLP</b> (Data Loss Prevention).</li>
+                <li><b>Privileged Access Management (PAM)</b> + just-in-time elevation.</li>
+                <li><b>Mandatory vacation</b> + <b>job rotation</b> — surface ongoing fraud.</li>
+                <li><b>Offboarding controls</b> — revoke access on day of separation; collect badges, devices.</li>
+                <li><b>Background checks</b> for sensitive roles.</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h2>Script kiddie / Unskilled attacker</h2>
+          <ul>
+            <li><b>Sophistication:</b> Low. Runs other people's tools (Kali, Metasploit, automated exploit kits).</li>
+            <li><b>Motivation:</b> Curiosity, bragging rights, fun.</li>
+            <li><b>Resources:</b> Personal.</li>
+            <li><b>Persistence:</b> Opportunistic — moves on if defended.</li>
+            <li><b>Volume:</b> Massive — vast majority of probes Internet-facing servers receive.</li>
+            <li><b>Defense:</b> Baseline hygiene (patches, MFA, default-deny firewalls) defeats most.</li>
+          </ul>
+
+          <h2>Competitor</h2>
+          <p>Rival businesses engaging in or sponsoring industrial espionage — IP theft, customer lists, strategy docs.</p>
+          <p><b>Tactics:</b> Hiring away employees with NDAs, planting insiders, hiring private intel firms, occasionally contracting with criminals.</p>
+
+          <h2>Shadow IT / Unintentional insiders</h2>
+          <ul>
+            <li>Employees adopting unsanctioned SaaS (cloud drives, AI tools, plugins) to bypass slow IT.</li>
+            <li><b>Risk:</b> Data leakage, lack of MFA + DLP coverage, compliance gaps, unmanaged credentials.</li>
+            <li><b>Defenses:</b> CASB visibility, friendly self-service approved-app catalog, training.</li>
+          </ul>
+
+          <h2>Cyber-terrorist</h2>
+          <ul>
+            <li><b>Motivation:</b> Ideologically motivated mass disruption / fear.</li>
+            <li><b>Targets:</b> Critical infrastructure, transportation, finance.</li>
+            <li><b>Often overlaps:</b> Nation-state proxies + hacktivism + organized crime.</li>
+          </ul>
+
+          <h2>Cybercrime markets + roles</h2>
+          <ul>
+            <li><b>Initial Access Broker (IAB)</b> — gains a foothold, sells access to ransomware affiliates.</li>
+            <li><b>RaaS operators</b> — develop ransomware, run leak sites, take a cut.</li>
+            <li><b>Affiliates</b> — deploy ransomware on bought access; share ransom.</li>
+            <li><b>Money mules</b> — launder funds.</li>
+            <li><b>Carders</b> — buy + sell stolen card data.</li>
+            <li><b>Forums + dark-web markets</b> — BreachForums, RAMP, marketplaces over Tor / I2P.</li>
+            <li><b>Cryptocurrency</b> — primary payment method (Bitcoin + Monero).</li>
+          </ul>
+
+          <h2>Threat actor identifying terms</h2>
+          <ul>
+            <li><b>TTPs</b> (Tactics, Techniques, Procedures) — distinctive operational patterns. Mapped in MITRE ATT&CK.</li>
+            <li><b>IOC</b> (Indicator of Compromise) — hashes, IPs, domains, registry keys associated with an actor or campaign.</li>
+            <li><b>IOA</b> (Indicator of Attack) — behavioral patterns.</li>
+            <li><b>Threat intelligence feeds:</b> commercial (Mandiant, Recorded Future, CrowdStrike), open (AlienVault OTX, Abuse.ch, MISP).</li>
+            <li><b>Threat intelligence levels:</b> Strategic (board), Operational (SOC), Tactical (tooling), Technical (specific IOCs).</li>
+          </ul>
+
+          <h2>Attack vectors / Pathways</h2>
+          <p>How threats reach the asset.</p>
+          <ul>
+            <li><b>Email</b> — phishing, malicious attachments, links. Largest single vector.</li>
+            <li><b>Web / drive-by</b> — malicious sites, exploit kits, malvertising, watering-hole.</li>
+            <li><b>Removable media</b> — USB sticks (baiting), CD-ROM, flash cards.</li>
+            <li><b>Supply chain</b> — compromised vendor / software / firmware (SolarWinds 2020, MOVEit 2023, 3CX, Kaseya).</li>
+            <li><b>Cloud misconfiguration</b> — open S3 / blob, exposed IAM roles, default credentials. Top breach cause.</li>
+            <li><b>Public-facing services</b> — RDP open to Internet, unpatched VPN gateways, vulnerable web apps.</li>
+            <li><b>Wireless</b> — evil twin, rogue AP, WPS attack, deauth.</li>
+            <li><b>Social engineering</b> — phone (vishing), text (smishing), in-person.</li>
+            <li><b>Physical</b> — tailgating, dropped USB, stolen device, dumpster diving, evil maid.</li>
+            <li><b>Insider</b> — abuse of legitimate access.</li>
+            <li><b>Third-party / managed service</b> — MSP / MSSP compromise.</li>
+            <li><b>BYOD / unmanaged endpoints</b>.</li>
+            <li><b>IoT / OT</b> — default creds + unpatched firmware in cameras, ICS, sensors.</li>
+            <li><b>API</b> — exposed, unauthenticated, or overly permissive APIs.</li>
+            <li><b>Direct exploitation of 0-day</b>.</li>
+          </ul>
+
+          <h2>Attack surface</h2>
+          <p><b>Attack surface</b> = all points where an unauthorized user can try to enter or extract data.</p>
+          <ul>
+            <li><b>External</b> — Internet-facing (web, mail, VPN, exposed RDP).</li>
+            <li><b>Internal</b> — once inside the perimeter (lateral movement risks).</li>
+            <li><b>Human</b> — employees / contractors targeted by social engineering.</li>
+            <li><b>Supply chain</b> — every vendor + software dep.</li>
+          </ul>
+          <p><b>ASM</b> (Attack Surface Management) tools continuously inventory + monitor (RiskIQ, Censys, Shodan, Microsoft Defender EASM).</p>
+
+          <h2>Cyber Kill Chain (Lockheed Martin)</h2>
+          <p>7 stages of an intrusion. Defenders try to break the chain anywhere:</p>
+          <ol>
+            <li><b>Reconnaissance</b> — gather info (OSINT, scans).</li>
+            <li><b>Weaponization</b> — build payload + exploit.</li>
+            <li><b>Delivery</b> — get payload to target (email, web).</li>
+            <li><b>Exploitation</b> — trigger vuln.</li>
+            <li><b>Installation</b> — drop malware / backdoor.</li>
+            <li><b>Command & Control (C2)</b> — beacon home.</li>
+            <li><b>Actions on Objectives</b> — exfiltrate / encrypt / destroy.</li>
+          </ol>
+
+          <h2>MITRE ATT&CK</h2>
+          <p>Comprehensive knowledge base of adversary TTPs mapped to real-world groups. 14 tactics (Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Collection, Command and Control, Exfiltration, Impact, plus Reconnaissance and Resource Development). Used for purple team mapping + detection engineering.</p>
+          <p><b>Sub-frameworks:</b> Enterprise, Mobile, ICS.</p>
+
+          <h2>Diamond Model</h2>
+          <p>Threat analysis model with 4 vertices:</p>
+          <ul>
+            <li><b>Adversary</b></li>
+            <li><b>Capability</b> (malware, exploits)</li>
+            <li><b>Infrastructure</b> (C2 servers, domains)</li>
+            <li><b>Victim</b></li>
+          </ul>
+          <p>Connected by edges showing the relationship. Useful for pivoting investigations.</p>
+
+          <h2>Threat hunting</h2>
+          <p><b>Proactive</b> search for adversaries already inside the environment, vs. reactive alert triage. Hypothesis-driven, often informed by recent threat-intel reports.</p>
+          <ul>
+            <li>"Assume breach" mindset.</li>
+            <li>Looks for IOAs, anomalous behaviors, lateral movement, beaconing.</li>
+            <li>Tools: EDR, SIEM, Sysmon, ATT&CK Navigator, JupyterNotebooks, KQL/SPL queries.</li>
+          </ul>
+
+          <h2>Honeypots + deception</h2>
+          <ul>
+            <li><b>Honeypot</b> — decoy system designed to attract + log attackers.</li>
+            <li><b>Honeynet</b> — network of decoys.</li>
+            <li><b>Honeyfile / Canary token</b> — fake document that alerts when opened.</li>
+            <li><b>Deception platforms</b> — Attivo, Illusive — sprinkle decoys across real network.</li>
+            <li>Detects insiders + lateral movement that didn't trigger AV.</li>
+          </ul>
+
+          <h2>OSINT — Open-Source Intelligence</h2>
+          <p>Both attackers and defenders use:</p>
+          <ul>
+            <li>Search engines, Google Dorks.</li>
+            <li>Shodan / Censys (Internet-wide scanner data).</li>
+            <li>theHarvester, Maltego, SpiderFoot.</li>
+            <li>LinkedIn / social media for org charts.</li>
+            <li>Code leaks on GitHub / pastebin.</li>
+            <li>Domain WHOIS, DNS records, certificate transparency logs.</li>
+            <li>Breach corpora (Have I Been Pwned).</li>
+          </ul>
+
+          <h2>Defenders</h2>
+          <ul>
+            <li><b>SOC</b> (Security Operations Center) — 24/7 monitoring team.</li>
+            <li><b>CSIRT / CERT</b> (Computer Security Incident Response Team).</li>
+            <li><b>Red team</b> — offensive, simulates real attacks.</li>
+            <li><b>Blue team</b> — defenders.</li>
+            <li><b>Purple team</b> — collaborative red+blue.</li>
+            <li><b>White team</b> — referees / planners.</li>
+            <li><b>Threat hunter</b>.</li>
+            <li><b>MSSP / MDR</b> — outsourced security.</li>
+            <li><b>ISAC / ISAO</b> — industry information sharing.</li>
+          </ul>
+
+          <h2>Common threat-actor exam profiles</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Actor</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Skill</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Resources</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Motivation</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Internal?</th></tr>
+            <tr><td>Nation-state / APT</td><td>Very high</td><td>Very high</td><td>Espionage / disruption</td><td>External</td></tr>
+            <tr><td>Organized crime</td><td>Mid-high</td><td>High</td><td>Money</td><td>External</td></tr>
+            <tr><td>Hacktivist</td><td>Variable</td><td>Low-mid</td><td>Ideology</td><td>External</td></tr>
+            <tr><td>Insider (malicious)</td><td>Variable</td><td>Low-mid</td><td>Revenge / money / ideology</td><td>Internal</td></tr>
+            <tr><td>Insider (negligent)</td><td>N/A</td><td>N/A</td><td>Accident</td><td>Internal</td></tr>
+            <tr><td>Script kiddie</td><td>Low</td><td>Personal</td><td>Curiosity / fame</td><td>External</td></tr>
+            <tr><td>Competitor</td><td>Variable</td><td>Mid</td><td>Industrial espionage</td><td>Often via hired actor</td></tr>
+            <tr><td>Cyber-terrorist</td><td>Variable</td><td>Mid-high</td><td>Disrupt / spread fear</td><td>External</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Long-term stealth state-sponsored attacker" → APT.</li>
+            <li>"Ransomware-for-hire" → RaaS operator + affiliate.</li>
+            <li>"Defaced website with political message" → hacktivist.</li>
+            <li>"Former employee exfiltrated source code" → malicious insider.</li>
+            <li>"User pasted creds into ChatGPT" → shadow IT / negligent insider.</li>
+            <li>"Compromise of a software supplier's update mechanism affects all customers" → supply chain attack (e.g., SolarWinds).</li>
+            <li>"Knowledge base of adversary TTPs" → MITRE ATT&CK.</li>
+            <li>"7-stage attack model" → Cyber Kill Chain.</li>
+            <li>"Open-source intel gathering" → OSINT (Shodan, theHarvester).</li>
+            <li>"Decoy server designed to log attacks" → honeypot.</li>
+          </ul>
         `
       },
       {
