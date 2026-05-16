@@ -4603,14 +4603,216 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
       {
         title: '6. WAN Technologies',
         body: `
+          <p><b>WAN</b> = Wide Area Network. Anything that connects two or more LANs across geographic distance — typically using a carrier / ISP. Speeds, latency, cost, and reliability vary by technology. Exam tests recognition of WAN types, their use cases, and modern alternatives (SD-WAN, SASE).</p>
+
+          <h2>WAN connection categories</h2>
           <ul>
-            <li><b>MPLS</b> — label-switched paths, QoS-capable.</li>
-            <li><b>SD-WAN</b> — overlay using multiple transports (broadband, LTE, MPLS) with central policy.</li>
-            <li><b>Metro Ethernet</b> — carrier Ethernet over fiber.</li>
-            <li><b>Leased line / T1 (1.544 Mbps) / T3 (44.7 Mbps)</b>.</li>
-            <li><b>SONET/SDH</b> — telecom optical multiplexing.</li>
-            <li><b>DOCSIS</b> — cable broadband.</li>
-            <li><b>PON (GPON, XGS-PON)</b> — passive optical to home.</li>
+            <li><b>Dedicated / leased</b> — point-to-point bandwidth always available (T1/T3, dark fiber, Metro Ethernet, Direct Connect / ExpressRoute).</li>
+            <li><b>Packet-switched shared</b> — multi-customer infrastructure (MPLS, public Internet).</li>
+            <li><b>Circuit-switched</b> — establish call-like path (ISDN, dial-up).</li>
+            <li><b>Cellular / wireless</b> — 4G LTE, 5G FWA, satellite (LEO/GEO).</li>
+            <li><b>Broadband</b> — DSL, cable (DOCSIS), fiber (FTTH/PON).</li>
+          </ul>
+
+          <h2>MPLS — Multiprotocol Label Switching</h2>
+          <p><b>What:</b> Carrier technology that prepends a 32-bit <b>label</b> to each packet at the edge of the provider network. Core routers (<b>P</b> routers) forward based on the label only — no L3 lookup needed. Label is popped at egress, revealing the original packet.</p>
+          <p><b>Why:</b></p>
+          <ul>
+            <li><b>Speed</b> — label switching is faster than IP route lookup (less relevant today as hardware is fast everywhere).</li>
+            <li><b>Traffic engineering</b> — pre-compute paths for specific flows (RSVP-TE / Segment Routing).</li>
+            <li><b>VPN services</b> — <b>L3VPN</b> (VRFs separating customer routing tables) and <b>L2VPN</b> (Ethernet over MPLS, VPLS).</li>
+            <li><b>QoS</b> — EXP / Traffic Class bits prioritize voice/video.</li>
+          </ul>
+          <p><b>Roles:</b></p>
+          <ul>
+            <li><b>CE</b> (Customer Edge) — router at customer site.</li>
+            <li><b>PE</b> (Provider Edge) — router where customer joins MPLS.</li>
+            <li><b>P</b> (Provider core) — internal label-switched router.</li>
+          </ul>
+          <p><b>Status:</b> Still dominant for many enterprises, especially regulated industries. Slowly being replaced or augmented by SD-WAN + Internet links for cost.</p>
+
+          <h2>Frame Relay (legacy)</h2>
+          <p>Older packet-switched WAN using <b>DLCIs</b> (Data Link Connection Identifiers). Mostly retired; exam still references for context.</p>
+
+          <h2>ATM — Asynchronous Transfer Mode (legacy)</h2>
+          <p>Fixed 53-byte cells. Used in older telco backbones, ADSL last mile.</p>
+
+          <h2>Metro Ethernet</h2>
+          <p><b>What:</b> Carrier-delivered Ethernet service between sites within a metro area (and increasingly nationally) over carrier fiber.</p>
+          <p><b>Service models</b> (<b>MEF</b> — Metro Ethernet Forum):</p>
+          <ul>
+            <li><b>E-Line</b> — point-to-point Ethernet (EPL / EVPL).</li>
+            <li><b>E-LAN</b> — multipoint LAN service.</li>
+            <li><b>E-Tree</b> — rooted multipoint.</li>
+            <li><b>E-Access</b> — operator-to-operator hand-off.</li>
+          </ul>
+          <p><b>Speeds:</b> 10 Mbps – 100 Gbps. Hand-off typically on a standard Ethernet UNI (User-Network Interface) connector.</p>
+          <p><b>Why:</b> Familiar Ethernet interface, scalable bandwidth, often cheaper than MPLS, easier integration.</p>
+
+          <h2>Leased lines — T-carrier + E-carrier (legacy digital)</h2>
+          <p>Time-division multiplexed digital circuits from the telco days. Still encountered in older deployments and government / international.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tier</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bandwidth</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td><b>DS0</b></td><td>64 Kbps</td><td>Single voice channel.</td></tr>
+            <tr><td><b>T1 (DS1)</b></td><td>1.544 Mbps</td><td>24 DS0 channels. US/Canada/Japan.</td></tr>
+            <tr><td><b>E1</b></td><td>2.048 Mbps</td><td>32 DS0 channels. Europe.</td></tr>
+            <tr><td><b>T3 (DS3)</b></td><td>44.736 Mbps</td><td>28 T1s.</td></tr>
+            <tr><td><b>E3</b></td><td>34.368 Mbps</td><td>European DS3 equivalent.</td></tr>
+          </table>
+          <p><b>CSU/DSU</b> (Channel Service Unit / Data Service Unit) — modem-like device that terminates the T-carrier circuit, converts to serial for the router.</p>
+          <p><b>Smart Jack</b> / <b>NIU</b> — telco demarcation device.</p>
+
+          <h2>SONET / SDH — Optical multiplexing</h2>
+          <p><b>SONET</b> (Synchronous Optical Network, North America) / <b>SDH</b> (Synchronous Digital Hierarchy, ITU global).</p>
+          <p><b>What:</b> Standardized optical transport for telco backbones. Self-healing rings (UPSR, BLSR) provide sub-50ms failover.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">SONET</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SDH</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bandwidth</th></tr>
+            <tr><td>OC-3</td><td>STM-1</td><td>155.52 Mbps</td></tr>
+            <tr><td>OC-12</td><td>STM-4</td><td>622.08 Mbps</td></tr>
+            <tr><td>OC-48</td><td>STM-16</td><td>2.488 Gbps</td></tr>
+            <tr><td>OC-192</td><td>STM-64</td><td>9.953 Gbps</td></tr>
+            <tr><td>OC-768</td><td>STM-256</td><td>39.813 Gbps</td></tr>
+          </table>
+          <p>Modern backbones use <b>OTN</b> (Optical Transport Network) + <b>DWDM</b> (Dense Wavelength Division Multiplexing) for hundreds of channels per fiber.</p>
+
+          <h2>DOCSIS — Data Over Cable Service Interface Specification</h2>
+          <ul>
+            <li>Cable broadband standard from CableLabs.</li>
+            <li><b>DOCSIS 3.0</b> — channel bonding, up to 1 Gbps down / 200 Mbps up.</li>
+            <li><b>DOCSIS 3.1</b> — OFDM, up to ~10 Gbps down / 1-2 Gbps up.</li>
+            <li><b>DOCSIS 4.0</b> — full duplex, symmetric multi-gig.</li>
+            <li>Shared bandwidth with neighbors on the same cable segment; peak slowdowns common.</li>
+            <li>Cable modem at home → coax → fiber node → ISP core (HFC = Hybrid Fiber-Coax).</li>
+          </ul>
+
+          <h2>PON — Passive Optical Network (FTTH)</h2>
+          <p><b>What:</b> Fiber from ISP head-end (<b>OLT</b> — Optical Line Terminal) splits passively (no power) at a curbside splitter, serving up to 32-128 subscribers (<b>ONT</b> — Optical Network Terminal at customer).</p>
+          <ul>
+            <li><b>GPON</b> — 2.5 Gbps down / 1.25 Gbps up shared.</li>
+            <li><b>XGS-PON</b> — 10 Gbps symmetric.</li>
+            <li><b>NG-PON2 / 25G/50G PON</b> — emerging.</li>
+            <li><b>EPON / 10G-EPON</b> — Ethernet PON variants.</li>
+          </ul>
+          <p><b>Active Ethernet</b> alternative gives each customer dedicated fiber to an active switch — common for enterprise FTTH.</p>
+
+          <h2>DSL — Digital Subscriber Line</h2>
+          <p>Already covered in A+ Internet lesson; summary here:</p>
+          <ul>
+            <li><b>ADSL</b> — asymmetric, ~24/3 Mbps max, distance-limited.</li>
+            <li><b>VDSL / VDSL2</b> — up to 100 Mbps.</li>
+            <li><b>G.fast</b> — over short copper from a curb-side enclosure, up to 1 Gbps.</li>
+            <li>Customer device = DSL modem terminating to telco <b>DSLAM</b> (Digital Subscriber Line Access Multiplexer) at the central office.</li>
+          </ul>
+
+          <h2>Cellular WAN</h2>
+          <ul>
+            <li><b>3G</b> (HSPA+) — legacy, mostly retired in US.</li>
+            <li><b>4G LTE</b> — 10-100 Mbps typical, sub-50 ms latency.</li>
+            <li><b>5G NR</b> — sub-6 GHz mid-band ~100-900 Mbps. mmWave (24-39 GHz) multi-gig short range.</li>
+            <li><b>FWA</b> (Fixed Wireless Access) — 5G replacing cable for home (T-Mobile, Verizon).</li>
+            <li><b>Private LTE / 5G</b> — enterprise-owned cellular networks (CBRS in US).</li>
+            <li><b>IoT cellular:</b> <b>NB-IoT</b> (Narrowband IoT), <b>LTE-M / CAT-M1</b> — low-power wide-area.</li>
+            <li><b>LoRaWAN</b>, <b>Sigfox</b>, <b>Zigbee</b> — non-cellular LPWAN options.</li>
+            <li><b>APN</b> (Access Point Name) — identifies the gateway / network on cellular.</li>
+          </ul>
+
+          <h2>Satellite</h2>
+          <ul>
+            <li><b>GEO</b> (Geostationary, ~36,000 km) — high latency (~600 ms RTT). HughesNet, Viasat.</li>
+            <li><b>MEO</b> (Medium Earth Orbit, ~8,000-20,000 km) — middle.</li>
+            <li><b>LEO</b> (Low Earth Orbit, ~550 km) — low latency (~25-50 ms). Starlink, OneWeb, Project Kuiper.</li>
+            <li>Weather (rain fade) + line-of-sight to sky.</li>
+            <li>Used for rural broadband, maritime, aviation, military.</li>
+          </ul>
+
+          <h2>SD-WAN — Software-Defined WAN</h2>
+          <p><b>What:</b> Overlay technology that runs on TOP of any underlying transport (broadband, LTE, MPLS) and applies central policy + app-aware path steering.</p>
+          <p><b>Why:</b></p>
+          <ul>
+            <li>Replace expensive MPLS with cheaper Internet links.</li>
+            <li>Active-active links — load balance by application.</li>
+            <li>Centralized management (orchestrator pushes policy to all sites).</li>
+            <li>Built-in encryption (IPsec tunnels between sites).</li>
+            <li>Application-aware steering (real-time traffic → MPLS, bulk → Internet).</li>
+            <li>Zero-touch deployment (ZTD).</li>
+            <li>Built-in WAN optimization (compression, dedup) on many platforms.</li>
+          </ul>
+          <p><b>Major vendors:</b> Cisco (Viptela / Meraki MX), VMware VeloCloud, Fortinet, Versa, Aruba SD-Branch, Palo Alto Prisma SD-WAN, Cato Networks.</p>
+
+          <h2>SASE + SSE — Cloud-delivered secure access</h2>
+          <p><b>SASE</b> (Secure Access Service Edge, pron. "sassy") — Gartner term combining SD-WAN + cloud-delivered security (FWaaS, SWG, CASB, ZTNA) into one global service.</p>
+          <p><b>SSE</b> (Security Service Edge) — the security half of SASE (no SD-WAN).</p>
+          <p><b>Components:</b></p>
+          <ul>
+            <li><b>FWaaS</b> — Firewall as a Service.</li>
+            <li><b>SWG</b> (Secure Web Gateway) — URL filtering, malware sandbox.</li>
+            <li><b>CASB</b> (Cloud Access Security Broker) — visibility + policy for SaaS.</li>
+            <li><b>ZTNA</b> (Zero Trust Network Access) — per-application identity-checked access; replaces VPN.</li>
+            <li><b>DLP</b> (Data Loss Prevention).</li>
+          </ul>
+
+          <h2>VPN — Virtual Private Network</h2>
+          <ul>
+            <li><b>Site-to-site VPN</b> — IPsec tunnel between two gateways; transparent to users.</li>
+            <li><b>Remote-access VPN</b> — client connects to gateway. IPsec (Cisco AnyConnect / IKEv2), SSL/TLS (OpenVPN, AnyConnect, GlobalProtect), <b>WireGuard</b> (modern, fast).</li>
+            <li><b>L2TP/IPsec</b> — legacy.</li>
+            <li><b>PPTP</b> — deprecated, broken.</li>
+            <li><b>Split tunnel</b> — only corporate traffic over VPN; Internet direct.</li>
+            <li><b>Full tunnel</b> — everything over VPN.</li>
+            <li><b>Always-on VPN</b> — auto-connects on boot.</li>
+            <li><b>SSL VPN portal</b> — browser-based clientless access.</li>
+            <li><b>DMVPN</b> (Dynamic Multipoint VPN, Cisco) — hub-and-spoke / spoke-to-spoke on-demand tunnels.</li>
+          </ul>
+
+          <h2>Cloud direct-connect services</h2>
+          <ul>
+            <li><b>AWS Direct Connect</b>.</li>
+            <li><b>Azure ExpressRoute</b>.</li>
+            <li><b>Google Cloud Interconnect</b>.</li>
+            <li><b>Oracle FastConnect</b>.</li>
+          </ul>
+          <p>Dedicated private circuits from customer DC to cloud region. Lower latency, predictable bandwidth, often required for compliance. Connect via colocation provider (Equinix, Megaport).</p>
+
+          <h2>Common demarc + termination terms</h2>
+          <ul>
+            <li><b>Demarc</b> (Demarcation point) — where carrier responsibility ends and customer begins. Usually a smart jack / NIU in a closet or MDF.</li>
+            <li><b>MDF</b> (Main Distribution Frame) — main cable entrance / cross-connect.</li>
+            <li><b>IDF</b> (Intermediate Distribution Frame) — telecom closets fed by MDF.</li>
+            <li><b>CPE</b> (Customer Premises Equipment) — anything on customer side of demarc.</li>
+            <li><b>NIU / smart jack</b> — telco-installed test point.</li>
+            <li><b>POP</b> (Point of Presence) — carrier's local exchange entry point.</li>
+            <li><b>CO</b> (Central Office) — telco facility.</li>
+          </ul>
+
+          <h2>Choosing a WAN technology</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Need</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Pick</th></tr>
+            <tr><td>Multi-site enterprise, strict SLA, predictable</td><td>MPLS or Metro Ethernet, with optional SD-WAN overlay</td></tr>
+            <tr><td>Cost-effective branch with Internet links</td><td>SD-WAN over broadband + LTE backup</td></tr>
+            <tr><td>Rural / mobile / no fiber</td><td>Cellular (4G/5G FWA) or LEO satellite</td></tr>
+            <tr><td>Home / SMB high-speed</td><td>Cable (DOCSIS) or fiber (FTTH/PON)</td></tr>
+            <tr><td>Cloud private connectivity</td><td>Direct Connect / ExpressRoute</td></tr>
+            <tr><td>Last-mile to legacy site</td><td>T1/E1 or VDSL still common</td></tr>
+            <tr><td>Modern unified security + access</td><td>SASE</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Label-switched paths" → MPLS.</li>
+            <li>"Carrier Ethernet between sites" → Metro Ethernet (MEF E-Line / E-LAN).</li>
+            <li>"T1 speed" → 1.544 Mbps.</li>
+            <li>"E1 speed" → 2.048 Mbps.</li>
+            <li>"T3 speed" → 44.736 Mbps.</li>
+            <li>"Optical telco rings" → SONET / SDH.</li>
+            <li>"Multiple wavelengths on one fiber" → DWDM.</li>
+            <li>"Cable modem standard" → DOCSIS (3.1 / 4.0).</li>
+            <li>"Passive splitter fiber to home" → PON (GPON / XGS-PON).</li>
+            <li>"Overlay multi-transport WAN with central policy" → SD-WAN.</li>
+            <li>"Cloud-delivered SD-WAN + security" → SASE.</li>
+            <li>"Private dedicated link to AWS" → Direct Connect.</li>
+            <li>"Modern fast VPN protocol" → WireGuard.</li>
+            <li>"Replace VPN with per-app identity-based access" → ZTNA.</li>
+            <li>"Where carrier responsibility ends" → demarc.</li>
           </ul>
         `
       },
