@@ -17543,22 +17543,105 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '10. AZ-900 Exam Tips',
         body: `
-          <h2>Format</h2>
-          <p>~40–60 questions, 45–60 minutes. Multiple choice, drag-drop, scenario. Passing ~700/1000. No labs.</p>
-          <h2>Domains (current weighting)</h2>
+          <h2>Exam logistics</h2>
           <ul>
-            <li>Cloud concepts — 25–30%</li>
-            <li>Azure architecture & services — 35–40%</li>
-            <li>Azure management & governance — 30–35%</li>
+            <li><b>Code:</b> AZ-900 — Microsoft Azure Fundamentals.</li>
+            <li><b>Format:</b> ~40–60 questions in 45–60 minutes (Microsoft varies the count). Mix of single-answer multiple choice, multi-select, <b>case study with multiple linked questions</b>, drag-and-drop ordering, hot-area, and "yes/no" series. <b>No labs.</b></li>
+            <li><b>Score:</b> 700 / 1000 to pass (NOT a 70% raw score — Microsoft uses scaled scoring; you can miss a meaningful number of questions and still pass).</li>
+            <li><b>Cost:</b> ~$99 USD (varies by region / discount). Free voucher offered at most Microsoft Virtual Training Day events.</li>
+            <li><b>Delivery:</b> Pearson VUE — in test center or online proctored from home.</li>
+            <li><b>Validity:</b> AZ-900 does not expire on a renewal cycle (Microsoft Fundamentals certifications stay valid).</li>
+            <li><b>Prerequisites:</b> none. Recommended next steps: <b>AZ-104</b> Administrator, <b>AZ-204</b> Developer, <b>AZ-305</b> Architect, <b>SC-900</b> Security Fundamentals, <b>AI-900</b> AI Fundamentals.</li>
           </ul>
-          <h2>Most-missed traps</h2>
+
+          <h2>Domain weightings (Microsoft's official skills outline)</h2>
           <ul>
-            <li>Difference between Service Health vs Resource Health.</li>
-            <li>Region pair behavior (paired by Microsoft, not user-selectable).</li>
-            <li>Resource locks block delete even for Owners.</li>
-            <li>Azure Policy ≠ RBAC (policy = what's allowed to exist, RBAC = who can do what).</li>
-            <li>Cost Calc = estimate before; Cost Mgmt = analyze actual after.</li>
-            <li>Entra ID is identity, not a directory replacement for on-prem AD unless Domain Services added.</li>
+            <li><b>Describe cloud concepts</b> — <b>25–30%</b> (Lessons 1–2: benefits, deployment models, IaaS/PaaS/SaaS, shared responsibility, CapEx/OpEx).</li>
+            <li><b>Describe Azure architecture and services</b> — <b>35–40%</b> (Lessons 3–6: regions/AZs/region pairs, MG/Sub/RG/Resource, ARM, compute, networking, storage, databases, identity / Entra ID).</li>
+            <li><b>Describe Azure management and governance</b> — <b>30–35%</b> (Lessons 7–9: RBAC, Policy, locks, tags, Cost Mgmt, SLAs, tools, monitoring, trust).</li>
+          </ul>
+
+          <h2>Top 25 most-missed concepts (Microsoft instructor data)</h2>
+          <ol>
+            <li><b>Service Health vs Resource Health</b> — Service Health = Microsoft platform incidents affecting your services; Resource Health = state of <i>your</i> specific resource (Available / Unavailable / Degraded / Unknown).</li>
+            <li><b>Region pairs</b> — Microsoft defines pairs; you cannot choose them. Provides geo-replication for GRS and not-simultaneous maintenance.</li>
+            <li><b>Resource lock CanNotDelete vs ReadOnly</b> — CanNotDelete blocks delete only; ReadOnly blocks modify + delete. Even an Owner is blocked until lock removed.</li>
+            <li><b>Azure Policy vs RBAC</b> — Policy controls <i>what configurations are allowed</i>; RBAC controls <i>who can do what</i>. Both apply at any scope and inherit downward.</li>
+            <li><b>Pricing Calculator vs TCO Calculator vs Cost Management</b> — Pricing = estimate a future Azure deployment; TCO = compare on-prem vs Azure over 3 years; Cost Management = actual spend after deploy.</li>
+            <li><b>Entra ID ≠ on-prem AD</b> — Entra ID is HTTP/REST identity for cloud + SaaS. For Kerberos/LDAP/Group Policy use <b>Entra Domain Services</b> or extend on-prem AD via <b>Entra Connect</b>.</li>
+            <li><b>Availability Set vs Availability Zone</b> — Set = fault/update domains within ONE datacenter (99.95% SLA); Zone = physically separate DCs in a region (99.99% SLA).</li>
+            <li><b>Public vs Private vs Hybrid cloud</b> — read the wording carefully. Hybrid = mix of public + private with connectivity.</li>
+            <li><b>IaaS vs PaaS vs SaaS responsibility</b> — customer always owns data + identity + accounts; provider always owns physical layers; OS and app shift in between.</li>
+            <li><b>VPN Gateway vs ExpressRoute</b> — VPN = encrypted over Internet; ExpressRoute = private fiber via partner, no Internet.</li>
+            <li><b>Application Gateway vs Front Door vs Load Balancer</b> — ALB L4 regional; AppGW L7 regional (HTTP + WAF); Front Door L7 global anycast (+ CDN + WAF).</li>
+            <li><b>Storage redundancy options</b> — LRS (1 DC, 3 copies) → ZRS (3 zones) → GRS (LRS + paired region async) → GZRS (ZRS + paired region). RA-* = read access to secondary.</li>
+            <li><b>Blob tiers</b> — Hot / Cool / Cold / Archive; minimum retention 0 / 30 / 90 / 180 days; Archive needs rehydration (hours).</li>
+            <li><b>Reserved Instance vs Savings Plan vs Hybrid Benefit vs Spot</b> — RI = lock SKU+region for max discount; Savings Plan = lock hourly spend, flexible across compute; AHB = bring existing Windows/SQL license; Spot = unused capacity, evictable.</li>
+            <li><b>Subscription = billing + access boundary</b>. Separate dev vs prod by separate subscriptions, not just by RG.</li>
+            <li><b>Resource Group rules</b> — every resource in exactly one RG, RG cannot be nested, deleting RG deletes all resources inside, RG has a region but resources may span regions.</li>
+            <li><b>Service Principal vs Managed Identity</b> — both are app identities; Managed Identity = Microsoft rotates credentials for you.</li>
+            <li><b>Conditional Access</b> — Entra ID feature (P1 license); evaluates signals (user, device, location, risk) at sign-in. Security Defaults = free baseline.</li>
+            <li><b>PIM</b> — JIT activation of privileged roles. Requires Entra ID P2 license.</li>
+            <li><b>Defender for Cloud vs Sentinel</b> — Defender for Cloud = posture + workload protection (CSPM + CWPP); Sentinel = SIEM/SOAR (correlate logs, hunt, automate response).</li>
+            <li><b>Azure Advisor</b> — recommendations across Cost / Security / Reliability / Operational Excellence / Performance.</li>
+            <li><b>Composite SLA math</b> — services in series multiply (always &lt; weakest link); parallel components increase availability.</li>
+            <li><b>Compliance home</b> — <b>Service Trust Portal</b> for SOC/ISO reports; <b>Compliance Manager</b> (Purview) for tracking.</li>
+            <li><b>Bicep vs ARM</b> — Bicep = DSL that transpiles to ARM JSON; equivalent capability, cleaner syntax.</li>
+            <li><b>Azure Arc</b> — extend Azure management plane (Resource Manager + Policy + Defender) to on-prem and other clouds.</li>
+          </ol>
+
+          <h2>Question-reading strategy</h2>
+          <ul>
+            <li><b>Read every word — twice.</b> Microsoft frequently flips one keyword (e.g., "EXCEPT", "NOT", "least", "minimum cost") that changes the right answer.</li>
+            <li><b>Identify the constraint.</b> "Lowest cost", "highest availability", "least admin effort", "no public IP exposure", "regulated data must stay in country". The constraint usually picks one of 4 plausible options.</li>
+            <li><b>Eliminate two answers fast.</b> Most questions have two clearly wrong options and two tempting ones. Cross out the obvious-wrong first, then compare the two finalists against the constraint.</li>
+            <li><b>Watch for product-name twins.</b> Azure Front Door vs Application Gateway; Azure Files vs Blob; Azure SQL DB vs Managed Instance; Service Health vs Resource Health; ALB vs AppGW — Microsoft pairs these on purpose.</li>
+            <li><b>Drag-and-drop ordering</b> — read all options first; common Microsoft patterns: Plan → Build → Monitor; Detect → Investigate → Respond; high-to-low scope (MG → Sub → RG → Resource).</li>
+            <li><b>Case study questions</b> link to the same scenario — open the case study tab, skim the requirements, then answer each question. You cannot return to a case study once you leave.</li>
+            <li><b>Mark + review.</b> Flag uncertain questions; come back at the end if time allows. Don't leave any blank — no penalty for wrong answers.</li>
+            <li><b>Time budget.</b> ~1 minute per question. If you spend more than 2 minutes on one, mark it and move on.</li>
+          </ul>
+
+          <h2>"If you only memorize 20 facts, memorize these"</h2>
+          <ol>
+            <li>OpEx = pay-as-you-go cloud; CapEx = up-front on-prem.</li>
+            <li>IaaS = you patch OS; PaaS = Microsoft patches OS; SaaS = Microsoft owns whole app.</li>
+            <li>Customer always owns: data, identity, accounts. Provider always owns: physical DC, host, network.</li>
+            <li>Region = group of DCs; AZ = physically separate DCs in a region; region pair = MS-defined cross-region pair.</li>
+            <li>MG → Sub → RG → Resource (top-to-bottom inheritance).</li>
+            <li>RBAC = who can do what; Policy = what can be deployed.</li>
+            <li>Locks: CanNotDelete (delete only) vs ReadOnly (modify+delete).</li>
+            <li>SLA: single VM 99.9% → Avail Set 99.95% → Avail Zones 99.99%.</li>
+            <li>Composite SLA = product of dependent service SLAs.</li>
+            <li>Pricing Calc = before deploy; TCO Calc = on-prem vs Azure; Cost Mgmt = actual spend after.</li>
+            <li>Reservations 1/3-yr → up to 72% off; Spot up to 90% off (evictable); AHB uses existing Windows/SQL licenses.</li>
+            <li>LRS &lt; ZRS &lt; GRS &lt; GZRS (durability + cost).</li>
+            <li>Blob tiers Hot / Cool / Cold / Archive (min retention 0/30/90/180 days).</li>
+            <li>VPN Gateway = encrypted over Internet; ExpressRoute = private fiber.</li>
+            <li>ALB = L4; AppGW = L7 regional; Front Door = L7 global + CDN.</li>
+            <li>Entra ID = cloud IAM (HTTP). Entra Domain Services = managed AD DS (Kerberos/LDAP).</li>
+            <li>Conditional Access requires Entra ID P1; PIM + Identity Protection require P2.</li>
+            <li>Defender for Cloud = CSPM + CWPP; Sentinel = SIEM + SOAR.</li>
+            <li>Service Health (Microsoft side) vs Resource Health (one resource).</li>
+            <li>Service Trust Portal = compliance docs (SOC, ISO, pen-test reports).</li>
+          </ol>
+
+          <h2>Pre-exam checklist</h2>
+          <ul>
+            <li>Take Microsoft's free <b>AZ-900 Learning Path</b> on Microsoft Learn — official content tracks the skills outline exactly.</li>
+            <li>Use the <b>Microsoft Practice Assessment</b> (free, official) — questions in the real exam style.</li>
+            <li>Spend 1–2 hours in the Azure portal: create a free account, deploy a VM, a storage account, a Bicep template; touch every blade you can.</li>
+            <li>Test environment day-of: government-issued ID, quiet space (online proctor scans the room), reliable webcam + bandwidth, water + tissues allowed at test center but not online.</li>
+            <li>Skim the <b>Azure glossary</b> the night before — vocabulary drives 30% of the test.</li>
+          </ul>
+
+          <h2>After AZ-900 — what to study next</h2>
+          <ul>
+            <li><b>AZ-104</b> Azure Administrator — operational hands-on; the next step Microsoft expects.</li>
+            <li><b>SC-900</b> Security/Compliance/Identity Fundamentals — light, broad partner cert to AZ-900.</li>
+            <li><b>AI-900</b> Azure AI Fundamentals — covers Azure AI Foundry, Azure OpenAI, Cognitive Services.</li>
+            <li><b>DP-900</b> Data Fundamentals.</li>
+            <li><b>AZ-204</b> Developer / <b>AZ-305</b> Architect — for IC and solution-architect tracks.</li>
           </ul>
         `
       }
