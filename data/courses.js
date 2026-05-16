@@ -7329,15 +7329,319 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '6. Network Security Controls',
         body: `
+          <p>Catalog of every appliance, service, and architectural pattern the exam expects you to recognize for protecting traffic and infrastructure. Pick the right CONTROL for the CONTROL OBJECTIVE. Defense-in-depth means stacking several so a single failure doesn't expose the whole stack.</p>
+
+          <h2>Architectural patterns</h2>
+
+          <h3>Network segmentation</h3>
           <ul>
-            <li><b>Segmentation</b> — VLANs, microsegmentation, DMZ / screened subnet.</li>
-            <li><b>Firewalls</b> — stateful, NGFW with IPS + app awareness + TLS inspect.</li>
-            <li><b>Proxy</b> — egress filter, content rules.</li>
-            <li><b>NAC</b> — 802.1X posture.</li>
-            <li><b>VPN</b> — site-to-site (IPsec), client (SSL/IKEv2/WireGuard).</li>
-            <li><b>SASE / SSE</b> — cloud-delivered SWG + ZTNA + CASB + FWaaS.</li>
-            <li><b>DNS filtering</b> — block by reputation.</li>
-            <li><b>WAF</b> — protects web apps; OWASP rules.</li>
+            <li><b>Physical segmentation</b> — separate hardware / cables (air-gap).</li>
+            <li><b>Logical segmentation</b> — VLAN (802.1Q), VRF (Virtual Routing & Forwarding), subnet + ACL.</li>
+            <li><b>Microsegmentation</b> — per-workload firewall rules. Examples: VMware NSX, Illumio, Akamai Guardicore, AWS security groups, Calico Kubernetes NetworkPolicy.</li>
+            <li><b>DMZ / Screened subnet</b> — perimeter zone hosting public-facing services. Compromise of a DMZ host doesn't directly expose the internal LAN.</li>
+            <li><b>Zero Trust segmentation</b> — identity + device + context evaluated per request; no implicit trust by zone.</li>
+            <li><b>OT / ICS / SCADA isolation</b> — production controls separated from IT (Purdue model levels 0-5).</li>
+            <li><b>Bastion / jump host</b> — single hardened entry point for admin access.</li>
+            <li><b>Air-gap</b> — no electronic path. Used for high-classification + critical OT.</li>
+          </ul>
+
+          <h3>Network zones (typical)</h3>
+          <ul>
+            <li><b>Trusted / Internal</b> — corporate LAN.</li>
+            <li><b>Untrusted / Internet</b>.</li>
+            <li><b>DMZ / Screened</b> — public-facing services.</li>
+            <li><b>Guest</b> — separate Internet-only.</li>
+            <li><b>Management</b> — out-of-band for admin (separate VLAN / interface).</li>
+            <li><b>Honeynet</b> — decoy.</li>
+            <li><b>PCI cardholder zone</b> — heavily restricted segment for cardholder data.</li>
+          </ul>
+
+          <h2>Firewalls</h2>
+          <p>Primary traffic filter. Generations:</p>
+          <ul>
+            <li><b>Packet filter (stateless)</b> — matches 5-tuple (src/dst IP, src/dst port, protocol). No memory of past packets.</li>
+            <li><b>Stateful firewall</b> — tracks TCP/UDP connection state; auto-permits return traffic. Industry baseline.</li>
+            <li><b>Application-layer / proxy firewall</b> — understands protocols (HTTP, FTP, SQL); blocks by URL / method / content.</li>
+            <li><b>NGFW</b> (Next-Generation Firewall) — stateful + application awareness + IPS + TLS inspection + user identity + threat intel feeds. Palo Alto, Fortinet, Cisco Firepower, Check Point Quantum, Sophos XG.</li>
+            <li><b>UTM</b> (Unified Threat Management) — bundles FW + AV + IPS + content filter + VPN in one box. SMB-focused. Often the same vendor as NGFW with a different SKU.</li>
+            <li><b>Host-based firewall</b> — runs on endpoint (Windows Defender Firewall, iptables / nftables, pf, ufw).</li>
+            <li><b>Hypervisor / virtual firewall</b> — runs as VM (VMware NSX Edge, Palo Alto VM-series, Cisco vASA).</li>
+            <li><b>FWaaS</b> (Firewall as a Service) — cloud-delivered (Zscaler, Cloudflare Magic Firewall, Cisco Umbrella).</li>
+            <li><b>Cloud-native security groups</b> — AWS SG / NSG / GCP firewall — stateful, instance-level.</li>
+            <li><b>NACL</b> (Network ACL, AWS) — stateless, subnet-level.</li>
+          </ul>
+          <p><b>Rule processing:</b> Top-down, FIRST match wins, IMPLICIT DENY at end. Place specific allows above broader denies; broad denies near the bottom.</p>
+
+          <h2>WAF — Web Application Firewall</h2>
+          <p><b>What:</b> Layer 7 firewall specifically for HTTP/S apps. Defends against OWASP Top 10-class attacks (SQLi, XSS, CSRF, SSRF, path traversal).</p>
+          <ul>
+            <li><b>Modes:</b> Detection (alert only) vs Prevention (block).</li>
+            <li><b>Rule sources:</b> Vendor managed rule sets + OWASP CRS (Core Rule Set) + custom rules + bot mitigation.</li>
+            <li><b>Examples:</b> Cloudflare WAF, AWS WAF, Azure Front Door WAF, F5 ASM/Advanced WAF, Imperva, Akamai Kona, ModSecurity (open-source).</li>
+            <li><b>Bot management</b> + <b>rate limiting</b> often bundled.</li>
+          </ul>
+
+          <h2>API gateway + API security</h2>
+          <ul>
+            <li>Centralizes authentication, rate limiting, throttling, transformation, logging, schema validation for APIs.</li>
+            <li><b>Examples:</b> Kong, AWS API Gateway, Azure API Management, Apigee, Tyk.</li>
+            <li><b>API security tools:</b> Salt Security, 42Crunch, Noname Security.</li>
+          </ul>
+
+          <h2>IDS / IPS</h2>
+          <ul>
+            <li><b>IDS</b> (Intrusion Detection System) — passive monitoring; alerts on matching pattern. Sees mirror traffic via <b>SPAN port</b> or <b>network TAP</b>. Cannot block.</li>
+            <li><b>IPS</b> (Intrusion Prevention System) — inline; can drop matching packets.</li>
+            <li><b>HIDS / HIPS</b> — host-based versions.</li>
+            <li><b>NIDS / NIPS</b> — network-based.</li>
+            <li><b>Detection methods:</b>
+              <ul>
+                <li><b>Signature-based</b> — known patterns. Fast, high precision, misses novel.</li>
+                <li><b>Anomaly / behavior-based</b> — learn baseline, flag deviation. Catches novel + insider, more false positives.</li>
+                <li><b>Heuristic / ML-driven</b> — rules + behavior.</li>
+                <li><b>Honeypot-fed</b>.</li>
+              </ul>
+            </li>
+            <li><b>Examples:</b> Snort, Suricata, Zeek (formerly Bro), Cisco Firepower IPS, Palo Alto Threat Prevention.</li>
+            <li><b>NDR</b> (Network Detection &amp; Response) — modern AI-driven traffic analytics (Vectra, Darktrace, ExtraHop, Corelight).</li>
+          </ul>
+
+          <h2>Proxies</h2>
+          <ul>
+            <li><b>Forward proxy</b> — between user + Internet. Controls + caches + filters outbound. Squid, BlueCoat.</li>
+            <li><b>Reverse proxy</b> — in front of backend servers. TLS termination, caching, header rewriting, load balancing. NGINX, HAProxy, Caddy, Envoy, Cloudflare.</li>
+            <li><b>Transparent proxy</b> — intercepts traffic without client config (HTTP CONNECT or DNS redirect).</li>
+            <li><b>SWG</b> (Secure Web Gateway) — modern URL + content filter + malware sandbox; often delivered cloud-side (Zscaler ZIA, Netskope, Forcepoint, Symantec).</li>
+            <li><b>SSL/TLS inspection / decryption</b> — proxy holds private CA cert trusted by endpoints, terminates + inspects + re-encrypts. Privacy and certain-pinned-app friction issues.</li>
+          </ul>
+
+          <h2>NAC — Network Access Control</h2>
+          <ul>
+            <li>Authenticates + posture-checks every device BEFORE granting network access.</li>
+            <li>Enforced at switch port (802.1X) or Wi-Fi AP, with policies from RADIUS / NAC platform.</li>
+            <li><b>Posture checks:</b> OS patched, AV running + up-to-date, FDE enabled, MDM enrolled, no banned software.</li>
+            <li><b>Outcomes:</b> Compliant → production VLAN; non-compliant → remediation VLAN; unknown → guest.</li>
+            <li><b>Agent vs Agentless</b> NAC.</li>
+            <li><b>Examples:</b> Cisco ISE (Identity Services Engine), Aruba ClearPass, Forescout, Microsoft NPS + Intune compliance, Portnox.</li>
+          </ul>
+
+          <h2>VPN — Virtual Private Network</h2>
+          <ul>
+            <li><b>Site-to-site VPN</b> — IPsec between two gateways. Always-on tunnel.</li>
+            <li><b>Remote-access VPN</b> — client to gateway. AnyConnect, GlobalProtect, FortiClient, AWS Client VPN.</li>
+            <li><b>IPsec modes:</b> Transport (host-to-host, encrypts payload) vs Tunnel (gateway-to-gateway, encrypts whole packet + new outer IP).</li>
+            <li><b>IKEv2</b> — modern key exchange.</li>
+            <li><b>ESP</b> (IP proto 50) — confidentiality + integrity. <b>AH</b> (proto 51) — integrity only.</li>
+            <li><b>SSL/TLS VPN</b> — TCP/443, NAT-friendly, clientless via browser.</li>
+            <li><b>WireGuard</b> — modern, fast UDP-based VPN. Lean codebase + Noise protocol + Curve25519 + ChaCha20.</li>
+            <li><b>Split tunnel</b> vs <b>Full tunnel</b>.</li>
+            <li><b>Always-on / Per-app VPN</b> via MDM.</li>
+            <li><b>L2TP/IPsec</b> — legacy.</li>
+            <li><b>PPTP</b> — deprecated / broken.</li>
+            <li><b>DMVPN</b> (Cisco Dynamic Multipoint) — hub-and-spoke + on-demand spoke-to-spoke.</li>
+            <li><b>SSL VPN portal</b> — clientless browser-only access.</li>
+          </ul>
+
+          <h2>Zero Trust + SASE / SSE</h2>
+          <ul>
+            <li><b>Zero Trust</b> (NIST 800-207) — never trust, always verify. Per-request authentication + authorization.</li>
+            <li><b>ZTNA</b> (Zero Trust Network Access) — replaces traditional VPN with brokered per-application access. Examples: Zscaler ZPA, Cloudflare Access, Cisco Secure Access, Tailscale, Twingate.</li>
+            <li><b>SASE</b> (Secure Access Service Edge, pron. "sassy") — Gartner term combining SD-WAN + cloud-delivered security (FWaaS + SWG + CASB + ZTNA + DLP).</li>
+            <li><b>SSE</b> (Security Service Edge) — security half of SASE without SD-WAN.</li>
+            <li><b>Vendors:</b> Zscaler, Netskope, Palo Alto Prisma, Cisco Umbrella + Duo, Cloudflare One, Cato Networks.</li>
+          </ul>
+
+          <h2>DLP — Data Loss Prevention</h2>
+          <ul>
+            <li>Monitors + blocks unauthorized movement of sensitive data (PII, PHI, PCI, IP).</li>
+            <li><b>Channels:</b> Endpoint (USB / clipboard / print), email (SMTP), web (HTTPS upload), cloud (CASB), network egress.</li>
+            <li><b>Detection methods:</b> Regex (SSN, CC), exact data match, fingerprinting, OCR, ML classifiers.</li>
+            <li><b>Examples:</b> Microsoft Purview DLP, Symantec / Broadcom DLP, Forcepoint, Digital Guardian.</li>
+            <li><b>Actions:</b> Allow / log / encrypt / quarantine / block / educate user.</li>
+          </ul>
+
+          <h2>CASB — Cloud Access Security Broker</h2>
+          <ul>
+            <li>Visibility + policy for SaaS apps.</li>
+            <li><b>Discovers shadow IT</b> by analyzing proxy / firewall logs.</li>
+            <li>Enforces DLP + access policies in approved SaaS.</li>
+            <li>Integrates with IdP for sign-in inspection.</li>
+            <li>Deploy modes: API-based (most common) and reverse-proxy / forward-proxy inline.</li>
+            <li><b>Examples:</b> Microsoft Defender for Cloud Apps, Netskope, Zscaler, Skyhigh (McAfee MVISION).</li>
+          </ul>
+
+          <h2>DNS-layer protection</h2>
+          <ul>
+            <li><b>Recursive DNS filtering</b> blocks malicious + adult / gambling categories at resolution time.</li>
+            <li>Examples: Cisco Umbrella, Cloudflare 1.1.1.1 for Families, Quad9, OpenDNS, DNSFilter.</li>
+            <li><b>DNS sinkhole</b> — internal DNS resolves known-bad domains to a controlled IP for monitoring.</li>
+            <li><b>DNSSEC</b> — cryptographically signs DNS records; blocks cache poisoning.</li>
+            <li><b>DoT / DoH</b> — encrypted DNS over TLS / HTTPS.</li>
+          </ul>
+
+          <h2>Email security gateway / EOP</h2>
+          <ul>
+            <li>Anti-spam, anti-phishing, AV, attachment sandboxing, URL rewriting + detonation.</li>
+            <li>Validates SPF / DKIM / DMARC.</li>
+            <li><b>Examples:</b> Microsoft Defender for Office 365 (formerly ATP), Proofpoint, Mimecast, Google Workspace, Cisco Secure Email.</li>
+            <li><b>BEC</b> (Business Email Compromise) detection via ML + impersonation rules.</li>
+          </ul>
+
+          <h2>Anti-DDoS / scrubbing</h2>
+          <ul>
+            <li>Upstream provider absorbs volumetric attacks before they reach your edge.</li>
+            <li>Examples: Cloudflare Magic Transit, AWS Shield Standard + Advanced, Azure DDoS Protection Standard, Akamai Prolexic, Radware DefensePro.</li>
+            <li>Combine with rate limiting + WAF + on-prem mitigation appliances.</li>
+          </ul>
+
+          <h2>Load balancer</h2>
+          <ul>
+            <li>Distributes traffic across backend servers. Adds health checks + failover.</li>
+            <li><b>L4 (TCP/UDP)</b> — fast, transport-level. Examples: AWS NLB, HAProxy.</li>
+            <li><b>L7 (HTTP-aware)</b> — header / URL / cookie routing. AWS ALB, NGINX, F5 BIG-IP, Citrix ADC, Azure App Gateway.</li>
+            <li><b>Global Server Load Balancing (GSLB)</b> — geographic + multi-DC failover via DNS or anycast.</li>
+            <li>Pairs naturally with WAF + autoscaling.</li>
+          </ul>
+
+          <h2>SD-WAN</h2>
+          <ul>
+            <li>Overlay technology that runs on TOP of any underlying transport (broadband, LTE, MPLS).</li>
+            <li>Central policy + app-aware steering + encrypted tunnels.</li>
+            <li>Replaces or augments traditional MPLS WANs.</li>
+            <li>Often paired with SASE.</li>
+          </ul>
+
+          <h2>Wireless security controls</h2>
+          <ul>
+            <li><b>WPA3-Enterprise</b> + 802.1X + RADIUS + EAP-TLS for corp Wi-Fi.</li>
+            <li><b>OWE</b> (Opportunistic Wireless Encryption) for guest networks.</li>
+            <li><b>PMF</b> / 802.11w (mandatory WPA3) to block deauth attacks.</li>
+            <li><b>WIPS</b> (Wireless Intrusion Prevention System) for rogue AP + evil-twin detection.</li>
+            <li>Disable WPS.</li>
+            <li>Guest SSID isolation on a separate VLAN.</li>
+          </ul>
+
+          <h2>Switch + port hardening</h2>
+          <ul>
+            <li><b>Port Security</b> — limit MAC addresses per port; sticky-MAC lockdown.</li>
+            <li><b>DHCP Snooping</b> — only trust DHCP responses on specific (uplink) ports.</li>
+            <li><b>Dynamic ARP Inspection (DAI)</b> — drops forged ARP replies.</li>
+            <li><b>IP Source Guard</b> — drops packets with spoofed source IP.</li>
+            <li><b>BPDU Guard</b> + <b>Root Guard</b> on access ports.</li>
+            <li><b>Storm Control</b> — rate-limit broadcast / multicast / unknown unicast.</li>
+            <li><b>Private VLAN</b> for guest / DMZ isolation.</li>
+            <li>Shut unused ports + park them in an unused VLAN.</li>
+          </ul>
+
+          <h2>Endpoint controls relevant to network</h2>
+          <ul>
+            <li><b>EDR</b> (Endpoint Detection &amp; Response) — behavior monitoring + telemetry. CrowdStrike, SentinelOne, Microsoft Defender for Endpoint.</li>
+            <li><b>XDR</b> (Extended Detection &amp; Response) — correlates endpoint + network + identity + cloud.</li>
+            <li><b>HIPS</b> / host firewall.</li>
+            <li><b>Application allowlisting</b> — AppLocker, Windows Defender Application Control (WDAC), Carbon Black.</li>
+            <li><b>USB / device control</b>.</li>
+            <li><b>Full-disk encryption</b>.</li>
+            <li><b>OS hardening + CIS benchmarks</b>.</li>
+          </ul>
+
+          <h2>Out-of-band management</h2>
+          <ul>
+            <li>Dedicated network / interface used to manage devices, separate from production data plane.</li>
+            <li>Used by SSH consoles, iDRAC / iLO / IPMI BMCs, serial console servers.</li>
+            <li>Allows recovery when production network is down.</li>
+            <li>BMC ports are MAJOR targets — keep on isolated management VLAN + strong creds + MFA.</li>
+          </ul>
+
+          <h2>Monitoring + visibility</h2>
+          <ul>
+            <li><b>SIEM</b> (Security Information &amp; Event Management) — centralized log + correlation. Splunk, QRadar, Microsoft Sentinel, Elastic Security, Sumo Logic, Chronicle.</li>
+            <li><b>SOAR</b> — automated playbook response.</li>
+            <li><b>UEBA</b> — User and Entity Behavior Analytics.</li>
+            <li><b>NetFlow / sFlow / IPFIX</b> — flow records for analytics.</li>
+            <li><b>SNMPv3</b> — encrypted device telemetry.</li>
+            <li><b>Syslog</b> — UDP 514 (or TLS 6514).</li>
+            <li><b>Packet capture</b> — Wireshark, tcpdump, network TAP, SPAN port.</li>
+            <li><b>Threat intel</b> — STIX/TAXII feeds for IOCs.</li>
+            <li><b>Honeypot / canary tokens</b> — alert on lateral movement.</li>
+          </ul>
+
+          <h2>Control selection — match the use case</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Use case</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Primary control</th></tr>
+            <tr><td>Inbound block from Internet</td><td>NGFW + WAF</td></tr>
+            <tr><td>Stop OWASP web attacks</td><td>WAF</td></tr>
+            <tr><td>Per-app remote access without flat VPN</td><td>ZTNA</td></tr>
+            <tr><td>Cloud SaaS visibility + DLP</td><td>CASB</td></tr>
+            <tr><td>URL + malware filtering for outbound</td><td>SWG</td></tr>
+            <tr><td>Posture check before LAN access</td><td>NAC (802.1X)</td></tr>
+            <tr><td>Lateral movement containment</td><td>Microsegmentation</td></tr>
+            <tr><td>Detect rogue AP</td><td>WIPS</td></tr>
+            <tr><td>Detect rogue DHCP / ARP spoof</td><td>DHCP Snooping + DAI</td></tr>
+            <tr><td>Encrypted DNS for users</td><td>DoH / DoT + DNS filter</td></tr>
+            <tr><td>Stop wire-transfer BEC</td><td>SPF / DKIM / DMARC + email gateway + training</td></tr>
+            <tr><td>Volumetric DDoS</td><td>Upstream scrubbing / anycast CDN</td></tr>
+            <tr><td>Block sensitive data exfil</td><td>DLP across endpoint + email + web + cloud</td></tr>
+            <tr><td>Forensic packet evidence</td><td>Network TAP + capture</td></tr>
+            <tr><td>Detect insider lateral movement</td><td>Honeypot / canary + UEBA + EDR + segmentation</td></tr>
+          </table>
+
+          <h2>Common policies / deployment patterns</h2>
+          <ul>
+            <li><b>Default deny</b> — start with all blocked; explicitly allow.</li>
+            <li><b>Ingress + egress filtering</b> — limit both directions.</li>
+            <li><b>BCP 38</b> — anti-spoofing (drop packets w/ source IP not in your network).</li>
+            <li><b>uRPF</b> (Unicast Reverse Path Forwarding) — drop packets from interface that doesn't match return route.</li>
+            <li><b>Bogon filtering</b> — drop traffic from unallocated IP space.</li>
+            <li><b>Honeytokens</b> sprinkled in normal data.</li>
+            <li><b>Geo-fencing</b> for high-risk countries.</li>
+            <li><b>Rate limiting + throttling</b> at WAF + API gateway.</li>
+          </ul>
+
+          <h2>Network device hardening checklist</h2>
+          <ol>
+            <li>Change defaults; manage out-of-band.</li>
+            <li>Patch firmware monthly.</li>
+            <li>Disable unused services (Telnet, HTTP, SNMPv1/v2c).</li>
+            <li>SSH + HTTPS only for mgmt; strong cipher + key auth.</li>
+            <li>Dedicated mgmt VLAN.</li>
+            <li>NTP synced + logs to central SIEM.</li>
+            <li>Least-privilege admin via TACACS+ / RADIUS / API.</li>
+            <li>ACLs ingress + egress.</li>
+            <li>Port Security + BPDU Guard + DHCP Snooping + DAI on access switches.</li>
+            <li>Restrict VLANs allowed on trunks.</li>
+            <li>Disable unused ports.</li>
+            <li>Document + back up configs (Git).</li>
+          </ol>
+
+          <h2>Common acronyms</h2>
+          <ul>
+            <li><b>FW / NGFW / UTM / WAF / FWaaS</b> — firewall variants.</li>
+            <li><b>IDS / IPS / HIDS / NIDS / NDR</b>.</li>
+            <li><b>SWG / CASB / DLP / ZTNA / SASE / SSE</b>.</li>
+            <li><b>NAC / 802.1X / RADIUS / TACACS+</b>.</li>
+            <li><b>VPN / IPsec / ESP / AH / IKEv2 / TLS / WireGuard</b>.</li>
+            <li><b>SD-WAN / MPLS</b>.</li>
+            <li><b>SPAN / TAP / NetFlow / sFlow / IPFIX</b>.</li>
+            <li><b>SIEM / SOAR / UEBA / XDR / EDR / MDR / MDM</b>.</li>
+            <li><b>WPA3 / OWE / WIPS / PMF</b>.</li>
+            <li><b>BCP 38 / uRPF / RPKI</b>.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"L7 protection for HTTP/S apps" → WAF.</li>
+            <li>"Replace VPN with brokered per-app access" → ZTNA.</li>
+            <li>"Cloud-delivered SD-WAN + security" → SASE.</li>
+            <li>"Block sensitive data exfiltration" → DLP.</li>
+            <li>"Visibility + control for SaaS" → CASB.</li>
+            <li>"Posture check + VLAN assignment" → NAC.</li>
+            <li>"Inline blocking" → IPS; "passive alert" → IDS.</li>
+            <li>"Stops VLAN hopping + rogue DHCP" → switch-port hardening (Port Security + DHCP Snooping + DAI).</li>
+            <li>"Mirrors traffic to monitor for analysis" → SPAN port or network TAP.</li>
+            <li>"Drops packets with spoofed source addresses" → uRPF / BCP 38.</li>
+            <li>"Filters by URL category + sandbox" → SWG.</li>
+            <li>"Stateful, instance-level firewall in cloud" → Security Group; "stateless subnet-level" → NACL (AWS).</li>
+            <li>"Out-of-band management" → separate physical / logical mgmt path.</li>
           </ul>
         `
       },
