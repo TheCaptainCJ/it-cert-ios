@@ -13092,18 +13092,290 @@ diff -r dir1 dir2 | grep -v '^Common subdirectories'</code></pre>
       {
         title: '1. Cloud Service & Deployment Models',
         body: `
-          <h2>Service models</h2>
+          <p>The first Cloud+ lesson establishes the language used through the rest of the course: how providers package services, how customers consume them, who's responsible for what, and the trade-offs between on-prem and the public cloud. Exam tests definitions, comparison tables, and which model fits a given scenario.</p>
+
+          <h2>What is "the cloud"?</h2>
+          <p>NIST SP 800-145 defines cloud computing by FIVE essential characteristics:</p>
+          <ol>
+            <li><b>On-demand self-service</b> — provision resources via portal / API without human ticketing.</li>
+            <li><b>Broad network access</b> — reachable over standard protocols (HTTPS / API).</li>
+            <li><b>Resource pooling</b> — provider multi-tenant; physical resources shared across customers using virtualization.</li>
+            <li><b>Rapid elasticity</b> — scale up and down quickly (often automatically) with demand; appears unlimited.</li>
+            <li><b>Measured service</b> — metered usage + transparent billing.</li>
+          </ol>
+
+          <h2>Cloud service models (the "as-a-Service" stack)</h2>
+
+          <h3>IaaS — Infrastructure as a Service</h3>
+          <p><b>What:</b> Virtualized hardware — VMs, virtual networks, block + object storage, load balancers — rented from a provider.</p>
+          <p><b>Examples:</b> AWS EC2 + EBS + VPC; Azure Virtual Machines; Google Compute Engine; Oracle OCI Compute; Linode; DigitalOcean; Vultr.</p>
+          <p><b>Provider responsibility:</b> Datacenter, hardware, hypervisor, hypervisor patching, basic networking fabric.<br>
+          <b>Customer responsibility:</b> Guest OS + patches, middleware, app code, data, identity, network security groups, backup strategy.</p>
+          <p><b>When to use:</b> Lift-and-shift workloads, OS-level control, GPU compute, custom networking, license-bound software, edge-case kernel modules.</p>
+          <p><b>Pros:</b> Maximum flexibility + control. Easy migration from on-prem.<br>
+          <b>Cons:</b> You still patch OS + manage app stack. Most operational effort of any cloud model.</p>
+
+          <h3>PaaS — Platform as a Service</h3>
+          <p><b>What:</b> Managed runtime / application platform. Push code, provider runs it — OS + middleware abstracted away.</p>
+          <p><b>Examples:</b> Azure App Service, AWS Elastic Beanstalk, AWS App Runner, Google Cloud Run, Google App Engine, Heroku, Render, Fly.io, Cloud Foundry.</p>
+          <p><b>Provider:</b> OS, runtime, load balancing, scaling, patching, monitoring hooks.<br>
+          <b>Customer:</b> App code + config + data + identity policy.</p>
+          <p><b>When to use:</b> Web apps, APIs, batch jobs where the OS is uninteresting; small teams wanting fast delivery.</p>
+          <p><b>Pros:</b> Less operational burden; faster time-to-deploy.<br>
+          <b>Cons:</b> Lock-in to platform conventions; less low-level tuning.</p>
+
+          <h3>SaaS — Software as a Service</h3>
+          <p><b>What:</b> Finished application delivered over the web. End users consume features; no OS or app code to manage.</p>
+          <p><b>Examples:</b> Microsoft 365, Google Workspace, Salesforce, Dropbox, Slack, Notion, Zoom, ServiceNow, Workday, Atlassian Cloud.</p>
+          <p><b>Provider:</b> Everything except user data + identity policy.<br>
+          <b>Customer:</b> Data classification, who has access, configuration of the app, MFA + Conditional Access.</p>
+          <p><b>When to use:</b> Commodity functions (email, file sync, CRM, HR, ticketing) where building / running internally is not strategic.</p>
+          <p><b>Pros:</b> Lowest ops effort, instant features.<br>
+          <b>Cons:</b> Less control; vendor pricing power; vendor lock-in / data-portability risks; multi-tenant noisy-neighbor + shared incident impact.</p>
+
+          <h3>FaaS — Function as a Service (Serverless)</h3>
+          <p><b>What:</b> Provider runs short-lived, event-driven functions. You write a function; provider auto-scales each invocation. Pay per request + ms of compute.</p>
+          <p><b>Examples:</b> AWS Lambda, Azure Functions, Google Cloud Functions / Cloud Run jobs, Cloudflare Workers, Vercel functions.</p>
+          <p><b>Pros:</b> No server management; scales to zero (zero idle cost); good for sporadic event-driven workloads.<br>
+          <b>Cons:</b> Cold-start latency; vendor-specific runtimes; long-running or stateful workloads are awkward; debugging distributed flows.</p>
+
+          <h3>Specialty "as a Service" terms</h3>
           <ul>
-            <li><b>IaaS</b> — VMs, networks, storage (AWS EC2, Azure VM, GCP CE).</li>
-            <li><b>PaaS</b> — runtime / app platform (App Service, Cloud Run, Elastic Beanstalk).</li>
-            <li><b>SaaS</b> — finished apps (M365, Salesforce).</li>
-            <li><b>FaaS / Serverless</b> — event-driven functions (Lambda, Azure Functions).</li>
-            <li><b>DBaaS / Storage-as-a-Service</b> — managed DB and object storage.</li>
+            <li><b>DBaaS</b> — Database as a Service. Managed SQL or NoSQL DBs. AWS RDS / Aurora, Azure SQL DB / Cosmos DB, Cloud SQL, Cloud Spanner, MongoDB Atlas, Redis Enterprise Cloud.</li>
+            <li><b>DaaS</b> — Desktop as a Service. Azure Virtual Desktop, AWS WorkSpaces, Citrix DaaS, Windows 365.</li>
+            <li><b>STaaS</b> — Storage as a Service. S3, Azure Blob, Google Cloud Storage; also Box / Dropbox for end-user SaaS.</li>
+            <li><b>BaaS</b> — Backup as a Service.</li>
+            <li><b>DRaaS</b> — Disaster Recovery as a Service. Azure Site Recovery, AWS Elastic DR, Zerto, Veeam.</li>
+            <li><b>SECaaS</b> — Security as a Service (Zscaler, Cloudflare, Cisco Umbrella).</li>
+            <li><b>IDaaS</b> — Identity as a Service. Okta, Microsoft Entra ID, Auth0, Ping, OneLogin.</li>
+            <li><b>iPaaS</b> — Integration Platform as a Service. MuleSoft, Boomi, Azure Logic Apps, AWS Step Functions, Workato.</li>
+            <li><b>NaaS</b> — Network as a Service. Aviatrix, Megaport, AWS Cloud WAN.</li>
+            <li><b>CaaS</b> — Containers as a Service. ECS, AKS, GKE, ACI.</li>
+            <li><b>MLaaS / AIaaS</b> — managed ML (SageMaker, Vertex AI, Azure ML, OpenAI on Azure).</li>
+            <li><b>BPaaS</b> — Business Process as a Service.</li>
+            <li><b>UCaaS</b> — Unified Communications as a Service (Zoom Phone, Teams Calling, Webex).</li>
+            <li><b>CCaaS</b> — Contact Center as a Service (Amazon Connect, Genesys Cloud).</li>
+            <li><b>VDIaaS</b> — same family as DaaS, virtual desktops.</li>
           </ul>
-          <h2>Deployment models</h2>
-          <p>Public, Private, Hybrid, Community, Multi-cloud. Edge / fog for latency-sensitive.</p>
-          <h2>Shared responsibility</h2>
-          <p>Provider secures <i>of</i> the cloud. Customer secures <i>in</i> the cloud — varies by model (most responsibility in IaaS, least in SaaS).</p>
+
+          <h2>Visualize the stack — who manages what</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">On-prem</th><th align="left" style="padding:4px;border-bottom:1px solid #444">IaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">FaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SaaS</th></tr>
+            <tr><td>Data + Identity</td><td>You</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>App code</td><td>You</td><td>You</td><td>You</td><td>You</td><td>Provider</td></tr>
+            <tr><td>Runtime / middleware</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>OS</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Hypervisor / virtualization</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Servers, storage, network</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Datacenter, power, cooling</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+          </table>
+          <p>Memorize: <b>more abstract = less customer responsibility = less control + faster delivery</b>.</p>
+
+          <h2>Shared responsibility model</h2>
+          <ul>
+            <li>Provider secures "<b>of</b> the cloud" — physical DC, hardware, hypervisor, network backbone.</li>
+            <li>Customer secures "<b>in</b> the cloud" — everything they upload + configure.</li>
+            <li>Boundary moves with the service model (see table).</li>
+            <li><b>Always customer's job</b> regardless of model: <b>data classification + access control + identity governance + compliance posture</b>.</li>
+            <li>Vendor publishes their version: AWS Shared Responsibility, Azure Shared Responsibility (Customer / Microsoft tables), Google's Shared Fate variant.</li>
+          </ul>
+
+          <h2>Cloud deployment models</h2>
+
+          <h3>Public cloud</h3>
+          <p><b>What:</b> Provider-owned, multi-tenant infrastructure delivered over the Internet.</p>
+          <p><b>Examples:</b> AWS, Azure, Google Cloud, Oracle Cloud, IBM Cloud, Alibaba Cloud, Tencent Cloud.</p>
+          <p><b>Pros:</b> Massive scale, OpEx pricing, global reach, fast onboarding, rich PaaS/managed services.<br>
+          <b>Cons:</b> Multi-tenancy concerns, data residency, less network control, egress fees.</p>
+
+          <h3>Private cloud</h3>
+          <p><b>What:</b> Dedicated cloud-style infrastructure for a single organization. Hosted on-prem OR by a single-tenant provider.</p>
+          <p><b>Examples:</b> VMware Cloud Foundation / VCF, OpenStack, OpenShift, Nutanix, Microsoft Azure Stack Hub / HCI, Google Anthos on-prem.</p>
+          <p><b>Pros:</b> Maximum data + network control; predictable costs (CapEx); regulatory compliance.<br>
+          <b>Cons:</b> Capacity planning is your problem; smaller catalog of services; harder to scale globally.</p>
+
+          <h3>Hybrid cloud</h3>
+          <p><b>What:</b> Integrated mix of public + private, often with workload portability + identity federation.</p>
+          <p><b>Examples:</b> on-prem ERP + public cloud analytics; bursting to public cloud at peak.</p>
+          <p><b>Pros:</b> Right tool for the workload; gradual migration; keep sensitive data on-prem while leveraging cloud for elasticity.<br>
+          <b>Cons:</b> Operational complexity; need consistent identity + networking + monitoring across both.</p>
+          <p><b>Connection patterns:</b> Site-to-site VPN (IPsec), Direct Connect / ExpressRoute / Interconnect (private circuits), SD-WAN, Azure Arc / AWS Outposts / Google Anthos for control-plane extension.</p>
+
+          <h3>Community cloud</h3>
+          <p>Shared by organizations with common requirements (regulators, government agencies, education consortia, healthcare alliances). Examples: AWS GovCloud, Azure Government, Google Assured Workloads, GAIA-X (EU).</p>
+
+          <h3>Multi-cloud</h3>
+          <p>Intentionally using two or more public providers. Reasons: resilience (avoid single-provider outage), best-of-breed services, regulatory diversity, negotiating leverage. Tools needed: cross-cloud IAM federation, unified monitoring, consistent IaC, network connectivity.</p>
+
+          <h3>Polycloud</h3>
+          <p>Using DIFFERENT providers for DIFFERENT workloads (vs multi-cloud where the SAME workload spans).</p>
+
+          <h3>Edge + fog computing</h3>
+          <p><b>Edge</b> — compute at or near where data is generated (IoT gateway, retail store, factory). Reduces latency + bandwidth use.<br>
+          <b>Fog</b> — layer between edge devices + cloud datacenters; intermediate aggregation. Cisco-coined term.<br>
+          <b>Examples:</b> AWS Outposts / Wavelength / Snowball Edge, Azure Stack Edge, Google Distributed Cloud Edge, NVIDIA Jetson, Cloudflare Workers at PoPs.</p>
+
+          <h2>Cloud-native vs lift-and-shift</h2>
+          <ul>
+            <li><b>Lift-and-shift (rehost)</b> — move workload as-is into IaaS. Fast; minimal redesign; misses cost + scale benefits.</li>
+            <li><b>Replatform</b> — modest changes (move DB to managed RDS).</li>
+            <li><b>Refactor / re-architect</b> — redesign into cloud-native patterns (microservices + serverless + managed services).</li>
+            <li><b>Repurchase</b> — replace with SaaS.</li>
+            <li><b>Retire</b> — decommission unused workload.</li>
+            <li><b>Retain</b> — keep on-prem for now.</li>
+            <li>These are AWS's "<b>6 Rs</b>" of migration; other vendors use similar lists.</li>
+          </ul>
+
+          <h2>Pricing models</h2>
+          <ul>
+            <li><b>On-demand / pay-as-you-go</b> — hourly / per-second / per-request billing. No commitment.</li>
+            <li><b>Reserved / committed-use</b> — 1- or 3-year commitment for steady workloads; ~30-72% discount.</li>
+            <li><b>Savings Plans</b> (AWS) / <b>Reservations</b> (Azure) / <b>Committed Use Discount</b> (GCP) — variants.</li>
+            <li><b>Spot / preemptible / low-priority</b> — deep discount; provider can reclaim with little notice. For stateless / fault-tolerant workloads.</li>
+            <li><b>Dedicated host / bare metal</b> — premium for compliance, license-bound software (BYOL), or hardware isolation.</li>
+            <li><b>Free tier</b> — limited resources for learning; watch for billing once you exit free tier.</li>
+            <li><b>Egress fees</b> — outbound data to Internet is the biggest "surprise" line item; in-region traffic + cloud-to-customer dedicated link cheaper.</li>
+            <li><b>Marketplace</b> — third-party software + appliances billed through cloud provider.</li>
+          </ul>
+
+          <h2>CapEx vs OpEx</h2>
+          <ul>
+            <li><b>CapEx</b> (Capital Expenditure) — large up-front purchase + depreciation over years. Traditional on-prem hardware buy.</li>
+            <li><b>OpEx</b> (Operating Expenditure) — ongoing pay-as-you-go expense. Cloud subscription / metered usage.</li>
+            <li>Cloud shifts most IT spend from CapEx to OpEx. Finance teams treat the two very differently (depreciation schedules, tax effect, budget approvals).</li>
+            <li><b>Reservations / Savings Plans</b> can look more like CapEx (committed up front) but are usually still classified as OpEx.</li>
+          </ul>
+
+          <h2>Cloud benefits (what providers will trumpet)</h2>
+          <ul>
+            <li><b>Elasticity</b> — scale up + down on demand.</li>
+            <li><b>Scalability</b> — capability to grow; vertical (bigger VM) + horizontal (more VMs).</li>
+            <li><b>High availability</b> — multi-AZ + multi-region patterns.</li>
+            <li><b>Global reach</b> — deploy in any region in minutes.</li>
+            <li><b>Time-to-market</b> — provision in seconds vs months for on-prem buy.</li>
+            <li><b>Managed services</b> — outsource undifferentiated heavy lifting.</li>
+            <li><b>Pay-as-you-go</b> — match cost to demand.</li>
+            <li><b>Innovation velocity</b> — AI/ML, big data, IoT off the shelf.</li>
+            <li><b>OPEX, not CAPEX</b>.</li>
+            <li><b>Disaster recovery</b> at lower cost.</li>
+          </ul>
+
+          <h2>Cloud risks + downsides</h2>
+          <ul>
+            <li><b>Cost overruns</b> — un-tagged auto-scaled resources. FinOps discipline required.</li>
+            <li><b>Vendor lock-in</b> — heavy reliance on proprietary services.</li>
+            <li><b>Egress costs</b>.</li>
+            <li><b>Data residency / sovereignty</b> — regulatory constraints on where data may reside.</li>
+            <li><b>Outage blast radius</b> — provider region outage affects many customers.</li>
+            <li><b>Shared-tenant risks</b> — noisy neighbors, side-channel attacks (theoretical).</li>
+            <li><b>Configuration sprawl</b> — leading cause of breaches.</li>
+            <li><b>Skills gap</b> — need cloud-trained staff.</li>
+            <li><b>Compliance complexity</b> — multiple regulators / frameworks.</li>
+            <li><b>Account compromise</b> — single API key can torch the entire account.</li>
+          </ul>
+
+          <h2>Regions, Availability Zones, Edge locations</h2>
+          <ul>
+            <li><b>Region</b> — geographic area containing multiple isolated datacenters. Examples: <code>us-east-1</code>, <code>westus2</code>, <code>europe-west4</code>.</li>
+            <li><b>Availability Zone (AZ) / Zone</b> — physically separate datacenter inside a region with redundant power, cooling, networking. Most regions have 3+.</li>
+            <li><b>Region pair</b> (Azure) — provider-paired regions for geo-redundant replication.</li>
+            <li><b>Edge / PoP / CDN location</b> — points-of-presence at major Internet exchanges for low-latency caching + DDoS absorption.</li>
+            <li><b>Local Zone / Wavelength Zone</b> (AWS) — metro + carrier extensions.</li>
+            <li><b>Sovereign region</b> — operated by separate legal entity / locally controlled (Azure China, AWS GovCloud, EU sovereign clouds).</li>
+          </ul>
+
+          <h2>Provider service catalogs (high level)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Category</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Compute (VM)</td><td>EC2</td><td>Virtual Machines</td><td>Compute Engine</td></tr>
+            <tr><td>Container orchestration</td><td>ECS / EKS / Fargate</td><td>AKS / Container Apps</td><td>GKE / Cloud Run</td></tr>
+            <tr><td>Serverless functions</td><td>Lambda</td><td>Functions</td><td>Cloud Functions</td></tr>
+            <tr><td>Object storage</td><td>S3</td><td>Blob Storage</td><td>Cloud Storage</td></tr>
+            <tr><td>Block storage</td><td>EBS</td><td>Managed Disks</td><td>Persistent Disk</td></tr>
+            <tr><td>File storage</td><td>EFS / FSx</td><td>Files</td><td>Filestore</td></tr>
+            <tr><td>Managed RDBMS</td><td>RDS / Aurora</td><td>SQL DB</td><td>Cloud SQL / Spanner</td></tr>
+            <tr><td>NoSQL</td><td>DynamoDB</td><td>Cosmos DB</td><td>Firestore / Bigtable</td></tr>
+            <tr><td>Data warehouse</td><td>Redshift</td><td>Synapse</td><td>BigQuery</td></tr>
+            <tr><td>VPC / Network</td><td>VPC</td><td>VNet</td><td>VPC</td></tr>
+            <tr><td>CDN</td><td>CloudFront</td><td>Front Door / CDN</td><td>Cloud CDN</td></tr>
+            <tr><td>IAM</td><td>IAM + Identity Center</td><td>Entra ID / RBAC</td><td>IAM + Cloud Identity</td></tr>
+            <tr><td>Private link to on-prem</td><td>Direct Connect</td><td>ExpressRoute</td><td>Interconnect</td></tr>
+            <tr><td>Hybrid extension</td><td>Outposts</td><td>Arc / Stack HCI</td><td>Anthos</td></tr>
+            <tr><td>Secrets</td><td>Secrets Manager</td><td>Key Vault</td><td>Secret Manager</td></tr>
+            <tr><td>Monitoring</td><td>CloudWatch</td><td>Monitor</td><td>Cloud Monitoring</td></tr>
+            <tr><td>SIEM</td><td>Security Lake + Detective</td><td>Sentinel</td><td>Chronicle</td></tr>
+          </table>
+
+          <h2>Scenario → model picker</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Scenario</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Best fit</th></tr>
+            <tr><td>Provide email + Office apps to 5,000 employees</td><td>SaaS (M365 / Google Workspace)</td></tr>
+            <tr><td>Migrate legacy ERP VM with proprietary driver</td><td>IaaS (lift-and-shift) or private cloud</td></tr>
+            <tr><td>Build new web app, small team, fast iteration</td><td>PaaS (App Service / Cloud Run / Heroku)</td></tr>
+            <tr><td>Run cron-like jobs triggered by S3 uploads</td><td>FaaS (Lambda)</td></tr>
+            <tr><td>Healthcare org needs strict data residency + audit</td><td>Community / Sovereign cloud (HIPAA / FedRAMP)</td></tr>
+            <tr><td>Bank with on-prem core + cloud analytics</td><td>Hybrid</td></tr>
+            <tr><td>Retailer wants resilience across two clouds</td><td>Multi-cloud</td></tr>
+            <tr><td>IoT camera farm needs sub-50 ms inference</td><td>Edge + fog computing</td></tr>
+            <tr><td>Quarterly batch ML training, idle in between</td><td>Spot instances or burstable serverless</td></tr>
+          </table>
+
+          <h2>Cloud governance + FinOps intro</h2>
+          <ul>
+            <li><b>Tagging strategy</b> — owner, environment (prod / dev), cost center, app, data classification.</li>
+            <li><b>Account / subscription hierarchy</b> — AWS Organizations / OUs, Azure Management Groups + Subscriptions, GCP Folders + Projects.</li>
+            <li><b>Budgets + alerts</b> — Cost Anomaly Detection (AWS), Cost Management (Azure), Billing Alerts (GCP).</li>
+            <li><b>Reservation + Savings Plan</b> management at org level.</li>
+            <li><b>Right-sizing</b> + decommission audits — Trusted Advisor, Azure Advisor, Recommender.</li>
+            <li><b>Egress optimization</b> — cache via CDN; keep traffic in-region.</li>
+            <li><b>Showback / Chargeback</b> — bill each team for its consumption.</li>
+            <li><b>FinOps culture</b> — engineering + finance + ops collaboration on cost.</li>
+          </ul>
+
+          <h2>Compliance + sovereignty considerations</h2>
+          <ul>
+            <li><b>FedRAMP</b> (US federal cloud authorization), <b>DoD IL2-IL6</b>, <b>HIPAA</b>, <b>PCI-DSS</b>, <b>SOC 2</b>, <b>ISO 27001 / 27017 / 27018</b>, <b>GDPR / Schrems II</b>, <b>CCPA</b>, <b>PIPEDA</b>, <b>LGPD</b>, <b>PIPL</b>.</li>
+            <li>Many regulators require <b>data residency</b> in country / region.</li>
+            <li>Providers expose dedicated <b>government / sovereign regions</b> separately accredited.</li>
+            <li>Customer remains accountable for compliance even if provider holds certifications.</li>
+          </ul>
+
+          <h2>Common exam acronyms</h2>
+          <ul>
+            <li><b>IaaS / PaaS / SaaS / FaaS / DBaaS / DaaS / DRaaS / IDaaS / iPaaS / NaaS / CaaS / SECaaS</b></li>
+            <li><b>AZ</b> — Availability Zone</li>
+            <li><b>VPC / VNet</b></li>
+            <li><b>CDN / PoP</b></li>
+            <li><b>CapEx / OpEx</b></li>
+            <li><b>SLA / OLA / UC</b></li>
+            <li><b>RTO / RPO / MTBF / MTTR</b></li>
+            <li><b>BYOL</b> (Bring Your Own License)</li>
+            <li><b>BYOK / CMK</b> (Bring Your Own Key / Customer-Managed Keys)</li>
+            <li><b>HYOK</b> (Hold Your Own Key)</li>
+            <li><b>FinOps</b></li>
+            <li><b>POC / MVP</b> (Proof of Concept / Minimum Viable Product)</li>
+            <li><b>RBAC / ABAC</b></li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Pay only for what you use" → measured / metered (NIST essential).</li>
+            <li>"Auto-scale up + down with demand" → rapid elasticity.</li>
+            <li>"VMs + storage + networks rented from provider" → IaaS.</li>
+            <li>"Provider manages OS + runtime, customer deploys code" → PaaS.</li>
+            <li>"Finished application accessed via browser / API" → SaaS.</li>
+            <li>"Event-driven, scales to zero, pay per execution" → FaaS / Serverless.</li>
+            <li>"Independent fault-isolated datacenter inside a region" → Availability Zone.</li>
+            <li>"On-prem + public cloud connected with consistent identity" → Hybrid cloud.</li>
+            <li>"Strict data residency for regulated sector" → community / sovereign cloud or private + on-prem.</li>
+            <li>"Process data near IoT source for low latency" → edge / fog.</li>
+            <li>"Provider responsible for hypervisor, customer for guest OS" → IaaS.</li>
+            <li>"Always customer's responsibility in EVERY model" → data + identity.</li>
+            <li>"Cheapest if you commit to 1- or 3-year usage" → Reserved / Savings Plan.</li>
+            <li>"Deep discount, can be reclaimed" → Spot / Preemptible.</li>
+            <li>"Shift from CapEx to OpEx" → cloud subscription model.</li>
+            <li>"Provider-paired region for geo-redundant storage" → Azure region pair.</li>
+          </ul>
         `
       },
       {
