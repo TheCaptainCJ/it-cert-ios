@@ -9996,22 +9996,457 @@ repquota -a                         # all filesystems summary</code></pre>
       {
         title: '4. Processes & systemd',
         body: `
-          <pre><code>ps aux | grep nginx
-top / htop
-kill -9 PID
-pkill -f pattern
-nice -n 10 cmd
-renice -n 5 -p PID
-jobs / bg / fg
-nohup cmd &</code></pre>
-          <h2>systemd</h2>
-          <pre><code>systemctl status sshd
-systemctl start|stop|restart|reload sshd
-systemctl enable|disable sshd
-systemctl list-units --type=service
-journalctl -u sshd -f
-systemctl daemon-reload
-systemctl get-default          # graphical.target / multi-user.target</code></pre>
+          <p>A <b>process</b> is a running program with its own memory, file descriptors, and identifiers. <b>systemd</b> is the init system + service manager that runs as PID 1 on virtually all modern Linux distros (RHEL/CentOS/Rocky/Alma 7+, Ubuntu 15.04+, Debian 8+, Fedora, Arch, openSUSE, Amazon Linux 2023). Exam tests process inspection, signals, scheduling priorities, and systemd unit management.</p>
+
+          <h2>Process basics</h2>
+          <ul>
+            <li><b>PID</b> (Process ID) — unique integer assigned at fork.</li>
+            <li><b>PPID</b> — parent PID. Every process except PID 1 has a parent.</li>
+            <li><b>UID / EUID</b> — real + effective user IDs (covered in lesson 2).</li>
+            <li><b>State</b>:
+              <ul>
+                <li><b>R</b> — Running / Runnable.</li>
+                <li><b>S</b> — Sleeping (interruptible).</li>
+                <li><b>D</b> — Uninterruptible sleep (usually waiting on I/O — CANNOT be killed).</li>
+                <li><b>Z</b> — Zombie (exited but parent hasn't reaped).</li>
+                <li><b>T</b> — Stopped (signal SIGSTOP).</li>
+                <li><b>X</b> — Dead.</li>
+                <li><b>I</b> — Idle kernel thread.</li>
+              </ul>
+            </li>
+            <li><b>Foreground vs background</b> — controlled by shell job control.</li>
+            <li><b>Daemon</b> — long-running background process, no terminal.</li>
+            <li><b>Thread</b> — execution context within a process; shares memory.</li>
+            <li><b>fork() + exec()</b> — Unix process creation. <code>fork</code> duplicates current process; <code>exec</code> replaces image. systemd-style sd_notify variants on top.</li>
+            <li><b>Init (PID 1)</b> — first userspace process; adopts orphans; reaps zombies. On modern Linux = systemd.</li>
+          </ul>
+
+          <h2>Listing processes</h2>
+
+          <h3>ps</h3>
+          <p>Snapshot. Two syntax styles (BSD + UNIX) often work simultaneously.</p>
+          <pre><code>ps                            # current shell's processes only
+ps aux                        # all (BSD): user, %CPU, %MEM, VSZ, RSS, TTY, STAT, START, TIME, COMMAND
+ps -ef                        # full listing (UNIX style): UID, PID, PPID, C, STIME, TTY, TIME, CMD
+ps -eo pid,ppid,user,state,comm,cmd     # custom columns
+ps -eo pid,etime,cmd          # uptime per process
+ps -p 1234                    # specific PID
+ps -u alice                   # user
+ps -C nginx                   # by command name
+ps --forest                   # parent→child tree
+ps -fLp 1234                  # threads of one PID</code></pre>
+
+          <h3>pgrep / pkill</h3>
+          <pre><code>pgrep nginx                   # PIDs by name
+pgrep -u alice                # PIDs by user
+pgrep -f "python.*server"     # match full command line
+pgrep -P 1                    # children of PID 1
+pkill nginx
+pkill -9 -u alice             # kill all of alice's processes with SIGKILL</code></pre>
+
+          <h3>pstree</h3>
+          <pre><code>pstree                        # whole tree
+pstree -p                     # show PIDs
+pstree -u                     # show user transitions
+pstree -al</code></pre>
+
+          <h2>Live monitoring</h2>
+
+          <h3>top</h3>
+          <p>Classic real-time process viewer. Key bindings:</p>
+          <ul>
+            <li><b>P</b> — sort by CPU (default).</li>
+            <li><b>M</b> — sort by memory.</li>
+            <li><b>T</b> — sort by time.</li>
+            <li><b>k</b> — kill (asks for PID + signal).</li>
+            <li><b>r</b> — renice.</li>
+            <li><b>u</b> — filter by user.</li>
+            <li><b>1</b> — show per-CPU stats.</li>
+            <li><b>c</b> — full command line.</li>
+            <li><b>H</b> — show threads.</li>
+            <li><b>q</b> — quit.</li>
+          </ul>
+          <pre><code>top -bn1                      # one batch iteration (scriptable)
+top -p 1234                   # single PID</code></pre>
+
+          <h3>htop</h3>
+          <p>Nicer, color, mouse-friendly. Tree view (F5), filter (F4), kill (F9), nice (F7/F8), search (F3).</p>
+
+          <h3>btop / atop / glances</h3>
+          <p>Modern alternatives. <b>atop</b> records snapshots for retroactive analysis. <b>glances</b> is web-friendly.</p>
+
+          <h3>System counters</h3>
+          <pre><code>uptime                        # load avg
+free -h                       # memory (-h human)
+vmstat 2 5                    # 5 samples at 2-sec interval
+mpstat -P ALL 1               # per-CPU
+iostat -x 1                   # disk I/O
+sar -u 1 5                    # historical sar (sysstat)
+nload                         # bandwidth per interface
+iotop                         # per-process I/O
+nethogs                       # per-process network
+pidstat -d 1                  # per-process I/O</code></pre>
+
+          <h2>Signals (kill + signal table)</h2>
+          <p>Send a signal to a process to request behavior. Signals are integers, also named like SIGTERM.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Num</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Behavior</th></tr>
+            <tr><td>1</td><td>SIGHUP</td><td>Hangup. Often used to make daemons reload config.</td></tr>
+            <tr><td>2</td><td>SIGINT</td><td>Interrupt (Ctrl+C).</td></tr>
+            <tr><td>3</td><td>SIGQUIT</td><td>Quit + core dump (Ctrl+\\).</td></tr>
+            <tr><td>9</td><td>SIGKILL</td><td>Force kill. Cannot be caught or ignored.</td></tr>
+            <tr><td>11</td><td>SIGSEGV</td><td>Segmentation fault.</td></tr>
+            <tr><td>13</td><td>SIGPIPE</td><td>Write to broken pipe.</td></tr>
+            <tr><td>14</td><td>SIGALRM</td><td>Alarm timer.</td></tr>
+            <tr><td>15</td><td>SIGTERM</td><td>Default kill signal — request polite exit.</td></tr>
+            <tr><td>17</td><td>SIGCHLD</td><td>Child process state change.</td></tr>
+            <tr><td>18</td><td>SIGCONT</td><td>Continue (resume from stop).</td></tr>
+            <tr><td>19</td><td>SIGSTOP</td><td>Stop (cannot be caught).</td></tr>
+            <tr><td>20</td><td>SIGTSTP</td><td>Terminal stop (Ctrl+Z).</td></tr>
+          </table>
+          <p><code>kill -l</code> lists all signals on the system.</p>
+
+          <pre><code>kill 1234                     # SIGTERM (graceful)
+kill -9 1234                  # SIGKILL (force)
+kill -HUP 1234                # reload config
+kill -STOP 1234               # pause
+kill -CONT 1234               # resume
+killall nginx                 # by name
+killall -9 nginx
+pkill -f "python.*serve.py"   # pattern match
+xkill                         # GUI: click target window
+fuser -k /var/lock/foo        # kill anything using a file/port</code></pre>
+          <p><b>Best practice:</b> Always try SIGTERM first; SIGKILL only when unresponsive (cannot run cleanup handlers).</p>
+
+          <h2>Job control (shell foreground / background)</h2>
+          <pre><code>cmd &                          # run in background
+jobs                           # list shell's background jobs
+fg %1                          # bring job 1 to foreground
+bg %1                          # resume in background
+Ctrl+Z                         # suspend foreground job (SIGTSTP)
+nohup cmd &                    # immune to HUP on shell exit
+disown %1                      # detach from current shell (no HUP delivery)
+setsid cmd                     # new session — fully detach</code></pre>
+
+          <h2>nice + renice — CPU scheduling priority</h2>
+          <ul>
+            <li><b>nice value</b> — −20 (highest priority) to +19 (lowest). Default 0.</li>
+            <li>Only root can set NEGATIVE nice (raise priority).</li>
+            <li><b>Priority (PR)</b> is what the kernel actually uses (visible in top); typically <code>PR = 20 + nice</code>.</li>
+          </ul>
+          <pre><code>nice -n 10 long-job           # start at nice 10 (lower priority)
+nice -n -5 important          # raise (root only)
+renice -n 5 -p 1234           # change PID
+renice -n 0 -u alice          # all of alice's processes</code></pre>
+
+          <h2>I/O scheduling — ionice</h2>
+          <pre><code>ionice -c 3 cmd               # class 3 = idle (only runs when disk free)
+ionice -c 2 -n 0 cmd          # best-effort, priority 0 (highest)
+ionice -p 1234                # show class + level for PID</code></pre>
+
+          <h2>cgroups — resource limiting</h2>
+          <p><b>cgroups</b> (control groups) let the kernel limit + account for CPU, memory, I/O, network, processes per group. systemd organizes everything into cgroups (one per service).</p>
+          <pre><code>systemctl set-property nginx.service MemoryMax=512M
+systemctl set-property nginx.service CPUQuota=50%
+systemd-cgls                  # tree of cgroups
+systemd-cgtop                 # top-like view of cgroups</code></pre>
+          <p>cgroups v2 (unified hierarchy) is default on RHEL 9, Fedora 31+, Ubuntu 21.10+.</p>
+
+          <h2>Namespaces (process isolation)</h2>
+          <p>Kernel feature underlying containers. Each process can have its own view of:</p>
+          <ul>
+            <li><b>PID namespace</b> — independent PID numbering.</li>
+            <li><b>Mount namespace</b> — separate filesystem view.</li>
+            <li><b>Network namespace</b> — separate stack + interfaces.</li>
+            <li><b>UTS namespace</b> — hostname.</li>
+            <li><b>IPC namespace</b> — shared memory, semaphores.</li>
+            <li><b>User namespace</b> — UID/GID remapping (rootless containers).</li>
+            <li><b>Cgroup namespace</b> — cgroup view.</li>
+            <li><b>Time namespace</b> — clocks (newer).</li>
+          </ul>
+          <p>Tools: <code>nsenter</code>, <code>unshare</code>, <code>lsns</code>.</p>
+
+          <h2>systemd — init + service manager</h2>
+          <p>systemd replaced SysV init (<code>/etc/init.d/*</code> + runlevels) + Upstart. PID 1. Manages services, mounts, sockets, timers, devices, network targets, and more — all as <b>units</b>.</p>
+
+          <h2>Unit types</h2>
+          <ul>
+            <li><b>.service</b> — daemon / service.</li>
+            <li><b>.socket</b> — listening socket; activates a service on connect (socket activation).</li>
+            <li><b>.target</b> — group of units (analog to SysV runlevel).</li>
+            <li><b>.mount</b> + <b>.automount</b> — filesystem mounts.</li>
+            <li><b>.timer</b> — scheduled trigger (cron alternative).</li>
+            <li><b>.path</b> — fires when a path changes.</li>
+            <li><b>.device</b> — udev-tracked hardware.</li>
+            <li><b>.slice</b> — cgroup container of services.</li>
+            <li><b>.scope</b> — externally-created processes.</li>
+            <li><b>.swap</b> — swap area.</li>
+          </ul>
+
+          <h2>Unit file locations</h2>
+          <ul>
+            <li><code>/usr/lib/systemd/system/</code> — packaged units (don't edit).</li>
+            <li><code>/etc/systemd/system/</code> — admin overrides; takes precedence.</li>
+            <li><code>/run/systemd/system/</code> — runtime, transient.</li>
+            <li><b>User units</b>: <code>~/.config/systemd/user/</code>.</li>
+            <li><b>Drop-ins:</b> <code>/etc/systemd/system/&lt;unit&gt;.d/*.conf</code> override single directives.</li>
+          </ul>
+
+          <h2>systemctl essentials</h2>
+          <pre><code># Lifecycle
+systemctl start nginx
+systemctl stop nginx
+systemctl restart nginx
+systemctl reload nginx           # reload config without dropping
+systemctl reload-or-restart nginx
+systemctl kill -s SIGUSR1 nginx  # send arbitrary signal
+systemctl mask nginx             # block start (symlink to /dev/null)
+systemctl unmask nginx
+
+# Boot persistence
+systemctl enable nginx           # start at boot
+systemctl disable nginx
+systemctl enable --now nginx     # enable + start in one command
+systemctl is-enabled nginx
+systemctl is-active nginx
+
+# Inspect
+systemctl status nginx
+systemctl show nginx             # all properties
+systemctl cat nginx.service      # effective unit definition
+systemctl list-units             # all loaded
+systemctl list-units --type=service --state=failed
+systemctl list-unit-files        # show enabled/disabled state for all
+systemctl list-dependencies nginx
+systemctl --failed               # everything failed
+
+# Config edits
+systemctl edit nginx             # creates drop-in override file
+systemctl edit --full nginx      # edit entire unit
+systemctl daemon-reload          # reread unit files after changes
+systemctl daemon-reexec          # reload systemd itself
+
+# Hostname / time
+hostnamectl set-hostname host01
+timedatectl set-timezone UTC
+timedatectl set-ntp true
+localectl set-locale LANG=en_US.UTF-8</code></pre>
+
+          <h2>Service unit file example</h2>
+          <pre><code>[Unit]
+Description=My Web App
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=app
+WorkingDirectory=/srv/app
+EnvironmentFile=/etc/myapp/env
+ExecStart=/srv/app/run.sh
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+LimitNOFILE=65535
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/myapp
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+          <p>Save as <code>/etc/systemd/system/myapp.service</code>, then <code>systemctl daemon-reload</code> + <code>systemctl enable --now myapp</code>.</p>
+
+          <h3>Service Type values</h3>
+          <ul>
+            <li><b>simple</b> (default) — ExecStart is the main process; doesn't fork.</li>
+            <li><b>exec</b> — like simple but waits for exec().</li>
+            <li><b>forking</b> — daemon forks itself; systemd tracks PID file.</li>
+            <li><b>oneshot</b> — single command, exits. Often paired with RemainAfterExit=yes.</li>
+            <li><b>notify</b> — service uses sd_notify to signal readiness.</li>
+            <li><b>dbus</b> — daemon registers D-Bus name.</li>
+            <li><b>idle</b> — delay until no other jobs running.</li>
+          </ul>
+
+          <h3>Restart policies</h3>
+          <p><code>Restart=no | always | on-success | on-failure | on-abnormal | on-watchdog | on-abort</code>. Combine with <code>RestartSec=</code>.</p>
+
+          <h3>Hardening directives (security)</h3>
+          <ul>
+            <li><code>User=</code> + <code>Group=</code></li>
+            <li><code>PrivateTmp=true</code></li>
+            <li><code>ProtectSystem=full|strict</code></li>
+            <li><code>ProtectHome=true</code></li>
+            <li><code>NoNewPrivileges=true</code></li>
+            <li><code>CapabilityBoundingSet=</code></li>
+            <li><code>RestrictAddressFamilies=</code></li>
+            <li><code>SystemCallFilter=</code></li>
+            <li><code>ReadOnlyPaths=</code> / <code>ReadWritePaths=</code></li>
+            <li><code>MemoryMax=</code>, <code>CPUQuota=</code>, <code>TasksMax=</code></li>
+            <li><code>PrivateNetwork=true</code> (isolates from host network)</li>
+            <li><code>DynamicUser=true</code> (auto creates ephemeral UID)</li>
+          </ul>
+          <p>Inspect a service's security score: <code>systemd-analyze security nginx</code>.</p>
+
+          <h2>Targets (replace runlevels)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Target</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SysV runlevel</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Meaning</th></tr>
+            <tr><td>poweroff.target</td><td>0</td><td>System halt / power off</td></tr>
+            <tr><td>rescue.target</td><td>1 (single)</td><td>Single-user maintenance, root shell</td></tr>
+            <tr><td>multi-user.target</td><td>3</td><td>Full multi-user, no GUI</td></tr>
+            <tr><td>graphical.target</td><td>5</td><td>Multi-user + GUI</td></tr>
+            <tr><td>reboot.target</td><td>6</td><td>Reboot</td></tr>
+            <tr><td>emergency.target</td><td>—</td><td>Minimal, read-only root, emergency shell</td></tr>
+          </table>
+          <pre><code>systemctl get-default                       # current default
+systemctl set-default multi-user.target     # change default
+systemctl isolate rescue.target             # switch now
+systemctl reboot
+systemctl poweroff</code></pre>
+
+          <h2>Boot diagnostics with systemd</h2>
+          <pre><code>systemd-analyze                      # total boot time
+systemd-analyze blame                # slowest units
+systemd-analyze critical-chain       # critical path
+systemd-analyze plot > boot.svg      # SVG diagram
+systemd-analyze verify unit.service  # syntax check
+systemd-analyze security nginx       # hardening score
+journalctl -b -p err                 # current boot, errors only
+journalctl -b -1                     # previous boot</code></pre>
+
+          <h2>journalctl — logs</h2>
+          <p>systemd's structured log facility.</p>
+          <pre><code>journalctl                            # all logs
+journalctl -u sshd                    # unit
+journalctl -u sshd -f                 # follow
+journalctl -u sshd --since "1 hour ago"
+journalctl --since today
+journalctl -p err -b                  # priority &lt;= err in current boot
+journalctl -k                         # kernel messages (dmesg)
+journalctl _PID=1234
+journalctl _COMM=sshd
+journalctl --disk-usage
+journalctl --vacuum-time=2weeks       # prune older than 2 weeks
+journalctl --vacuum-size=500M
+journalctl --list-boots</code></pre>
+          <p>Persistent journal: <code>mkdir -p /var/log/journal</code> (or set <code>Storage=persistent</code> in <code>/etc/systemd/journald.conf</code>).</p>
+          <p><b>Priority levels:</b> emerg(0), alert(1), crit(2), err(3), warning(4), notice(5), info(6), debug(7).</p>
+
+          <h2>systemd timers (cron replacement)</h2>
+          <p>Two files: a <code>.service</code> + a <code>.timer</code>.</p>
+          <pre><code># /etc/systemd/system/backup.service
+[Unit]
+Description=Backup
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/backup.sh
+
+# /etc/systemd/system/backup.timer
+[Unit]
+Description=Run backup nightly
+[Timer]
+OnCalendar=*-*-* 02:00:00          # nightly at 02:00
+Persistent=true                    # catch up missed runs
+RandomizedDelaySec=300             # random 5-min jitter
+[Install]
+WantedBy=timers.target</code></pre>
+          <pre><code>systemctl enable --now backup.timer
+systemctl list-timers                # all active timers</code></pre>
+
+          <h2>Socket activation</h2>
+          <p>systemd can listen on a socket and start the service only on first connection. Saves resources + allows on-demand startup. Used by sshd in some installs, CUPS, Avahi.</p>
+
+          <h2>System control + login</h2>
+          <ul>
+            <li><code>shutdown -h now</code> / <code>shutdown -r now</code> / <code>shutdown -h +10 "msg"</code>.</li>
+            <li><code>poweroff</code>, <code>reboot</code>, <code>halt</code>.</li>
+            <li><code>systemctl suspend</code>, <code>systemctl hibernate</code>.</li>
+            <li><code>loginctl</code> — session manager. <code>loginctl list-sessions</code>, <code>loginctl terminate-session 5</code>.</li>
+            <li><code>wall "Maintenance in 5 min"</code> — broadcast to all users.</li>
+          </ul>
+
+          <h2>Older inits (legacy)</h2>
+          <ul>
+            <li><b>SysV init</b> — runlevels 0-6, scripts in /etc/init.d/, controlled by <code>service</code> + <code>chkconfig</code> / <code>update-rc.d</code>.</li>
+            <li><b>Upstart</b> — Ubuntu pre-15.04. Event-driven.</li>
+            <li><b>OpenRC</b> — used by Gentoo / Alpine.</li>
+            <li><b>BusyBox init</b> — embedded.</li>
+            <li><b>runit / s6</b> — minimalist supervisors.</li>
+          </ul>
+
+          <h2>cron (traditional scheduler)</h2>
+          <pre><code># crontab fields: minute hour day-of-month month day-of-week command
+*/5 * * * *   /usr/local/bin/check.sh
+0 2 * * *     /usr/local/bin/backup.sh
+0 0 * * 0     /usr/local/bin/weekly.sh
+@reboot       /usr/local/bin/onboot.sh
+@daily        /usr/local/bin/daily.sh         # shortcuts: @hourly/@daily/@weekly/@monthly/@yearly
+
+crontab -e              # edit current user's crontab
+crontab -l              # list
+crontab -r              # remove (CAREFUL)
+sudo crontab -e -u alice
+ls /etc/cron.d/         # system drop-ins
+ls /etc/cron.{hourly,daily,weekly,monthly}/  # run-parts dirs
+/etc/cron.allow + /etc/cron.deny</code></pre>
+          <p><b>anacron</b> — for systems not always on; catches up missed daily/weekly/monthly runs.</p>
+          <p><b>at</b> — schedule a one-shot future command. <code>echo "cmd" | at now + 5 minutes</code>.</p>
+
+          <h2>Service troubleshooting workflow</h2>
+          <ol>
+            <li><code>systemctl status name</code> — quick snapshot + last lines.</li>
+            <li><code>journalctl -u name -n 200 --no-pager</code> — recent log.</li>
+            <li>If config syntax: <code>name -t</code> (e.g., <code>nginx -t</code>, <code>sshd -t</code>) when available.</li>
+            <li>Port conflict? <code>ss -tunlp | grep :PORT</code>.</li>
+            <li>SELinux denial? <code>ausearch -m AVC -ts recent</code>.</li>
+            <li>Permission issue? Check user/group of dir; SELinux contexts <code>ls -Z</code>.</li>
+            <li>systemd-analyze verify for unit syntax.</li>
+            <li>Memory pressure? <code>journalctl -k -b | grep -i oom</code>.</li>
+            <li>Increase service log verbosity (often via EnvironmentFile or arg).</li>
+            <li><code>strace -p PID</code> or <code>perf top</code> for live runtime inspection.</li>
+          </ol>
+
+          <h2>Killing the unkillable</h2>
+          <ul>
+            <li><b>D-state (uninterruptible)</b> processes block on kernel I/O. They cannot be killed. Investigate the device (NFS hang, failing disk) — fix that and they exit.</li>
+            <li><b>Zombie (Z-state)</b> — parent must <code>wait()</code>; if parent buggy, signal parent (<code>SIGCHLD</code>) or kill it so init reaps.</li>
+          </ul>
+
+          <h2>Common exam patterns</h2>
+          <ul>
+            <li>"Start service + enable at boot" → <code>systemctl enable --now name</code>.</li>
+            <li>"Reload service without dropping connections" → <code>systemctl reload name</code>.</li>
+            <li>"Reload unit files after edit" → <code>systemctl daemon-reload</code>.</li>
+            <li>"View service log live" → <code>journalctl -u name -f</code>.</li>
+            <li>"Show boot time of slow units" → <code>systemd-analyze blame</code>.</li>
+            <li>"Change to multi-user (no GUI)" → <code>systemctl isolate multi-user.target</code> or set default.</li>
+            <li>"Schedule daily job (modern)" → systemd .timer with OnCalendar.</li>
+            <li>"Send graceful exit signal" → <code>kill 1234</code> (SIGTERM = 15).</li>
+            <li>"Force kill" → <code>kill -9 1234</code>.</li>
+            <li>"Daemon reload config without restart" → SIGHUP (kill -1).</li>
+            <li>"Lower CPU priority" → <code>nice -n 10</code> or <code>renice -n 10 -p PID</code>.</li>
+            <li>"Limit memory per service" → systemctl set-property name MemoryMax=512M.</li>
+            <li>"systemd PID is" → 1.</li>
+            <li>"List enabled services" → <code>systemctl list-unit-files --state=enabled</code>.</li>
+            <li>"Mask service so it cannot start" → <code>systemctl mask name</code>.</li>
+            <li>"Persist journal across reboots" → mkdir /var/log/journal or Storage=persistent.</li>
+            <li>"Drop-in override single directive" → <code>systemctl edit name</code>.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>SIGTERM = 15 graceful; SIGKILL = 9 force; SIGHUP = 1 reload.</li>
+            <li>D-state can't be killed; chase the I/O.</li>
+            <li>systemctl enable ≠ start; use <code>--now</code> for both.</li>
+            <li>Override files live in <code>/etc/systemd/system/</code> (and drop-ins).</li>
+            <li>journalctl needs <code>--vacuum</code> options to control disk usage.</li>
+            <li>"Restart=on-failure" + "RestartSec=5" is a common HA pattern.</li>
+            <li>"systemd-analyze security &lt;unit&gt;" reveals hardening gaps.</li>
+            <li>cgroups v2 unified hierarchy is default on modern distros.</li>
+            <li>Namespaces underlie containers (Docker, Podman, Kubernetes).</li>
+            <li>Boot target = "graphical.target" with GUI; "multi-user.target" without.</li>
+          </ul>
         `
       },
       {
