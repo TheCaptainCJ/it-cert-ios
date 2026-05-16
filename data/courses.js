@@ -17049,18 +17049,118 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '6. Identity — Microsoft Entra ID',
         body: `
-          <p><b>Microsoft Entra ID</b> (formerly Azure Active Directory) is the cloud identity service.</p>
-          <h2>Key features</h2>
+          <h2>What is Microsoft Entra ID?</h2>
+          <p><b>Microsoft Entra ID</b> (renamed from <b>Azure Active Directory / Azure AD / AAD</b> in 2023) is Microsoft's cloud-based <b>identity and access management (IAM)</b> service. It authenticates users, devices, and applications, then authorizes access to Microsoft 365, Azure, and thousands of third-party SaaS apps via standards like <b>SAML 2.0</b>, <b>OAuth 2.0</b>, and <b>OpenID Connect (OIDC)</b>. Every Azure tenant has exactly one Entra ID directory; every subscription is bound to one Entra ID tenant.</p>
+          <p><b>Important distinction:</b> Entra ID is <i>not</i> on-prem Active Directory Domain Services (AD DS). It does not do Kerberos, LDAP, Group Policy, or domain join in the classical sense. It is HTTP/REST-based identity. For workloads that need full AD DS, Microsoft offers <b>Microsoft Entra Domain Services</b> (managed domain controllers compatible with classic AD) as a separate service.</p>
+
+          <h2>Authentication vs authorization</h2>
           <ul>
-            <li><b>SSO</b> across Microsoft + thousands of SaaS apps.</li>
-            <li><b>MFA</b> — phone, authenticator app, FIDO2 keys.</li>
-            <li><b>Conditional Access</b> — policies on user/device/location/risk.</li>
-            <li><b>Identity Protection</b> — risk-based detection.</li>
-            <li><b>Privileged Identity Management (PIM)</b> — just-in-time elevation for admin roles.</li>
-            <li><b>External identities / B2B / B2C</b> — guests, customer-facing IAM.</li>
+            <li><b>Authentication (AuthN)</b> — proving <i>who</i> you are. Entra ID handles this — username/password, MFA, certificate, passwordless. Returns a signed token.</li>
+            <li><b>Authorization (AuthZ)</b> — deciding <i>what</i> you can do once authenticated. <b>Azure RBAC</b> handles this for Azure resources; <b>Entra ID roles</b> (like Global Admin) handle directory-level permissions; app-specific permissions live inside each app.</li>
           </ul>
-          <h2>Auth vs authz</h2>
-          <p><b>Authentication</b> — Entra ID verifies who you are.<br><b>Authorization</b> — Azure RBAC decides what you can do on a resource.</p>
+          <p><b>Why memorize this split:</b> AZ-900 questions test the wording. "Verifying user identity with MFA" → AuthN. "Letting only Operations group manage VMs" → AuthZ via RBAC.</p>
+
+          <h2>Identity objects in Entra ID</h2>
+          <ul>
+            <li><b>User</b> — a person with credentials. Two kinds: <b>cloud-only</b> (created in Entra) and <b>synced</b> (mirrored from on-prem AD via Entra Connect / Cloud Sync).</li>
+            <li><b>Group</b> — collection of users/devices/groups. Types: <b>Security</b> (for RBAC/Conditional Access), <b>Microsoft 365</b> (also gets a mailbox + SharePoint). Membership: <b>Assigned</b> (manual) or <b>Dynamic</b> (rule-based, e.g., department = Engineering).</li>
+            <li><b>Device</b> — registered, Entra-joined, or hybrid-joined Windows/macOS/iOS/Android. Required for device-based Conditional Access.</li>
+            <li><b>Service Principal (SP)</b> — the identity of an application in your directory. Apps authenticate as a service principal to call APIs/resources.</li>
+            <li><b>App Registration</b> — the definition of an application (client ID, secrets/certs, redirect URIs); creates a corresponding service principal when consented in a tenant.</li>
+            <li><b>Managed Identity (MI)</b> — Microsoft-managed service principal whose credentials Azure rotates for you. Two flavors: <b>System-assigned</b> (tied to one resource's lifecycle) and <b>User-assigned</b> (standalone resource, attached to many).</li>
+            <li><b>Guest user (B2B)</b> — external user from another Entra/Microsoft/Google account invited via email.</li>
+          </ul>
+
+          <h2>Authentication methods (modern + legacy)</h2>
+          <ul>
+            <li><b>Password</b> — baseline; subject to spray/phishing.</li>
+            <li><b>MFA</b> — Multi-Factor Authentication. Something you know + have + are. Methods: Microsoft Authenticator push, OATH TOTP code, SMS/voice (least secure), FIDO2 hardware key, Windows Hello for Business.</li>
+            <li><b>Passwordless</b> — Microsoft's strategic direction: FIDO2 keys, Authenticator phone-as-token, Windows Hello.</li>
+            <li><b>Certificate-based authentication (CBA)</b> — for smart cards / CAC / PIV.</li>
+            <li><b>Self-Service Password Reset (SSPR)</b> — users reset their own password after verifying via MFA-style methods.</li>
+            <li><b>Password Protection</b> — banned-password list (global Microsoft list + your custom list) blocks weak passwords org-wide.</li>
+          </ul>
+
+          <h2>Single Sign-On (SSO) + federation</h2>
+          <p><b>SSO</b> = sign in once with Entra ID, access many apps. <b>Why:</b> fewer passwords = fewer phishing victims + lower help-desk cost. <b>How used:</b> Entra ID issues <b>SAML</b> tokens (legacy SaaS), <b>OIDC</b> ID tokens (modern web/mobile), or <b>OAuth</b> access tokens (APIs). Federation lets a partner's IdP authenticate users while Entra ID still authorizes — common pattern: AD FS → Entra ID.</p>
+
+          <h2>Conditional Access (CA)</h2>
+          <p><b>What:</b> the policy engine that evaluates every sign-in against signals and decides to <b>allow</b>, <b>block</b>, or require <b>controls</b> (MFA, compliant device, terms of use, password change). <b>Why:</b> moves you from "MFA always or never" to risk-appropriate enforcement. <b>How used:</b> a CA policy has <b>assignments</b> (users + groups, cloud apps, conditions like location/risk/device/client app) and <b>access controls</b> (block, grant with MFA/compliant device/etc.).</p>
+          <p><b>Conditions Microsoft tests:</b></p>
+          <ul>
+            <li><b>User risk / sign-in risk</b> — from Identity Protection (Low/Medium/High).</li>
+            <li><b>Device platform</b> — Windows, macOS, iOS, Android.</li>
+            <li><b>Location</b> — named locations / trusted IP ranges; geo-blocking.</li>
+            <li><b>Client apps</b> — modern auth vs legacy (Exchange ActiveSync, IMAP, POP).</li>
+            <li><b>Device state</b> — compliant (Intune) or Entra-joined.</li>
+          </ul>
+          <p>Common starter policy: "Require MFA for all users when not on a trusted location." Microsoft also publishes <b>Security Defaults</b> (one-click baseline MFA) and <b>Conditional Access templates</b> for common patterns.</p>
+
+          <h2>Microsoft Entra ID Protection</h2>
+          <p><b>What:</b> risk-based detection that scores each sign-in (anomalous travel, unfamiliar location, leaked credentials, malware-linked IP) and each user (token replay, attacker-in-the-middle). <b>Why:</b> automates response; feeds Conditional Access. <b>How used:</b> set policies like "require password change if user risk = High" or "require MFA if sign-in risk = Medium."</p>
+
+          <h2>Privileged Identity Management (PIM)</h2>
+          <p><b>Acronym:</b> Privileged Identity Management. <b>What:</b> just-in-time (JIT), time-bounded elevation for sensitive roles in Entra ID, Azure RBAC, and Microsoft 365. Admins are <b>eligible</b> for a role; they must <b>activate</b> it (with MFA, justification, optional approval) for a limited window. <b>Why:</b> eliminates standing privilege (the #1 thing red teams hunt for). <b>How used:</b> assign "Eligible Global Administrator" to admins; they request activation for up to 8 hours when needed. Includes access reviews, alerts on suspicious activations, and reporting.</p>
+
+          <h2>External identities — B2B and B2C</h2>
+          <ul>
+            <li><b>B2B Collaboration</b> — invite users from another Entra ID / Microsoft / Google / SAML IdP / email-OTP as <b>guests</b> in your tenant; grant them access to specific apps and resources. Typical use: contractors, partners.</li>
+            <li><b>B2C (Azure AD B2C / Entra External ID for customers)</b> — separate tenant type used to authenticate customers/consumers with social logins (Facebook, Google, Apple), local accounts, or federation. Used by public-facing apps.</li>
+          </ul>
+
+          <h2>Hybrid identity (on-prem ↔ Entra ID)</h2>
+          <ul>
+            <li><b>Microsoft Entra Connect</b> (legacy sync agent) and <b>Entra Cloud Sync</b> (newer, lightweight) — sync users/groups/hashes from on-prem AD to Entra ID.</li>
+            <li><b>Sync types:</b> <b>Password Hash Sync (PHS)</b> — Entra authenticates, default; <b>Pass-Through Authentication (PTA)</b> — Entra validates against on-prem AD via agent; <b>Federation (AD FS)</b> — on-prem AD FS does the auth.</li>
+            <li><b>Seamless SSO</b> — auto-sign-in for domain-joined PCs without prompts.</li>
+            <li><b>Entra Domain Services</b> — managed AD DS controllers with Kerberos/LDAP/Group Policy for legacy apps that need real AD.</li>
+          </ul>
+
+          <h2>Entra ID licenses (AZ-900 should recognize)</h2>
+          <ul>
+            <li><b>Free</b> — included with any Azure/Microsoft 365 subscription: directory, basic SSO, user/group mgmt.</li>
+            <li><b>Microsoft 365 Apps</b> — adds branding, SSPR cloud-only.</li>
+            <li><b>Premium P1</b> — Conditional Access, Group-based access management, dynamic groups, advanced reports, hybrid identity (Entra Connect Health).</li>
+            <li><b>Premium P2</b> — adds Identity Protection (risk-based CA) + PIM + access reviews + entitlement management.</li>
+          </ul>
+
+          <h2>Zero Trust (Microsoft's guiding model)</h2>
+          <p>Three principles: <b>Verify explicitly</b> (auth every request with all signals), <b>Use least privilege</b> (JIT, just-enough-access), <b>Assume breach</b> (segment, encrypt, monitor). Entra ID + Conditional Access + Defender for Cloud + Microsoft Sentinel are the Microsoft Zero Trust pillars.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>Entra ID</b> — Microsoft Entra ID (formerly Azure AD / AAD).</li>
+            <li><b>IAM</b> — Identity and Access Management.</li>
+            <li><b>AuthN / AuthZ</b> — Authentication / Authorization.</li>
+            <li><b>SSO</b> — Single Sign-On.</li>
+            <li><b>MFA</b> — Multi-Factor Authentication.</li>
+            <li><b>CA</b> — Conditional Access.</li>
+            <li><b>PIM</b> — Privileged Identity Management.</li>
+            <li><b>SP</b> — Service Principal.</li>
+            <li><b>MI</b> — Managed Identity.</li>
+            <li><b>SSPR</b> — Self-Service Password Reset.</li>
+            <li><b>SAML / OIDC / OAuth</b> — federation protocols.</li>
+            <li><b>FIDO2</b> — hardware-token passwordless standard.</li>
+            <li><b>JIT</b> — Just-In-Time access.</li>
+            <li><b>PHS / PTA</b> — Password Hash Sync / Pass-Through Authentication.</li>
+            <li><b>AD FS</b> — Active Directory Federation Services.</li>
+            <li><b>AD DS</b> — Active Directory Domain Services.</li>
+            <li><b>B2B / B2C</b> — Business-to-Business / Business-to-Consumer (external identities).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Verifying user with phone + password" → <b>AuthN</b> with <b>MFA</b>.</li>
+            <li>"Granting Reader access on RG" → <b>AuthZ</b> via <b>Azure RBAC</b>.</li>
+            <li>"Require MFA only from outside trusted office IPs" → <b>Conditional Access</b> with named location.</li>
+            <li>"Eliminate permanent Global Admin assignments" → <b>PIM</b> (eligible role + JIT activation).</li>
+            <li>"App needs to call Azure SQL without storing credentials" → <b>Managed Identity</b>.</li>
+            <li>"Invite contractor from another company to access SharePoint" → <b>B2B</b> guest invite.</li>
+            <li>"Customer-facing app with Google + Facebook sign-in" → <b>Entra External ID / B2C</b>.</li>
+            <li>"Risk-based detection requiring password reset on compromised account" → <b>Identity Protection</b> (requires Entra P2).</li>
+            <li>"Sync on-prem AD users to Entra so they sign in with same password" → <b>Entra Connect / Cloud Sync</b> with <b>Password Hash Sync</b>.</li>
+            <li>"Users reset their own forgotten password" → <b>SSPR</b>.</li>
+          </ul>
         `
       },
       {
