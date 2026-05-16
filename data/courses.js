@@ -5060,15 +5060,192 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
       {
         title: '8. Wireless Concepts',
         body: `
-          <h2>Bands & channels</h2>
-          <p>2.4 GHz: 1, 6, 11 non-overlap. 5 GHz: 20/40/80/160 MHz width tradeoffs. 6 GHz adds Wi-Fi 6E.</p>
-          <h2>Authentication</h2>
+          <p>Network+ wireless lesson focuses on the design + operational side of Wi-Fi: choosing standards/bands, doing site surveys, picking authentication, deploying APs, and troubleshooting. (See A+ Core 1 Wireless lesson for the deep theory.) Exam tests channel planning, security modes, RF terminology, and antenna concepts.</p>
+
+          <h2>Wi-Fi standards quick table</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Marketing</th><th align="left" style="padding:4px;border-bottom:1px solid #444">IEEE</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bands</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Key feature</th></tr>
+            <tr><td>Wi-Fi 4</td><td>802.11n</td><td>2.4 + 5 GHz</td><td>600 Mbps</td><td>MIMO</td></tr>
+            <tr><td>Wi-Fi 5</td><td>802.11ac</td><td>5 GHz</td><td>~3.5 Gbps</td><td>MU-MIMO DL, 256-QAM</td></tr>
+            <tr><td>Wi-Fi 6</td><td>802.11ax</td><td>2.4 + 5 GHz</td><td>~9.6 Gbps</td><td>OFDMA, BSS color, TWT</td></tr>
+            <tr><td>Wi-Fi 6E</td><td>802.11ax</td><td>+ 6 GHz</td><td>~9.6 Gbps</td><td>6 GHz band</td></tr>
+            <tr><td>Wi-Fi 7</td><td>802.11be</td><td>2.4 + 5 + 6 GHz</td><td>~46 Gbps</td><td>MLO, 320 MHz, 4K-QAM</td></tr>
+          </table>
+
+          <h2>Frequency bands</h2>
+
+          <h3>2.4 GHz (ISM band)</h3>
           <ul>
-            <li><b>WPA2/WPA3-Personal (PSK)</b> — shared password.</li>
-            <li><b>WPA2/WPA3-Enterprise (802.1X)</b> — per-user via RADIUS, EAP (PEAP, EAP-TLS).</li>
+            <li>2.400 – 2.4835 GHz. License-free worldwide.</li>
+            <li><b>Only 3 non-overlapping channels at 20 MHz: 1, 6, 11.</b></li>
+            <li>Longer range, better wall penetration than higher bands.</li>
+            <li>Heavily congested — Bluetooth, microwaves, cordless phones, baby monitors all share.</li>
           </ul>
-          <h2>Site survey terms</h2>
-          <p>RSSI, SNR, channel reuse, heatmap, AP placement, captive portal.</p>
+
+          <h3>5 GHz (UNII)</h3>
+          <ul>
+            <li>Sub-bands: <b>UNII-1, UNII-2, UNII-2 Extended, UNII-3</b>.</li>
+            <li>~25 channels at 20 MHz wide; channels can bond to 40 / 80 / 160 MHz.</li>
+            <li>Less crowded, less interference.</li>
+            <li><b>DFS</b> (Dynamic Frequency Selection) on UNII-2 channels — APs must vacate if radar detected. Allows more channels at cost of possible disruption.</li>
+            <li><b>TPC</b> (Transmit Power Control) — adjusts power for regulatory compliance.</li>
+            <li>Range shorter than 2.4 GHz; weaker through walls.</li>
+          </ul>
+
+          <h3>6 GHz (Wi-Fi 6E / 7)</h3>
+          <ul>
+            <li>5.925 – 7.125 GHz. ~1.2 GHz of fresh spectrum.</li>
+            <li>Many non-overlapping 80 / 160 / 320 MHz channels.</li>
+            <li>Lower interference (no legacy gear).</li>
+            <li><b>LPI</b> (Low Power Indoor) + <b>VLP</b> (Very Low Power) class power limits.</li>
+            <li><b>AFC</b> (Automated Frequency Coordination) for standard-power outdoor use.</li>
+          </ul>
+
+          <h2>Channel width tradeoffs</h2>
+          <ul>
+            <li><b>20 MHz</b> — most reliable, most channels, lower throughput. ALWAYS use in 2.4 GHz.</li>
+            <li><b>40 MHz</b> — common 5 GHz default for SOHO.</li>
+            <li><b>80 MHz</b> — high-throughput 5 GHz indoor.</li>
+            <li><b>160 MHz</b> — high-perf in 5 / 6 GHz; fewer slots, more co-channel interference.</li>
+            <li><b>320 MHz</b> — Wi-Fi 7, 6 GHz only.</li>
+          </ul>
+          <p>Wider = more BW but fewer non-overlapping options + higher noise floor.</p>
+
+          <h2>Antenna fundamentals</h2>
+          <ul>
+            <li><b>Omnidirectional</b> — radiates 360° horizontally (donut). Default for indoor APs.</li>
+            <li><b>Directional / Yagi / Panel / Patch</b> — focused beam for one direction. Outdoor point-to-multipoint.</li>
+            <li><b>Parabolic dish</b> — very high-gain, point-to-point long links (building-to-building).</li>
+            <li><b>Polarization</b> — vertical vs horizontal vs circular. Both ends should match.</li>
+            <li><b>Beam-forming</b> — phased-array adjusts radiation pattern toward each client (MU-MIMO uses this).</li>
+            <li><b>MIMO</b> (Multiple Input Multiple Output) — multiple antennas + spatial streams (e.g., 4x4:4 = 4 TX × 4 RX × 4 spatial streams).</li>
+          </ul>
+          <p><b>Antenna metrics:</b></p>
+          <ul>
+            <li><b>dBi</b> — gain relative to ideal isotropic radiator. Higher = narrower + stronger in the chosen direction.</li>
+            <li><b>EIRP</b> (Effective Isotropic Radiated Power) — actual radiated power = transmitter power + antenna gain − cable loss. Regulators (FCC, ETSI) cap this.</li>
+            <li><b>VSWR</b> — antenna match quality.</li>
+          </ul>
+
+          <h2>RF measurements</h2>
+          <ul>
+            <li><b>RSSI</b> (Received Signal Strength Indicator) — typically negative dBm. -50 great, -65 good, -70 OK, -80 poor, -90 unusable.</li>
+            <li><b>SNR</b> (Signal-to-Noise Ratio) — signal level above noise floor in dB. &gt; 25 dB great; &lt; 15 dB struggles.</li>
+            <li><b>Noise floor</b> — ambient RF; typical indoor -90 dBm.</li>
+            <li><b>EIRP</b> (above).</li>
+            <li><b>Channel utilization</b> — % of airtime the channel is busy.</li>
+            <li><b>Retry rate / MCS rate</b> — high retries indicate poor signal or interference.</li>
+          </ul>
+
+          <h2>Authentication modes</h2>
+          <ul>
+            <li><b>Open</b> — no auth. Use only with captive portal + VPN.</li>
+            <li><b>WEP</b> — broken, never use.</li>
+            <li><b>WPA</b> — TKIP, deprecated.</li>
+            <li><b>WPA2-Personal (PSK)</b> — shared password. Home / small biz. AES-CCMP cipher.</li>
+            <li><b>WPA2-Enterprise (802.1X)</b> — per-user / per-device via RADIUS + EAP.</li>
+            <li><b>WPA3-Personal</b> — uses <b>SAE</b> (Simultaneous Authentication of Equals) handshake; defeats offline dictionary attacks.</li>
+            <li><b>WPA3-Enterprise</b> — adds 192-bit suite for high-security (government).</li>
+            <li><b>Enhanced Open / OWE</b> (Opportunistic Wireless Encryption) — encrypts open guest networks.</li>
+            <li><b>WPS</b> (Wi-Fi Protected Setup) — PIN/push-button; vulnerable to Reaver. Disable.</li>
+          </ul>
+
+          <h2>EAP variants (for Enterprise mode)</h2>
+          <ul>
+            <li><b>EAP-TLS</b> — mutual cert auth. Strongest. Needs PKI.</li>
+            <li><b>EAP-TTLS</b> — server cert + inner password.</li>
+            <li><b>PEAP-MSCHAPv2</b> — server cert + password tunneled. Common with AD.</li>
+            <li><b>EAP-FAST</b> — Cisco; PAC file instead of cert.</li>
+            <li><b>EAP-MD5</b> — weak, avoid.</li>
+          </ul>
+
+          <h2>Site survey types</h2>
+          <ul>
+            <li><b>Predictive</b> — software (Ekahau AI Pro, Hamina, iBwave) models building floor plan + materials + AP placement. Done BEFORE installation.</li>
+            <li><b>Passive</b> — walk with laptop / specialized device, log signal levels from existing APs. No association required.</li>
+            <li><b>Active</b> — associate to APs and test throughput, retries, roaming. Reveals real-world performance.</li>
+            <li><b>Spectrum analysis</b> — captures full RF spectrum (not just Wi-Fi) to identify non-Wi-Fi interferers (microwaves, radar, Bluetooth, etc.).</li>
+            <li><b>Heatmap</b> — visual output of RSSI / SNR / coverage across the floor plan. Goal: -65 dBm everywhere for data-grade.</li>
+          </ul>
+
+          <h2>AP placement + design</h2>
+          <ul>
+            <li><b>Cell sizing</b> — smaller cells (lower TX power) at high density.</li>
+            <li><b>Channel reuse</b> — never neighbor co-channel APs. Use 1/6/11 in 2.4 GHz, available 5 GHz channels in a non-overlapping pattern.</li>
+            <li><b>Mounting</b> — ceiling-mount for omnidirectional indoor; wall-mount with directional / patch for corridors or outdoors.</li>
+            <li><b>Overlap</b> — design ~15-20% coverage overlap between adjacent APs for seamless roaming.</li>
+            <li><b>Roaming aids</b>: <b>802.11k</b> (neighbor list), <b>802.11v</b> (BSS transition management), <b>802.11r</b> (Fast BSS Transition — fast handoff).</li>
+            <li><b>Band steering</b> — push capable clients to 5 / 6 GHz.</li>
+            <li><b>Airtime fairness</b> — slow clients don't monopolize.</li>
+          </ul>
+
+          <h2>Wireless architectures</h2>
+          <ul>
+            <li><b>Autonomous / fat APs</b> — each AP configured independently. Small deployments only.</li>
+            <li><b>Controller-based / thin APs</b> — central <b>WLC</b> (Wireless LAN Controller) pushes config + handles roaming, RRM (Radio Resource Management), security. Cisco WLC, Aruba Mobility Controllers.</li>
+            <li><b>Cloud-managed</b> — controller in the cloud, lightweight APs talk to it (Meraki MR, Aruba Central, Mist).</li>
+            <li><b>Mesh</b> — APs wirelessly backhaul to each other. Useful where Ethernet to every AP isn't possible.</li>
+          </ul>
+
+          <h2>BSS / SSID terminology</h2>
+          <ul>
+            <li><b>SSID</b> (Service Set Identifier) — human-readable network name.</li>
+            <li><b>BSSID</b> — MAC of the AP's radio. Identifies one BSS (one AP coverage area).</li>
+            <li><b>BSS</b> — Basic Service Set. One AP + clients.</li>
+            <li><b>ESS</b> (Extended Service Set) — multiple APs sharing the same SSID for one big network.</li>
+            <li><b>IBSS</b> — Ad-hoc mode (peer-to-peer, no AP).</li>
+          </ul>
+
+          <h2>Guest + captive portal</h2>
+          <p><b>Captive portal</b> — first HTTP request redirects to a login / acceptance page until authenticated. Hotel / conference Wi-Fi. Often combined with vouchers, social login, or RADIUS.</p>
+          <p><b>Guest VLAN isolation</b> — keep guest traffic on its own VLAN with only Internet access, no internal LAN.</p>
+
+          <h2>Wireless attacks (recap)</h2>
+          <ul>
+            <li><b>Rogue AP</b> — unauthorized AP plugged into corporate LAN. Defense: <b>WIPS</b> (Wireless Intrusion Prevention System).</li>
+            <li><b>Evil twin</b> — AP impersonating legit SSID. Defense: WPA2/3-Enterprise w/ server cert validation, MDM-pushed Wi-Fi profile.</li>
+            <li><b>Deauth flood</b> — forged 802.11 management frames. Defense: <b>PMF / 802.11w</b> (mandatory in WPA3).</li>
+            <li><b>WPS attack</b> — Reaver / Pixie Dust. Defense: disable WPS.</li>
+            <li><b>KRACK</b> (WPA2 key reinstall) — patched OS / firmware.</li>
+            <li><b>Karma</b> — AP answers any "looking for SSID X" probe to lure clients. Defense: turn off auto-join for unknown SSIDs.</li>
+            <li><b>Jamming / DoS</b> — RF interference. Defense: spectrum analyzer, locate + report.</li>
+          </ul>
+
+          <h2>Wireless troubleshooting</h2>
+          <ul>
+            <li><b>Slow / dropping in one area</b> — passive survey heatmap; add AP, change channel, raise power, fix interference source.</li>
+            <li><b>Co-channel interference</b> — multiple APs on same channel competing. Use channel planning + auto-RRM.</li>
+            <li><b>Adjacent-channel interference</b> — partial overlap on adjacent channels. Use only 1/6/11 in 2.4.</li>
+            <li><b>Sticky client</b> — phone stays connected to far AP at low signal. Tune RSSI minimum on AP / enable 802.11k/v/r assist.</li>
+            <li><b>Auth failures</b> — wrong PSK; expired RADIUS cert; client trust store; account locked.</li>
+            <li><b>Captive portal blank</b> — DNS not redirected; user's browser using DoH.</li>
+            <li><b>Slow even at strong RSSI</b> — channel utilization high (interference) or non-Wi-Fi interferer; check airtime + spectrum.</li>
+            <li><b>Roaming dropouts on phone</b> — enable 802.11r/k/v on infrastructure; lower power on origin AP.</li>
+          </ul>
+
+          <h2>Useful client / engineer tools</h2>
+          <ul>
+            <li><b>NetSpot</b>, <b>Ekahau</b>, <b>Hamina</b>, <b>Aruba PEF</b>, <b>iBwave</b> — survey + heatmap.</li>
+            <li><b>WiFi Analyzer</b> (Android) — quick channel + RSSI on the go.</li>
+            <li><b>WiFi Explorer</b> (macOS) — spectrum, channels, BSSIDs.</li>
+            <li><b>inSSIDer</b> — Windows scanner.</li>
+            <li><b>Wireshark</b> + monitor-mode adapter — capture 802.11 frames.</li>
+            <li><b>iperf3</b> — throughput tester.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>2.4 GHz non-overlapping channels = 1, 6, 11.</li>
+            <li>"Use largest channel width" → fewer non-overlapping channels; bad in dense env.</li>
+            <li>"Strongest wireless security" → WPA3 (or WPA2 if WPA3 not offered).</li>
+            <li>"Per-user wireless auth via certs" → 802.1X + EAP-TLS.</li>
+            <li>"Fast handoff between APs" → 802.11r.</li>
+            <li>"Channel selection in 5 GHz where radar may exist" → DFS.</li>
+            <li>"Rogue AP defense" → WIPS + 802.1X on wired ports.</li>
+            <li>"Evil-twin defense" → Enterprise auth + server cert validation.</li>
+            <li>"-70 RSSI roaming threshold" → acceptable signal; below = poor.</li>
+            <li>"SSID hiding is security" → NO. Trivially defeated by any client probe sniffer.</li>
+          </ul>
         `
       },
       {
