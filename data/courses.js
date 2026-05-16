@@ -17410,26 +17410,134 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '9. Tools, Monitoring, Trust',
         body: `
-          <h2>Management tools</h2>
+          <h2>Why this lesson matters</h2>
+          <p>AZ-900 expects you to know <i>how</i> to interact with Azure (portal/CLI/PowerShell/Cloud Shell/IaC), <i>how</i> to watch what is happening (Monitor / Application Insights / Service Health / Resource Health), <i>how</i> to secure + respond (Defender for Cloud, Sentinel), and <i>where</i> to find compliance evidence (Service Trust Portal). Distinguish each tool's purpose — Microsoft loves pairing the closest two and asking which one fits the scenario.</p>
+
+          <h2>Management interfaces</h2>
+
+          <h3>Azure Portal</h3>
+          <p><b>What:</b> the web GUI at <code>portal.azure.com</code> — every Azure service exposed via a "blade". <b>Why:</b> discovery, learning, occasional one-off work; not for repeatable deployments. <b>How used:</b> dashboards, role-based views, integrated Cloud Shell, governance/policy blades. Mobile equivalent: <b>Azure Mobile App</b> (iOS / Android — view resources, run shell commands, see alerts).</p>
+
+          <h3>Azure CLI</h3>
+          <p><b>Acronym:</b> Command Line Interface. <b>What:</b> cross-platform shell command set under <code>az</code> (Bash-friendly, also runs on Windows). Written in Python. <b>Why:</b> scriptable, Linux-style, JMESPath query support (<code>--query</code>). <b>How used:</b> <code>az login</code>, then <code>az group create</code>, <code>az vm create</code>, <code>az resource list --query "[?location=='eastus']"</code>.</p>
+
+          <h3>Azure PowerShell (Az module)</h3>
+          <p><b>What:</b> PowerShell module set (<code>Az.*</code>) with cmdlets like <code>Get-AzVM</code>, <code>New-AzResourceGroup</code>. Replaces the older <code>AzureRM</code> module. <b>Why:</b> Windows admins, object-pipeline workflows. <b>How used:</b> <code>Connect-AzAccount</code>, then any <code>Verb-AzNoun</code> cmdlet.</p>
+
+          <h3>Azure Cloud Shell</h3>
+          <p><b>What:</b> browser-hosted shell — choose <b>Bash</b> (Azure CLI preinstalled) or <b>PowerShell</b> (Az module preinstalled). Persists user files in a small Azure Files share. <b>Why:</b> no local install, pre-authenticated, mobile-friendly. <b>How used:</b> click the &gt;_ icon in the Portal or visit <code>shell.azure.com</code>.</p>
+
+          <h3>Infrastructure as Code (IaC)</h3>
+          <p><b>What:</b> declarative template files that describe the desired state of Azure resources; idempotent, version-controlled, peer-reviewable. <b>Why:</b> repeatable environments, drift detection, change history, CI/CD. <b>Options on Azure:</b></p>
           <ul>
-            <li><b>Azure portal</b> — GUI.</li>
-            <li><b>Azure CLI</b> — cross-platform shell (<code>az</code>).</li>
-            <li><b>Azure PowerShell</b> — <code>Az</code> module.</li>
-            <li><b>Cloud Shell</b> — browser shell with CLI/PS preloaded.</li>
-            <li><b>ARM / Bicep / Terraform</b> — IaC.</li>
-            <li><b>Azure Mobile App</b>.</li>
+            <li><b>ARM templates</b> — JSON; native to Azure Resource Manager; verbose.</li>
+            <li><b>Bicep</b> — Microsoft's DSL that transpiles to ARM; cleaner syntax, modules, no curly-brace tax.</li>
+            <li><b>Terraform</b> (HashiCorp) — multi-cloud DSL with state management.</li>
+            <li><b>Pulumi</b> — IaC in TypeScript/Python/Go/C#.</li>
+            <li><b>Azure Developer CLI (azd)</b> — opinionated front-end that combines Bicep templates + GitHub Actions for full app deployment.</li>
           </ul>
-          <h2>Monitoring</h2>
+
+          <h3>Azure REST API + SDKs</h3>
+          <p>Underneath everything is the <b>Azure Resource Manager REST API</b>. SDKs for .NET, Java, Python, JS, Go, Ruby wrap it. Every CLI/PowerShell call eventually hits this API. Authenticated via Entra ID OAuth tokens.</p>
+
+          <h2>Monitoring + observability</h2>
+
+          <h3>Azure Monitor (the umbrella)</h3>
+          <p><b>What:</b> the unified observability platform. Collects two data shapes: <b>Metrics</b> (numeric time-series, 1-minute granularity, near-real-time) and <b>Logs</b> (structured events stored in a <b>Log Analytics workspace</b>). Adds <b>Alerts</b>, <b>Action Groups</b>, <b>Workbooks</b>, <b>Dashboards</b>. <b>Why:</b> single pane for telemetry across compute, network, app, and security.</p>
+
+          <h3>Log Analytics + Kusto Query Language (KQL)</h3>
+          <p><b>What:</b> the queryable log store inside Azure Monitor. Query with <b>KQL</b> (Kusto Query Language) — similar feel to SQL/Splunk SPL. <b>Why:</b> ad-hoc investigation, alert rules, scheduled queries. <b>How used:</b> <code>AzureActivity | where OperationName == "Delete VM" | summarize count() by Caller</code>.</p>
+
+          <h3>Application Insights (APM)</h3>
+          <p><b>Acronym:</b> Application Performance Monitoring. <b>What:</b> auto-instrumentation for web apps — collects request rate, dependencies, exceptions, page views, custom events. Now part of Azure Monitor. <b>Why:</b> understand application latency, find the slow SQL call, see end-user perf. <b>How used:</b> add SDK or enable codeless attach in App Service / AKS / VMs.</p>
+
+          <h3>Service Health</h3>
+          <p><b>What:</b> Microsoft-side status — incidents, planned maintenance, health advisories, security advisories that affect <i>your</i> subscriptions and regions. <b>Why:</b> when something seems broken, check this first to confirm it is Azure, not you. <b>How used:</b> set alerts so you are paged when Microsoft declares an outage in a region you use.</p>
+
+          <h3>Resource Health</h3>
+          <p><b>What:</b> per-resource health status — Available / Unavailable / Unknown / Degraded — based on platform signals (host failure, VM crash, network drop). <b>Why vs Service Health:</b> Resource Health is about <i>one resource you own</i>; Service Health is about <i>Microsoft platform incidents</i>. Microsoft tests this distinction.</p>
+
+          <h3>Azure Status</h3>
+          <p>Public global page at <code>status.azure.com</code> — shows region-wide outages without sign-in. Used by anyone evaluating an issue when the Portal itself is unreachable.</p>
+
+          <h3>Alerts + Action Groups</h3>
+          <p><b>Alert rule:</b> a condition over a metric / log / activity / service health event that fires when met. <b>Severity:</b> 0–4. <b>Action group:</b> the recipients of an alert — email, SMS, voice, webhook, ITSM (ServiceNow), Logic App, Function, Runbook, push to Azure Mobile App.</p>
+
+          <h2>Security + threat protection</h2>
+
+          <h3>Microsoft Defender for Cloud</h3>
+          <p><b>Formerly:</b> Azure Security Center + Azure Defender. <b>What:</b> Cloud Security Posture Management (<b>CSPM</b>) + Cloud Workload Protection (<b>CWPP</b>). <b>Two layers:</b></p>
           <ul>
-            <li><b>Azure Monitor</b> — metrics, logs (Log Analytics), alerts.</li>
-            <li><b>Application Insights</b> — APM for web apps.</li>
-            <li><b>Service Health</b> — incidents affecting your services.</li>
-            <li><b>Resource Health</b> — health of a specific resource.</li>
-            <li><b>Microsoft Defender for Cloud</b> — CSPM + CWPP.</li>
-            <li><b>Microsoft Sentinel</b> — cloud SIEM/SOAR.</li>
+            <li><b>Free CSPM (Foundational)</b> — Microsoft Cloud Security Benchmark, Secure Score, recommendations, asset inventory.</li>
+            <li><b>Defender plans (paid)</b> — runtime threat protection per workload: Defender for Servers, Storage, SQL, Containers, App Service, Key Vault, Resource Manager, DNS, APIs, etc.</li>
           </ul>
-          <h2>Trust Center & Compliance</h2>
-          <p>Service Trust Portal. Certifications: ISO 27001, SOC 1/2/3, FedRAMP, HIPAA, GDPR, PCI-DSS.</p>
+          <p><b>Secure Score</b> = single percentage rolling up your security posture across recommendations; higher is better.</p>
+
+          <h3>Microsoft Sentinel (SIEM / SOAR)</h3>
+          <p><b>Acronyms:</b> Security Information and Event Management (SIEM) + Security Orchestration, Automation, and Response (SOAR). <b>What:</b> Microsoft's cloud-native SIEM, built on Log Analytics + KQL + playbooks (Logic Apps). <b>Why:</b> ingest logs from Azure, M365, AWS, GCP, on-prem firewalls; detect, hunt, investigate, respond automatically. <b>How used:</b> connect data sources, enable analytic rules (Microsoft-provided + custom), automate response via playbooks (e.g., disable user on compromised-account alert).</p>
+
+          <h3>Microsoft Defender XDR</h3>
+          <p><b>XDR</b> = Extended Detection and Response. <b>What:</b> integrates Defender for Endpoint, Identity, Cloud Apps, Office 365 into a single console for cross-signal threat investigation. <b>Why:</b> a phishing email → token theft → cloud session is one attack across products; XDR correlates them.</p>
+
+          <h3>Azure Key Vault</h3>
+          <p><b>What:</b> managed secret/key/certificate store. Three object types: <b>Secrets</b> (strings/passwords), <b>Keys</b> (asymmetric/symmetric, optionally HSM-backed), <b>Certificates</b> (X.509). <b>Why:</b> centralize secrets, audit access, integrate with Managed Identities. <b>How used:</b> apps fetch secrets at runtime via Managed Identity → Key Vault.</p>
+
+          <h3>Azure DDoS Protection</h3>
+          <p><b>Acronym:</b> Distributed Denial of Service. <b>Two tiers:</b> Basic (free, on by default at the Azure backbone) and <b>Network/IP Protection</b> (paid, per-VNet or per-IP — adaptive mitigation, telemetry, cost protection refunds).</p>
+
+          <h2>Trust + compliance</h2>
+
+          <h3>Microsoft Service Trust Portal (STP)</h3>
+          <p><b>What:</b> hub for compliance documentation at <code>servicetrust.microsoft.com</code> — audit reports (SOC, ISO), data-protection documents, pen-test summaries, Microsoft's compliance offerings list, regional certifications. <b>Why:</b> auditors and procurement need evidence; download SOC 2 Type II reports here.</p>
+
+          <h3>Microsoft Privacy Statement + Online Services Terms (OST) + DPA</h3>
+          <p>Privacy Statement = data handling. OST → now called <b>Microsoft Product Terms</b>. <b>DPA</b> = Data Protection Addendum, the GDPR-required contract between you and Microsoft.</p>
+
+          <h3>Microsoft Purview Compliance Manager</h3>
+          <p>Scorecard + workflow to track compliance against frameworks (NIST 800-53, ISO 27001, HIPAA, GDPR). Assigns improvement actions.</p>
+
+          <h3>Compliance certifications Microsoft holds (recognize these names)</h3>
+          <ul>
+            <li><b>ISO 27001 / 27017 / 27018 / 27701</b> — information security, cloud security, cloud PII, privacy management.</li>
+            <li><b>SOC 1 / SOC 2 / SOC 3</b> — Service Organization Control reports (controls + audit).</li>
+            <li><b>FedRAMP High</b>, <b>DoD IL2/IL4/IL5/IL6</b> — US Gov.</li>
+            <li><b>HIPAA / HITRUST</b> — US healthcare.</li>
+            <li><b>PCI-DSS Level 1</b> — payment cards.</li>
+            <li><b>GDPR</b> — EU data protection.</li>
+            <li><b>FERPA</b> — US education.</li>
+            <li><b>CJIS</b> — US law enforcement.</li>
+            <li><b>IRS 1075</b> — US tax data.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>CLI</b> — Command Line Interface.</li>
+            <li><b>IaC</b> — Infrastructure as Code.</li>
+            <li><b>ARM</b> — Azure Resource Manager.</li>
+            <li><b>APM</b> — Application Performance Monitoring.</li>
+            <li><b>KQL</b> — Kusto Query Language.</li>
+            <li><b>CSPM / CWPP</b> — Cloud Security Posture Management / Cloud Workload Protection Platform.</li>
+            <li><b>SIEM / SOAR / XDR</b> — Security Information &amp; Event Management / Security Orchestration Automation &amp; Response / Extended Detection &amp; Response.</li>
+            <li><b>DDoS</b> — Distributed Denial of Service.</li>
+            <li><b>STP</b> — Service Trust Portal.</li>
+            <li><b>DPA</b> — Data Protection Addendum.</li>
+            <li><b>HSM</b> — Hardware Security Module (FIPS 140-2 / 140-3 certified key store).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Browser-based shell already authenticated" → <b>Cloud Shell</b>.</li>
+            <li>"Declarative repeatable deployment" → <b>Bicep / ARM / Terraform</b> (IaC).</li>
+            <li>"Status of my VM right now" → <b>Resource Health</b>.</li>
+            <li>"Microsoft platform incident in East US" → <b>Service Health</b> (or status.azure.com if Portal unreachable).</li>
+            <li>"APM for web app performance" → <b>Application Insights</b>.</li>
+            <li>"Centralized SIEM that ingests M365 + AWS logs" → <b>Microsoft Sentinel</b>.</li>
+            <li>"Posture management + Secure Score" → <b>Microsoft Defender for Cloud</b>.</li>
+            <li>"Store API keys, retrieve via Managed Identity" → <b>Azure Key Vault</b>.</li>
+            <li>"Download SOC 2 Type II report for auditor" → <b>Service Trust Portal</b>.</li>
+            <li>"Mitigate volumetric attack on public endpoint" → <b>Azure DDoS Protection</b>.</li>
+            <li>"Query logs with KQL" → <b>Log Analytics</b> (part of Azure Monitor).</li>
+          </ul>
         `
       },
       {
