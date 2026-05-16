@@ -7022,24 +7022,308 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '5. Identity & Access Management',
         body: `
-          <h2>Factors</h2>
+          <p><b>IAM</b> = Identity and Access Management. The discipline of proving who someone is (authentication), what they can do (authorization), and recording it (accounting). Identity is the new perimeter — modern Zero Trust architectures route nearly every decision through IAM.</p>
+
+          <h2>Identity lifecycle</h2>
+          <ol>
+            <li><b>Provisioning</b> — create account on hire / vendor onboarding. Pulls attributes from HRIS (Workday, BambooHR). Automated via SCIM / Entra connectors.</li>
+            <li><b>Authentication</b> — verify identity at sign-in.</li>
+            <li><b>Authorization</b> — grant least-privilege access.</li>
+            <li><b>Access reviews / Recertification</b> — periodic check that access is still needed (SOX, ISO).</li>
+            <li><b>Role / attribute changes</b> — transfers + promotions.</li>
+            <li><b>De-provisioning</b> — revoke on termination same day; archive data per retention.</li>
+            <li><b>Audit + logging</b> — record every action.</li>
+          </ol>
+
+          <h2>Account types</h2>
           <ul>
-            <li><b>Something you know</b> — password, PIN.</li>
-            <li><b>Something you have</b> — token, smart card, phone.</li>
-            <li><b>Something you are</b> — biometric.</li>
-            <li><b>Somewhere you are</b> — geolocation/IP.</li>
-            <li><b>Something you do</b> — behavioral (typing).</li>
+            <li><b>User account</b> — one human, one set of credentials.</li>
+            <li><b>Privileged / admin account</b> — separate higher-rights account (never daily-use).</li>
+            <li><b>Service account</b> — non-human, runs services / jobs. Long random password, restricted, monitored, no interactive logon.</li>
+            <li><b>Managed Service Account (MSA / gMSA)</b> — Windows variant with auto-rotated password.</li>
+            <li><b>Local account</b> — exists only on one machine.</li>
+            <li><b>Domain account</b> — Active Directory / Entra ID.</li>
+            <li><b>Cloud account</b> — IdP-native (Entra ID, Okta).</li>
+            <li><b>Guest / external</b> — for partners + contractors. B2B in Entra ID.</li>
+            <li><b>Shared account</b> — multiple humans, one set of creds. Discouraged (no accountability). Use checkout via PAM if unavoidable.</li>
+            <li><b>Default / built-in account</b> — Administrator, Guest, Root. Rename + disable when feasible.</li>
+            <li><b>Break-glass account</b> — emergency-only highly-privileged account; alarmed, MFA-protected, password vaulted.</li>
           </ul>
-          <p><b>MFA</b> requires 2+ different factor categories.</p>
-          <h2>Access models</h2>
+
+          <h2>Authentication factors</h2>
+          <ol>
+            <li><b>Something you know</b> — password, PIN, security questions, passphrase.</li>
+            <li><b>Something you have</b> — phone authenticator app, hardware token, smart card, FIDO2 key.</li>
+            <li><b>Something you are</b> — biometric (fingerprint, face, iris, vein, voice).</li>
+            <li><b>Somewhere you are</b> — geolocation / IP / network zone.</li>
+            <li><b>Something you do</b> — behavioral biometrics (typing cadence, gait, mouse movement).</li>
+          </ol>
+          <p><b>2FA / MFA</b> = combine 2+ DIFFERENT categories. Two passwords ≠ MFA. Two biometrics ≠ MFA.</p>
+
+          <h2>Strong MFA — phishing-resistant</h2>
           <ul>
-            <li><b>DAC</b> — owner sets perms.</li>
-            <li><b>MAC</b> — labels / clearances (military).</li>
-            <li><b>RBAC</b> — by job role.</li>
-            <li><b>ABAC</b> — attributes & policy (NIST).</li>
+            <li><b>FIDO2 / WebAuthn</b> + <b>passkeys</b> — public-key challenge-response bound to origin → defeats credential phishing + adversary-in-the-middle (EvilGinx).</li>
+            <li><b>Smart card + PIN / PIV / CAC</b> — used by US government, defense.</li>
+            <li><b>Mobile authenticator with number matching</b> (Microsoft Authenticator) — mitigates MFA fatigue.</li>
+            <li><b>YubiKey, Google Titan, Feitian</b> — hardware FIDO2 / U2F security keys.</li>
+            <li>Avoid SMS / voice OTP where possible (SIM swap, SS7 attacks).</li>
           </ul>
-          <h2>Federation & SSO</h2>
-          <p>SAML, OAuth 2.0, OIDC. Federation = identity from one realm trusted in another.</p>
+
+          <h2>MFA implementation pitfalls</h2>
+          <ul>
+            <li><b>MFA fatigue / push bombing</b> — attacker spams approvals hoping victim taps "yes". Mitigation: number matching, account lockout on repeated denies.</li>
+            <li><b>Adversary-in-the-Middle (AiTM)</b> — reverse-proxy phish that captures both password + session cookie. Mitigation: phishing-resistant FIDO2.</li>
+            <li><b>SIM swap</b> — carrier ports number to attacker SIM. Mitigation: carrier PIN, eSIM, prefer non-SMS factors.</li>
+            <li><b>SS7</b> — telecom signaling attacks intercept SMS / calls.</li>
+            <li><b>Bypass via legacy auth</b> — old IMAP / POP / SMTP basic auth bypassing MFA. Mitigation: disable legacy auth.</li>
+          </ul>
+
+          <h2>Biometric metrics</h2>
+          <ul>
+            <li><b>FAR</b> (False Acceptance Rate) — imposter wrongly accepted. Security risk.</li>
+            <li><b>FRR</b> (False Rejection Rate) — legitimate user wrongly rejected. UX risk.</li>
+            <li><b>CER / EER</b> (Crossover / Equal Error Rate) — point where FAR = FRR. Lower CER = better system.</li>
+            <li><b>Throughput</b> — speed of authentication decisions.</li>
+            <li>Biometrics are NOT secrets — can't be revoked. Pair with a knowledge / possession factor.</li>
+            <li>Templates stored in TPM / Secure Enclave; never sent to cloud.</li>
+          </ul>
+
+          <h2>SSO — Single Sign-On</h2>
+          <p><b>What:</b> Authenticate once with the <b>IdP</b> (Identity Provider) → access many <b>SPs</b> (Service Providers) without re-entering credentials.</p>
+          <p><b>Why:</b> Better UX, fewer passwords for users to reuse, centralized policy + MFA, faster onboarding/offboarding.</p>
+          <p><b>Risks:</b> Compromise of the IdP → access to all federated apps. Defenses: strong IdP MFA, conditional access, session limits, monitoring.</p>
+          <ul>
+            <li><b>Examples:</b> Microsoft Entra ID, Okta, Google Workspace, Ping Identity, Auth0, OneLogin, ADFS (legacy).</li>
+            <li><b>Enterprise integration patterns:</b> "Sign in with Microsoft / Google / Apple" buttons in business apps.</li>
+          </ul>
+
+          <h2>Federation</h2>
+          <p><b>What:</b> Trust relationship between two security domains. User authenticates in their home domain, access granted in partner's resources.</p>
+          <p><b>Standards / protocols:</b></p>
+
+          <h3>SAML 2.0 — Security Assertion Markup Language</h3>
+          <ul>
+            <li>XML-based assertions describing identity + attributes.</li>
+            <li>Browser-based SSO for web apps.</li>
+            <li>Three actors: User-Agent (browser) — Service Provider (app) — Identity Provider.</li>
+            <li>Common flow: SP-initiated SSO with redirect to IdP, POST signed assertion back.</li>
+            <li>Used widely in B2B SaaS integrations (Salesforce, ServiceNow, AWS).</li>
+          </ul>
+
+          <h3>OAuth 2.0</h3>
+          <ul>
+            <li><b>Authorization</b> framework (not authentication). RFC 6749.</li>
+            <li>Issues access tokens letting an app act on user's behalf without seeing password.</li>
+            <li><b>Roles:</b> Resource Owner (user), Client (app), Authorization Server, Resource Server.</li>
+            <li><b>Grant types / flows:</b>
+              <ul>
+                <li><b>Authorization Code + PKCE</b> — modern default for web + mobile.</li>
+                <li><b>Client Credentials</b> — service-to-service.</li>
+                <li><b>Device Code</b> — input-limited devices (TVs, CLI).</li>
+                <li>Resource Owner Password Credentials — discouraged.</li>
+                <li>Implicit — deprecated.</li>
+              </ul>
+            </li>
+            <li><b>PKCE</b> (Proof Key for Code Exchange) — mitigates code interception on public clients.</li>
+            <li><b>Scopes</b> — what permissions the token grants.</li>
+            <li><b>Tokens:</b> Access token (short-lived), refresh token (longer; exchange for new access tokens).</li>
+          </ul>
+
+          <h3>OIDC — OpenID Connect</h3>
+          <ul>
+            <li><b>Authentication</b> layer built on top of OAuth 2.0.</li>
+            <li>Adds <b>ID token</b> (signed JWT) describing the authenticated user.</li>
+            <li>Endpoints: authorization, token, userinfo, JWKS (key set), discovery (<code>/.well-known/openid-configuration</code>).</li>
+            <li>"Sign in with Google" buttons use OIDC.</li>
+          </ul>
+
+          <h3>JWT — JSON Web Token</h3>
+          <ul>
+            <li>Compact signed (sometimes encrypted) token. Three parts: header.payload.signature, base64url-encoded.</li>
+            <li>Signed with HMAC (HS256) or asymmetric (RS256, ES256, EdDSA).</li>
+            <li>Carry claims: sub (subject), iss (issuer), aud (audience), exp (expiry), iat (issued-at), nbf.</li>
+            <li>Common bugs: alg=none, signature not verified, JWK confusion, key confusion (HS256 vs RS256).</li>
+          </ul>
+
+          <h3>SCIM — System for Cross-domain Identity Management</h3>
+          <ul>
+            <li>REST + JSON standard for automated user/group provisioning between IdP and SaaS.</li>
+            <li>Replaces manual CSV imports + ad-hoc scripts.</li>
+            <li>Supported by most modern SaaS apps; required for any "auto-deprovision when terminated" workflow.</li>
+          </ul>
+
+          <h3>Kerberos</h3>
+          <ul>
+            <li>Symmetric-key ticket-based auth from MIT.</li>
+            <li>Used in Active Directory + many *nix realms.</li>
+            <li><b>KDC</b> (Key Distribution Center) issues tickets.</li>
+            <li><b>AS</b> (Authentication Server) → grants <b>TGT</b> (Ticket Granting Ticket).</li>
+            <li><b>TGS</b> (Ticket Granting Service) → grants <b>service tickets</b>.</li>
+            <li>Tickets time-bound (default 10 hr).</li>
+            <li><b>Mutual auth</b> + no password traversal after initial login.</li>
+            <li><b>5-minute clock skew tolerance</b> → NTP critical.</li>
+            <li><b>Kerberos-specific attacks:</b> pass-the-ticket, golden ticket (compromise KRBTGT), silver ticket (forge service ticket), Kerberoasting (offline-crack service tickets).</li>
+          </ul>
+
+          <h3>NTLM (legacy)</h3>
+          <p>Microsoft challenge/response from Windows NT. Vulnerable to pass-the-hash + relay attacks. Disable where possible; prefer Kerberos. <b>Credential Guard</b> + <b>NTLM mitigations</b> reduce risk.</p>
+
+          <h3>RADIUS</h3>
+          <p>Remote Authentication Dial-In User Service. UDP 1812 auth / 1813 accounting. Carries EAP for 802.1X. Used for Wi-Fi, VPN, switch admin, device admin. Modern: <b>RadSec</b> (RADIUS over TLS, TCP/2083).</p>
+
+          <h3>TACACS+</h3>
+          <p>Cisco-developed. TCP 49. Encrypts the entire payload (RADIUS only encrypts password). Separates Authentication / Authorization / Accounting clearly. Primary use: device admin AAA for Cisco gear.</p>
+
+          <h3>Diameter</h3>
+          <p>Telco-grade successor to RADIUS. Used in mobile networks (3GPP, IMS).</p>
+
+          <h2>LDAP — Lightweight Directory Access Protocol</h2>
+          <ul>
+            <li>Standard for querying directory services (AD, OpenLDAP, FreeIPA).</li>
+            <li>TCP 389 (LDAP) / TCP 636 (<b>LDAPS</b>, over TLS) / TCP 3268 + 3269 for Global Catalog.</li>
+            <li>Hierarchical: <b>DN</b> (Distinguished Name), <b>RDN</b>, organizational units, attributes.</li>
+            <li>Bind types: anonymous, simple (password), SASL (Kerberos / EXTERNAL / DIGEST-MD5).</li>
+            <li>Use <b>LDAPS</b> or LDAP+StartTLS for any password-bearing query.</li>
+          </ul>
+
+          <h2>Access control models (recap)</h2>
+          <ul>
+            <li><b>DAC</b> (Discretionary) — owner decides. NTFS files.</li>
+            <li><b>MAC</b> (Mandatory) — system-enforced labels (Confidential / Secret / Top Secret). SELinux, military.</li>
+            <li><b>RBAC</b> (Role-Based) — permissions attached to roles; users assigned to roles. Most enterprises.</li>
+            <li><b>ABAC</b> (Attribute-Based) — policy engine evaluates user + resource + environment attributes (NIST 800-162).</li>
+            <li><b>Rule-Based</b> — fixed rules (e.g., firewall ACL).</li>
+            <li><b>PBAC</b> (Policy-Based) — generalized policy engine, often XACML.</li>
+            <li><b>Risk-Based / Context-Aware</b> — adapts based on real-time signals (impossible travel, unmanaged device).</li>
+          </ul>
+
+          <h2>Principles for IAM design</h2>
+          <ul>
+            <li><b>Least privilege</b>.</li>
+            <li><b>Need to know</b>.</li>
+            <li><b>Separation of duties (SoD)</b>.</li>
+            <li><b>Just-in-Time (JIT)</b> elevation — request access temporarily; auto-expires.</li>
+            <li><b>Time-bound access</b>.</li>
+            <li><b>Mandatory vacation</b> + job rotation.</li>
+            <li><b>Dual control</b> for sensitive operations.</li>
+            <li><b>Recertification / access reviews</b> quarterly.</li>
+            <li><b>Standing privilege minimized</b>.</li>
+          </ul>
+
+          <h2>Privileged Access Management (PAM)</h2>
+          <ul>
+            <li>Vaults shared / break-glass / service account credentials.</li>
+            <li>Checkout / approval workflow before use.</li>
+            <li>Session recording for accountability.</li>
+            <li>Automatic password rotation post-checkout.</li>
+            <li>Examples: CyberArk, BeyondTrust, Delinea (Thycotic), HashiCorp Boundary, Microsoft Entra PIM.</li>
+            <li><b>PIM</b> (Privileged Identity Management) — Microsoft term for time-bound role elevation.</li>
+          </ul>
+
+          <h2>Zero Trust Architecture</h2>
+          <p>Identity-centric model. NIST SP 800-207 principles:</p>
+          <ul>
+            <li>Never trust, always verify — every request authenticated + authorized.</li>
+            <li>Least privilege per request.</li>
+            <li>Continuous evaluation — re-check posture mid-session.</li>
+            <li>Microsegmentation — small blast radii.</li>
+            <li>Encrypt everywhere.</li>
+            <li><b>ZTNA</b> (Zero Trust Network Access) — replaces VPN with per-app brokered access. Examples: Zscaler ZPA, Cloudflare Access, Cisco Secure Access, Tailscale.</li>
+          </ul>
+
+          <h2>Conditional Access / risk-based access</h2>
+          <ul>
+            <li>Policy engine evaluates user + device + location + risk signals before granting access.</li>
+            <li><b>Examples of signals:</b> compliant device (Intune), risk score (Entra ID Protection / Okta ThreatInsight), impossible-travel, unmanaged device, known IP block.</li>
+            <li><b>Actions:</b> Allow / require MFA / require compliant device / block / require password change.</li>
+            <li>Examples: Microsoft Conditional Access, Okta Adaptive MFA.</li>
+          </ul>
+
+          <h2>Hybrid + cloud identity</h2>
+          <ul>
+            <li><b>Microsoft Entra Connect</b> (formerly Azure AD Connect) — sync on-prem AD users + password hashes (PHS) or pass-through auth (PTA) or federation (ADFS).</li>
+            <li><b>Cross-tenant access</b> — B2B collaboration.</li>
+            <li><b>Workload identities</b> — service principals + managed identities for apps.</li>
+            <li><b>SCIM provisioning</b> to SaaS.</li>
+          </ul>
+
+          <h2>Identity governance + administration (IGA)</h2>
+          <ul>
+            <li>Automate access requests + approvals.</li>
+            <li>Role mining + assignment.</li>
+            <li>Access reviews / recertifications.</li>
+            <li>Segregation of duties enforcement.</li>
+            <li>Examples: SailPoint IdentityNow, Saviynt, Microsoft Entra ID Governance.</li>
+          </ul>
+
+          <h2>Passwordless authentication</h2>
+          <ul>
+            <li><b>Passkeys</b> (WebAuthn / FIDO2) — synced or device-bound public-key credentials. Apple iCloud Keychain, Google Password Manager, 1Password sync passkeys.</li>
+            <li>Windows Hello for Business — biometric / PIN backed by TPM.</li>
+            <li>Smart card / certificate-based.</li>
+            <li>Push notification w/ device biometric.</li>
+            <li><b>Why:</b> Eliminates phishable secrets, simplifies UX.</li>
+          </ul>
+
+          <h2>Account hardening checklist</h2>
+          <ol>
+            <li>Enforce strong password policy: long passphrase (14+), breached-pw screening, NO mandatory periodic rotation (NIST 800-63B).</li>
+            <li>MFA on every account; phishing-resistant for admins.</li>
+            <li>Separate admin from daily-driver accounts.</li>
+            <li>Disable / rename default accounts.</li>
+            <li>Lock out after consecutive bad attempts (with progressive delays, not just count).</li>
+            <li>Account expiration for contractors.</li>
+            <li>Conditional Access policies.</li>
+            <li>Privileged access via PAM/PIM with session recording.</li>
+            <li>Automatic provisioning + de-provisioning (SCIM + HRIS).</li>
+            <li>Quarterly access recertification.</li>
+            <li>Log + alert on anomalies (UEBA / SIEM).</li>
+          </ol>
+
+          <h2>Common IAM exam acronyms</h2>
+          <ul>
+            <li><b>IAM</b> — Identity and Access Management.</li>
+            <li><b>IdP</b> — Identity Provider.</li>
+            <li><b>SP</b> — Service Provider.</li>
+            <li><b>SSO</b> — Single Sign-On.</li>
+            <li><b>MFA / 2FA</b> — Multi/Two-Factor Auth.</li>
+            <li><b>SAML</b> — Security Assertion Markup Language.</li>
+            <li><b>OAuth / OIDC</b> — authorization / authentication frameworks.</li>
+            <li><b>JWT</b> — JSON Web Token.</li>
+            <li><b>SCIM</b> — provisioning standard.</li>
+            <li><b>RBAC / ABAC / DAC / MAC</b> — access control models.</li>
+            <li><b>PAM / PIM</b> — privileged access / identity management.</li>
+            <li><b>ZTNA</b> — Zero Trust Network Access.</li>
+            <li><b>CASB</b> — Cloud Access Security Broker.</li>
+            <li><b>IGA</b> — Identity Governance + Administration.</li>
+            <li><b>FIDO2 / WebAuthn / U2F</b> — phishing-resistant auth standards.</li>
+            <li><b>PKI / CA / X.509</b>.</li>
+            <li><b>LDAP / LDAPS / DN</b>.</li>
+            <li><b>RADIUS / TACACS+ / Diameter</b>.</li>
+            <li><b>NTLM / Kerberos / TGT / TGS / KDC</b>.</li>
+            <li><b>FAR / FRR / CER</b> — biometric error metrics.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Two passwords" = NOT MFA.</li>
+            <li>"Authentication framework w/ ID token JWT" → OIDC.</li>
+            <li>"Authorization without sharing password" → OAuth 2.0.</li>
+            <li>"XML-based browser SSO" → SAML 2.0.</li>
+            <li>"Provisioning automation between IdP and SaaS" → SCIM.</li>
+            <li>"AD ticket-granting service" → Kerberos KDC / TGT.</li>
+            <li>"Phishing-resistant MFA" → FIDO2 / WebAuthn / passkey.</li>
+            <li>"Just-in-time admin elevation" → PIM / PAM.</li>
+            <li>"Decide based on user + device + location + risk" → Conditional Access (ABAC / risk-based).</li>
+            <li>"Lowest FAR + FRR intersection" → CER (Crossover Error Rate); lower is better.</li>
+            <li>"Never trust, always verify, per-request auth" → Zero Trust.</li>
+            <li>"Encrypted LDAP" → LDAPS (TCP 636) or LDAP + StartTLS.</li>
+            <li>"AAA on Cisco device with encrypted body" → TACACS+ (TCP 49).</li>
+            <li>"AAA for Wi-Fi + VPN" → RADIUS (UDP 1812/1813).</li>
+            <li>"Replace VPN with brokered per-app identity-based access" → ZTNA.</li>
+            <li>"Crack offline Kerberos service tickets" → Kerberoasting (use long passwords on service accounts).</li>
+            <li>"Compromise of KRBTGT lets attacker forge ANY ticket" → Golden Ticket.</li>
+          </ul>
         `
       },
       {
