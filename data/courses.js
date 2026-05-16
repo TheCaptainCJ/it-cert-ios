@@ -17716,18 +17716,159 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
         title: '1. PowerShell Fundamentals',
         body: `
           <h2>What is PowerShell?</h2>
-          <p>Object-based shell + scripting language from Microsoft. Two builds:</p>
+          <p><b>PowerShell</b> is Microsoft's object-oriented shell and scripting language. Unlike traditional Unix shells (bash, zsh, sh) that pipe <b>text</b> between programs, PowerShell pipes structured <b>.NET objects</b> with named properties and typed values. That single design choice — objects-in, objects-out — is what makes PowerShell a "true" scripting language for systems administration: you do not have to parse <code>ps aux</code> output with awk; you call <code>Get-Process | Where-Object CPU -gt 100</code> and operate directly on the CPU property.</p>
+          <p><b>Why it exists:</b> Microsoft built PowerShell to replace cmd.exe + VBScript for Windows administration. Today every Microsoft product (Windows Server, Exchange, Active Directory, Azure, M365, SQL Server, Hyper-V, Intune) ships PowerShell modules as a first-class management API. On-prem and cloud admins, DevOps engineers, security responders, and helpdesk technicians all use it daily.</p>
+
+          <h2>Two PowerShell editions — know the difference</h2>
           <ul>
-            <li><b>Windows PowerShell 5.1</b> — built into Windows, runs on .NET Framework.</li>
-            <li><b>PowerShell 7+ (Core)</b> — cross-platform (Windows, macOS, Linux), runs on .NET. Recommended.</li>
+            <li><b>Windows PowerShell 5.1</b> — the "legacy" edition. <b>What:</b> built into Windows 7/8/10/11 and Windows Server; runs on <b>.NET Framework 4.x</b>. <b>Why kept:</b> hundreds of older modules require it (some Exchange / SharePoint admin tools). <b>Limitations:</b> Windows-only, frozen at version 5.1 (Microsoft will not add new features), command name is <code>powershell.exe</code>. AZ-900 / CompTIA exams may reference this version.</li>
+            <li><b>PowerShell 7.x (formerly "PowerShell Core")</b> — the modern, supported edition. <b>What:</b> cross-platform — Windows, macOS, Linux — runs on the open-source, cross-platform <b>.NET</b> (formerly .NET Core) runtime. Command name is <code>pwsh</code> (so you can run both side-by-side on Windows). <b>Why use it:</b> ongoing feature releases, ternary operator, pipeline parallelism (<code>ForEach-Object -Parallel</code>), null-coalescing, better SSH-based remoting, container-friendly. <b>Recommended for all new scripts.</b></li>
           </ul>
-          <h2>Verb-Noun cmdlets</h2>
-          <p>Every cmdlet follows <code>Verb-Noun</code>: <code>Get-Process</code>, <code>Set-Location</code>, <code>New-Item</code>, <code>Remove-Item</code>.</p>
-          <pre><code>Get-Command -Verb Get        # list all Get-* cmdlets
-Get-Help Get-Process -Full   # full help
-Get-Help about_*             # conceptual help topics</code></pre>
-          <h2>Objects, not text</h2>
-          <p>Unlike bash, PowerShell pipes <i>objects</i>. <code>Get-Process | Sort-Object CPU -Descending</code> sorts by a property, not by parsing text.</p>
+          <p><b>Microsoft's stance:</b> Windows PowerShell 5.1 is in maintenance mode. PowerShell 7 is the strategic edition. Install on Windows via <code>winget install Microsoft.PowerShell</code>, on macOS via <code>brew install powershell</code>, on Linux via the official Microsoft repository packages.</p>
+
+          <h2>Cmdlets — the building block</h2>
+          <p><b>Acronym:</b> "cmdlet" = "command-let". Pronounced "command-let". <b>What:</b> a single compiled .NET class that performs one operation (get, set, create, remove, test, invoke). Each cmdlet ships in a <b>module</b>. The shell discovers them dynamically. There are roughly 1,500+ built-in cmdlets on a stock Windows 11 install plus tens of thousands more shipped by modules (Azure: ~5,000 cmdlets alone).</p>
+
+          <h3>Verb-Noun naming convention</h3>
+          <p>Every cmdlet follows a strict <code>Verb-Noun</code> pattern (PascalCase). The verb is from Microsoft's <i>approved verb list</i> — about 100 verbs in 6 categories (Common, Communications, Data, Lifecycle, Diagnostic, Security). Examples:</p>
+          <ul>
+            <li><b>Get-</b> retrieve — <code>Get-Process</code>, <code>Get-Service</code>, <code>Get-ChildItem</code>, <code>Get-Content</code>.</li>
+            <li><b>Set-</b> change existing — <code>Set-Location</code>, <code>Set-Content</code>, <code>Set-ExecutionPolicy</code>.</li>
+            <li><b>New-</b> create — <code>New-Item</code>, <code>New-PSSession</code>, <code>New-LocalUser</code>.</li>
+            <li><b>Remove-</b> delete — <code>Remove-Item</code>, <code>Remove-LocalUser</code>.</li>
+            <li><b>Start-</b> / <b>Stop-</b> / <b>Restart-</b> — lifecycle on a service, process, computer.</li>
+            <li><b>Test-</b> — non-destructive boolean check (<code>Test-Path</code>, <code>Test-Connection</code>).</li>
+            <li><b>Invoke-</b> — run a command, REST call, or scriptblock (<code>Invoke-Command</code>, <code>Invoke-RestMethod</code>, <code>Invoke-WebRequest</code>).</li>
+            <li><b>Out-</b> — send object to output (<code>Out-File</code>, <code>Out-Host</code>, <code>Out-GridView</code>).</li>
+          </ul>
+          <p><b>Why the convention matters:</b> predictable. If you know one cmdlet's name shape, you can guess the rest — <code>Get-Service</code> retrieves, so <code>Set-Service</code>, <code>Start-Service</code>, <code>Stop-Service</code>, <code>Restart-Service</code>, <code>New-Service</code>, <code>Remove-Service</code> all exist. Run <code>Get-Verb</code> to list approved verbs.</p>
+
+          <h3>Aliases</h3>
+          <p>Common short aliases for shell ergonomics: <code>ls</code> / <code>dir</code> → <code>Get-ChildItem</code>, <code>cd</code> → <code>Set-Location</code>, <code>cat</code> → <code>Get-Content</code>, <code>cp</code> → <code>Copy-Item</code>, <code>mv</code> → <code>Move-Item</code>, <code>rm</code> → <code>Remove-Item</code>, <code>ps</code> → <code>Get-Process</code>, <code>kill</code> → <code>Stop-Process</code>, <code>echo</code> → <code>Write-Output</code>. <b>List all aliases:</b> <code>Get-Alias</code>. <b>Best practice:</b> aliases at the prompt; full cmdlet names in scripts for clarity and code review.</p>
+
+          <h2>The discovery trinity — Get-Command, Get-Help, Get-Member</h2>
+          <p>These three cmdlets let you operate any module without prior memorization.</p>
+
+          <h3>Get-Command</h3>
+          <p>Lists or filters available commands.</p>
+          <pre><code>Get-Command                          # everything in scope
+Get-Command -Verb Get                # all Get-* cmdlets
+Get-Command -Noun Service            # all *-Service cmdlets
+Get-Command -Module Az.Storage       # cmdlets from the Az.Storage module
+Get-Command *user* -CommandType Cmdlet</code></pre>
+
+          <h3>Get-Help</h3>
+          <p>Built-in documentation per cmdlet. First run <code>Update-Help</code> as admin to download the latest help XML.</p>
+          <pre><code>Get-Help Get-Process                 # synopsis + syntax
+Get-Help Get-Process -Examples       # examples only
+Get-Help Get-Process -Detailed       # parameter descriptions
+Get-Help Get-Process -Full           # everything
+Get-Help Get-Process -Online         # open MSDN page in browser
+Get-Help about_pipelines             # conceptual topic (about_*)</code></pre>
+
+          <h3>Get-Member</h3>
+          <p>Inspect the properties and methods of any object on the pipeline — the most useful single command in PowerShell.</p>
+          <pre><code>Get-Process | Get-Member             # all members of System.Diagnostics.Process
+Get-Process | Get-Member -MemberType Property
+Get-Service | Get-Member -MemberType Method</code></pre>
+
+          <h2>Objects, not text — the core distinction</h2>
+          <p>In bash: <code>ps aux | grep chrome | awk '{print $2}' | xargs kill</code> — you parse text columns by position. In PowerShell: <code>Get-Process chrome | Stop-Process</code> — you pass objects, and <code>Stop-Process</code> reads the <code>Id</code> property automatically. <b>Why this matters:</b></p>
+          <ul>
+            <li>No fragile string parsing — column positions never matter.</li>
+            <li>Type safety — <code>Sort-Object Length</code> sorts numerically because <code>Length</code> is an int.</li>
+            <li>IntelliSense in PowerShell ISE / VS Code / Windows Terminal reveals members live.</li>
+            <li>Cmdlets accept structured input via parameters or pipeline binding, not free text.</li>
+          </ul>
+
+          <h2>The pipeline operator <code>|</code></h2>
+          <p>Sends the <b>output object(s)</b> of one command as <b>input object(s)</b> to the next. Two binding modes the runtime tries (in order): <b>ByValue</b> (input type matches the parameter type) and <b>ByPropertyName</b> (input object has a property whose name matches a parameter).</p>
+          <pre><code>Get-Process | Where-Object WorkingSet -gt 100MB | Sort-Object CPU -Descending | Select-Object -First 5</code></pre>
+          <p>That single line: list processes → keep those using more than 100 MB RAM → sort by CPU descending → take top 5. No awk, no temp files.</p>
+
+          <h2>Running PowerShell</h2>
+          <ul>
+            <li><b>powershell.exe</b> — Windows PowerShell 5.1 (legacy).</li>
+            <li><b>pwsh</b> — PowerShell 7+ (recommended).</li>
+            <li><b>Windows Terminal</b> — modern tabbed terminal that hosts pwsh, powershell.exe, cmd, WSL, Azure Cloud Shell in tabs.</li>
+            <li><b>VS Code + PowerShell extension</b> — modern script editor with debugger, IntelliSense, integrated terminal.</li>
+            <li><b>PowerShell ISE</b> — legacy 5.1 IDE; do not use for new scripts.</li>
+            <li><b>Azure Cloud Shell</b> — browser PowerShell preloaded with Az module + cross-cloud auth.</li>
+          </ul>
+
+          <h2>Execution policy (security gate)</h2>
+          <p><b>What:</b> a safety setting that controls whether scripts can run. <b>Not</b> a true security boundary — it stops accidents, not adversaries. <b>Levels:</b></p>
+          <ul>
+            <li><b>Restricted</b> — no scripts; interactive commands only. Default on Windows clients.</li>
+            <li><b>AllSigned</b> — only signed scripts (any trusted publisher).</li>
+            <li><b>RemoteSigned</b> — local scripts run; downloaded scripts (with "Zone.Identifier" mark) require signature. Default on Windows Server.</li>
+            <li><b>Unrestricted</b> — runs everything but warns on downloaded scripts.</li>
+            <li><b>Bypass</b> — runs anything silently.</li>
+          </ul>
+          <p>Inspect + set:</p>
+          <pre><code>Get-ExecutionPolicy -List
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code></pre>
+
+          <h2>Scopes — where commands run</h2>
+          <ul>
+            <li><b>Process</b> — current PowerShell session only.</li>
+            <li><b>CurrentUser</b> — that user's settings (registry / profile).</li>
+            <li><b>LocalMachine</b> — all users on the machine.</li>
+            <li><b>MachinePolicy / UserPolicy</b> — Group Policy enforced (Active Directory).</li>
+          </ul>
+          <p>Group Policy can lock execution policy machine-wide; <code>Set-ExecutionPolicy</code> at lower scope will be ignored if Group Policy overrides.</p>
+
+          <h2>Profile script (your "shellrc")</h2>
+          <p><code>$PROFILE</code> auto-variable points to the profile script that runs at every shell start. Typical path: <code>~\\Documents\\PowerShell\\Profile.ps1</code> for pwsh, <code>~\\Documents\\WindowsPowerShell\\Profile.ps1</code> for 5.1. Use it to set aliases, import modules, customize prompt, set <code>$PSDefaultParameterValues</code>.</p>
+
+          <h2>Modules — the package unit</h2>
+          <p>A <b>module</b> is a versioned bundle of cmdlets/functions/types. Sources:</p>
+          <ul>
+            <li><b>Built-in</b> — ship with the OS (Microsoft.PowerShell.Management, ActiveDirectory, NetSecurity, Hyper-V, etc.).</li>
+            <li><b>PowerShell Gallery</b> — public registry at <code>powershellgallery.com</code>. Install with <code>Install-Module Az -Scope CurrentUser</code>.</li>
+            <li><b>Internal repository</b> — private NuGet feed for company modules.</li>
+          </ul>
+          <p>Manage modules:</p>
+          <pre><code>Get-Module -ListAvailable            # everything installed
+Import-Module Az                     # explicit load (modern PS auto-imports on first cmdlet call)
+Update-Module Az
+Uninstall-Module OldThing</code></pre>
+
+          <h2>Common Parameters — present on every cmdlet</h2>
+          <p>Microsoft auto-adds these to every cmdlet so you do not re-implement them:</p>
+          <ul>
+            <li><b>-Verbose</b> — write informational text via <code>Write-Verbose</code>.</li>
+            <li><b>-Debug</b> — write debug text via <code>Write-Debug</code>.</li>
+            <li><b>-ErrorAction</b> — Continue / Stop / SilentlyContinue / Inquire / Ignore.</li>
+            <li><b>-ErrorVariable</b> — capture errors into a named variable.</li>
+            <li><b>-WarningAction / -WarningVariable</b>.</li>
+            <li><b>-InformationAction / -InformationVariable</b>.</li>
+            <li><b>-OutVariable</b> — capture output into a variable while still streaming it.</li>
+            <li><b>-OutBuffer</b> — buffering control.</li>
+            <li><b>-PipelineVariable</b> — name the current pipeline object.</li>
+            <li><b>-WhatIf</b> — show what would happen without doing it (cmdlets that support state change).</li>
+            <li><b>-Confirm</b> — interactive yes/no prompt.</li>
+          </ul>
+
+          <h2>Acronyms + jargon</h2>
+          <ul>
+            <li><b>PowerShell / pwsh</b> — official name; <code>pwsh</code> is the binary for v7+.</li>
+            <li><b>cmdlet</b> — compiled command (single .NET class).</li>
+            <li><b>PSObject / PSCustomObject</b> — wrapper type that adds dynamic properties.</li>
+            <li><b>ISE</b> — Integrated Scripting Environment (legacy 5.1 IDE).</li>
+            <li><b>PSRemoting / WinRM</b> — PowerShell Remoting protocol (Windows Remote Management).</li>
+            <li><b>DSC</b> — Desired State Configuration (declarative config management).</li>
+            <li><b>Az / AzureRM</b> — Azure modules. Az = current; AzureRM = deprecated 2024.</li>
+            <li><b>$PROFILE</b> — auto-variable for profile script path.</li>
+            <li><b>$_</b> / <b>$PSItem</b> — current pipeline object.</li>
+          </ul>
+
+          <h2>Try these right now</h2>
+          <pre><code>$PSVersionTable                       # which edition + version
+Get-Command -Verb Get -Noun Process
+Get-Process | Sort-Object CPU -Desc | Select-Object -First 3
+Get-Service | Where-Object Status -eq 'Running' | Measure-Object
+Get-Help about_Pipelines              # read this conceptual help</code></pre>
         `
       },
       {
