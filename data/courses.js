@@ -16917,23 +16917,133 @@ kubectl debug node/node-name -it --image=busybox</code></pre>
       {
         title: '5. Storage & Databases',
         body: `
-          <h2>Storage account services</h2>
+          <h2>Azure Storage Account — the container for unstructured storage</h2>
+          <p>An <b>Azure Storage Account</b> is the top-level namespace that exposes four data services under one billing/access boundary: <b>Blob</b>, <b>File</b>, <b>Queue</b>, and <b>Table</b>. Managed Disks live in a separate but related resource type. Pick the account <b>kind</b> (StorageV2 is the default and what Microsoft tests), <b>performance tier</b> (Standard HDD-backed or Premium SSD-backed), and <b>redundancy</b> (LRS/ZRS/GRS/GZRS).</p>
+
+          <h3>Blob storage (object storage)</h3>
+          <p><b>What:</b> object storage for unstructured data — images, video, backups, logs, IaC artifacts, data-lake files. Objects are stored in <b>containers</b>; each blob has a URL like <code>https://{account}.blob.core.windows.net/{container}/{blob}</code>. <b>Why:</b> cheap, infinitely scalable, durable; underpins Data Lake (Hierarchical Namespace on top of Blob = ADLS Gen2). <b>Three blob types:</b></p>
           <ul>
-            <li><b>Blob</b> — object storage. Tiers: Hot, Cool, Cold, Archive.</li>
-            <li><b>Files</b> — SMB/NFS shares in cloud.</li>
-            <li><b>Queue</b> — async messaging.</li>
-            <li><b>Table</b> — key-value NoSQL.</li>
-            <li><b>Disk</b> — managed disks for VMs.</li>
+            <li><b>Block blobs</b> — most common; objects up to ~190 TiB built from blocks; ideal for files and streaming.</li>
+            <li><b>Append blobs</b> — optimized for append-only writes (logs).</li>
+            <li><b>Page blobs</b> — random read/write 512-byte pages; backing store for unmanaged VHDs (rarely used since Managed Disks).</li>
           </ul>
-          <h2>Redundancy options</h2>
+          <p><b>Access tiers (lifecycle/cost optimization):</b></p>
           <ul>
-            <li><b>LRS</b> — 3 copies in 1 datacenter.</li>
-            <li><b>ZRS</b> — 3 zones in 1 region.</li>
-            <li><b>GRS</b> — LRS + async copy to paired region.</li>
-            <li><b>GZRS</b> — ZRS + paired region.</li>
+            <li><b>Hot</b> — frequent access; lowest read cost, highest storage cost. Default.</li>
+            <li><b>Cool</b> — infrequent; lower storage cost, higher read cost; min 30-day retention.</li>
+            <li><b>Cold</b> — rarer access; min 90-day retention.</li>
+            <li><b>Archive</b> — offline tape-class; lowest storage cost, hours-long rehydration; min 180-day retention.</li>
           </ul>
-          <h2>Databases</h2>
-          <p>Azure SQL Database (PaaS SQL), SQL Managed Instance, Azure Cosmos DB (multi-model NoSQL, global distribution), Azure Database for MySQL/PostgreSQL/MariaDB.</p>
+          <p><b>Lifecycle management</b> rules auto-tier blobs by age — e.g., "after 30 days move to Cool, after 180 to Archive, after 7 years delete."</p>
+
+          <h3>Azure Files (managed file shares)</h3>
+          <p><b>What:</b> fully managed SMB 3.x and NFS 4.1 file shares accessible from cloud or on-prem. <b>Why:</b> lift-and-shift apps that expect a file share; replace on-prem file servers. <b>How used:</b> mount with <code>net use</code> (Windows), <code>mount -t cifs</code> or <code>nfs</code> (Linux). Pair with <b>Azure File Sync</b> to cache hot data on on-prem Windows Servers and tier cold data to Azure. Tiers: Transaction-optimized, Hot, Cool, Premium (SSD).</p>
+
+          <h3>Azure Queue Storage</h3>
+          <p><b>What:</b> simple HTTP message queue (up to 64 KB messages, 500 TB queue). <b>Why:</b> decouple producer/consumer for async work. <b>How used:</b> background processing — web app drops a message, worker dequeues. For richer features (FIFO, sessions, dead-letter, transactions) use <b>Azure Service Bus</b> instead.</p>
+
+          <h3>Azure Table Storage</h3>
+          <p><b>What:</b> key-value / schemaless NoSQL store; legacy product. <b>Why:</b> very cheap structured-ish storage. <b>How used:</b> new workloads should use <b>Cosmos DB for Table API</b> instead — same API, global distribution, better SLA.</p>
+
+          <h3>Azure Managed Disks</h3>
+          <p><b>What:</b> block storage attached to VMs; Microsoft manages the underlying storage account, snapshots, encryption. <b>Disk tiers:</b></p>
+          <ul>
+            <li><b>Standard HDD</b> — cheapest; dev/test, infrequent.</li>
+            <li><b>Standard SSD</b> — better consistency; entry production.</li>
+            <li><b>Premium SSD</b> — production single-VM SLA (99.9%); high IOPS.</li>
+            <li><b>Premium SSD v2</b> — independent IOPS/throughput/size tuning; high-end production.</li>
+            <li><b>Ultra Disk</b> — sub-ms latency, up to 160K IOPS — SAP HANA, top-tier OLTP.</li>
+          </ul>
+          <p>Disks support snapshots, encryption (SSE with platform-managed or customer-managed keys), and shared disks (multiple VMs read/write — for clustering).</p>
+
+          <h2>Redundancy options (memorize replica counts)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>Option</th><th>Copies</th><th>Where</th><th>Survives</th><th>Durability</th></tr>
+            <tr><td><b>LRS</b> (Locally Redundant)</td><td>3</td><td>1 datacenter, same rack-group</td><td>disk/server failure</td><td>11 nines</td></tr>
+            <tr><td><b>ZRS</b> (Zone-Redundant)</td><td>3</td><td>3 AZs in 1 region</td><td>datacenter loss</td><td>12 nines</td></tr>
+            <tr><td><b>GRS</b> (Geo-Redundant)</td><td>6 = 3+3</td><td>LRS + LRS in paired region (async)</td><td>region loss</td><td>16 nines</td></tr>
+            <tr><td><b>GZRS</b> (Geo-Zone-Redundant)</td><td>6 = 3 zones + 3</td><td>ZRS + LRS in paired region</td><td>region loss + DC loss</td><td>16 nines</td></tr>
+            <tr><td><b>RA-GRS / RA-GZRS</b></td><td>same</td><td>read-access to secondary region</td><td>same + read fallback</td><td>same</td></tr>
+          </table>
+          <p><b>Acronyms:</b> LRS = Locally Redundant Storage, ZRS = Zone-Redundant Storage, GRS = Geo-Redundant Storage, GZRS = Geo-Zone-Redundant Storage, RA = Read-Access (to secondary).</p>
+
+          <h2>Security on storage</h2>
+          <ul>
+            <li><b>Encryption at rest</b> — Storage Service Encryption (SSE) with AES-256, always on; choose Microsoft-managed or customer-managed key (CMK in Key Vault).</li>
+            <li><b>Encryption in transit</b> — HTTPS only (disable HTTP); SMB 3.0 channel encryption.</li>
+            <li><b>Access control:</b> Entra ID RBAC, account keys (rotate!), <b>Shared Access Signatures (SAS)</b> for scoped time-limited URLs, stored access policies.</li>
+            <li><b>Network controls:</b> firewall (allow specific IPs), VNet service endpoints, <b>Private Endpoints</b> (private IP in your VNet — no public surface).</li>
+            <li><b>Soft delete</b> + <b>versioning</b> + <b>immutability policies</b> (WORM / Object Lock for compliance).</li>
+          </ul>
+
+          <h2>Data movement tools</h2>
+          <ul>
+            <li><b>AzCopy</b> — CLI for high-throughput uploads/downloads/copies.</li>
+            <li><b>Azure Storage Explorer</b> — free GUI client.</li>
+            <li><b>Azure Data Box</b> — ship a physical 100 TB appliance when network transfer is impractical (Data Box Disk 8 TB, Data Box 100 TB, Data Box Heavy 1 PB).</li>
+            <li><b>Azure Data Box Gateway / Stack Edge</b> — appliance staying on-prem as a cloud staging cache.</li>
+            <li><b>Azure File Sync</b> — sync on-prem Windows file servers to Azure Files.</li>
+            <li><b>Azure Migrate</b> — assessment + migration of servers, databases, web apps.</li>
+            <li><b>Database Migration Service (DMS)</b> — online migrations from SQL/Oracle/MySQL/PostgreSQL.</li>
+          </ul>
+
+          <h2>Database services</h2>
+
+          <h3>Azure SQL family</h3>
+          <ul>
+            <li><b>Azure SQL Database</b> — PaaS SQL Server engine; Microsoft manages OS, patching, backups. Deployment models: <b>Single Database</b>, <b>Elastic Pool</b>, <b>Hyperscale</b>. Purchase models: <b>DTU</b> (bundled compute+storage+IO units) or <b>vCore</b> (independent CPU, memory, storage). 99.99% SLA at the General Purpose tier.</li>
+            <li><b>Azure SQL Managed Instance</b> — near-100% SQL Server feature compatibility (CLR, cross-DB queries, SQL Agent) inside your VNet; ideal for lift-and-shift.</li>
+            <li><b>SQL Server on Azure VM</b> — IaaS; you patch SQL Server yourself.</li>
+          </ul>
+
+          <h3>Azure Cosmos DB</h3>
+          <p><b>What:</b> globally distributed, multi-model NoSQL (APIs: <b>NoSQL/Core</b>, <b>MongoDB</b>, <b>Cassandra</b>, <b>Gremlin</b> graph, <b>Table</b>, <b>PostgreSQL</b>). <b>Why:</b> single-digit-ms SLA, turnkey global replication, automatic indexing, five consistency levels (Strong, Bounded Staleness, Session, Consistent Prefix, Eventual). <b>Billing:</b> <b>Request Units (RU/s)</b> — provisioned, autoscale, or serverless.</p>
+
+          <h3>Open-source database PaaS</h3>
+          <ul>
+            <li><b>Azure Database for PostgreSQL</b> — Flexible Server (current), Single Server (legacy), Hyperscale (Citus, sharded).</li>
+            <li><b>Azure Database for MySQL</b> — Flexible Server (current), Single Server (retiring).</li>
+            <li><b>Azure Database for MariaDB</b> — retiring product.</li>
+          </ul>
+
+          <h3>Analytics / big data</h3>
+          <ul>
+            <li><b>Azure Synapse Analytics</b> — unified analytics (data warehouse + Spark + pipelines) over data lake.</li>
+            <li><b>Azure Data Lake Storage Gen2 (ADLS Gen2)</b> — Blob with Hierarchical Namespace; foundation for big-data analytics.</li>
+            <li><b>Azure Data Factory (ADF)</b> — ETL/ELT pipelines (think: SSIS in cloud).</li>
+            <li><b>Azure Databricks</b> — managed Apache Spark.</li>
+            <li><b>Azure HDInsight</b> — managed Hadoop/Spark/Kafka clusters.</li>
+            <li><b>Microsoft Fabric</b> — unified SaaS analytics (lakehouse + warehouse + real-time + Power BI) — Microsoft's new strategic analytics product.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>LRS / ZRS / GRS / GZRS / RA-GRS</b> — redundancy options (see table).</li>
+            <li><b>SSE</b> — Storage Service Encryption.</li>
+            <li><b>SAS</b> — Shared Access Signature (scoped token URL).</li>
+            <li><b>CMK / MMK</b> — Customer-Managed Key / Microsoft-Managed Key.</li>
+            <li><b>WORM</b> — Write Once Read Many (immutability).</li>
+            <li><b>ADLS Gen2</b> — Azure Data Lake Storage Gen2.</li>
+            <li><b>ADF</b> — Azure Data Factory.</li>
+            <li><b>DMS</b> — Database Migration Service.</li>
+            <li><b>DTU / vCore</b> — Database Transaction Unit / virtual Core (Azure SQL purchase models).</li>
+            <li><b>RU/s</b> — Request Units per second (Cosmos DB billing).</li>
+            <li><b>OLTP / OLAP</b> — Online Transaction / Analytical Processing.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Cheapest storage for files accessed once per year" → Blob <b>Archive</b> tier.</li>
+            <li>"Lift-and-shift app needs SMB file share in cloud" → <b>Azure Files</b>.</li>
+            <li>"Data must survive a full region outage" → <b>GRS / GZRS</b>.</li>
+            <li>"Three copies within one datacenter, cheapest redundancy" → <b>LRS</b>.</li>
+            <li>"Read-only copy of data in secondary region during normal ops" → <b>RA-GRS / RA-GZRS</b>.</li>
+            <li>"Globally distributed NoSQL with single-digit-ms SLA" → <b>Cosmos DB</b>.</li>
+            <li>"Managed SQL with near-100% SQL Server compat in my VNet" → <b>Azure SQL Managed Instance</b>.</li>
+            <li>"Ship 100 TB to Azure; bandwidth too slow" → <b>Azure Data Box</b>.</li>
+            <li>"Token-based time-limited URL for one blob" → <b>SAS</b>.</li>
+            <li>"Encrypt blobs with our own key in Key Vault" → <b>CMK (customer-managed key)</b>.</li>
+          </ul>
         `
       },
       {
