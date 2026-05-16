@@ -9400,22 +9400,278 @@ $0 $1 $2                     # script name + args</code></pre>
       {
         title: '2. Permissions & Ownership',
         body: `
-          <h2>Symbolic & octal</h2>
-          <p>Each file has rwx for user/group/other.</p>
-          <pre><code>chmod 755 script.sh   rwx r-x r-x
-chmod u+x file
-chmod g-w file
-chown user:group file
-chgrp staff file</code></pre>
-          <h2>Special bits</h2>
+          <p>Every Linux file + directory has an <b>owner</b>, a <b>group</b>, and a set of <b>permissions</b> for three classes: <b>user (u)</b>, <b>group (g)</b>, <b>other (o)</b>. Permissions decide who can read, write, or execute. This is the foundation of Linux security; exam tests symbolic + octal modes, special bits, ACLs, umask, and chattr.</p>
+
+          <h2>Anatomy of <code>ls -l</code></h2>
+          <pre><code>-rwxr-xr--  1  alice  developers   4096  Jan  5 10:12  script.sh
+^^^^^^^^^^  -  -----  ----------    ----  -----------  ---------
+|           |  |      |             size  mtime         name
+|           |  user   group
+|           hard link count
+file type + perms</code></pre>
+
+          <h2>Permission letters</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Bit</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Letter</th><th align="left" style="padding:4px;border-bottom:1px solid #444">File</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Directory</th></tr>
+            <tr><td>Read</td><td>r</td><td>Read content</td><td>List entries (ls)</td></tr>
+            <tr><td>Write</td><td>w</td><td>Modify content</td><td>Create/delete/rename entries</td></tr>
+            <tr><td>Execute</td><td>x</td><td>Run as program</td><td>Enter (cd) / access files within</td></tr>
+          </table>
+          <p><b>Important:</b> On a directory you need <code>x</code> to traverse into it; <code>r</code> only lets you list names without metadata. Removing <code>x</code> from a directory effectively hides everything inside.</p>
+
+          <h2>Three classes + the unknown 4th: "everyone"</h2>
           <ul>
-            <li><b>SUID (4xxx)</b> — run as file owner. <code>/usr/bin/passwd</code>.</li>
-            <li><b>SGID (2xxx)</b> — run as group / inherit group on dirs.</li>
-            <li><b>Sticky (1xxx)</b> — only owner can delete in shared dir (e.g., <code>/tmp</code>).</li>
+            <li><b>u</b> — owner (file's user).</li>
+            <li><b>g</b> — group (file's group).</li>
+            <li><b>o</b> — other (everyone NOT in the group).</li>
+            <li><b>a</b> — all three (equivalent to ugo).</li>
           </ul>
-          <h2>ACLs</h2>
-          <pre><code>getfacl file
-setfacl -m u:alice:rw file</code></pre>
+          <p>Note: <code>o</code> is "other", NOT "owner". Common mix-up.</p>
+
+          <h2>Symbolic mode</h2>
+          <p>Format: <code>[class][operator][perm]</code></p>
+          <ul>
+            <li>Operators: <b>+</b> add, <b>-</b> remove, <b>=</b> set exactly.</li>
+          </ul>
+          <pre><code>chmod u+x file            # add execute to owner
+chmod g-w file            # remove write from group
+chmod o=r file            # other: only read (clear everything else)
+chmod a+r file            # everyone gets read
+chmod u+s file            # set SUID
+chmod g+s dir             # set SGID
+chmod +t dir              # set sticky
+chmod -R u+rwX,go+rX dir  # recursive; X = add x only if a dir or already executable</code></pre>
+          <p><b>Capital X</b> trick: useful in recursive chmod — adds execute only on directories or files that already had at least one x bit.</p>
+
+          <h2>Octal (numeric) mode</h2>
+          <p>Each digit = sum of permission bits for one class.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Value</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Symbol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Meaning</th></tr>
+            <tr><td>4</td><td>r--</td><td>Read</td></tr>
+            <tr><td>2</td><td>-w-</td><td>Write</td></tr>
+            <tr><td>1</td><td>--x</td><td>Execute</td></tr>
+            <tr><td>0</td><td>---</td><td>None</td></tr>
+          </table>
+          <p>Add for combinations: 7 = rwx, 6 = rw-, 5 = r-x, 4 = r--, 3 = -wx, 2 = -w-, 1 = --x.</p>
+
+          <h3>Common modes</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Octal</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Symbolic</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td>777</td><td>rwxrwxrwx</td><td>World-writable (avoid except scratch)</td></tr>
+            <tr><td>755</td><td>rwxr-xr-x</td><td>Executables / dirs everyone can run + enter</td></tr>
+            <tr><td>750</td><td>rwxr-x---</td><td>Owner + group only — server config dirs</td></tr>
+            <tr><td>700</td><td>rwx------</td><td>Private (~/.ssh)</td></tr>
+            <tr><td>664</td><td>rw-rw-r--</td><td>Group-collaboration document</td></tr>
+            <tr><td>644</td><td>rw-r--r--</td><td>Normal readable file</td></tr>
+            <tr><td>640</td><td>rw-r-----</td><td>Sensitive file (/etc/shadow)</td></tr>
+            <tr><td>600</td><td>rw-------</td><td>SSH private key</td></tr>
+          </table>
+          <p>Convention: directories typically 755 / 750 / 700, files 644 / 640 / 600.</p>
+
+          <h2>Special permission bits — fourth digit</h2>
+          <p>Adds an octal digit BEFORE the standard three (e.g., 4755 = SUID + rwxr-xr-x).</p>
+
+          <h3>SUID — Set User ID (4xxx)</h3>
+          <ul>
+            <li><b>What:</b> When an executable with SUID set runs, the process effective UID becomes the FILE OWNER (often root).</li>
+            <li><b>Why:</b> Lets unprivileged users run specific programs that need root powers (e.g., changing your own password).</li>
+            <li><b>Classic examples:</b> <code>/usr/bin/passwd</code>, <code>/usr/bin/sudo</code>, <code>/usr/bin/ping</code> (legacy).</li>
+            <li><b>How shown:</b> <code>rws</code> in user-execute slot (lowercase s if x is set; uppercase S if x is NOT set — unusual).</li>
+            <li><b>Set:</b> <code>chmod 4755 file</code> or <code>chmod u+s file</code>.</li>
+            <li><b>Find all SUID binaries:</b> <code>find / -perm -4000 -type f 2>/dev/null</code>.</li>
+            <li><b>Security risk:</b> Misconfigured / vulnerable SUID-root binaries = priv-esc. Many distros increasingly replace SUID with capabilities.</li>
+            <li><b>SUID is ignored on scripts</b> (#! shebang scripts) on modern Linux for security.</li>
+          </ul>
+
+          <h3>SGID — Set Group ID (2xxx)</h3>
+          <ul>
+            <li><b>On a file:</b> Process runs with effective GID = file's group.</li>
+            <li><b>On a directory:</b> New files created inside INHERIT the directory's group. Hugely useful for shared-team folders.</li>
+            <li><b>Shown as:</b> <code>rws</code> in group slot for files, <code>rws</code> for dirs.</li>
+            <li><b>Set:</b> <code>chmod 2775 dir</code> or <code>chmod g+s dir</code>.</li>
+            <li><b>Find:</b> <code>find / -perm -2000 -type f 2>/dev/null</code>.</li>
+          </ul>
+
+          <h3>Sticky bit (1xxx)</h3>
+          <ul>
+            <li><b>On a directory:</b> Only the FILE OWNER (or root) can delete or rename files inside, even if others have write on the directory. World-writable shared spaces depend on it.</li>
+            <li><b>Classic example:</b> <code>/tmp</code>, <code>/var/tmp</code> — drwxrwxrwt.</li>
+            <li><b>Shown as:</b> <code>t</code> in other-execute slot (or <code>T</code> if x not set).</li>
+            <li><b>Set:</b> <code>chmod 1777 dir</code> or <code>chmod +t dir</code>.</li>
+            <li><b>On files:</b> Historically meant "keep in swap" — now ignored.</li>
+          </ul>
+
+          <h3>Octal cheat for special bits</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Octal</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bits</th></tr>
+            <tr><td>4</td><td>SUID</td></tr>
+            <tr><td>2</td><td>SGID</td></tr>
+            <tr><td>1</td><td>Sticky</td></tr>
+          </table>
+          <p>Combine: <code>chmod 6755 file</code> = SUID + SGID + 755. <code>chmod 1777 dir</code> = sticky + 777.</p>
+
+          <h2>Ownership commands</h2>
+          <pre><code>chown user file                  # change owner only
+chown user:group file            # owner + group together
+chown user: file                 # owner + their primary group
+chown :group file                # group only
+chown -R user:group dir          # recursive
+chown --reference=ref target     # match another file's owner
+chgrp staff file
+chgrp -R staff dir</code></pre>
+          <p>Only <b>root</b> can change ownership to an arbitrary user (security: prevents giving away files to bypass quotas).</p>
+
+          <h2>umask — default permissions</h2>
+          <p><b>umask</b> = bits to REMOVE from default permissions on new files / dirs.</p>
+          <ul>
+            <li>Defaults: files start with 666, dirs with 777.</li>
+            <li>Apply mask: actual perms = default AND NOT umask.</li>
+            <li><b>Standard umask:</b> 022 → file 644, dir 755.</li>
+            <li><b>Stricter:</b> 027 → file 640, dir 750 (others = no access).</li>
+            <li><b>Personal:</b> 077 → file 600, dir 700.</li>
+          </ul>
+          <pre><code>umask                            # show current
+umask 027                        # set for this shell
+umask -S                         # symbolic display
+# Persistent: set in /etc/profile, /etc/bashrc, /etc/login.defs (UMASK), or ~/.bashrc</code></pre>
+
+          <h2>ACL — Access Control Lists (POSIX ACLs)</h2>
+          <p>Traditional <code>rwx</code> is limited to ONE user + ONE group. POSIX ACLs add fine-grained per-user / per-group entries.</p>
+          <ul>
+            <li>Filesystem must support + mount with <code>acl</code> option (ext4, XFS default; btrfs not full-ACL).</li>
+            <li><b>Plus sign</b> (<code>+</code>) at end of <code>ls -l</code> mode indicates ACL present.</li>
+          </ul>
+          <pre><code>getfacl file                     # show ACL
+setfacl -m u:alice:rw file       # grant alice rw
+setfacl -m g:devs:rx dir         # grant group devs r-x
+setfacl -x u:alice file          # remove alice's entry
+setfacl -b file                  # remove all ACL entries
+setfacl -d -m u:alice:rwx dir    # DEFAULT ACL — applies to new files in dir
+setfacl -k dir                   # remove default ACLs
+setfacl --restore=backup.acl     # restore from file
+getfacl -R / | grep -v '^$' > /tmp/all.acl   # back up ACLs</code></pre>
+          <p><b>ACL mask</b> — controls maximum effective permissions for named users/groups (auto-computed; manually with <code>setfacl -m m::rwx</code>).</p>
+
+          <h2>chattr / lsattr — Extended attributes</h2>
+          <p>Set special filesystem flags beyond rwx (ext2/3/4, partial on XFS).</p>
+          <pre><code>chattr +i file               # immutable — cannot modify, delete, rename. Even root must remove the flag first.
+chattr -i file
+chattr +a file               # append-only — useful for log files
+chattr +A file               # don't update atime
+chattr +c file               # compress (btrfs / ext4 with feature)
+lsattr file                  # show attributes
+lsattr -d dir                # show on dir itself</code></pre>
+          <p><b>Use cases:</b> Lock down /etc/shadow against tampering, protect critical logs from edit, audit-evidence files.</p>
+
+          <h2>Capabilities — finer-grained privileges</h2>
+          <p>Modern alternative to SUID-root. Capabilities split root's powers into discrete privileges.</p>
+          <pre><code>getcap /usr/bin/ping
+setcap cap_net_raw+ep /usr/bin/myping   # raw sockets without SUID
+capsh --print                           # show current process capabilities</code></pre>
+          <p><b>Common capabilities:</b> <code>cap_net_bind_service</code> (bind ports &lt; 1024), <code>cap_net_raw</code> (raw + packet sockets), <code>cap_sys_admin</code> (broad), <code>cap_chown</code>, <code>cap_dac_override</code>.</p>
+
+          <h2>SELinux + AppArmor — MAC layers</h2>
+          <ul>
+            <li><b>SELinux</b> (Security-Enhanced Linux) — kernel <b>MAC</b> (Mandatory Access Control). Labels every process + file with a context (user_u:role_r:type_t).
+              <ul>
+                <li>Modes: <b>Enforcing</b> (block + log), <b>Permissive</b> (log only), <b>Disabled</b>.</li>
+                <li><b>Check mode:</b> <code>getenforce</code>; <b>change:</b> <code>setenforce 0|1</code>; persistent in <code>/etc/selinux/config</code>.</li>
+                <li><b>Context view:</b> <code>ls -Z</code>, <code>ps -auxZ</code>.</li>
+                <li><b>Change context:</b> <code>chcon -t httpd_sys_content_t file</code>; <b>permanent default:</b> <code>semanage fcontext -a</code> + <code>restorecon -v</code>.</li>
+                <li><b>Booleans:</b> <code>getsebool -a</code> / <code>setsebool -P httpd_can_network_connect on</code>.</li>
+                <li><b>Audit denials:</b> <code>ausearch -m AVC -ts recent</code>, <code>audit2allow</code>.</li>
+                <li>Default on RHEL family, Fedora, CentOS Stream, Rocky, Alma.</li>
+              </ul>
+            </li>
+            <li><b>AppArmor</b> — pathname-based MAC. Profiles in <code>/etc/apparmor.d/</code>.
+              <ul>
+                <li>Status: <code>aa-status</code>.</li>
+                <li>Enforce / complain modes per profile: <code>aa-enforce</code> / <code>aa-complain</code>.</li>
+                <li>Default on Ubuntu, openSUSE, SLES.</li>
+              </ul>
+            </li>
+          </ul>
+
+          <h2>sudo + privilege elevation</h2>
+          <ul>
+            <li><b>sudo</b> — run command as another user (default: root).</li>
+            <li><b>Configure:</b> always edit with <code>visudo</code> (locks + syntax-checks).</li>
+            <li><b>File:</b> <code>/etc/sudoers</code> + <code>/etc/sudoers.d/*</code>.</li>
+            <li><b>Examples:</b>
+              <pre><code>alice ALL=(ALL:ALL) ALL                         # full
+%wheel ALL=(ALL) NOPASSWD: ALL                  # wheel group, no password
+bob ALL=(www-data) /usr/bin/systemctl restart nginx    # specific command
+Defaults timestamp_timeout=15                   # password cache 15 min
+Defaults log_input,log_output                   # session recording</code></pre>
+            </li>
+            <li><b>Run as different user:</b> <code>sudo -u alice command</code>; <b>list allowed commands:</b> <code>sudo -l</code>.</li>
+            <li><b>Sudo logs</b> to /var/log/auth.log (Debian) or /var/log/secure (RHEL) — useful audit trail.</li>
+            <li><b>Avoid <code>sudo su -</code></b> when possible; prefer specific commands so auditing remains useful.</li>
+          </ul>
+
+          <h2>su vs sudo</h2>
+          <ul>
+            <li><b>su</b> — switch user (requires the TARGET user's password). <code>su -</code> = login shell.</li>
+            <li><b>sudo</b> — run as another user (typically requires INVOKER's password + policy). Allows scoped, audited delegation.</li>
+            <li>Best practice: disable direct root login + use sudo.</li>
+          </ul>
+
+          <h2>Process effective vs real UID</h2>
+          <ul>
+            <li><b>Real UID (RUID)</b> — actual user who started the process.</li>
+            <li><b>Effective UID (EUID)</b> — used for permission checks. SUID makes EUID = file owner.</li>
+            <li><b>Saved UID</b> — allows temporary drop + reclaim.</li>
+            <li><b>Filesystem UID</b> — historical (NFS).</li>
+          </ul>
+          <p>Check with <code>ps -eo pid,ruid,euid,user,cmd</code> or <code>id</code> within a process.</p>
+
+          <h2>Common permission troubleshooting</h2>
+          <ul>
+            <li><b>"Permission denied":</b> verify owner + group + perms (<code>ls -l</code>); check ACL (<code>+</code> flag); check SELinux / AppArmor denial (<code>ausearch -m AVC</code>).</li>
+            <li><b>SSH refuses key</b> — <code>~/.ssh</code> must be 700, <code>authorized_keys</code> 600, home dir not group/other-writable.</li>
+            <li><b>Webserver 403</b> — content path needs +x on every parent dir + +r on file; SELinux context <code>httpd_sys_content_t</code>.</li>
+            <li><b>sudo not working</b> — sudo group / wheel membership; <code>id</code> shows groups, but new group needs new login.</li>
+            <li><b>Can't delete file even with +w on dir</b> — check sticky bit; only owner can delete.</li>
+            <li><b>chmod -R fails on /usr</b> — read-only filesystem (modern usrmerge / immutable variants).</li>
+          </ul>
+
+          <h2>Audit + monitoring</h2>
+          <ul>
+            <li><b>auditd</b> — Linux audit daemon. Rules in <code>/etc/audit/audit.rules</code>; reports via <code>ausearch</code> + <code>aureport</code>.</li>
+            <li><b>Watch a file:</b> <code>auditctl -w /etc/shadow -p rwxa -k shadow-edit</code>.</li>
+            <li><b>File integrity tools:</b> AIDE, Tripwire, OSSEC.</li>
+            <li><b>Log paths:</b> auth.log / secure for authn + sudo + SSH.</li>
+          </ul>
+
+          <h2>Defaults file reference</h2>
+          <ul>
+            <li><code>/etc/login.defs</code> — UMASK, password aging defaults, UID/GID ranges.</li>
+            <li><code>/etc/skel/</code> — template files copied to new users' home.</li>
+            <li><code>/etc/profile</code>, <code>/etc/bash.bashrc</code> — system-wide shell init.</li>
+            <li><code>~/.bashrc</code>, <code>~/.profile</code>, <code>~/.bash_profile</code>, <code>~/.bash_logout</code>.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"rwx r-x r-x" → 755.</li>
+            <li>"rw- r-- r--" → 644.</li>
+            <li>"rwx ------" → 700.</li>
+            <li>"rw- r----- " → 640.</li>
+            <li>SUID octal = 4 (prefix). SGID = 2. Sticky = 1.</li>
+            <li>"Owner runs as file owner" → SUID.</li>
+            <li>"Files in dir inherit dir's group" → SGID on directory.</li>
+            <li>"Only owner can delete in /tmp" → sticky bit.</li>
+            <li>"Lock file against any modification, even root" → <code>chattr +i</code>.</li>
+            <li>"Append-only log" → <code>chattr +a</code>.</li>
+            <li>"Find all SUID binaries" → <code>find / -perm -4000 -type f</code>.</li>
+            <li>"SELinux mode toggle" → <code>setenforce 0|1</code>; <code>getenforce</code>.</li>
+            <li>"Add per-user ACL" → <code>setfacl -m u:alice:rw file</code>.</li>
+            <li>"View ACL" → <code>getfacl file</code>.</li>
+            <li>"Standard umask 022 → file 644, dir 755".</li>
+            <li>"Capability replacing SUID for raw sockets" → <code>cap_net_raw</code>.</li>
+            <li>"Edit sudoers safely" → <code>visudo</code>.</li>
+            <li>"Default umask for personal-only" → 077.</li>
+          </ul>
         `
       },
       {
