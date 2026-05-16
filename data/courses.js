@@ -14754,13 +14754,336 @@ Bastion / SSM Session Manager replacing SSH bastion</code></pre>
       {
         title: '6. Cloud Security',
         body: `
+          <p>Cloud security combines control frameworks, encryption, identity, network defense, posture management, runtime protection, logging, and compliance into one continuous discipline. Misconfiguration is the #1 cause of cloud breaches — far ahead of provider failures. Exam tests every cloud-specific security tool category + how they map across AWS / Azure / GCP.</p>
+
+          <h2>Cloud security control families</h2>
+
+          <h3>CSPM — Cloud Security Posture Management</h3>
           <ul>
-            <li><b>Encryption</b> — at rest (AES-256 default), in transit (TLS), client-side, customer-managed keys (CMK / BYOK).</li>
-            <li><b>Network security</b> — segmentation, security groups, WAF, DDoS protection (Shield, Front Door, Cloudflare).</li>
-            <li><b>Posture mgmt (CSPM)</b> — detect misconfigs (open S3, public RDP).</li>
-            <li><b>Workload protection (CWPP)</b> — EDR-equivalent for VMs/containers.</li>
-            <li><b>SIEM / cloud-native logging</b> — CloudTrail, Azure Activity Log, GCP Audit Logs.</li>
-            <li><b>Compliance frameworks</b> — FedRAMP, SOC 2, ISO 27001, HIPAA, PCI-DSS.</li>
+            <li>Continuously scans cloud accounts for <b>misconfigurations</b>: public S3, open security groups, weak IAM, unencrypted disks, no MFA on root, public RDS, expired certs.</li>
+            <li>Maps findings to compliance frameworks (CIS, PCI, HIPAA, FedRAMP).</li>
+            <li>Native: <b>AWS Security Hub + Config</b>, <b>Microsoft Defender for Cloud</b>, <b>GCP Security Command Center</b>.</li>
+            <li>Third-party: Wiz, Prisma Cloud (Palo Alto), Orca, Lacework, Crowdstrike Falcon Cloud Security.</li>
+            <li>Best practice: prevent at deploy time (Service Control Policy / Azure Policy / Organization Policy) + detect drift continuously.</li>
+          </ul>
+
+          <h3>CWPP — Cloud Workload Protection Platform</h3>
+          <ul>
+            <li>Runtime protection for VMs, containers, serverless.</li>
+            <li>Vuln scanning + EDR-style behavior + integrity monitoring + Kubernetes runtime security.</li>
+            <li>Examples: Wiz Runtime, CrowdStrike Falcon for Cloud, Aqua Security, Sysdig Secure, Microsoft Defender for Servers / Containers.</li>
+            <li>Often deployed via DaemonSet (K8s) or agent on VM.</li>
+          </ul>
+
+          <h3>CNAPP — Cloud Native Application Protection Platform</h3>
+          <ul>
+            <li>Unifies CSPM + CWPP + CIEM + IaC scan + container security + Kubernetes posture into one console.</li>
+            <li>Wiz, Prisma Cloud, Microsoft Defender for Cloud (CSPM + CWPP + DSPM), Orca, Lacework, CrowdStrike.</li>
+            <li>Gartner-driven category replacing siloed point tools.</li>
+          </ul>
+
+          <h3>CIEM — Cloud Infrastructure Entitlement Management</h3>
+          <ul>
+            <li>Analyzes IAM entitlements across clouds.</li>
+            <li>Highlights over-privileged IAM, unused permissions, cross-account risks, dormant identities.</li>
+            <li>Wiz, Sonrai, Saviynt, Ermetic, AWS IAM Access Analyzer (limited CIEM).</li>
+          </ul>
+
+          <h3>SSPM — SaaS Security Posture Management</h3>
+          <ul>
+            <li>Specifically for SaaS apps (Microsoft 365, Salesforce, Workday, Google Workspace, Slack, GitHub).</li>
+            <li>Detects misconfigured tenant settings, OAuth app abuse, oversharing, weak MFA.</li>
+            <li>Adaptive Shield, AppOmni, Obsidian.</li>
+          </ul>
+
+          <h3>DSPM — Data Security Posture Management</h3>
+          <ul>
+            <li>Discovers + classifies + monitors sensitive data across cloud / SaaS.</li>
+            <li>Detects exposed databases, mis-shared files, shadow data, ROT (redundant/obsolete/trivial).</li>
+            <li>Cyera, Laminar (Rubrik), Sentra, Big ID, Microsoft Purview DSPM.</li>
+          </ul>
+
+          <h3>CASB — Cloud Access Security Broker</h3>
+          <ul>
+            <li>Visibility + policy + DLP + threat protection for SaaS.</li>
+            <li>4 pillars: Visibility, Compliance, Data Security, Threat Protection.</li>
+            <li>Deploys: API-based (most common), forward proxy, reverse proxy.</li>
+            <li>Examples: Microsoft Defender for Cloud Apps, Netskope, Zscaler ZIA, Cloudflare CASB.</li>
+            <li>Discovers <b>shadow IT</b> by analyzing egress logs.</li>
+          </ul>
+
+          <h3>SASE / SSE</h3>
+          <ul>
+            <li><b>SASE</b> = Secure Access Service Edge — SD-WAN + FWaaS + SWG + CASB + ZTNA delivered cloud-side.</li>
+            <li><b>SSE</b> = Security Service Edge — security half of SASE without SD-WAN.</li>
+            <li>Zscaler, Netskope, Palo Alto Prisma, Cisco Umbrella + Duo, Cloudflare One, Cato Networks.</li>
+          </ul>
+
+          <h2>Encryption strategies</h2>
+
+          <h3>Encryption at rest</h3>
+          <ul>
+            <li><b>Provider-managed keys (SSE-S3 / Microsoft-managed / Google-managed)</b> — default; AES-256; zero customer work.</li>
+            <li><b>Customer-managed keys (CMK / SSE-KMS / Key Vault / Cloud KMS)</b> — you control rotation, audit, revoke. Required by many compliance frameworks.</li>
+            <li><b>Customer-supplied keys (SSE-C)</b> — provide key per request; provider never stores.</li>
+            <li><b>BYOK</b> (Bring Your Own Key) — import existing key into cloud KMS.</li>
+            <li><b>HYOK</b> (Hold Your Own Key) — key NEVER leaves on-prem HSM; cloud calls back to decrypt.</li>
+            <li><b>Envelope encryption</b> — data key encrypted by master key in KMS; bulk encrypt with data key.</li>
+            <li><b>Disk encryption</b> — EBS default-on, Azure ADE (Azure Disk Encryption with BitLocker/dm-crypt), GCP CMEK on persistent disks.</li>
+            <li><b>Database encryption</b> — TDE (Transparent Data Encryption) for managed DBs.</li>
+            <li><b>Field-level encryption</b> — encrypt sensitive columns / fields.</li>
+            <li><b>Tokenization</b> — replace sensitive value with random token; vault holds mapping.</li>
+          </ul>
+
+          <h3>Encryption in transit</h3>
+          <ul>
+            <li>TLS 1.2 / 1.3 on every endpoint. TLS 1.0 / 1.1 disabled.</li>
+            <li>Mutual TLS (mTLS) for service-to-service.</li>
+            <li>Private endpoints / PrivateLink / Service Connect keep traffic on cloud backbone (still encrypted).</li>
+            <li>VPN gateways (IPsec) + Direct Connect / ExpressRoute / Interconnect for hybrid.</li>
+            <li>Encrypted mesh (Istio, Linkerd) for east-west microservice traffic.</li>
+          </ul>
+
+          <h3>Encryption in use (Confidential Computing)</h3>
+          <ul>
+            <li>CPU encrypts memory of running workload.</li>
+            <li><b>Intel SGX</b> — enclaves; small TCB but limited memory.</li>
+            <li><b>Intel TDX</b> — Trust Domain Extensions; full VM isolation.</li>
+            <li><b>AMD SEV-SNP</b> — Secure Encrypted Virtualization w/ secure nested paging.</li>
+            <li><b>AWS Nitro Enclaves</b> — isolated VMs without networking; can attest to KMS.</li>
+            <li><b>Azure Confidential VMs / Confidential Containers</b> on AMD SEV-SNP / Intel TDX.</li>
+            <li><b>GCP Confidential VMs</b> using AMD SEV-SNP / Intel TDX.</li>
+          </ul>
+
+          <h2>Network security recap</h2>
+          <ul>
+            <li>Segmentation: VPC + subnets, microsegmentation, private subnets behind NAT.</li>
+            <li>Stateful Security Groups / NSGs at instance level + stateless NACLs at subnet (AWS).</li>
+            <li>WAF (AWS WAF, Azure WAF on Front Door / App Gateway, GCP Cloud Armor).</li>
+            <li>DDoS protection (Shield Standard + Advanced, Azure DDoS Protection Standard, Cloud Armor).</li>
+            <li>Private connectivity (PrivateLink, Private Endpoint, Private Service Connect).</li>
+            <li>Network firewall / NGFW (AWS Network Firewall, Azure Firewall, GCP Cloud NGFW).</li>
+            <li>Egress filtering — Internet egress proxy / Squid / Zscaler.</li>
+            <li>DNS filtering — Route 53 Resolver DNS Firewall, Azure Firewall DNS proxy, Cloud DNS w/ Cloud Armor.</li>
+            <li>Zero Trust + ZTNA replacing flat VPN.</li>
+          </ul>
+
+          <h2>Identity recap (from lesson 5)</h2>
+          <ul>
+            <li>MFA on every admin (phishing-resistant preferred).</li>
+            <li>Conditional Access / risk-based access.</li>
+            <li>Privileged Identity Management — just-in-time.</li>
+            <li>Workload Identity Federation — eliminate stored keys.</li>
+            <li>Service control policy / Org policy guardrails.</li>
+            <li>Least privilege via Access Analyzer / Recommender.</li>
+          </ul>
+
+          <h2>Logging + audit</h2>
+          <ul>
+            <li><b>AWS CloudTrail</b> — every API call. Multi-region trail + Lake for queryable retention.</li>
+            <li><b>AWS Config</b> — resource configuration timeline + compliance rules.</li>
+            <li><b>VPC Flow Logs</b> — network metadata.</li>
+            <li><b>Azure Activity Log + Microsoft Entra Sign-in/Audit Logs + Resource diagnostic logs + NSG/VNet Flow Logs</b>.</li>
+            <li><b>GCP Cloud Audit Logs</b> — Admin Activity (default), Data Access (opt-in), System, Policy Denied.</li>
+            <li><b>Centralize</b> via S3 + Lake / Log Analytics workspace / BigQuery + immutable retention.</li>
+            <li><b>Ship to SIEM</b> — Sentinel, Splunk Cloud, Sumo Logic, Elastic, Chronicle, Datadog.</li>
+            <li><b>Alert</b> on: root account use, IAM policy changes, MFA disabled, public bucket created, GuardDuty findings, key deletion.</li>
+            <li><b>Retention</b> per regulation (HIPAA 6y, PCI 1y active, SOX 7y).</li>
+          </ul>
+
+          <h2>Threat detection + SIEM / SOAR</h2>
+          <ul>
+            <li><b>AWS GuardDuty</b> — managed threat detection (VPC Flow, DNS, CloudTrail, S3, EKS).</li>
+            <li><b>Amazon Detective</b> — investigation + graph analysis.</li>
+            <li><b>Amazon Macie</b> — sensitive data discovery in S3.</li>
+            <li><b>AWS Security Lake</b> — centralized security data lake in OCSF.</li>
+            <li><b>Microsoft Sentinel</b> — cloud SIEM + SOAR on Log Analytics.</li>
+            <li><b>Microsoft Defender for Cloud</b> — multi-cloud CSPM + CWPP + DSPM.</li>
+            <li><b>Microsoft Defender for Endpoint / Identity / Office 365</b> — XDR stack.</li>
+            <li><b>GCP Security Command Center (SCC)</b> — CSPM + threat detection.</li>
+            <li><b>Google Chronicle / SecOps</b> — petabyte-scale SIEM.</li>
+            <li>Third-party: Splunk, Sumo Logic, Datadog Security, Panther, Devo.</li>
+            <li><b>SOAR</b> — Phantom (Splunk), Tines, Torq, XSOAR — orchestrate response playbooks.</li>
+          </ul>
+
+          <h2>Vulnerability + patch management</h2>
+          <ul>
+            <li><b>AWS Inspector</b> — automated vuln scan for EC2 + ECR + Lambda.</li>
+            <li><b>Azure Defender for Cloud Vulnerability Assessment</b> (powered by Qualys / MDVM).</li>
+            <li><b>GCP Container Analysis</b> + Artifact Registry vuln scan.</li>
+            <li><b>Tenable Nessus / Rapid7 / Qualys</b> for VMs + on-prem.</li>
+            <li><b>Trivy / Grype / Snyk / Anchore</b> for container + IaC scan.</li>
+            <li><b>SBOM</b> — Syft / CycloneDX / SPDX inventory at build.</li>
+            <li><b>Patch management:</b> AWS Systems Manager Patch Manager, Azure Update Manager, GCP OS Config Patch.</li>
+            <li><b>KEV</b> (CISA Known Exploited Vulnerabilities) — patch these first.</li>
+            <li><b>CVSS</b> + <b>EPSS</b> + asset criticality + exposure → prioritization.</li>
+          </ul>
+
+          <h2>Container + Kubernetes security</h2>
+          <ul>
+            <li>Scan images at build (Trivy / Grype / Snyk / Wiz).</li>
+            <li>Sign + verify with cosign / Sigstore / Notary v2.</li>
+            <li>Use distroless / Wolfi / minimal base.</li>
+            <li>Pod Security Standards (PSS): Privileged / Baseline / Restricted profiles enforced via Pod Security Admission.</li>
+            <li>Admission controllers: OPA Gatekeeper, Kyverno enforce policy.</li>
+            <li>Secrets via External Secrets Operator / Vault / KV — not env vars.</li>
+            <li>Runtime detection: Falco, Sysdig, CrowdStrike, Defender for Containers, Tracee.</li>
+            <li>NetworkPolicy + service mesh mTLS for east-west.</li>
+            <li>RBAC least privilege + ServiceAccount per workload.</li>
+            <li>Restrict <code>privileged</code>, <code>hostNetwork</code>, <code>hostPID</code>, <code>hostPath</code>.</li>
+            <li>SBOM per build + supply-chain integrity (SLSA).</li>
+          </ul>
+
+          <h2>Storage + data security</h2>
+          <ul>
+            <li><b>Block Public Access</b> at account level — mandatory.</li>
+            <li>Bucket policies + IAM least-privilege.</li>
+            <li>Encryption at rest with CMK; deny non-encrypted uploads via bucket policy.</li>
+            <li>Versioning + Object Lock (Governance / Compliance) + MFA-Delete = ransomware defense.</li>
+            <li>Macie / Defender for Storage / DLP API to scan for PII / secrets in objects.</li>
+            <li>VPC Endpoint / PrivateLink to skip Internet egress.</li>
+            <li>Pre-signed URLs short-lived; never share keys.</li>
+          </ul>
+
+          <h2>Application security</h2>
+          <ul>
+            <li>WAF rules + rate limiting at edge.</li>
+            <li>Bot management + CAPTCHA.</li>
+            <li>API gateway + schema validation + throttle.</li>
+            <li>OWASP API Top 10 + OWASP ASVS.</li>
+            <li>Mutual TLS + JWT signature verification.</li>
+            <li>Secure SDLC: SAST, DAST, IAST, SCA, secrets scanning, IaC scanning, container scanning.</li>
+            <li>Code signing + reproducible builds + provenance attestations (in-toto / SLSA).</li>
+            <li>RASP (Runtime Application Self-Protection) — Sqreen, Contrast, Imperva.</li>
+            <li>Bug bounty / VDP.</li>
+          </ul>
+
+          <h2>Email + collaboration security</h2>
+          <ul>
+            <li><b>Microsoft Defender for Office 365</b>, <b>Google Workspace Advanced Security</b>, <b>Proofpoint</b>, <b>Mimecast</b>, <b>Abnormal</b>.</li>
+            <li>SPF + DKIM + DMARC enforcement; DMARC reject for impersonation defense.</li>
+            <li>Link rewriting + sandbox detonation.</li>
+            <li>BEC detection via ML + impersonation policies.</li>
+            <li>Phishing simulation + training (KnowBe4, Cofense, Microsoft Attack Simulator).</li>
+          </ul>
+
+          <h2>Incident response in cloud</h2>
+          <ol>
+            <li><b>Detect</b> via SIEM / GuardDuty / Defender / SCC alerts.</li>
+            <li><b>Triage</b> with playbooks; classify severity.</li>
+            <li><b>Contain</b> — quarantine IAM credentials (deactivate access keys), isolate instance via SG / NACL, snapshot for forensics BEFORE termination.</li>
+            <li><b>Eradicate</b> — rotate creds + keys, redeploy from clean image, remove malicious resources.</li>
+            <li><b>Recover</b> — from clean backups + tested DR.</li>
+            <li><b>Post-incident</b> — RCA, lessons, runbook update.</li>
+            <li><b>Tools:</b> AWS Detective + GuardDuty, Velociraptor, AWS Forensics solution, Azure Defender investigation, GCP Forensics Logbook.</li>
+            <li><b>Cloud-aware DFIR</b> — preserve EBS snapshot + memory dump + flow logs + CloudTrail before destroying evidence.</li>
+          </ol>
+
+          <h2>Compliance frameworks (recap from Sec+ + governance)</h2>
+          <ul>
+            <li><b>FedRAMP</b> — US federal cloud (Low / Moderate / High); requires 3PAO assessment.</li>
+            <li><b>SOC 1 / SOC 2 / SOC 3</b> — AICPA Trust Services. SOC 2 Type II = 6-12 month operational testing — common requirement for SaaS vendors.</li>
+            <li><b>ISO 27001 + 27017 (cloud) + 27018 (PII in public cloud)</b>.</li>
+            <li><b>PCI-DSS v4.0</b> — payment cards.</li>
+            <li><b>HIPAA</b> — health data; BAA required.</li>
+            <li><b>HITRUST CSF</b> — healthcare cross-mapping.</li>
+            <li><b>GDPR</b> — EU personal data; data residency + 72-hr breach notice.</li>
+            <li><b>CCPA / CPRA</b> — California.</li>
+            <li><b>NIST CSF + 800-53 + 800-171 + 800-207 (Zero Trust)</b>.</li>
+            <li><b>CIS Benchmarks + CIS Critical Controls v8</b>.</li>
+            <li><b>CSA STAR + CCM</b> — Cloud Security Alliance.</li>
+            <li><b>CMMC</b> — US defense contractors.</li>
+            <li><b>NIS2 + DORA</b> — EU.</li>
+          </ul>
+
+          <h2>Top cloud breach causes</h2>
+          <ol>
+            <li><b>Misconfigured storage</b> — public S3 / Blob / GCS exposing data.</li>
+            <li><b>Compromised credentials</b> — leaked access keys in git / pastebin / forgotten.</li>
+            <li><b>Over-privileged IAM</b> — wildcard roles + assumed everywhere.</li>
+            <li><b>Public RDP / SSH</b> — open to Internet, brute force.</li>
+            <li><b>Unpatched workloads</b> — known CVE exploits.</li>
+            <li><b>Phishing / credential theft</b> + no MFA.</li>
+            <li><b>Insecure APIs</b> — missing auth, IDOR, mass assignment.</li>
+            <li><b>Supply chain</b> — compromised dependencies / images / IaC.</li>
+            <li><b>Insider error</b> — accidental policy widening.</li>
+            <li><b>Shadow IT / SaaS sprawl</b> — undiscovered data exposure.</li>
+          </ol>
+
+          <h2>Defense-in-depth recipe for a workload</h2>
+          <ol>
+            <li><b>Account hygiene</b> — MFA on root, IAM Identity Center for users, no access keys, billing alarms.</li>
+            <li><b>Network</b> — private subnets, NACL + SG least privilege, no public IPs unless required, PrivateLink for SaaS.</li>
+            <li><b>Identity</b> — workload identities not stored keys, JIT admin via PIM, Conditional Access.</li>
+            <li><b>Data</b> — CMK encryption at rest, TLS 1.2+ in transit, Object Lock on backups, DSPM scanning.</li>
+            <li><b>Workload</b> — patched images via patch manager, vuln scanning, EDR/CWPP agent, K8s PSS, signed images.</li>
+            <li><b>Detection</b> — GuardDuty / Defender / SCC, CloudTrail / Activity Log / Cloud Audit Logs to SIEM, anomaly alerts.</li>
+            <li><b>Response</b> — runbooks, SOAR automation, regular tabletops, immutable forensics.</li>
+            <li><b>Backups</b> — cross-region + immutable + tested restores.</li>
+            <li><b>Governance</b> — SCP / Azure Policy / Org Policy preventive guardrails, IaC scanning at PR, CSPM continuous.</li>
+            <li><b>Education</b> — phishing simulations + secure-coding training.</li>
+          </ol>
+
+          <h2>Cross-cloud security service equivalence</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Service</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Threat detection</td><td>GuardDuty</td><td>Defender for Cloud</td><td>Security Command Center</td></tr>
+            <tr><td>CSPM</td><td>Security Hub + Config</td><td>Defender for Cloud (CSPM)</td><td>SCC Premium</td></tr>
+            <tr><td>CWPP</td><td>Inspector + GuardDuty Runtime</td><td>Defender for Servers / Containers</td><td>SCC + Container Analysis</td></tr>
+            <tr><td>DSPM / data security</td><td>Macie</td><td>Purview + Defender for Storage</td><td>SCC DSPM + Sensitive Data Protection (DLP API)</td></tr>
+            <tr><td>SIEM</td><td>Security Lake (data) + 3rd party</td><td>Microsoft Sentinel</td><td>Chronicle / SecOps</td></tr>
+            <tr><td>SOAR</td><td>Security Hub workflows + 3rd party</td><td>Sentinel playbooks (Logic Apps)</td><td>Chronicle SOAR (Siemplify)</td></tr>
+            <tr><td>WAF</td><td>AWS WAF</td><td>WAF on Front Door / App GW</td><td>Cloud Armor</td></tr>
+            <tr><td>DDoS</td><td>Shield Standard + Advanced</td><td>DDoS Protection Standard</td><td>Cloud Armor</td></tr>
+            <tr><td>Key mgmt</td><td>KMS + CloudHSM</td><td>Key Vault (Standard / Premium HSM)</td><td>Cloud KMS / HSM / EKM</td></tr>
+            <tr><td>Secrets</td><td>Secrets Manager / Parameter Store</td><td>Key Vault</td><td>Secret Manager</td></tr>
+            <tr><td>Audit log</td><td>CloudTrail</td><td>Activity Log + Sign-in/Audit Logs</td><td>Cloud Audit Logs</td></tr>
+            <tr><td>Resource config</td><td>Config</td><td>Resource Graph + Policy</td><td>Asset Inventory + Org Policy</td></tr>
+            <tr><td>Vuln scan</td><td>Inspector</td><td>Defender Vulnerability Mgmt</td><td>Container Analysis + on-host agent</td></tr>
+            <tr><td>Patch mgmt</td><td>SSM Patch Manager</td><td>Update Manager</td><td>OS Config Patch</td></tr>
+            <tr><td>Confidential compute</td><td>Nitro Enclaves</td><td>Confidential VMs / Containers</td><td>Confidential VMs</td></tr>
+            <tr><td>Private SaaS path</td><td>PrivateLink</td><td>Private Link / Private Endpoint</td><td>Private Service Connect</td></tr>
+            <tr><td>Identity-aware proxy</td><td>Verified Access + IAM Identity Center</td><td>Entra App Proxy</td><td>IAP</td></tr>
+          </table>
+
+          <h2>Common cloud security antipatterns</h2>
+          <ul>
+            <li>Disabling MFA / using SMS only.</li>
+            <li>Long-lived access keys for apps instead of workload identity federation.</li>
+            <li>Wildcard <code>*</code> in IAM Action / Resource.</li>
+            <li>Default security groups left wide open (0.0.0.0/0:any).</li>
+            <li>RDP / SSH directly exposed to Internet.</li>
+            <li>Logs disabled or short retention.</li>
+            <li>Encryption keys with no rotation, no audit.</li>
+            <li>Public storage buckets.</li>
+            <li>Same admin account for humans + automation.</li>
+            <li>Backups in same account as production (ransomware reach).</li>
+            <li>No SBOM, no image signing, no IaC scan.</li>
+            <li>No tabletop, no IR runbook.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Detect open S3 + weak IAM continuously" → CSPM (Security Hub / Defender for Cloud / SCC).</li>
+            <li>"Runtime protection for K8s + VMs" → CWPP (Defender for Servers/Containers / Falco / CrowdStrike).</li>
+            <li>"Unified CSPM + CWPP + CIEM" → CNAPP.</li>
+            <li>"Identify excessive IAM permissions across cloud" → CIEM.</li>
+            <li>"Discover + classify sensitive data" → DSPM (Macie, Purview DSPM, SCC DSPM).</li>
+            <li>"Find shadow SaaS + apply DLP" → CASB.</li>
+            <li>"Cloud-delivered firewall + ZTNA + DLP + SWG" → SASE.</li>
+            <li>"Customer-controlled encryption key" → CMK / BYOK.</li>
+            <li>"Key never leaves on-prem" → HYOK + cloud EKM.</li>
+            <li>"Encrypt RAM of running VM" → Confidential Computing (SEV-SNP / TDX / Nitro Enclaves).</li>
+            <li>"Cloud-native SIEM" → Sentinel / Chronicle / Security Lake.</li>
+            <li>"AWS managed threat detection" → GuardDuty.</li>
+            <li>"Investigate AWS security findings graphically" → Detective.</li>
+            <li>"Scan EC2 + ECR + Lambda for vulnerabilities" → Inspector.</li>
+            <li>"Defender for Cloud" → CSPM + CWPP + DSPM in Azure (multi-cloud).</li>
+            <li>"SCC Premium" → GCP CSPM + threat detection.</li>
+            <li>"Object Lock + versioning + MFA-Delete" → ransomware defense trinity.</li>
+            <li>"Replace VPN with brokered identity-based access" → ZTNA.</li>
+            <li>"Preventive guardrail across AWS accounts" → SCP.</li>
+            <li>"Equivalent preventive policy in Azure" → Azure Policy.</li>
           </ul>
         `
       },
