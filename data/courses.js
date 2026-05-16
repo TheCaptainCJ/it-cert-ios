@@ -10808,24 +10808,451 @@ sudo make install                          # install to prefix
       {
         title: '6. Networking',
         body: `
-          <pre><code>ip a                interfaces
-ip r                routes
+          <p>Linux networking is built around the kernel TCP/IP stack with userspace tools to inspect + configure interfaces, routes, DNS, firewall, and connectivity. Modern Linux uses <b>iproute2</b> (<code>ip</code> + <code>ss</code>) replacing legacy <code>ifconfig</code> + <code>netstat</code>, and <b>NetworkManager</b> (or systemd-networkd / Netplan) replacing per-script config. Exam tests interfaces, routes, sockets, DNS, firewall.</p>
+
+          <h2>Modern vs legacy tools</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Modern (iproute2)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Legacy (net-tools)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td><code>ip addr</code></td><td><code>ifconfig</code></td><td>Show / configure interfaces + addresses</td></tr>
+            <tr><td><code>ip route</code></td><td><code>route -n</code> / <code>netstat -r</code></td><td>Routing table</td></tr>
+            <tr><td><code>ip neigh</code></td><td><code>arp -a</code></td><td>ARP / neighbor cache</td></tr>
+            <tr><td><code>ss</code></td><td><code>netstat</code></td><td>Sockets / connections</td></tr>
+            <tr><td><code>ip link</code></td><td><code>ifconfig eth0 up</code></td><td>Bring interfaces up/down</td></tr>
+            <tr><td><code>ip -s link</code></td><td><code>ifconfig</code></td><td>Interface statistics</td></tr>
+            <tr><td><code>nmcli</code></td><td>per-distro scripts</td><td>NetworkManager CLI</td></tr>
+          </table>
+          <p>Net-tools is deprecated; iproute2 ships everywhere now. Both still answer the same questions, but exam may use either.</p>
+
+          <h2>Interface basics</h2>
+          <pre><code>ip a                              # all interfaces + addresses
+ip -br a                          # brief one-line per interface
+ip a show eth0
+ip -4 a                           # IPv4 only
+ip -6 a                           # IPv6 only
+
+ip link                           # link layer info
+ip link show eth0
 ip link set eth0 up
-nmcli device status      NetworkManager
-ss -tunlp                listening sockets
-ping host
-traceroute host
-dig host / nslookup host
-curl -I https://x.com
-wget https://x.com/file</code></pre>
-          <h2>Config files</h2>
-          <p><code>/etc/hosts</code>, <code>/etc/resolv.conf</code>, <code>/etc/netplan/*.yaml</code> (Ubuntu), <code>/etc/sysconfig/network-scripts/</code> (RHEL legacy).</p>
-          <h2>Firewall</h2>
-          <pre><code>firewall-cmd --add-service=https --permanent
-firewall-cmd --reload
-ufw allow 22/tcp
-ufw enable
-iptables -L -n -v</code></pre>
+ip link set eth0 down
+ip link set eth0 mtu 9000         # jumbo frames
+ip link set eth0 promisc on
+ip link set eth0 address 02:11:22:33:44:55  # spoof MAC
+
+ip -s link show eth0              # stats (RX/TX bytes + errors)
+ethtool eth0                      # link speed, duplex, driver
+ethtool -i eth0                   # driver + firmware
+ethtool -S eth0                   # driver-level stats
+ethtool -K eth0 tx-checksumming off   # offload features
+
+# Add / remove addresses
+sudo ip addr add 192.168.1.50/24 dev eth0
+sudo ip addr del 192.168.1.50/24 dev eth0
+sudo ip addr flush dev eth0        # wipe all addresses</code></pre>
+
+          <h2>Naming conventions</h2>
+          <ul>
+            <li>Old: <b>eth0, eth1, wlan0</b> (kernel-assigned, can re-order across reboots).</li>
+            <li>Modern: <b>Predictable Network Interface Names</b> (PNIN) — <code>enp3s0</code> (PCI bus 3, slot 0), <code>eno1</code> (onboard 1), <code>wlp2s0</code> (wireless), <code>enx&lt;mac&gt;</code> (USB).</li>
+            <li>Loopback always <b>lo</b>.</li>
+            <li>VLAN: <b>eth0.10</b> for VLAN ID 10.</li>
+            <li>Bridge: <b>br0</b>, <b>docker0</b>, <b>virbr0</b>.</li>
+            <li>Tunnel: <b>tun0</b>, <b>tap0</b>, <b>wg0</b> (WireGuard).</li>
+            <li>Bond / Team: <b>bond0</b>, <b>team0</b>.</li>
+            <li>Container veth pairs: <b>veth*</b>.</li>
+            <li>Override naming with <code>net.ifnames=0 biosdevname=0</code> kernel cmdline or <code>/etc/systemd/network/10-foo.link</code>.</li>
+          </ul>
+
+          <h2>Routing</h2>
+          <pre><code>ip route                          # main routing table
+ip route show table all           # all tables (main + local + custom)
+ip route get 8.8.8.8              # which route applies to a destination
+sudo ip route add 10.0.0.0/24 via 192.168.1.1
+sudo ip route del 10.0.0.0/24
+sudo ip route add default via 192.168.1.1 dev eth0
+sudo ip route flush cache
+ip rule                           # policy routing rules</code></pre>
+          <p><b>Policy-based routing:</b> Multiple routing tables (<code>/etc/iproute2/rt_tables</code>) + <code>ip rule</code> select table based on source / mark / interface — used for multi-WAN, VPN routing.</p>
+
+          <h2>Neighbor / ARP cache</h2>
+          <pre><code>ip neigh                         # show neighbors (IPv4 ARP + IPv6 ND)
+sudo ip neigh flush all
+sudo ip neigh add 192.168.1.5 lladdr aa:bb:cc:dd:ee:ff dev eth0
+sudo arp -d 192.168.1.5          # legacy delete</code></pre>
+
+          <h2>Sockets (ss + netstat)</h2>
+          <pre><code>ss -tunlp                        # TCP + UDP listening + PIDs
+ss -tan                          # all TCP sockets
+ss -tan state established
+ss -tn state syn-sent
+ss -p src :443                   # who's bound to 443
+ss -s                            # summary stats
+ss -K dst 10.0.0.5               # kill matching sockets (root)
+
+netstat -tunlp                   # legacy equivalent
+lsof -i :443                     # what's on port 443
+lsof -i -P -n
+fuser 443/tcp                    # which PID uses port</code></pre>
+
+          <h2>Reachability + DNS testing</h2>
+          <pre><code>ping host
+ping6 host                       # IPv6
+ping -c 4 -I eth0 host           # source interface
+ping -s 1472 -M do host          # path MTU test (DF flag)
+
+traceroute host                  # UDP probes by default
+traceroute -I host               # ICMP
+traceroute -T -p 443 host        # TCP traceroute (firewall-friendly)
+tracepath host                   # no-root traceroute
+mtr host                         # combined ping + traceroute, continuous
+
+dig host
+dig +short host
+dig @1.1.1.1 host AAAA
+dig +trace host
+dig -x 8.8.8.8                   # reverse PTR
+host host
+nslookup host
+
+nc -vz host 443                  # TCP port test
+nc -uvz host 53                  # UDP port test (less reliable)
+telnet host 80                   # legacy; still works
+curl -I https://example.com
+wget -O- https://example.com</code></pre>
+
+          <h2>DNS client configuration</h2>
+          <ul>
+            <li><b>/etc/hosts</b> — static name → IP overrides (checked first by nsswitch).</li>
+            <li><b>/etc/resolv.conf</b> — resolver config: <code>nameserver</code>, <code>search</code>, <code>domain</code>, <code>options</code> (timeout, attempts, ndots, single-request). On modern systems often a symlink managed by <b>systemd-resolved</b> or <b>NetworkManager</b>.</li>
+            <li><b>/etc/nsswitch.conf</b> — lookup order: <code>hosts: files dns mdns_minimal sss</code>.</li>
+            <li><b>systemd-resolved</b> — caching local resolver listening on 127.0.0.53; query via <code>resolvectl</code>:
+              <pre><code>resolvectl status
+resolvectl query example.com
+resolvectl flush-caches
+resolvectl default-route eth0 yes</code></pre>
+            </li>
+            <li><b>nscd / sssd</b> — cache services.</li>
+            <li><b>mDNS / Avahi</b> — .local zeroconf names.</li>
+            <li><b>DoT / DoH</b> — systemd-resolved + DNSCrypt-proxy.</li>
+          </ul>
+
+          <h2>NetworkManager (nmcli + nmtui)</h2>
+          <p>Default on most desktop + RHEL family servers. Manages wired, Wi-Fi, VPN, bonds, bridges, VLANs via "connections".</p>
+          <pre><code>nmcli device status              # interfaces + state
+nmcli connection show            # all connections
+nmcli connection up "Wired connection 1"
+nmcli connection down "Wired connection 1"
+
+# Add ethernet static IP
+sudo nmcli connection add type ethernet con-name lan ifname eth0 \
+    ipv4.addresses 192.168.1.50/24 ipv4.gateway 192.168.1.1 \
+    ipv4.dns "1.1.1.1 9.9.9.9" ipv4.method manual autoconnect yes
+sudo nmcli connection up lan
+
+# Modify
+sudo nmcli connection modify lan ipv4.dns "8.8.8.8 8.8.4.4"
+sudo nmcli connection modify lan +ipv4.addresses 10.0.0.5/8
+sudo nmcli connection reload
+
+# Wi-Fi
+nmcli device wifi list
+sudo nmcli device wifi connect "SSID" password "pass"
+sudo nmcli device wifi hotspot ifname wlan0 ssid mywifi password "letmein123"
+
+# VLAN
+sudo nmcli connection add type vlan ifname eth0.10 dev eth0 id 10 \
+    ipv4.method manual ipv4.addresses 10.10.10.5/24
+
+nmtui                              # ncurses TUI alternative</code></pre>
+
+          <h2>systemd-networkd</h2>
+          <p>Used by Ubuntu Server (via Netplan), CoreOS, minimal cloud images. Config files in <code>/etc/systemd/network/</code>.</p>
+          <pre><code># /etc/systemd/network/10-eth0.network
+[Match]
+Name=eth0
+
+[Network]
+Address=192.168.1.50/24
+Gateway=192.168.1.1
+DNS=1.1.1.1
+DNS=9.9.9.9
+
+sudo systemctl enable --now systemd-networkd
+networkctl status                 # interface overview
+networkctl list</code></pre>
+
+          <h2>Netplan (Ubuntu)</h2>
+          <p>YAML front-end. Generates configs for systemd-networkd or NetworkManager.</p>
+          <pre><code># /etc/netplan/01-netcfg.yaml
+network:
+  version: 2
+  renderer: networkd            # or NetworkManager
+  ethernets:
+    eth0:
+      dhcp4: true
+    eth1:
+      addresses: [192.168.1.50/24]
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses: [1.1.1.1, 9.9.9.9]
+        search: [example.com]
+
+sudo netplan try                 # apply with 120s revert if no confirm
+sudo netplan apply</code></pre>
+
+          <h2>Legacy RHEL ifcfg + Debian interfaces</h2>
+          <ul>
+            <li><b>RHEL 7 / older:</b> <code>/etc/sysconfig/network-scripts/ifcfg-eth0</code>. <b>RHEL 8+:</b> NetworkManager keyfile <code>/etc/NetworkManager/system-connections/</code>.</li>
+            <li><b>Debian classic:</b> <code>/etc/network/interfaces</code> with <code>ifup</code> / <code>ifdown</code>.</li>
+          </ul>
+
+          <h2>Hostname + DNS aliases</h2>
+          <pre><code>hostname                          # show
+hostnamectl                       # systemd hostname info
+sudo hostnamectl set-hostname srv01
+cat /etc/hostname                 # persistent
+cat /etc/hosts                    # local name overrides</code></pre>
+
+          <h2>Bonding (link aggregation)</h2>
+          <p>Combine multiple NICs into one logical interface for bandwidth or redundancy.</p>
+          <ul>
+            <li><b>Modes:</b> 0 round-robin, 1 active-backup, 2 XOR, 3 broadcast, 4 802.3ad LACP, 5 balance-tlb, 6 balance-alb.</li>
+            <li><code>cat /proc/net/bonding/bond0</code> — status.</li>
+            <li>Configured via NetworkManager / Netplan / kernel module options.</li>
+          </ul>
+
+          <h2>Teaming</h2>
+          <p>RHEL 7+ alternative to bonding. More flexible runner (active-backup / loadbalance / lacp / broadcast). <code>teamdctl team0 state</code>. Most distros standardize on bonding now.</p>
+
+          <h2>Bridging</h2>
+          <p>Software L2 switch. Used by libvirt (virbr0) + Docker (docker0) to connect VMs/containers.</p>
+          <pre><code>sudo ip link add br0 type bridge
+sudo ip link set eth0 master br0
+sudo ip link set br0 up
+bridge link                       # show bridge ports
+bridge fdb show                   # forwarding table
+brctl show                        # legacy</code></pre>
+
+          <h2>VLAN tagging</h2>
+          <pre><code># Manually via iproute2
+sudo ip link add link eth0 name eth0.10 type vlan id 10
+sudo ip link set eth0.10 up
+sudo ip addr add 10.10.10.5/24 dev eth0.10
+
+# /proc reporting
+cat /proc/net/vlan/config</code></pre>
+
+          <h2>Network namespaces</h2>
+          <pre><code>sudo ip netns add ns1
+sudo ip netns list
+sudo ip netns exec ns1 ip a
+sudo ip link add veth0 type veth peer name veth1
+sudo ip link set veth1 netns ns1
+sudo ip netns delete ns1</code></pre>
+          <p>Foundation of containers + many isolation use cases.</p>
+
+          <h2>Firewall — choose ONE manager</h2>
+          <p>Linux kernel has packet filtering via <b>netfilter</b>. Modern frontend = <b>nftables</b>; legacy = <b>iptables</b>. Most distros expose simplified wrappers:</p>
+          <ul>
+            <li><b>firewalld</b> — RHEL / Fedora default; uses zones + services.</li>
+            <li><b>ufw</b> — Uncomplicated Firewall (Ubuntu).</li>
+            <li><b>nftables</b> — direct rule sets in <code>/etc/nftables.conf</code>.</li>
+            <li><b>iptables</b> — legacy; rules in <code>iptables-save</code> format.</li>
+          </ul>
+
+          <h3>firewalld (RHEL/CentOS/Rocky/Alma/Fedora)</h3>
+          <p>Zone-based. Common zones: <b>public</b>, <b>internal</b>, <b>trusted</b>, <b>dmz</b>, <b>work</b>, <b>home</b>, <b>block</b>, <b>drop</b>.</p>
+          <pre><code>sudo firewall-cmd --state
+sudo firewall-cmd --get-default-zone
+sudo firewall-cmd --get-active-zones
+sudo firewall-cmd --list-all                # current zone summary
+
+# Allow services / ports (runtime + permanent)
+sudo firewall-cmd --add-service=https --permanent
+sudo firewall-cmd --add-port=8443/tcp --permanent
+sudo firewall-cmd --remove-service=ssh --permanent
+sudo firewall-cmd --reload                  # apply permanent rules
+sudo firewall-cmd --runtime-to-permanent    # save current runtime to permanent
+
+# Zone management
+sudo firewall-cmd --change-interface=eth1 --zone=internal --permanent
+sudo firewall-cmd --set-default-zone=public
+
+# Rich rules
+sudo firewall-cmd --add-rich-rule='rule family="ipv4" source address="10.0.0.0/8" service name="ssh" accept' --permanent
+sudo firewall-cmd --add-source=192.0.2.5 --zone=block --permanent
+
+# Service definitions: /usr/lib/firewalld/services/*.xml (read-only)
+#                     /etc/firewalld/services/*.xml (custom)</code></pre>
+
+          <h3>ufw (Ubuntu)</h3>
+          <pre><code>sudo ufw status
+sudo ufw enable                   # turn on
+sudo ufw disable
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow 22/tcp             # or 'ufw allow ssh'
+sudo ufw allow from 10.0.0.0/8 to any port 22
+sudo ufw deny 23/tcp
+sudo ufw limit 22/tcp             # rate-limit (anti-brute force)
+sudo ufw delete allow 22/tcp
+sudo ufw status verbose
+sudo ufw status numbered
+sudo ufw reset
+# App profiles: /etc/ufw/applications.d/
+sudo ufw app list
+sudo ufw allow OpenSSH</code></pre>
+
+          <h3>nftables</h3>
+          <pre><code>sudo nft list ruleset
+sudo nft -f /etc/nftables.conf    # load saved ruleset
+
+# Example minimal config
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    ct state established,related accept
+    iif lo accept
+    tcp dport { 22, 80, 443 } accept
+    icmp type echo-request accept
+    log prefix "nft-drop: " drop
+  }
+}
+sudo systemctl enable --now nftables</code></pre>
+
+          <h3>iptables (legacy)</h3>
+          <pre><code>sudo iptables -L -n -v             # list filter table
+sudo iptables -t nat -L            # NAT table
+sudo iptables -P INPUT DROP        # default-drop policy
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables-save > /etc/iptables/rules.v4
+sudo iptables-restore < /etc/iptables/rules.v4</code></pre>
+          <p><b>Tables:</b> filter (allow/deny), nat (SNAT/DNAT), mangle (rewrite), raw, security.</p>
+          <p><b>Chains:</b> INPUT, OUTPUT, FORWARD, PREROUTING, POSTROUTING.</p>
+          <p>Modern: <code>iptables-translate</code> generates nft equivalent. <code>iptables</code> on RHEL 8+ is usually <code>iptables-nft</code> (translation layer).</p>
+
+          <h3>fail2ban (brute-force protection)</h3>
+          <p>Watches log files; bans offending IPs via firewall.</p>
+          <pre><code>sudo apt install fail2ban / sudo dnf install fail2ban
+sudo systemctl enable --now fail2ban
+sudo fail2ban-client status sshd
+sudo fail2ban-client set sshd unbanip 1.2.3.4
+# Config: /etc/fail2ban/jail.local — override jail.conf</code></pre>
+
+          <h2>NAT + port forwarding</h2>
+          <ul>
+            <li><b>Enable IP forwarding:</b> <code>echo 1 | sudo tee /proc/sys/net/ipv4/ip_forward</code>. Persistent in <code>/etc/sysctl.conf</code> or <code>/etc/sysctl.d/*.conf</code>.</li>
+            <li><b>iptables MASQUERADE</b> (source NAT to interface IP): <code>iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE</code>.</li>
+            <li><b>firewalld masquerade:</b> <code>firewall-cmd --add-masquerade --permanent</code>.</li>
+            <li><b>Port forward (nat / DNAT):</b> <code>firewall-cmd --add-forward-port=port=80:proto=tcp:toport=8080:toaddr=10.0.0.5 --permanent</code>.</li>
+          </ul>
+
+          <h2>SSH</h2>
+          <pre><code>ssh user@host
+ssh -p 2222 user@host
+ssh -i ~/.ssh/key user@host
+ssh-keygen -t ed25519 -C "me@laptop"
+ssh-copy-id user@host             # install pubkey on server
+ssh -L 8080:internal:80 user@bastion  # local port forward
+ssh -R 9000:localhost:22 user@public  # remote port forward
+ssh -D 1080 user@host             # SOCKS dynamic proxy
+ssh -J jump user@target           # ProxyJump
+scp file user@host:/path
+rsync -av -e ssh src/ host:/dst/
+sftp user@host
+
+# sshd_config security
+Port 22                           # consider non-standard if exposed
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+PubkeyAuthentication yes
+ChallengeResponseAuthentication no
+AllowUsers alice bob
+AllowGroups admins
+MaxAuthTries 3
+ClientAliveInterval 300
+ClientAliveCountMax 0
+X11Forwarding no
+sudo systemctl restart sshd</code></pre>
+
+          <h2>tcpdump (packet capture)</h2>
+          <pre><code>sudo tcpdump -i eth0 -nn
+sudo tcpdump -i any -nn host 10.0.0.5
+sudo tcpdump -i eth0 -nn 'tcp port 443'
+sudo tcpdump -i eth0 -nn -X -s0 'host 1.2.3.4'   # full payload
+sudo tcpdump -i eth0 -w out.pcap                  # save to file
+tcpdump -r out.pcap
+tshark / Wireshark for offline analysis</code></pre>
+
+          <h2>VPN clients on Linux</h2>
+          <ul>
+            <li><b>WireGuard</b> — kernel-native; very simple config in <code>/etc/wireguard/wg0.conf</code>; brought up via <code>wg-quick up wg0</code> or systemd.</li>
+            <li><b>OpenVPN</b> — TUN/TAP; <code>openvpn /etc/openvpn/client.conf</code>; system service.</li>
+            <li><b>StrongSwan</b> / <b>Libreswan</b> — IPsec / IKEv2.</li>
+            <li><b>openconnect</b> — Cisco AnyConnect / Pulse / GlobalProtect compatible.</li>
+            <li><b>NetworkManager-VPN</b> plugins integrate above into the system tray.</li>
+          </ul>
+
+          <h2>Bandwidth + performance</h2>
+          <pre><code>iperf3 -s                         # server
+iperf3 -c server.local            # client
+iperf3 -c server -t 60 -P 8       # 60 sec 8 parallel streams
+iperf3 -c server -u -b 1G          # UDP test
+
+speedtest-cli                     # public Internet test
+nload eth0                        # live bandwidth
+iftop -i eth0                     # by connection
+nethogs                           # per process
+bmon                              # multi-interface monitor</code></pre>
+
+          <h2>Useful kernel tunables (sysctl)</h2>
+          <pre><code>sysctl net.ipv4.ip_forward                  # show
+sudo sysctl -w net.ipv4.ip_forward=1        # runtime
+# Persist in /etc/sysctl.d/99-custom.conf
+net.ipv4.tcp_syncookies = 1
+net.ipv4.conf.all.rp_filter = 1             # reverse-path filter (anti-spoof)
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.core.somaxconn = 4096
+net.ipv4.tcp_max_syn_backlog = 8192
+net.netfilter.nf_conntrack_max = 1048576
+sudo sysctl --system                        # reload</code></pre>
+
+          <h2>Common networking troubleshooting</h2>
+          <ul>
+            <li><b>"No route to host"</b> — check <code>ip route get DEST</code>; default gateway present?</li>
+            <li><b>"Network is unreachable"</b> — no usable interface / address for that destination.</li>
+            <li><b>DNS lookups fail but ping IP works</b> → <code>/etc/resolv.conf</code> stale; check systemd-resolved or NetworkManager.</li>
+            <li><b>Wi-Fi connects but no Internet</b> → captive portal; check default gateway + DNS; visit example.com to trigger portal.</li>
+            <li><b>Slow only on certain hosts</b> → <code>mtr</code> to localize hop; try <code>iperf3</code> for throughput.</li>
+            <li><b>Stuck in DHCP lease</b> → <code>nmcli connection down/up</code>, or <code>dhclient -r && dhclient eth0</code>.</li>
+            <li><b>MTU issues</b> → <code>ping -s 1472 -M do host</code> tests path MTU.</li>
+            <li><b>SELinux blocking app</b> → <code>ausearch -m AVC -ts recent</code>; allow correct port with <code>semanage port -a -t http_port_t -p tcp 8080</code>.</li>
+            <li><b>Firewall blocking</b> → <code>firewall-cmd --list-all</code>, <code>nft list ruleset</code>, <code>ufw status</code>, <code>iptables -L -n</code>.</li>
+            <li><b>Port already in use</b> → <code>ss -tunlp | grep :PORT</code> or <code>lsof -i :PORT</code>.</li>
+          </ul>
+
+          <h2>Quick exam patterns</h2>
+          <ul>
+            <li>"Show all interfaces + IPs" → <code>ip a</code>.</li>
+            <li>"View routing table" → <code>ip route</code>.</li>
+            <li>"Show listening ports + owning process" → <code>ss -tunlp</code>.</li>
+            <li>"Persistent IP on Ubuntu" → Netplan YAML in <code>/etc/netplan/</code> + <code>netplan apply</code>.</li>
+            <li>"Persistent IP on RHEL via NM" → <code>nmcli connection modify</code>.</li>
+            <li>"Set hostname" → <code>hostnamectl set-hostname name</code>.</li>
+            <li>"Local DNS overrides" → <code>/etc/hosts</code>.</li>
+            <li>"Open HTTPS on RHEL firewall" → <code>firewall-cmd --add-service=https --permanent</code> + <code>--reload</code>.</li>
+            <li>"Open SSH on Ubuntu" → <code>ufw allow 22/tcp</code> or <code>ufw allow OpenSSH</code>.</li>
+            <li>"Modern firewall framework replacing iptables" → nftables.</li>
+            <li>"Test TCP port reachability" → <code>nc -vz host port</code>.</li>
+            <li>"Capture packets" → <code>tcpdump -i eth0 -nn</code>.</li>
+            <li>"Bandwidth between two hosts" → <code>iperf3</code>.</li>
+            <li>"Path MTU test" → <code>ping -s SIZE -M do</code>.</li>
+            <li>"Enable IP forwarding" → <code>net.ipv4.ip_forward = 1</code> in sysctl.</li>
+            <li>"Brute-force protection" → fail2ban.</li>
+          </ul>
         `
       },
       {
