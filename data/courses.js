@@ -11654,26 +11654,498 @@ sudo smartctl -l selftest /dev/sda
       {
         title: '8. Shell Scripting (bash)',
         body: `
-          <pre><code>#!/usr/bin/env bash
-set -euo pipefail
+          <p>Shell scripts automate everything from backups to one-shot reports to provisioning. <b>Bash</b> is the dominant interactive + scripting shell on Linux. Exam tests script structure, variable expansion, conditionals, loops, functions, error handling, and the classic text-processing toolset (sed/awk/grep/cut/sort/uniq).</p>
 
-NAME=\${1:-world}
-if [[ -z "$NAME" ]]; then
-  echo "no name" >&2
-  exit 1
+          <h2>Hashbang + execution</h2>
+          <pre><code>#!/usr/bin/env bash               # portable: finds bash via PATH
+#!/bin/bash                       # alt: explicit path
+#!/usr/bin/env -S bash -euo pipefail   # set flags from shebang (Linux only)
+
+chmod +x script.sh
+./script.sh
+bash script.sh                    # run without exec bit
+sh script.sh                      # may be dash / ash on Debian / Alpine
+source script.sh                  # OR: . script.sh — run in CURRENT shell (preserves vars + cwd)</code></pre>
+
+          <h2>Safe-script preamble</h2>
+          <pre><code>#!/usr/bin/env bash
+set -e          # exit on first command error
+set -u          # error on unset variable
+set -o pipefail # any pipe stage failure causes pipeline failure
+set -E          # ERR trap propagates to functions / subshells
+IFS=$'\\n\\t'    # safer Internal Field Separator (avoid splitting on space)
+# Combined:
+set -euo pipefail</code></pre>
+          <p>Add <code>set -x</code> to trace execution; <code>set +x</code> to stop.</p>
+
+          <h2>Comments + here-docs</h2>
+          <pre><code># single-line comment
+
+cat <<EOF                 # heredoc — expand variables + commands
+Hello $USER, today is $(date)
+EOF
+
+cat <<'EOF'               # heredoc — LITERAL, no expansion (quote delimiter)
+$nothing expands here
+EOF
+
+cat <<-EOF                # leading TABS stripped (script readability)
+	indented
+EOF
+
+cat <<&lt;EOL > /tmp/out      # combined: write directly to file
+content
+EOL</code></pre>
+
+          <h2>Variables + expansion</h2>
+          <pre><code># Assignment — NO spaces around =
+NAME=alice
+GREETING="Hi $NAME"          # double-quotes expand
+LITERAL='No $expansion'      # single-quotes literal
+
+# Use a variable
+echo "$NAME"
+echo "${NAME}_id"            # braces help when adjoined to text
+
+# Default values
+echo "${VAR:-default}"       # use default if unset OR empty
+echo "${VAR-default}"        # use default if UNSET only
+echo "${VAR:=default}"       # assign default if unset, then expand
+echo "${VAR:?must be set}"   # exit + error if unset
+echo "${VAR:+other}"         # use 'other' if VAR is set
+
+# Length + substring
+echo "${#NAME}"              # length
+echo "${NAME:0:3}"           # substring from index 0, length 3
+
+# Pattern removal
+file="report.tar.gz"
+echo "${file%.gz}"           # report.tar — remove SHORTEST suffix match
+echo "${file%%.*}"           # report      — LONGEST suffix
+echo "${file#*.}"            # tar.gz      — remove SHORTEST prefix
+echo "${file##*.}"           # gz          — LONGEST prefix
+
+# Replace
+s="hello world"
+echo "${s/world/bash}"       # first match
+echo "${s//l/L}"             # all matches
+
+# Case
+echo "${NAME^^}"             # uppercase
+echo "${NAME,,}"             # lowercase
+
+# Arrays
+arr=(one two three)
+echo "${arr[0]}"             # one
+echo "${arr[@]}"             # all elements
+echo "${#arr[@]}"            # count
+arr+=(four)                  # append
+unset 'arr[1]'
+
+# Associative arrays (declare -A)
+declare -A cfg
+cfg[host]=example.com
+cfg[port]=443
+echo "${cfg[host]}"
+echo "${!cfg[@]}"            # keys</code></pre>
+
+          <h2>Quoting rules</h2>
+          <ul>
+            <li><b>Double quotes "..."</b> — variables + command substitution expand; preserves whitespace.</li>
+            <li><b>Single quotes '...'</b> — literal; nothing expands. Use for regex / fixed strings.</li>
+            <li><b>Backslash \\</b> — escape one character.</li>
+            <li><b>Backticks `cmd`</b> — legacy command substitution. Prefer <code>$(cmd)</code> (nestable + clearer).</li>
+            <li>ALWAYS quote variables: <code>"$var"</code>. Unquoted = word splitting + glob expansion (bugs + security issues).</li>
+          </ul>
+
+          <h2>Command substitution + arithmetic</h2>
+          <pre><code>now=$(date +%F)
+files=$(ls *.log)            # often safer to use globs directly
+count=$(grep -c ERROR app.log)
+
+# Arithmetic
+x=$((3 + 4))                 # 7
+((y = x * 2))                # 14
+echo "Total: $((x + y))"
+# Older: $[ ... ]   — avoid.
+let z=x+1                     # alternate; less readable</code></pre>
+
+          <h2>Tests + conditions</h2>
+          <p>Use <b>[[ ... ]]</b> in bash (preferred; safer + supports patterns). <code>[ ... ]</code> = POSIX test command. <code>test</code> = same as <code>[ ]</code>.</p>
+          <pre><code>[[ -e "$path" ]]              # exists
+[[ -f "$path" ]]              # regular file
+[[ -d "$path" ]]              # directory
+[[ -L "$path" ]]              # symlink
+[[ -r "$path" ]]              # readable
+[[ -w "$path" ]]              # writable
+[[ -x "$path" ]]              # executable
+[[ -s "$path" ]]              # non-empty file
+[[ -z "$s" ]]                 # empty string
+[[ -n "$s" ]]                 # non-empty string
+[[ "$a" == "$b" ]]            # string equal
+[[ "$a" != "$b" ]]            # not equal
+[[ "$a" =~ ^prefix ]]         # regex
+[[ "$a" == foo* ]]            # glob match (bash)
+[[ "$n" -eq 5 ]]              # integer compare: -eq -ne -lt -le -gt -ge
+(( n > 5 ))                   # arithmetic context
+[[ -f a && -f b ]]            # AND
+[[ -f a || -f b ]]            # OR
+! [[ -f a ]]                  # NOT</code></pre>
+
+          <h2>if / elif / else</h2>
+          <pre><code>if [[ -f "$file" ]]; then
+  echo "exists"
+elif [[ -d "$file" ]]; then
+  echo "is a dir"
+else
+  echo "missing"
 fi
 
+# Inline (short-circuit)
+[[ -f "$file" ]] && echo "exists" || echo "missing"
+[[ -d "$dir" ]] || mkdir -p "$dir"</code></pre>
+
+          <h2>case</h2>
+          <pre><code>case "$1" in
+  start)   systemctl start nginx ;;
+  stop)    systemctl stop nginx ;;
+  restart) systemctl restart nginx ;;
+  *.gz)    echo "gzip" ;;
+  [0-9]*)  echo "starts with digit" ;;
+  *)       echo "usage: $0 {start|stop|restart}" ; exit 1 ;;
+esac</code></pre>
+
+          <h2>Loops</h2>
+          <pre><code># for (list)
 for f in *.log; do
   [[ -f "$f" ]] || continue
-  lines=$(wc -l &lt; "$f")
-  echo "$f: $lines lines"
+  echo "$f"
 done
 
-# function
-greet() { echo "hi $1"; }
-greet "$NAME"</code></pre>
-          <h2>Tools</h2>
-          <p><code>grep</code>, <code>sed</code>, <code>awk</code>, <code>cut</code>, <code>sort</code>, <code>uniq</code>, <code>tr</code>, <code>xargs</code>, <code>tee</code>, <code>jq</code> (JSON).</p>
+for ip in 192.168.1.{1..10}; do
+  ping -c1 -W1 "$ip" &>/dev/null && echo "$ip up"
+done
+
+# for (C-style)
+for ((i=0; i<10; i++)); do echo "$i"; done
+
+# while
+while read -r line; do
+  echo "got: $line"
+done < /etc/passwd
+
+# until
+until ping -c1 example.com &>/dev/null; do
+  echo "waiting"; sleep 2
+done
+
+# Loop control
+break                              # exit loop
+continue                           # next iteration
+break 2                            # nested loops</code></pre>
+
+          <h2>Functions</h2>
+          <pre><code>greet() {
+  local name=${1:-world}
+  echo "hi $name"
+  return 0                         # exit code 0-255
+}
+
+# Capture stdout
+msg=$(greet alice)
+
+# Return rich values via stdout, exit code for status only
+add() { echo "$(( $1 + $2 ))"; }
+sum=$(add 3 4)
+
+# Local vs global
+counter=0
+bump() { local x=1; counter=$((counter + x)); }
+bump; echo "$counter"   # 1
+
+# Args inside function
+print_all() { for a in "$@"; do echo "$a"; done; }</code></pre>
+
+          <h2>Script arguments + getopts</h2>
+          <pre><code>$0                # script name
+$1 $2 $3          # positional
+$#                # arg count
+$@                # all args as separate words
+$*                # all args as single word
+$$                # script PID
+$!                # last background PID
+$?                # exit code of last command
+shift             # drop $1, shift the rest
+
+# Short options via getopts
+while getopts ":n:vh" opt; do
+  case "$opt" in
+    n) NAME="$OPTARG" ;;
+    v) VERBOSE=1 ;;
+    h) usage; exit 0 ;;
+    \\?) echo "bad option -$OPTARG" >&2; exit 1 ;;
+    :)  echo "-$OPTARG needs arg" >&2; exit 1 ;;
+  esac
+done
+shift $((OPTIND - 1))   # remaining args after flags
+
+# Long options: use 'getopt' (GNU) or argparse-like helpers in newer scripts</code></pre>
+
+          <h2>Reading user input</h2>
+          <pre><code>read -p "Name: " name
+read -s -p "Password: " pw; echo    # silent
+read -t 10 -p "Press enter (10s timeout): " || true
+read -n 1 -p "Continue? (y/n) " ans; echo
+# Read file line by line:
+while IFS= read -r line; do
+  echo "$line"
+done < input.txt</code></pre>
+          <p><b>IFS=</b> empty + <b>-r</b> = read raw (no backslash escape) + preserve leading/trailing whitespace. Standard for file iteration.</p>
+
+          <h2>Error handling + traps</h2>
+          <pre><code>set -euo pipefail
+trap 'rc=$?; echo "ERROR at line $LINENO (rc=$rc)" >&2; exit "$rc"' ERR
+trap 'rm -rf "$tmpdir"' EXIT                          # cleanup
+trap 'echo "Interrupted" >&2; exit 130' INT TERM
+
+tmpdir=$(mktemp -d)
+# ...work...
+
+# Manually trigger on error
+cmd || { echo "cmd failed"; exit 1; }
+
+# Soften set -e for a single command
+some_optional_step || true</code></pre>
+          <p><b>Exit codes</b>: 0 success; non-zero failure. By convention 1-2 general, 126 not executable, 127 not found, 128+N killed by signal N (e.g., 130 = SIGINT/Ctrl+C, 137 = SIGKILL, 143 = SIGTERM).</p>
+
+          <h2>Redirection + pipes</h2>
+          <pre><code>cmd > file               # stdout to file (overwrite)
+cmd >> file              # append
+cmd 2> errors            # stderr to file
+cmd > out 2>&1           # both to one file
+cmd &> out               # bash shortcut
+cmd > /dev/null 2>&1     # discard
+cmd < input              # stdin from file
+cmd1 | cmd2              # pipe
+cmd | tee file           # also save
+process &                # background
+wait                     # wait for all backgrounds
+disown %1                # detach from shell
+exec > out 2>&1          # redirect script's own output</code></pre>
+
+          <h2>Process substitution</h2>
+          <pre><code># Diff outputs of two commands
+diff <(ls /etc) <(ls /tmp)
+# Read both stdin and a file
+paste <(cut -d: -f1 /etc/passwd) <(cut -d: -f6 /etc/passwd)</code></pre>
+
+          <h2>Subshells + grouping</h2>
+          <pre><code>(cd /tmp && ls)                  # subshell — pwd reverts after
+{ cd /tmp; ls; }                  # same shell — pwd actually changes
+( cmd1; cmd2 ) &                  # background a group</code></pre>
+
+          <h2>Globbing</h2>
+          <pre><code>*           any
+?           single char
+[abc]       any of
+[a-z]
+{a,b,c}     brace expansion (NOT a glob — produced by shell before glob)
+shopt -s globstar
+echo **/*.log                     # recursive (bash globstar)
+shopt -s nullglob                 # no match → empty (vs literal pattern)
+shopt -s nocaseglob               # case-insensitive</code></pre>
+
+          <h2>Classic Unix toolset</h2>
+          <pre><code>echo / printf "%s\\n" hi
+cat / tac / head / tail / wc
+nl                                # number lines
+
+# Filtering
+grep 'pattern' file
+grep -i / -r / -v / -E / -F / -c / -n
+egrep ≡ grep -E; fgrep ≡ grep -F (legacy)
+
+# Cutting columns
+cut -d: -f1,3 /etc/passwd
+cut -c1-10 file                   # by characters
+
+# Sorting
+sort file
+sort -n                           # numeric
+sort -r                           # reverse
+sort -k 3                         # by column 3
+sort -t: -k3 -n /etc/passwd       # custom delimiter
+sort -u                           # uniq while sorting
+
+# Unique
+uniq                              # adjacent only — pipe sort first
+sort file | uniq -c | sort -rn
+
+# Translate
+tr 'a-z' 'A-Z' < file
+tr -d ' ' < file                   # delete spaces
+
+# Replace
+sed 's/old/new/' file              # first per line
+sed 's/old/new/g' file             # all
+sed -i 's/old/new/g' file          # in-place edit
+sed -E 's/([0-9]+)/[\\1]/g' file    # extended regex
+sed -n '3p' file                   # print line 3
+sed '/pattern/d' file              # delete matching lines
+
+# AWK — column-aware processing
+awk '{print $1}' file
+awk -F: '{print $1, $7}' /etc/passwd
+awk '$3 > 100 {print $1}' file
+awk 'BEGIN {sum=0} {sum+=$1} END {print sum}' file
+awk -F, '/error/ {count++} END {print count}' csvfile
+awk '{a[$1]++} END {for (k in a) print k, a[k]}' file   # frequency
+
+# Other
+xargs                              # build command lines
+xargs -n 1 -P 4 ./worker.sh < urls.txt    # 4-parallel
+find . -name '*.log' -print0 | xargs -0 wc -l
+tee                                # split stdout to file + screen
+column -t                          # pretty columns
+paste a b                          # merge side-by-side
+join -t: -1 1 -2 1 a b             # SQL-like join
+expand / unexpand                  # tab ↔ spaces
+fold / fmt                         # text reflow
+rev                                # reverse line characters
+shuf                               # randomize order
+seq 1 10                           # 1 2 3 ... 10
+yes 'msg' | head -5                # endless stream
+jq '.field' file.json              # JSON query
+yq                                 # YAML query
+xmllint --xpath '//x' file.xml</code></pre>
+
+          <h2>Regex flavors</h2>
+          <ul>
+            <li><b>BRE</b> (Basic Regex) — default for grep, sed. Some chars need escaping (<code>\\(</code>, <code>\\+</code>).</li>
+            <li><b>ERE</b> (Extended Regex) — <code>grep -E</code>, <code>egrep</code>, <code>sed -E</code>. No escapes for <code>(</code> <code>+</code> <code>|</code>.</li>
+            <li><b>PCRE</b> — <code>grep -P</code> (GNU only); much richer (look-ahead, named groups).</li>
+            <li>Anchors: <code>^</code> start, <code>$</code> end, <code>\\b</code> word boundary.</li>
+            <li>Quantifiers: <code>*</code> 0+, <code>+</code> 1+, <code>?</code> 0/1, <code>{n,m}</code>.</li>
+            <li>Classes: <code>[a-z]</code>, <code>[^...]</code>, <code>[:alpha:]</code>, <code>[:digit:]</code>, <code>[:space:]</code>.</li>
+          </ul>
+
+          <h2>Date + time</h2>
+          <pre><code>date
+date +%F                           # 2026-05-15
+date +%Y%m%d_%H%M%S
+date -d "yesterday" +%F
+date -d "2024-01-01 + 30 days" +%F
+date -u                            # UTC
+TZ=America/Los_Angeles date
+hwclock --systohc                  # sync hardware clock</code></pre>
+
+          <h2>Putting it together — sample useful scripts</h2>
+
+          <h3>Backup with rotation</h3>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+SRC=/etc
+DEST=/backup
+KEEP=14
+mkdir -p "$DEST"
+ts=$(date +%Y%m%d)
+tar -czf "$DEST/etc-$ts.tar.gz" "$SRC"
+find "$DEST" -name 'etc-*.tar.gz' -mtime "+$KEEP" -delete
+echo "backup complete: etc-$ts.tar.gz"</code></pre>
+
+          <h3>Wait for service ready</h3>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+HOST=${1:-localhost}; PORT=${2:-443}; TIMEOUT=${3:-60}
+for ((i=0;i<TIMEOUT;i++)); do
+  if (echo > /dev/tcp/$HOST/$PORT) 2>/dev/null; then
+    echo "$HOST:$PORT ready (after ${i}s)"; exit 0
+  fi
+  sleep 1
+done
+echo "timeout waiting on $HOST:$PORT" >&2; exit 1</code></pre>
+
+          <h3>Bulk SSH-run</h3>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+HOSTS=(srv01 srv02 srv03)
+for h in "${HOSTS[@]}"; do
+  echo "=== $h ==="
+  ssh -o BatchMode=yes -o ConnectTimeout=5 "$h" 'uptime'
+done</code></pre>
+
+          <h3>Reading a CSV</h3>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+while IFS=, read -r user dept email; do
+  [[ "$user" == "user" ]] && continue   # skip header
+  echo "Creating $user ($email) in $dept"
+  # useradd -c "$dept" -m "$user"
+done < users.csv</code></pre>
+
+          <h2>Debugging scripts</h2>
+          <pre><code>bash -n script.sh                  # syntax check, do NOT run
+bash -x script.sh                  # trace (set -x) each command
+bash -xv script.sh                 # also show source lines
+PS4='+ $(date +%T) ${BASH_SOURCE##*/}:$LINENO: ' bash -x script.sh
+shellcheck script.sh               # static analyzer — every script should pass</code></pre>
+
+          <h2>POSIX sh vs bash</h2>
+          <ul>
+            <li>POSIX <code>/bin/sh</code> is the lowest common denominator (dash on Debian/Ubuntu, ash on Alpine, ksh on some).</li>
+            <li>Bash adds: <code>[[ ]]</code>, arrays, brace expansion, <code>$()</code> (also POSIX in modern), process substitution <code>&lt;()</code>, <code>${var^^}</code> case mods.</li>
+            <li>If portability matters, target POSIX + shellcheck with <code>--shell=sh</code>.</li>
+          </ul>
+
+          <h2>Best practices</h2>
+          <ul>
+            <li>Always include <code>#!/usr/bin/env bash</code> + <code>set -euo pipefail</code>.</li>
+            <li>Quote every variable: <code>"$var"</code>.</li>
+            <li>Use <code>$()</code> not backticks.</li>
+            <li>Validate inputs early; usage + exit codes.</li>
+            <li>Use <code>mktemp -d</code> for temp work + trap to clean up on EXIT.</li>
+            <li>Prefer arrays over space-separated strings.</li>
+            <li>Run <code>shellcheck</code> in CI.</li>
+            <li>Avoid parsing <code>ls</code>; iterate globs or use <code>find -print0 | xargs -0</code>.</li>
+            <li>Log to stderr (<code>echo "..." &gt;&amp;2</code>); reserve stdout for data.</li>
+            <li>Keep one script = one purpose; functions per task.</li>
+            <li>Pin tool versions when reproducibility matters.</li>
+            <li>For complex logic, switch to Python instead of fighting bash.</li>
+          </ul>
+
+          <h2>Common gotchas</h2>
+          <ul>
+            <li>Spaces around <code>=</code> in assignment break it.</li>
+            <li>Unquoted globs + spaces in filenames cause word-split bugs.</li>
+            <li><code>$(...)</code> launches a SUBSHELL — variable assignments inside don't survive.</li>
+            <li>Pipes also subshell each stage (lastpipe option changes that).</li>
+            <li>Comparing numbers with <code>==</code> in <code>[[ ]]</code> = string compare; use <code>-eq</code> or <code>(( ))</code>.</li>
+            <li><code>for x in $(ls)</code> breaks on newlines / spaces; prefer globs or find -print0.</li>
+            <li>Forgetting <code>local</code> in functions creates accidental globals.</li>
+            <li>Heredoc with unquoted <code>EOF</code> expands $variables — sometimes you wanted literal.</li>
+            <li>Wrong shebang silently runs under sh, not bash.</li>
+            <li>SUID is IGNORED on shell scripts on modern Linux.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"#!" → shebang line.</li>
+            <li>"Run in current shell, not subshell" → <code>source</code> or <code>. file</code>.</li>
+            <li>"Safer script preamble" → <code>set -euo pipefail</code>.</li>
+            <li>"Iterate file lines safely" → <code>while IFS= read -r line; do ... done < file</code>.</li>
+            <li>"Argument count" → <code>$#</code>; "all args quoted" → <code>"$@"</code>.</li>
+            <li>"Last exit code" → <code>$?</code>.</li>
+            <li>"Background job PID" → <code>$!</code>.</li>
+            <li>"Substring removal longest suffix" → <code>${var%%.*}</code>.</li>
+            <li>"Replace all" → <code>${var//pat/repl}</code>.</li>
+            <li>"Heredoc literal" → quote the terminator: <code>&lt;&lt;'EOF'</code>.</li>
+            <li>"Trace execution" → <code>bash -x</code> or <code>set -x</code>.</li>
+            <li>"Static analyzer" → shellcheck.</li>
+            <li>"AWK column 3 sum" → <code>awk '{s+=$3} END{print s}'</code>.</li>
+            <li>"SED in-place replace" → <code>sed -i 's/old/new/g' file</code>.</li>
+            <li>"Sort uniq + counts" → <code>sort file | uniq -c | sort -rn</code>.</li>
+            <li>"Parallel xargs" → <code>xargs -P N</code>.</li>
+          </ul>
         `
       },
       {
