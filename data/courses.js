@@ -6713,16 +6713,310 @@ tcp.analysis.retransmission</code></pre>
       {
         title: '4. Cryptography Essentials',
         body: `
-          <h2>Symmetric (same key)</h2>
-          <p>AES (current standard, 128/192/256-bit), ChaCha20, 3DES (legacy), DES (broken).</p>
-          <h2>Asymmetric (key pair)</h2>
-          <p>RSA, ECC (smaller keys, same strength), Diffie-Hellman / ECDHE (key exchange).</p>
-          <h2>Hashing</h2>
-          <p>SHA-256, SHA-3, BLAKE2. <b>MD5 & SHA-1 are broken</b> for security. Salt + slow KDF (bcrypt, scrypt, Argon2, PBKDF2) for passwords.</p>
+          <p>Cryptography provides every modern security property: confidentiality (encryption), integrity (hashes / MACs), authenticity + non-repudiation (digital signatures), and key agreement. Exam tests algorithm categories, key sizes, modes, hashing, PKI components, and which tool gives which CIA property.</p>
+
+          <h2>Goals + properties cryptography gives you</h2>
+          <ul>
+            <li><b>Confidentiality</b> — encryption.</li>
+            <li><b>Integrity</b> — hashing, MAC, digital signature.</li>
+            <li><b>Authentication</b> — digital signatures, certificates, MACs.</li>
+            <li><b>Non-repudiation</b> — digital signatures (private key proves sender).</li>
+            <li><b>Key exchange</b> — DH / ECDHE.</li>
+            <li><b>Obfuscation</b> — encoding / tokenization (NOT encryption — reversible without key).</li>
+          </ul>
+
+          <h2>Symmetric encryption</h2>
+          <p><b>Same key</b> encrypts + decrypts. Fast. Used for bulk data.</p>
+
+          <h3>Algorithms</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Cipher</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Block / Key size</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Status</th></tr>
+            <tr><td><b>AES</b> (Rijndael)</td><td>Block</td><td>128-bit block, 128/192/256-bit key</td><td>Current standard</td></tr>
+            <tr><td><b>ChaCha20</b></td><td>Stream</td><td>256-bit key</td><td>Modern, fast in software</td></tr>
+            <tr><td><b>3DES (TDES)</b></td><td>Block</td><td>64-bit block, 112-bit effective key</td><td>Deprecated</td></tr>
+            <tr><td><b>DES</b></td><td>Block</td><td>56-bit key</td><td>Broken (1997 brute-forced)</td></tr>
+            <tr><td><b>Blowfish</b></td><td>Block</td><td>64-bit, 32-448-bit key</td><td>Legacy</td></tr>
+            <tr><td><b>Twofish</b></td><td>Block</td><td>128-bit, up to 256-bit key</td><td>Legacy alternative</td></tr>
+            <tr><td><b>RC4</b></td><td>Stream</td><td>40-2048-bit key</td><td>Broken; banned in TLS</td></tr>
+          </table>
+
+          <h3>Block cipher modes of operation</h3>
+          <ul>
+            <li><b>ECB</b> (Electronic Code Book) — same plaintext block → same ciphertext block. Leaks patterns. NEVER USE.</li>
+            <li><b>CBC</b> (Cipher Block Chaining) — XORs each block with previous ciphertext + IV. Padding-oracle attacks possible (POODLE).</li>
+            <li><b>CFB / OFB</b> — feedback modes.</li>
+            <li><b>CTR</b> (Counter) — parallelizable. No padding needed.</li>
+            <li><b>GCM</b> (Galois/Counter Mode) — <b>AEAD</b> (Authenticated Encryption with Associated Data). Provides confidentiality + integrity in one. Current best.</li>
+            <li><b>CCM</b> — Counter with CBC-MAC. AEAD used in WPA2.</li>
+            <li><b>XTS</b> — Tweakable mode for disk encryption (BitLocker, FileVault, LUKS use AES-XTS).</li>
+            <li><b>SIV</b> — nonce-misuse-resistant AEAD.</li>
+          </ul>
+
+          <h3>Pros + cons of symmetric</h3>
+          <ul>
+            <li>Pros: Very fast (hardware-accelerated AES-NI). Compact ciphertext.</li>
+            <li>Cons: Key distribution problem — both parties must share key safely (solved by asymmetric crypto in TLS handshake).</li>
+          </ul>
+
+          <h2>Asymmetric (public-key) cryptography</h2>
+          <p><b>Key pair</b>: <b>public key</b> (share with everyone) + <b>private key</b> (keep secret). What one encrypts, the other decrypts. Slower than symmetric — used for key exchange, signatures, small payloads.</p>
+
+          <h3>Algorithms</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Algorithm</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical key size</th></tr>
+            <tr><td><b>RSA</b></td><td>Encrypt / sign / key transport</td><td>2048 (legacy), 3072+ (current)</td></tr>
+            <tr><td><b>ECC</b> (Elliptic Curve)</td><td>Encrypt / sign</td><td>256-bit (≈ RSA-3072 strength)</td></tr>
+            <tr><td><b>ECDSA</b></td><td>Signatures</td><td>256 / 384 / 521-bit curves (P-256, P-384, P-521)</td></tr>
+            <tr><td><b>EdDSA</b> (Ed25519, Ed448)</td><td>Signatures</td><td>256 / 448-bit</td></tr>
+            <tr><td><b>DH</b> (Diffie-Hellman)</td><td>Key exchange</td><td>2048+ for finite-field DH</td></tr>
+            <tr><td><b>ECDHE</b></td><td>Ephemeral key exchange (provides PFS)</td><td>256-bit curve</td></tr>
+            <tr><td><b>DSA</b></td><td>Signatures (legacy)</td><td>1024-3072</td></tr>
+            <tr><td><b>ElGamal</b></td><td>Encrypt / sign</td><td>Variable</td></tr>
+          </table>
+
+          <h3>Why ECC?</h3>
+          <p>Same security as RSA at much smaller key sizes → faster on mobile / IoT, less power, less bandwidth. 256-bit ECC ≈ 3072-bit RSA.</p>
+
+          <h3>Diffie-Hellman + ephemeral variants</h3>
+          <ul>
+            <li><b>DH</b> — both parties agree on shared key without ever transmitting it. Vulnerable to MitM unless authenticated.</li>
+            <li><b>DHE</b> — Ephemeral DH (new key each session). Provides <b>PFS</b>.</li>
+            <li><b>ECDHE</b> — Ephemeral DH over elliptic curves. TLS 1.2/1.3 standard.</li>
+            <li><b>PFS</b> (Perfect Forward Secrecy) — past sessions remain secure even if long-term key is later compromised.</li>
+          </ul>
+
+          <h2>Hybrid encryption (real-world pattern)</h2>
+          <p>TLS, SSH, S/MIME, PGP all use the same recipe:</p>
+          <ol>
+            <li>Use asymmetric (RSA / ECDHE) to exchange / agree a short-lived <b>symmetric session key</b>.</li>
+            <li>Use that symmetric key (AES-GCM / ChaCha20-Poly1305) to encrypt the actual data.</li>
+          </ol>
+          <p>Combines asymmetric key-distribution with symmetric speed.</p>
+
+          <h2>Hashing — one-way functions</h2>
+          <p><b>What:</b> Fixed-size digest produced from any input. Properties:</p>
+          <ul>
+            <li>Deterministic (same input → same hash).</li>
+            <li><b>Preimage resistance</b> — can't recover input from hash.</li>
+            <li><b>Second preimage resistance</b> — can't find another input with same hash.</li>
+            <li><b>Collision resistance</b> — can't find any two inputs sharing a hash.</li>
+            <li>Avalanche effect — tiny input change → totally different hash.</li>
+          </ul>
+
+          <h3>Common hash algorithms</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Algorithm</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Output</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Status</th></tr>
+            <tr><td><b>MD5</b></td><td>128 bits</td><td>Broken; collisions trivial. Non-security use only.</td></tr>
+            <tr><td><b>SHA-1</b></td><td>160 bits</td><td>Broken (SHAttered 2017). Deprecated.</td></tr>
+            <tr><td><b>SHA-256</b> / <b>SHA-384</b> / <b>SHA-512</b></td><td>256 / 384 / 512 bits</td><td>SHA-2 family. Current standard.</td></tr>
+            <tr><td><b>SHA-3</b></td><td>variable (Keccak-based)</td><td>Modern, parallel-friendly.</td></tr>
+            <tr><td><b>BLAKE2</b> / <b>BLAKE3</b></td><td>variable</td><td>Very fast, secure.</td></tr>
+            <tr><td><b>RIPEMD-160</b></td><td>160 bits</td><td>Legacy, used in Bitcoin addresses.</td></tr>
+          </table>
+
+          <h3>Salting + KDFs (Key Derivation Functions)</h3>
+          <p>Plain SHA-256 of a password is brute-forceable on a GPU at billions of guesses/sec. Use SLOW KDFs designed for password hashing.</p>
+          <ul>
+            <li><b>PBKDF2</b> — Password-Based Key Derivation Function 2 (RFC 8018). Iterates HMAC + salt many times. Use ≥ 600,000 iterations w/ SHA-256.</li>
+            <li><b>bcrypt</b> — Blowfish-based, adjustable cost factor.</li>
+            <li><b>scrypt</b> — memory-hard; resists GPU/ASIC.</li>
+            <li><b>Argon2id</b> — modern OWASP-recommended winner of Password Hashing Competition (2015). Memory + time hard.</li>
+          </ul>
+          <p><b>Salt</b> — unique random per-password value stored alongside the hash. Defeats rainbow tables; ensures identical passwords don't share hashes.</p>
+          <p><b>Pepper</b> — site-wide secret added to the password before hashing (stored separately from DB). Optional extra layer.</p>
+
+          <h2>MAC — Message Authentication Code</h2>
+          <ul>
+            <li>Symmetric-key value providing integrity + authenticity.</li>
+            <li><b>HMAC</b> (Hash-based MAC) — HMAC-SHA-256 etc. Used in API auth, JWT (HS256).</li>
+            <li><b>CMAC</b> / <b>GMAC</b> — block-cipher MACs.</li>
+            <li><b>Poly1305</b> — paired with ChaCha20 for AEAD.</li>
+          </ul>
+          <p>Verifies sender knows shared key + message wasn't altered. Doesn't provide non-repudiation (both parties share key).</p>
+
           <h2>Digital signatures</h2>
-          <p>Sign with private, verify with public. Provides integrity + authentication + non-repudiation.</p>
-          <h2>PKI</h2>
-          <p>CA issues certs, RA verifies identity, CRL & OCSP revocation. X.509 cert holds public key + identity + CA signature.</p>
+          <ul>
+            <li>Sign = hash message → encrypt hash with sender's <b>private</b> key.</li>
+            <li>Verify = decrypt signature with sender's <b>public</b> key → compare to recomputed hash.</li>
+            <li>Provides <b>integrity</b> (hash check), <b>authentication</b> (only key owner could sign), <b>non-repudiation</b> (sender can't deny).</li>
+            <li>Algorithms: RSA-PSS, RSA-PKCS#1 v1.5, ECDSA (P-256/P-384), Ed25519, Ed448.</li>
+            <li>Examples: code signing, S/MIME email, JWT (RS256, ES256, EdDSA), TLS server identity.</li>
+          </ul>
+
+          <h2>PKI — Public Key Infrastructure</h2>
+          <p>The hierarchy + protocols that make public keys trustworthy at scale.</p>
+          <ul>
+            <li><b>CA</b> (Certificate Authority) — issues + signs certificates. Examples: DigiCert, Sectigo, Let's Encrypt, internal AD CS.</li>
+            <li><b>RA</b> (Registration Authority) — verifies identity before CA issues cert.</li>
+            <li><b>Root CA</b> — top of trust chain; offline, ceremoniously protected.</li>
+            <li><b>Intermediate CA</b> — issues end-entity certs; signed by root.</li>
+            <li><b>End-entity / leaf cert</b> — what your web server presents.</li>
+            <li><b>Trust store / Root Store</b> — list of trusted root CAs in OS / browser (Mozilla, Apple, Microsoft, Java).</li>
+          </ul>
+
+          <h3>X.509 cert contents</h3>
+          <ul>
+            <li>Subject (Common Name / CN, DNS Subject Alternative Names / SANs).</li>
+            <li>Issuer.</li>
+            <li>Public key.</li>
+            <li>Validity period (NotBefore, NotAfter).</li>
+            <li>Serial number.</li>
+            <li>Signature algorithm + signature value.</li>
+            <li>Extensions: Key Usage, Extended Key Usage, AIA (CA Issuer URL + OCSP), CRL distribution point, SCTs (Certificate Transparency).</li>
+          </ul>
+
+          <h3>Validation levels</h3>
+          <ul>
+            <li><b>DV</b> (Domain Validation) — proves domain control via HTTP / DNS / email challenge. Cheap / instant. Let's Encrypt.</li>
+            <li><b>OV</b> (Organization Validation) — verifies the organization is real.</li>
+            <li><b>EV</b> (Extended Validation) — thorough legal verification. (Browsers no longer show green bar.)</li>
+          </ul>
+
+          <h3>Cert formats / file extensions</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Format</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Encoding</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td><b>.pem</b></td><td>Base64 text</td><td>Most common; can hold cert, chain, key. Begins with -----BEGIN CERTIFICATE-----</td></tr>
+            <tr><td><b>.crt</b> / <b>.cer</b></td><td>PEM or DER</td><td>Just the cert.</td></tr>
+            <tr><td><b>.der</b></td><td>Binary</td><td>Same data, binary form.</td></tr>
+            <tr><td><b>.key</b></td><td>PEM</td><td>Private key. Protect with strong passphrase.</td></tr>
+            <tr><td><b>.csr</b></td><td>PEM</td><td>Certificate Signing Request sent to a CA.</td></tr>
+            <tr><td><b>.p12</b> / <b>.pfx</b></td><td>PKCS#12 binary</td><td>Cert + private key + chain, password-protected.</td></tr>
+            <tr><td><b>.p7b</b> / <b>.p7c</b></td><td>PKCS#7</td><td>Just cert chain (no key).</td></tr>
+            <tr><td><b>.jks</b></td><td>Java KeyStore</td><td>Java-specific.</td></tr>
+          </table>
+
+          <h3>Cert lifecycle</h3>
+          <ol>
+            <li>Generate key pair locally.</li>
+            <li>Create CSR (Certificate Signing Request) with public key + subject info.</li>
+            <li>Submit to CA. RA verifies.</li>
+            <li>CA signs + returns cert.</li>
+            <li>Install on server with private key.</li>
+            <li>Monitor expiration (set alerts; auto-renew with ACME).</li>
+            <li>Revoke if compromised.</li>
+          </ol>
+
+          <h3>Revocation</h3>
+          <ul>
+            <li><b>CRL</b> (Certificate Revocation List) — periodically-updated list of revoked serials. Bulky.</li>
+            <li><b>OCSP</b> (Online Certificate Status Protocol) — query CA in real time. Privacy concern: CA learns who you connect to.</li>
+            <li><b>OCSP Stapling</b> — server pre-fetches signed OCSP response + delivers with TLS handshake. Privacy + speed.</li>
+            <li><b>Must-staple</b> X.509 extension — requires OCSP staple.</li>
+          </ul>
+
+          <h3>Certificate Transparency (CT)</h3>
+          <p>Public append-only logs of every cert issued by participating CAs. Detects misissuance + rogue CAs. Browsers require <b>SCT</b> (Signed Certificate Timestamp) in modern certs.</p>
+
+          <h3>ACME + Let's Encrypt</h3>
+          <ul>
+            <li><b>ACME</b> (Automatic Certificate Management Environment) — RFC 8555. Automated cert issuance + renewal.</li>
+            <li><b>Let's Encrypt</b> — free CA running ACME. 90-day certs to encourage automation.</li>
+            <li>Tools: certbot, acme.sh, lego, win-acme.</li>
+          </ul>
+
+          <h3>Other PKI pieces</h3>
+          <ul>
+            <li><b>HSM</b> (Hardware Security Module) — FIPS-validated tamper-resistant device holding keys. Used by CAs + payment processors. Examples: Thales Luna, AWS CloudHSM, YubiHSM.</li>
+            <li><b>KMS</b> (Key Management Service) — cloud-managed (AWS KMS, Azure Key Vault, GCP KMS).</li>
+            <li><b>TPM</b> (Trusted Platform Module) — endpoint hardware key store.</li>
+            <li><b>Secure Enclave / TEE</b> (Trusted Execution Environment).</li>
+            <li><b>BYOK / CMK</b> — Customer-Managed Keys.</li>
+            <li><b>HYOK</b> (Hold Your Own Key) — keys stay entirely on-prem; cloud calls back.</li>
+            <li><b>Key escrow</b> — third party holds copies (for recovery, law).</li>
+            <li><b>M-of-N split key</b> / Shamir's Secret Sharing — k of n parts required to reconstruct.</li>
+          </ul>
+
+          <h2>TLS handshake overview</h2>
+          <ol>
+            <li>Client → Server: ClientHello (supported ciphers, TLS version, SNI, random).</li>
+            <li>Server → Client: ServerHello (chosen cipher), certificate, key share (TLS 1.3) or KEX params.</li>
+            <li>Both derive shared secret via ECDHE.</li>
+            <li>Both switch to symmetric (AES-GCM / ChaCha20-Poly1305) + send Finished.</li>
+            <li>Application data flows encrypted.</li>
+          </ol>
+          <p><b>TLS 1.3</b> (RFC 8446) — 1-RTT (or 0-RTT for resumption), removed weak ciphers, mandatory PFS, fewer messages. Use TLS 1.2 minimum; disable 1.0/1.1/SSLv3.</p>
+
+          <h2>Practical cryptographic protocols</h2>
+          <ul>
+            <li><b>TLS</b> — Web (HTTPS), email (SMTPS, IMAPS, POP3S), DB connections, any TCP service.</li>
+            <li><b>SSH</b> — remote shell + SFTP + tunnels. Ed25519 keys + ChaCha20-Poly1305 modern.</li>
+            <li><b>IPsec</b> — VPN (ESP for confidentiality + integrity, AH for integrity-only).</li>
+            <li><b>WireGuard</b> — modern VPN using Noise protocol + Curve25519 + ChaCha20.</li>
+            <li><b>PGP / GnuPG</b> — file + email signing/encryption with web of trust.</li>
+            <li><b>S/MIME</b> — email signing/encryption via X.509 certs.</li>
+            <li><b>DKIM</b> — DNS-published public key, signs outbound mail.</li>
+            <li><b>Kerberos</b> — symmetric-key ticket-based auth (AD).</li>
+            <li><b>Signal Protocol / Double Ratchet</b> — modern messaging E2EE.</li>
+            <li><b>Cryptocurrency</b> — ECDSA / EdDSA signatures + hash functions.</li>
+          </ul>
+
+          <h2>Key management lifecycle</h2>
+          <ol>
+            <li><b>Generate</b> — strong CSPRNG / HSM.</li>
+            <li><b>Store</b> — HSM / KMS / Key Vault.</li>
+            <li><b>Distribute</b> — secure channel.</li>
+            <li><b>Use</b> — least privilege.</li>
+            <li><b>Rotate</b> — periodically + on compromise. Rotation period per policy / standard.</li>
+            <li><b>Archive</b> — for old encrypted data.</li>
+            <li><b>Destroy</b> — when no longer needed; remove from HSM.</li>
+          </ol>
+
+          <h2>Quantum + post-quantum cryptography (PQC)</h2>
+          <ul>
+            <li><b>Shor's algorithm</b> on a sufficiently large quantum computer breaks RSA, DH, ECC.</li>
+            <li><b>Grover's algorithm</b> halves symmetric strength (AES-256 → 128 effective). Use AES-256.</li>
+            <li>NIST PQC standards (2024):
+              <ul>
+                <li><b>ML-KEM</b> (Module-Lattice KEM, fka Kyber) — key encapsulation.</li>
+                <li><b>ML-DSA</b> (fka Dilithium) — signatures.</li>
+                <li><b>SLH-DSA</b> (fka SPHINCS+) — hash-based signature alt.</li>
+                <li><b>FN-DSA</b> (fka Falcon) — compact signature.</li>
+              </ul>
+            </li>
+            <li>"Harvest now, decrypt later" risk — adversaries capture today's TLS, decrypt when quantum arrives. Sensitive long-life data needs PQC migration plan.</li>
+          </ul>
+
+          <h2>Steganography + obfuscation</h2>
+          <ul>
+            <li><b>Steganography</b> — hides data inside other data (image LSB, audio, video). NOT encryption.</li>
+            <li><b>Tokenization</b> — replaces sensitive value with random token; mapping in a vault. Common in PCI environments.</li>
+            <li><b>Masking</b> — partial reveal (last 4 of SSN).</li>
+            <li><b>Anonymization / pseudonymization</b> — privacy techniques (GDPR-defined).</li>
+            <li><b>Encoding (Base64 / hex / URL)</b> — NOT encryption; trivially reversible.</li>
+          </ul>
+
+          <h2>Common pitfalls</h2>
+          <ul>
+            <li>Rolling your own crypto.</li>
+            <li>Using MD5 / SHA-1 / DES / RC4 / TLS 1.0 in 2026.</li>
+            <li>Hard-coded keys / secrets in code or repos.</li>
+            <li>Reusing IVs in CTR / GCM (catastrophic).</li>
+            <li>Insufficient entropy in random number generation.</li>
+            <li>Storing private keys without HSM / strong protection.</li>
+            <li>Self-signed certs in production without proper distribution of trust.</li>
+            <li>Trusting expired or self-signed certs to bypass warnings ("just click through").</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Same key for encrypt + decrypt" → symmetric.</li>
+            <li>"Public + private key pair" → asymmetric.</li>
+            <li>"Fast bulk data encryption" → symmetric (AES-GCM).</li>
+            <li>"Key exchange + PFS" → ECDHE.</li>
+            <li>"Modern hash" → SHA-256 / SHA-3 / BLAKE3. Avoid MD5, SHA-1.</li>
+            <li>"Slow password hash" → Argon2id (preferred), bcrypt, scrypt, PBKDF2.</li>
+            <li>"Per-user random added to hash" → salt.</li>
+            <li>"Combined hash + key for integrity + auth" → HMAC.</li>
+            <li>"Sign with private, verify with public" → digital signature → integrity + auth + non-repudiation.</li>
+            <li>"Cert + private key bundle" → .pfx / .p12 (PKCS#12).</li>
+            <li>"Real-time revocation check" → OCSP (with stapling preferred).</li>
+            <li>"Free automated cert" → Let's Encrypt + ACME.</li>
+            <li>"Tamper-resistant hardware key store" → HSM.</li>
+            <li>"Disk encryption mode" → AES-XTS.</li>
+            <li>"AEAD mode for TLS" → AES-GCM or ChaCha20-Poly1305.</li>
+            <li>"Quantum-resistant key encapsulation" → ML-KEM (Kyber).</li>
+            <li>"Past sessions safe even if long-term key leaks" → Perfect Forward Secrecy via ephemeral DH.</li>
+          </ul>
         `
       },
       {
