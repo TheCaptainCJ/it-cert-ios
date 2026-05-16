@@ -10452,21 +10452,357 @@ ls /etc/cron.{hourly,daily,weekly,monthly}/  # run-parts dirs
       {
         title: '5. Package Management',
         body: `
-          <h2>Debian / Ubuntu (apt + dpkg)</h2>
-          <pre><code>apt update && apt upgrade
-apt install nginx
-apt remove nginx
-apt search keyword
-dpkg -i pkg.deb
-dpkg -l | grep nginx</code></pre>
-          <h2>RHEL / Fedora (dnf + rpm)</h2>
-          <pre><code>dnf install httpd
-dnf update
-dnf remove httpd
-rpm -ivh pkg.rpm
-rpm -qa | grep httpd</code></pre>
-          <h2>Universal</h2>
-          <p>Snap, Flatpak, AppImage.</p>
+          <p>Linux package managers handle installation, upgrades, removal, dependency resolution, and integrity verification. There are TWO major package formats (<b>.deb</b> for Debian-family, <b>.rpm</b> for RHEL-family) plus several universal formats (Snap, Flatpak, AppImage). Each ecosystem layers a high-level + low-level tool. Exam tests command syntax + which distro uses which tool.</p>
+
+          <h2>Distribution families</h2>
+          <ul>
+            <li><b>Debian-family</b> (Debian, Ubuntu, Mint, Pop!_OS, Kali, Raspberry Pi OS) — <code>.deb</code> packages, <b>apt</b> + <b>dpkg</b>.</li>
+            <li><b>RHEL-family</b> (RHEL, CentOS Stream, Rocky, AlmaLinux, Oracle Linux, Fedora, Amazon Linux 2/2023) — <code>.rpm</code> packages, <b>dnf</b> (or older <b>yum</b>) + <b>rpm</b>.</li>
+            <li><b>openSUSE / SLES</b> — <code>.rpm</code>, <b>zypper</b>.</li>
+            <li><b>Arch / Manjaro / EndeavourOS</b> — rolling release, <code>.pkg.tar.zst</code>, <b>pacman</b>; <b>yay/paru</b> wrap AUR (Arch User Repository).</li>
+            <li><b>Alpine</b> — musl-libc, minimal, container-friendly, <b>apk</b>.</li>
+            <li><b>Gentoo</b> — source-based, <b>Portage</b> / <b>emerge</b>.</li>
+            <li><b>NixOS</b> — declarative, immutable system, <b>nix</b> package manager.</li>
+            <li><b>Slackware</b> — minimal, <b>pkgtool</b>.</li>
+            <li><b>Void</b> — <b>xbps</b>.</li>
+          </ul>
+
+          <h2>Two-tier model on every distro</h2>
+          <ul>
+            <li><b>Low-level tool</b> — manipulates a single package file. Doesn't resolve dependencies. Examples: <code>dpkg</code>, <code>rpm</code>.</li>
+            <li><b>High-level tool</b> — talks to repositories, resolves dependencies, downloads, manages signatures. Examples: <code>apt</code>, <code>dnf</code>, <code>zypper</code>, <code>pacman</code>, <code>apk</code>.</li>
+          </ul>
+          <p>Always prefer high-level commands. Use low-level only for offline / single-package installs.</p>
+
+          <h2>Debian / Ubuntu — apt + dpkg</h2>
+
+          <h3>apt (modern user-facing CLI)</h3>
+          <pre><code>sudo apt update                            # refresh repository index
+sudo apt upgrade                           # upgrade installed packages (within current dist)
+sudo apt full-upgrade                      # upgrade + remove obsolete deps if needed (= dist-upgrade)
+sudo apt install nginx                     # install
+sudo apt install nginx=1.18.0-6ubuntu14.4  # pin a specific version
+sudo apt install ./local.deb               # install a downloaded .deb (resolves deps from repo)
+sudo apt remove nginx                      # remove pkg, keep config
+sudo apt purge nginx                       # remove pkg + config
+sudo apt autoremove                        # remove orphaned dependencies
+sudo apt autoclean                         # delete cached .deb files for removed packages
+
+apt search keyword                         # text search
+apt show nginx                             # detailed info
+apt list --installed
+apt list --upgradable
+apt-cache policy nginx                     # see versions + which repo
+
+# Repository + signing key management
+ls /etc/apt/sources.list /etc/apt/sources.list.d/
+sudo add-apt-repository ppa:repo-owner/ppa
+sudo add-apt-repository --remove ppa:...
+sudo apt-key list                          # legacy; deprecated
+# Modern: place gpg key in /etc/apt/keyrings/ + reference with signed-by= in .list
+
+# Holding versions
+sudo apt-mark hold nginx
+sudo apt-mark unhold nginx
+sudo apt-mark showhold</code></pre>
+
+          <h3>apt vs apt-get vs aptitude</h3>
+          <ul>
+            <li><b>apt</b> — modern user-friendly front-end (recommended interactive use).</li>
+            <li><b>apt-get</b> + <b>apt-cache</b> — older lower-level. Stable scripting interface.</li>
+            <li><b>aptitude</b> — full-screen TUI + alternative resolver.</li>
+          </ul>
+
+          <h3>dpkg (low-level)</h3>
+          <pre><code>sudo dpkg -i pkg.deb                       # install local .deb (no dep resolution!)
+sudo dpkg -r nginx                         # remove
+sudo dpkg -P nginx                         # purge
+dpkg -l | grep nginx                       # list installed (state in 1st column: ii = installed)
+dpkg -L nginx                              # files belonging to pkg
+dpkg -S /usr/sbin/nginx                    # which pkg owns file
+dpkg -c pkg.deb                            # list contents of a .deb without installing
+dpkg --configure -a                        # finish broken installs
+sudo apt --fix-broken install              # repair dependency mess</code></pre>
+
+          <h3>Sources.list format</h3>
+          <pre><code># /etc/apt/sources.list (or /etc/apt/sources.list.d/*.list)
+deb [signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable
+deb-src ...                       # source packages
+
+# Modern DEB822 format (.sources files):
+Types: deb
+URIs: http://archive.ubuntu.com/ubuntu/
+Suites: jammy jammy-updates jammy-security
+Components: main universe multiverse restricted
+Signed-By: /etc/apt/keyrings/ubuntu-archive.gpg</code></pre>
+
+          <h3>Unattended upgrades (auto patching)</h3>
+          <pre><code>sudo apt install unattended-upgrades
+sudo dpkg-reconfigure unattended-upgrades
+# Config: /etc/apt/apt.conf.d/50unattended-upgrades + 20auto-upgrades</code></pre>
+
+          <h2>RHEL / Fedora — dnf + rpm</h2>
+
+          <h3>dnf (replacement for yum)</h3>
+          <pre><code>sudo dnf check-update
+sudo dnf update                            # update all
+sudo dnf upgrade --refresh                 # force refresh metadata first
+sudo dnf install httpd
+sudo dnf install ./local.rpm
+sudo dnf remove httpd
+sudo dnf autoremove
+sudo dnf clean all                         # purge metadata cache
+
+dnf search keyword
+dnf info httpd
+dnf list installed
+dnf list available --showduplicates httpd  # all versions
+dnf history                                # transaction history
+sudo dnf history undo 12                   # undo a transaction
+sudo dnf history rollback 8                # roll back to ID
+
+sudo dnf module list                       # AppStream modules
+sudo dnf module install nodejs:20          # specific stream
+sudo dnf module switch-to nodejs:18
+
+# Groups / environments
+sudo dnf grouplist
+sudo dnf groupinstall "Development Tools"</code></pre>
+
+          <p><b>yum</b> still works as compatibility wrapper on RHEL 8+.</p>
+
+          <h3>rpm (low-level)</h3>
+          <pre><code>sudo rpm -ivh pkg.rpm                      # install verbose with hash
+sudo rpm -Uvh pkg.rpm                      # upgrade
+sudo rpm -e httpd                          # erase
+rpm -qa | grep httpd                       # query all installed
+rpm -qi httpd                              # info
+rpm -ql httpd                              # list files
+rpm -qf /usr/sbin/httpd                    # which pkg owns file
+rpm -V httpd                               # verify integrity (size, mode, md5)
+rpm -qp pkg.rpm --requires                 # show deps of a .rpm file
+rpm --import RPM-GPG-KEY-redhat-release    # add GPG signing key</code></pre>
+
+          <h3>RHEL repository management</h3>
+          <pre><code>ls /etc/yum.repos.d/                       # repo files
+sudo dnf config-manager --add-repo https://example.com/repo.repo
+sudo dnf config-manager --enable epel
+sudo subscription-manager repos --list-enabled  # RHEL only</code></pre>
+          <ul>
+            <li><b>EPEL</b> (Extra Packages for Enterprise Linux) — Fedora-maintained extras for RHEL/CentOS/Rocky.</li>
+            <li><b>Remi, RPM Fusion, ELrepo</b> — common third-party repos.</li>
+            <li><b>AppStream + BaseOS</b> — split repos since RHEL 8.</li>
+          </ul>
+
+          <h3>dnf-automatic (auto patching)</h3>
+          <pre><code>sudo dnf install dnf-automatic
+sudo systemctl enable --now dnf-automatic.timer
+# Config: /etc/dnf/automatic.conf</code></pre>
+
+          <h2>openSUSE / SLES — zypper</h2>
+          <pre><code>sudo zypper refresh                        # update repos
+sudo zypper update                         # patches
+sudo zypper dist-upgrade
+sudo zypper install nginx
+sudo zypper remove nginx
+zypper search keyword
+zypper info nginx
+zypper packages --installed-only
+zypper repos                               # list repos
+sudo zypper addrepo URL alias
+sudo zypper removerepo alias</code></pre>
+
+          <h2>Arch — pacman</h2>
+          <pre><code>sudo pacman -Sy                            # sync repo metadata
+sudo pacman -Syu                           # sync + upgrade
+sudo pacman -S nginx                       # install
+sudo pacman -R nginx                       # remove
+sudo pacman -Rs nginx                      # remove + orphan deps
+sudo pacman -Rns nginx                     # remove + deps + config
+pacman -Ss keyword                         # search remote
+pacman -Qs keyword                         # search installed
+pacman -Qi nginx                           # info
+pacman -Ql nginx                           # files
+pacman -Qo /usr/bin/nginx                  # which pkg owns
+pacman -Qe                                 # explicitly installed (not deps)
+pacman -Qdt                                # orphaned packages
+sudo pacman -Scc                           # clean cache</code></pre>
+          <p><b>AUR</b> (Arch User Repository) accessed via wrappers <b>yay</b> or <b>paru</b>: <code>yay -S package</code>.</p>
+
+          <h2>Alpine — apk</h2>
+          <pre><code>apk update
+apk upgrade
+apk add nginx
+apk del nginx
+apk search keyword
+apk info nginx
+apk info -L nginx                          # files
+apk info -W /usr/sbin/nginx                # which pkg
+apk policy nginx                           # repos + versions
+echo "package=version" >> /etc/apk/world   # constraint</code></pre>
+
+          <h2>Universal package formats</h2>
+
+          <h3>Snap</h3>
+          <p>Canonical-developed, packages app + dependencies + sandboxed runtime. Auto-updates. Default on Ubuntu desktops.</p>
+          <pre><code>snap install firefox
+snap install --classic code                # 'classic' = relaxed confinement
+snap install --channel=edge app
+snap refresh                               # update all
+snap refresh firefox
+snap remove firefox
+snap list
+snap info firefox
+snap revert firefox                        # roll back
+snap connections firefox                   # interfaces (camera, audio)
+snap connect / disconnect</code></pre>
+          <p>Files live in <code>/snap/&lt;name&gt;/&lt;rev&gt;</code>. App data in <code>~/snap/&lt;name&gt;/</code>.</p>
+
+          <h3>Flatpak</h3>
+          <p>Cross-distro, Flathub is the de facto store. Uses runtimes shared across apps. Sandboxed via bubblewrap.</p>
+          <pre><code>flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install flathub org.mozilla.firefox
+flatpak update
+flatpak run org.mozilla.firefox
+flatpak uninstall org.mozilla.firefox
+flatpak list
+flatpak info org.mozilla.firefox
+flatpak permission-set
+flatpak override --user --filesystem=home org.example.App</code></pre>
+
+          <h3>AppImage</h3>
+          <p>Self-contained executable that runs on most distros without installation. No package manager. Make executable + double-click.</p>
+          <pre><code>chmod +x MyApp-x86_64.AppImage
+./MyApp-x86_64.AppImage
+# Optional manager: AppImageLauncher integrates into desktop menu.</code></pre>
+
+          <h3>Container images (Podman / Docker / Kubernetes)</h3>
+          <p>Modern app delivery for servers; ships entire app + deps + minimal OS layer. Outside scope of package managers but increasingly replaces them for web stacks.</p>
+
+          <h2>Repository signing + integrity</h2>
+          <ul>
+            <li><b>GPG signing</b> — every legit repo has a public key; clients verify package signatures before install.</li>
+            <li><b>Debian:</b> <code>/etc/apt/keyrings/*.gpg</code> referenced by <code>signed-by=</code> in .list / .sources.</li>
+            <li><b>RHEL:</b> <code>/etc/pki/rpm-gpg/</code>; enable <code>gpgcheck=1</code> in repo file.</li>
+            <li><b>Never disable signature checks</b> in production.</li>
+            <li><b>Mirror security</b> — TLS to mirror + verify metadata signature (apt InRelease).</li>
+          </ul>
+
+          <h2>Compiling from source (the legacy way)</h2>
+          <pre><code>tar -xzf foo-1.2.3.tar.gz
+cd foo-1.2.3
+./configure --prefix=/usr/local            # generate Makefile
+make                                       # compile
+sudo make install                          # install to prefix
+# Install to /usr/local/ — separate from packaged software, easy uninstall
+# Use checkinstall to wrap in a .deb / .rpm for cleaner removal</code></pre>
+          <p>Required build tools: <code>build-essential</code> (Debian), "Development Tools" group (RHEL), <code>base-devel</code> (Arch).</p>
+
+          <h2>Kernel + driver packages</h2>
+          <ul>
+            <li><b>Kernel packages:</b> <code>linux-image-$(uname -r)</code> (Debian), <code>kernel-core</code> (RHEL).</li>
+            <li><b>Kernel headers:</b> <code>linux-headers</code> / <code>kernel-devel</code> needed for out-of-tree modules (NVIDIA, VirtualBox).</li>
+            <li><b>DKMS</b> (Dynamic Kernel Module Support) — auto-rebuilds modules on kernel upgrade.</li>
+            <li>Old kernels often left installed for rollback; remove with autoremove.</li>
+            <li><b>linux-firmware</b> / <b>iwlwifi-firmware</b> — closed-blob hardware firmware.</li>
+          </ul>
+
+          <h2>System update strategies</h2>
+          <ul>
+            <li><b>Stable + security only</b> — production servers; minimize change.</li>
+            <li><b>Auto-patch security only</b> — unattended-upgrades / dnf-automatic.</li>
+            <li><b>Rolling release</b> — Arch, openSUSE Tumbleweed, Fedora Rawhide. Latest but more breakage.</li>
+            <li><b>Pin a release / version</b> — apt pinning (<code>/etc/apt/preferences.d/</code>), <code>dnf versionlock</code>.</li>
+            <li><b>Test in lab, then prod</b> — match dev/stage/prod to same packages via image build pipelines.</li>
+            <li><b>Immutable / atomic distros</b> — Fedora Silverblue/Kinoite, openSUSE MicroOS, NixOS — updates atomic, rollback safe.</li>
+          </ul>
+
+          <h2>Software bill of materials + supply chain</h2>
+          <ul>
+            <li><b>SBOM</b> (Software Bill of Materials) — inventory of components. Generate with <code>syft</code>, <code>cyclonedx</code>.</li>
+            <li><b>Vuln scanning:</b> <code>grype</code>, <code>trivy</code>, <code>oscap</code> (OpenSCAP), <code>vulscan</code>.</li>
+            <li>SBOM mandates increasing (US EO 14028, EU CRA).</li>
+            <li>Package signature + checksum required for compliance.</li>
+            <li>Reproducible builds + SLSA levels.</li>
+          </ul>
+
+          <h2>Distro hopping cheat sheet (command equivalents)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Action</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Debian / Ubuntu</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RHEL / Fedora</th><th align="left" style="padding:4px;border-bottom:1px solid #444">openSUSE</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Arch</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Alpine</th></tr>
+            <tr><td>Update index</td><td>apt update</td><td>dnf check-update</td><td>zypper refresh</td><td>pacman -Sy</td><td>apk update</td></tr>
+            <tr><td>Upgrade all</td><td>apt upgrade</td><td>dnf update</td><td>zypper update</td><td>pacman -Syu</td><td>apk upgrade</td></tr>
+            <tr><td>Install</td><td>apt install pkg</td><td>dnf install pkg</td><td>zypper install pkg</td><td>pacman -S pkg</td><td>apk add pkg</td></tr>
+            <tr><td>Remove</td><td>apt remove pkg</td><td>dnf remove pkg</td><td>zypper remove pkg</td><td>pacman -R pkg</td><td>apk del pkg</td></tr>
+            <tr><td>Search</td><td>apt search kw</td><td>dnf search kw</td><td>zypper search kw</td><td>pacman -Ss kw</td><td>apk search kw</td></tr>
+            <tr><td>Info</td><td>apt show pkg</td><td>dnf info pkg</td><td>zypper info pkg</td><td>pacman -Qi pkg</td><td>apk info pkg</td></tr>
+            <tr><td>List installed</td><td>dpkg -l</td><td>rpm -qa</td><td>zypper se -i</td><td>pacman -Q</td><td>apk info</td></tr>
+            <tr><td>Which pkg owns file</td><td>dpkg -S /path</td><td>rpm -qf /path</td><td>zypper search --provides /path</td><td>pacman -Qo /path</td><td>apk info -W /path</td></tr>
+            <tr><td>Files in pkg</td><td>dpkg -L pkg</td><td>rpm -ql pkg</td><td>rpm -ql pkg</td><td>pacman -Ql pkg</td><td>apk info -L pkg</td></tr>
+            <tr><td>Clean cache</td><td>apt clean</td><td>dnf clean all</td><td>zypper clean</td><td>pacman -Scc</td><td>apk cache clean</td></tr>
+          </table>
+
+          <h2>Troubleshooting</h2>
+          <ul>
+            <li><b>"Held broken packages"</b> (apt) — <code>sudo apt --fix-broken install</code>; try <code>aptitude</code> for smarter resolver.</li>
+            <li><b>"GPG error: NO_PUBKEY ..."</b> — missing repo key; add via <code>/etc/apt/keyrings</code> or <code>rpm --import</code>.</li>
+            <li><b>"Repomd download failed"</b> (dnf) — connectivity or stale metadata; <code>dnf clean all + dnf makecache</code>.</li>
+            <li><b>Dependency hell</b> on RHEL — check enabled repos; sometimes need EPEL or RHSM subscriptions.</li>
+            <li><b>Disk full during install</b> — clean cache + autoremove + check <code>/var/cache/apt</code> or <code>/var/cache/dnf</code>.</li>
+            <li><b>"Package is not signed"</b> — never disable gpgcheck globally; trust only specific repos.</li>
+            <li><b>Held package by version</b> — <code>apt-mark showhold</code>, <code>dnf versionlock list</code>.</li>
+            <li><b>Snap auto-update timing</b> annoyance — <code>snap refresh --hold</code> or set <code>refresh.hold</code>.</li>
+            <li><b>Flatpak app can't access files</b> — adjust permissions with <code>flatpak override</code>.</li>
+            <li><b>"E: Unable to locate package"</b> (apt) — wrong release name in sources.list; <code>add-apt-repository universe</code>.</li>
+            <li><b>"Conflicts" between packages</b> — sometimes need to remove one or use <code>--allowerasing</code> (dnf).</li>
+          </ul>
+
+          <h2>Best practice patches</h2>
+          <ol>
+            <li>Run security patches promptly; test feature updates in lab first.</li>
+            <li>Maintenance windows for kernel + libc updates (require reboot).</li>
+            <li>Use <code>needs-restarting -r</code> (yum-utils) or <code>checkrestart</code> (debian-goodies) to detect when reboot needed.</li>
+            <li>For zero-downtime kernel updates: <b>kpatch</b> (RHEL), <b>kgraft</b>, <b>livepatch</b> (Ubuntu/Canonical), <b>kABI</b> patches.</li>
+            <li>Document repo configs in version control (Ansible / IaC).</li>
+            <li>Validate package signatures + checksums.</li>
+            <li>SBOM + vuln scanning in CI.</li>
+            <li>Use immutable images for prod (golden image + redeploy, no in-place patching).</li>
+          </ol>
+
+          <h2>Quick exam pattern memory</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">If you see</th><th align="left" style="padding:4px;border-bottom:1px solid #444">It's</th></tr>
+            <tr><td>apt / dpkg / .deb</td><td>Debian / Ubuntu family</td></tr>
+            <tr><td>dnf / yum / rpm / .rpm</td><td>RHEL / Fedora / Rocky / Alma family</td></tr>
+            <tr><td>zypper</td><td>openSUSE / SLES</td></tr>
+            <tr><td>pacman / .pkg.tar.zst</td><td>Arch / Manjaro</td></tr>
+            <tr><td>apk</td><td>Alpine</td></tr>
+            <tr><td>emerge / Portage</td><td>Gentoo</td></tr>
+            <tr><td>nix / nixos-rebuild</td><td>NixOS</td></tr>
+            <tr><td>snap</td><td>Canonical universal</td></tr>
+            <tr><td>flatpak</td><td>Cross-distro universal</td></tr>
+            <tr><td>AppImage</td><td>Self-contained portable</td></tr>
+          </table>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Refresh package metadata" → <code>apt update</code> / <code>dnf check-update</code> / <code>zypper refresh</code> / <code>pacman -Sy</code>.</li>
+            <li>"Upgrade everything safely" → <code>apt upgrade</code> / <code>dnf upgrade</code>.</li>
+            <li>"Cross-distro release upgrade" → <code>apt full-upgrade</code> / <code>dnf system-upgrade</code> / <code>zypper dist-upgrade</code>.</li>
+            <li>"Install local .deb resolving deps" → <code>sudo apt install ./local.deb</code>.</li>
+            <li>"Install local .rpm resolving deps" → <code>sudo dnf install ./local.rpm</code>.</li>
+            <li>"Find which package owns a file" → dpkg -S / rpm -qf / pacman -Qo / apk info -W.</li>
+            <li>"List files in installed pkg" → dpkg -L / rpm -ql / pacman -Ql / apk info -L.</li>
+            <li>"Roll back dnf transaction" → <code>dnf history undo &lt;id&gt;</code>.</li>
+            <li>"Hold package at current version" → <code>apt-mark hold</code> / <code>dnf versionlock</code>.</li>
+            <li>"Auto-patch security on Debian" → unattended-upgrades package.</li>
+            <li>"Auto-patch on RHEL" → dnf-automatic + systemd timer.</li>
+            <li>"Universal sandboxed app store" → Flatpak (Flathub) or Snap.</li>
+            <li>"Self-contained executable, no install" → AppImage.</li>
+            <li>"Extra packages for Enterprise Linux" → EPEL.</li>
+            <li>"Modular stream system on RHEL 8+" → <code>dnf module install pkg:stream</code>.</li>
+            <li>"Live kernel patching" → kpatch / livepatch / kgraft.</li>
+            <li>"Software inventory for vuln scan" → SBOM via syft + grype/trivy.</li>
+          </ul>
         `
       },
       {
