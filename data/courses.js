@@ -4819,17 +4819,242 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
       {
         title: '7. Network Security',
         body: `
-          <h2>Defense layers</h2>
+          <p>Network security is about controlling traffic flow + identifying threats at every layer of the network. Defense-in-depth means stacking multiple controls so a single failure does not breach the whole stack. Exam tests the role of each appliance, common attacks, and protective protocols.</p>
+
+          <h2>Defense-in-depth model</h2>
+          <ol>
+            <li><b>Perimeter</b> — Internet edge firewall, anti-DDoS, IPS.</li>
+            <li><b>Network</b> — segmentation (VLANs, microsegmentation), east-west firewalls.</li>
+            <li><b>Endpoint</b> — host firewall, EDR, patching, hardening.</li>
+            <li><b>Application</b> — WAF, secure coding, input validation.</li>
+            <li><b>Data</b> — encryption at rest + in transit, DLP, classification.</li>
+            <li><b>Identity</b> — strong auth, MFA, conditional access, PAM.</li>
+            <li><b>Physical</b> — locked racks, badge access, cameras.</li>
+            <li><b>Administrative</b> — policies, training, change management.</li>
+          </ol>
+
+          <h2>Firewalls</h2>
+          <p>The fundamental traffic-filtering device. Multiple generations:</p>
           <ul>
-            <li><b>Firewalls</b> — stateful, NGFW (app-aware, IPS, decrypt).</li>
-            <li><b>IDS/IPS</b> — detection vs. prevention inline.</li>
-            <li><b>Proxy</b> — forward (clients) / reverse (servers).</li>
-            <li><b>VPN</b> — IPsec (tunnel/transport), SSL/TLS, WireGuard.</li>
-            <li><b>NAC</b> — 802.1X + RADIUS, posture check before access.</li>
-            <li><b>Zero Trust</b> — never trust, always verify; identity + device + context per request.</li>
+            <li><b>Packet filter (stateless)</b> — matches 5-tuple (src IP, dst IP, src port, dst port, protocol). No memory of past packets. Fast, dumb.</li>
+            <li><b>Stateful firewall</b> — tracks TCP/UDP connection state. Return traffic for an established session is automatically allowed. Industry baseline.</li>
+            <li><b>Circuit-level gateway</b> — works at L4 / session layer.</li>
+            <li><b>Application-layer firewall</b> — understands specific protocols (HTTP, FTP, SQL). Can block by URL, method, content.</li>
+            <li><b>NGFW</b> (Next-Generation Firewall) — combines stateful inspection + application awareness + IPS + TLS inspection + user identity (AD integration) + threat intel feeds. Palo Alto, Fortinet FortiGate, Cisco Firepower, Check Point.</li>
+            <li><b>UTM</b> (Unified Threat Management) — bundle for SMB: firewall + AV + content filter + VPN + IDS in one box.</li>
+            <li><b>WAF</b> (Web Application Firewall) — L7 firewall protecting HTTP/S apps from OWASP-class attacks (SQLi, XSS, CSRF). Examples: Cloudflare, AWS WAF, F5 ASM, ModSecurity.</li>
+            <li><b>FWaaS</b> (Firewall as a Service) — cloud-delivered firewall (Zscaler, Cloudflare One, Cisco Umbrella).</li>
+            <li><b>Host-based firewall</b> — runs on endpoint (Windows Defender Firewall, iptables/nftables, pf).</li>
           </ul>
-          <h2>Attack types</h2>
-          <p>DDoS, ARP poisoning, DNS poisoning, MAC flooding, on-path (MitM), VLAN hopping, rogue DHCP, evil twin.</p>
+          <p><b>Rule basics:</b> Top-down evaluation, FIRST match wins, implicit DENY at the end. Order matters — put most specific rules above broader ones.</p>
+
+          <h2>DMZ / Screened subnet</h2>
+          <p><b>What:</b> A network segment between the Internet and the trusted internal LAN. Hosts public-facing servers (web, mail relay, reverse proxy).</p>
+          <p><b>Why:</b> If a public service is compromised, attackers still face another firewall before reaching the internal LAN.</p>
+          <p>Modern terminology often replaces "DMZ" with "<b>screened subnet</b>".</p>
+
+          <h2>IDS vs IPS</h2>
+          <ul>
+            <li><b>IDS</b> (Intrusion Detection System) — passive monitoring. Sees a copy of traffic (via SPAN port / network TAP) and alerts on signatures or anomalies. Cannot block.</li>
+            <li><b>IPS</b> (Intrusion Prevention System) — inline. Sees + can drop the matching packet in real time.</li>
+            <li><b>HIDS / HIPS</b> — host-based versions.</li>
+            <li><b>NIDS / NIPS</b> — network-based.</li>
+            <li><b>Detection methods:</b>
+              <ul>
+                <li><b>Signature-based</b> — match known patterns.</li>
+                <li><b>Anomaly / behavior-based</b> — learn normal, flag deviation.</li>
+                <li><b>Heuristic</b> — rules + behavior combo.</li>
+              </ul>
+            </li>
+            <li>Examples: Snort, Suricata, Zeek (formerly Bro), Cisco Firepower IPS.</li>
+          </ul>
+
+          <h2>Proxy servers</h2>
+          <ul>
+            <li><b>Forward proxy</b> — sits between client and Internet. Controls + caches + filters outbound. Squid, BlueCoat, Zscaler.</li>
+            <li><b>Reverse proxy</b> — sits in front of backend servers. Hides origin, terminates TLS, caches, security headers. NGINX, HAProxy, Caddy, Cloudflare.</li>
+            <li><b>Transparent proxy</b> — intercepts traffic without client config.</li>
+            <li><b>Web filter / SWG</b> (Secure Web Gateway) — modern URL + content filter + malware sandbox. Often delivered as cloud (SASE component).</li>
+          </ul>
+
+          <h2>VPN — Virtual Private Network</h2>
+          <p>Encrypted tunnel over an untrusted network.</p>
+          <ul>
+            <li><b>Site-to-site VPN</b> — IPsec between two gateways.</li>
+            <li><b>Remote access VPN</b> — client to gateway. Cisco AnyConnect, Palo Alto GlobalProtect, FortiClient.</li>
+            <li><b>IPsec</b> — L3 standard. Two modes:
+              <ul>
+                <li><b>Transport mode</b> — encrypts payload only; original IP header kept. Host-to-host.</li>
+                <li><b>Tunnel mode</b> — encrypts entire packet, new outer IP header. Gateway-to-gateway.</li>
+              </ul>
+            </li>
+            <li><b>IKE</b> (Internet Key Exchange) v1/v2 — negotiates SA (Security Association) + keys for IPsec.</li>
+            <li><b>ESP</b> (Encapsulating Security Payload, IP proto 50) — encryption + integrity.</li>
+            <li><b>AH</b> (Authentication Header, IP proto 51) — integrity only, no encryption.</li>
+            <li><b>SSL/TLS VPN</b> — runs over TCP/443. NAT-friendly. Often clientless via browser portal.</li>
+            <li><b>WireGuard</b> — modern, simple, fast UDP-based VPN. Built into Linux kernel; available everywhere.</li>
+            <li><b>L2TP/IPsec</b> — legacy combo.</li>
+            <li><b>PPTP</b> — broken, never use.</li>
+            <li><b>DMVPN</b> (Cisco Dynamic Multipoint VPN) — hub-and-spoke + on-demand spoke-to-spoke tunnels.</li>
+            <li><b>Split tunnel</b> — only corporate traffic through VPN; rest direct to Internet.</li>
+            <li><b>Full tunnel</b> — every byte through VPN — heavier inspection, more bandwidth use.</li>
+            <li><b>Always-on / Per-app VPN</b> — pushed via MDM.</li>
+          </ul>
+
+          <h2>NAC — Network Access Control</h2>
+          <p><b>What:</b> Authenticates + checks posture of every device BEFORE granting full network access. Enforced via 802.1X + RADIUS at the switch port / Wi-Fi.</p>
+          <p><b>Posture checks:</b> OS patched, AV running + up-to-date, disk encrypted, MDM enrolled, no banned software.</p>
+          <p><b>Outcomes:</b></p>
+          <ul>
+            <li>Compliant → production VLAN.</li>
+            <li>Non-compliant → remediation / quarantine VLAN (only update servers).</li>
+            <li>Unknown → guest VLAN / Internet-only.</li>
+          </ul>
+          <p><b>Examples:</b> Cisco ISE (Identity Services Engine), Aruba ClearPass, Forescout, Microsoft NPS + Intune.</p>
+
+          <h2>802.1X + RADIUS</h2>
+          <ul>
+            <li><b>Supplicant</b> — the client (Windows, Linux, phone, IP phone).</li>
+            <li><b>Authenticator</b> — the switch port or AP.</li>
+            <li><b>Authentication Server</b> — RADIUS (NPS, FreeRADIUS) backed by AD/LDAP.</li>
+            <li><b>EAP methods</b> — EAP-TLS (cert), PEAP-MSCHAPv2 (username/password tunneled), EAP-TTLS, EAP-FAST.</li>
+            <li><b>RADIUS</b> — UDP 1812 auth / 1813 accounting.</li>
+            <li><b>TACACS+</b> (Cisco) — separates auth/authz/acct; encrypts entire payload. TCP 49. Used for device admin.</li>
+            <li><b>Diameter</b> — telco-grade AAA evolution of RADIUS.</li>
+          </ul>
+
+          <h2>Zero Trust</h2>
+          <p><b>Concept:</b> "Never trust, always verify". No implicit trust based on network location — every request authenticated, authorized, and encrypted using least privilege.</p>
+          <p><b>Pillars (NIST SP 800-207):</b></p>
+          <ul>
+            <li>Identity (strong auth, MFA).</li>
+            <li>Device (compliance posture).</li>
+            <li>Network (microsegmentation).</li>
+            <li>Application + Workload (per-app access).</li>
+            <li>Data (classification + encryption).</li>
+            <li>Continuous evaluation + analytics.</li>
+            <li>Automation + orchestration.</li>
+          </ul>
+          <p><b>Implementation:</b> <b>ZTNA</b> (Zero Trust Network Access) brokers per-app access (Zscaler ZPA, Cloudflare Access, Cisco Duo). Replaces traditional flat VPN.</p>
+
+          <h2>Network segmentation</h2>
+          <ul>
+            <li><b>VLANs</b> — logical L2.</li>
+            <li><b>Subnets + ACLs</b> — L3 separation.</li>
+            <li><b>VRFs</b> (Virtual Routing and Forwarding) — multiple isolated routing tables on one device.</li>
+            <li><b>Microsegmentation</b> — host-level / workload-level firewall rules (VMware NSX, Illumio, Akamai Guardicore).</li>
+            <li><b>Air-gap</b> — physically isolated network. Used for OT / ICS / classified.</li>
+            <li><b>Jump box / bastion host</b> — single hardened entry point for admins.</li>
+          </ul>
+
+          <h2>Common L2 attacks + defenses</h2>
+          <ul>
+            <li><b>MAC flooding</b> — attacker fills CAM table → switch falls back to flooding all ports (broadcast hub mode). Defense: <b>Port Security</b> (limit MACs per port).</li>
+            <li><b>ARP poisoning / spoofing</b> — forged ARP replies redirect traffic to attacker. Enables on-path (MitM). Defense: <b>DAI</b> (Dynamic ARP Inspection) + DHCP Snooping.</li>
+            <li><b>DHCP starvation</b> — attacker requests all addresses, exhausts pool. Defense: DHCP Snooping + Port Security.</li>
+            <li><b>Rogue DHCP server</b> — hands out attacker-controlled DNS / gateway. Defense: <b>DHCP Snooping</b> (trust only specific ports).</li>
+            <li><b>VLAN hopping</b>:
+              <ul>
+                <li>Switch-spoofing (DTP) — disable DTP.</li>
+                <li>Double-tagging — change native VLAN, tag native, prune unused VLANs from trunks.</li>
+              </ul>
+            </li>
+            <li><b>STP attack</b> — attacker becomes root bridge → traffic re-routed. Defense: <b>BPDU Guard</b>, <b>Root Guard</b>.</li>
+            <li><b>CAM overflow + sniffing</b> — see MAC flooding above.</li>
+          </ul>
+
+          <h2>L3 / L4 attacks + defenses</h2>
+          <ul>
+            <li><b>IP spoofing</b> — forge source IP. Defense: <b>uRPF</b> (Unicast Reverse Path Forwarding), edge ingress ACLs, RFC 2827 / BCP 38 filtering.</li>
+            <li><b>SYN flood</b> — half-open TCP exhausts server. Defense: SYN cookies, scrubbing services.</li>
+            <li><b>Smurf / amplification</b> — spoofed broadcast pings. Modern: <b>DNS / NTP / Memcached amplification DDoS</b>.</li>
+            <li><b>Ping flood / ICMP flood</b> — bandwidth saturation. Defense: rate-limit ICMP, scrubbing.</li>
+            <li><b>Teardrop</b> — malformed fragments — historical kernel bug.</li>
+            <li><b>Session hijacking</b> — steal session cookie / token. Defense: HTTPS + HSTS + Secure cookies + short session lifetime + token binding.</li>
+            <li><b>TCP reset attack</b> — forge RST to terminate session. Defense: strong sequence randomization, TCP MD5/AO.</li>
+          </ul>
+
+          <h2>DDoS — Distributed Denial of Service</h2>
+          <p><b>Categories:</b></p>
+          <ul>
+            <li><b>Volumetric</b> — saturate bandwidth (UDP floods, amplification).</li>
+            <li><b>Protocol</b> — exhaust state on devices (SYN flood, Ping of Death).</li>
+            <li><b>Application-layer (L7)</b> — slow Loris, HTTP flood — small bandwidth but exhausts app threads.</li>
+          </ul>
+          <p><b>Defenses:</b> Provider-side scrubbing (Cloudflare Magic Transit, AWS Shield Advanced, Akamai Prolexic, Azure DDoS Protection Standard), anycast networks, rate limiting, WAF rules, CDN absorption, on-prem mitigation appliances.</p>
+
+          <h2>DNS attacks</h2>
+          <ul>
+            <li><b>DNS cache poisoning</b> — inject false records into resolver cache. Defense: DNSSEC, source-port randomization, query case randomization, encrypted DNS (DoT / DoH).</li>
+            <li><b>DNS amplification</b> — spoofed query → large response sent to victim.</li>
+            <li><b>DNS tunneling</b> — exfil via crafted DNS queries. Defense: DNS firewall / threat intel feeds, monitor query volume / entropy.</li>
+            <li><b>Domain hijacking</b> — registrar account compromise. Defense: registrar MFA, registry lock.</li>
+            <li><b>Subdomain takeover</b> — dangling CNAME pointing to deleted cloud resource. Defense: lifecycle DNS audit.</li>
+          </ul>
+
+          <h2>Wireless attacks (recap from A+ Core 2)</h2>
+          <ul>
+            <li>Evil twin / rogue AP — WIPS + WPA2/3 Enterprise + server cert validation.</li>
+            <li>Deauth flood — PMF / 802.11w.</li>
+            <li>WPS brute force — disable WPS.</li>
+            <li>KRACK (WPA2 handshake reinstall) — patched OS / firmware.</li>
+          </ul>
+
+          <h2>Encryption protocols + ciphers worth knowing</h2>
+          <ul>
+            <li><b>TLS 1.2 / 1.3</b> — secure transport. AEAD ciphers (AES-GCM, ChaCha20-Poly1305).</li>
+            <li><b>SSH</b> — TCP 22. Modern key pair = Ed25519.</li>
+            <li><b>HTTPS</b> — HTTP over TLS, port 443.</li>
+            <li><b>SFTP</b> (SSH File Transfer) — preferred over FTP.</li>
+            <li><b>FTPS</b> — FTP over TLS. Two modes: implicit (990), explicit (21 + STARTTLS).</li>
+            <li><b>IPsec</b> — ESP for confidentiality + integrity.</li>
+            <li><b>WireGuard</b> — Noise protocol + Curve25519 + ChaCha20.</li>
+            <li><b>S/MIME</b> + <b>PGP/GPG</b> — email signing + encryption.</li>
+          </ul>
+
+          <h2>Monitoring + visibility</h2>
+          <ul>
+            <li><b>SIEM</b> (Security Information and Event Management) — central log + correlation. Splunk, QRadar, Microsoft Sentinel, Elastic SIEM.</li>
+            <li><b>SOAR</b> — automated response playbooks.</li>
+            <li><b>NetFlow / sFlow / IPFIX</b> — flow records for analytics.</li>
+            <li><b>SNMPv3</b> — encrypted polling + traps for device health.</li>
+            <li><b>Syslog</b> — UDP 514; severity 0 (emerg) → 7 (debug).</li>
+            <li><b>NDR</b> (Network Detection &amp; Response) — behavior analytics on traffic.</li>
+            <li><b>Honeypots / honeynets</b> — decoy systems to detect + study attackers.</li>
+          </ul>
+
+          <h2>Hardening checklist for any network device</h2>
+          <ol>
+            <li>Change default credentials; enforce strong password / MFA on admin.</li>
+            <li>Update firmware regularly.</li>
+            <li>Disable unused services (Telnet, HTTP, SNMPv1/v2c, default SNMP communities).</li>
+            <li>Enable SSH + HTTPS for management; disable Telnet + HTTP.</li>
+            <li>Use a dedicated management VLAN or out-of-band network.</li>
+            <li>Configure NTP for accurate logs.</li>
+            <li>Send logs to central SIEM.</li>
+            <li>Apply least-privilege admin roles (RADIUS / TACACS+).</li>
+            <li>Enable port security, BPDU Guard, DHCP Snooping, DAI on access switches.</li>
+            <li>Apply ACLs on all ingress + egress.</li>
+            <li>Document configuration + back it up (TFTP / SCP / Git).</li>
+          </ol>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>"Inline blocking" → IPS. "Passive alerting" → IDS.</li>
+            <li>"Stops OWASP web attacks" → WAF.</li>
+            <li>"Hides backend, terminates TLS" → reverse proxy.</li>
+            <li>"Posture check before granting VLAN" → NAC (802.1X + RADIUS).</li>
+            <li>"Authenticates frames + encrypts management frames" → 802.11w PMF (WPA3 mandatory).</li>
+            <li>"Per-app brokered access instead of flat VPN" → ZTNA.</li>
+            <li>"Prevents attacker from filling MAC table" → Port Security.</li>
+            <li>"Detect + block rogue DHCP" → DHCP Snooping.</li>
+            <li>"Detect + block ARP spoofing" → Dynamic ARP Inspection.</li>
+            <li>"Validate origin of routing announcements" → RPKI.</li>
+            <li>"Mitigate volumetric DDoS" → upstream scrubbing / anycast CDN.</li>
+            <li>"Encrypted DNS queries" → DoT / DoH.</li>
+            <li>"Single hardened entry point for admin SSH" → jump box / bastion host.</li>
+            <li>"Tunnel mode IPsec vs Transport" → tunnel = encrypt entire packet + new outer IP header; transport = encrypt payload only.</li>
+          </ul>
         `
       },
       {
