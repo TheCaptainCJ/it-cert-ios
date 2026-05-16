@@ -3584,19 +3584,170 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
       {
         title: '1. OSI Model',
         body: `
-          <h2>The 7 layers</h2>
+          <p><b>OSI</b> = Open Systems Interconnection model. A 7-layer conceptual framework (ISO/IEC 7498-1, 1984) that describes how data moves from one application to another across a network. Real protocols (TCP/IP) don't map perfectly, but exam questions still reference OSI layers. Memorize the layer numbers, their function, what device + PDU lives there, and what kinds of problems show up at each layer.</p>
+
+          <h2>Why a model at all?</h2>
+          <ul>
+            <li><b>Common language</b> — every vendor, OS, and protocol designer talks about "Layer 2 issue" or "Layer 7 firewall" with the same meaning.</li>
+            <li><b>Troubleshooting structure</b> — start at L1 (cable/link) and work UP, or at L7 (app) and work DOWN.</li>
+            <li><b>Encapsulation</b> — each layer wraps the layer above with its own header, like nested envelopes. Reversed (decapsulation) on the receiving side.</li>
+            <li><b>Separation of concerns</b> — Ethernet doesn't care about HTTP; TCP doesn't care about cabling.</li>
+          </ul>
+
+          <h2>Mnemonics</h2>
+          <p>Top-down (Layer 7 → 1): <b>"All People Seem To Need Data Processing"</b><br>
+          Bottom-up (Layer 1 → 7): <b>"Please Do Not Throw Sausage Pizza Away"</b></p>
+
+          <h2>Layer 1 — Physical</h2>
+          <p><b>What:</b> Actual transmission of bits over a physical medium — copper voltage levels, optical light pulses, radio waves.</p>
+          <p><b>Why:</b> Defines connectors, cable types, signaling, voltages, distances, encoding (Manchester, 8b/10b, 64b/66b).</p>
+          <p><b>Devices:</b> Hubs, repeaters, transceivers (SFP/QSFP), cables, connectors (RJ45, LC, SC), patch panels, NIC physical layer.</p>
+          <p><b>PDU:</b> <b>Bits</b> (1s and 0s as voltage / light / RF).</p>
+          <p><b>Typical issues:</b> Bad cable, bent pins, broken fiber strand, dead transceiver, EMI, kinked cable, wrong cable category.</p>
+          <p><b>Tools:</b> Cable tester, certifier, TDR, OTDR, tone generator, light meter, multimeter.</p>
+
+          <h2>Layer 2 — Data Link</h2>
+          <p><b>What:</b> Handles node-to-node delivery within the same network segment. Frames the bits, adds error detection (CRC), and addresses devices using MAC.</p>
+          <p><b>Sublayers (IEEE 802):</b></p>
+          <ul>
+            <li><b>LLC</b> (Logical Link Control, 802.2) — handles flow + error control, identifies the upper-layer protocol (e.g., Ethertype 0x0800 = IPv4).</li>
+            <li><b>MAC</b> (Media Access Control) — defines how frames are placed onto the wire (CSMA/CD historically, full-duplex switching today).</li>
+          </ul>
+          <p><b>Devices:</b> Switches (modern L2), wireless access points, bridges, NICs (data-link half).</p>
+          <p><b>PDU:</b> <b>Frame</b> (header includes source/destination MAC, length/type, payload, CRC trailer).</p>
+          <p><b>Key concepts:</b> MAC addresses (48-bit, vendor OUI + unique), Ethernet, ARP (Address Resolution Protocol, technically L2/L3 boundary), VLANs (802.1Q tagging), STP (Spanning Tree, 802.1D / RSTP 802.1w), link aggregation (LACP 802.3ad), Power-over-Ethernet (802.3af/at/bt).</p>
+          <p><b>Typical issues:</b> Duplex mismatch, MAC flapping, broadcast storm (STP misconfig), VLAN trunk mismatch, late collisions.</p>
+
+          <h2>Layer 3 — Network</h2>
+          <p><b>What:</b> Logical addressing + routing between different networks. Moves packets across multiple hops.</p>
+          <p><b>Protocols:</b></p>
+          <ul>
+            <li><b>IPv4</b> + <b>IPv6</b> — primary network-layer addressing.</li>
+            <li><b>ICMP</b> (Internet Control Message Protocol) — diagnostics: ping, traceroute, destination-unreachable. Layer 3 by convention.</li>
+            <li><b>IGMP</b> (Internet Group Management Protocol) — multicast group membership.</li>
+            <li><b>IPsec</b> — encryption/auth at L3 (tunnel mode used by VPN gateways).</li>
+            <li>Routing protocols: <b>OSPF</b>, <b>EIGRP</b>, <b>IS-IS</b> (interior); <b>BGP</b> (exterior).</li>
+          </ul>
+          <p><b>Devices:</b> Routers, Layer-3 switches, firewalls (at minimum), some load balancers.</p>
+          <p><b>PDU:</b> <b>Packet</b> (header has source/destination IP, TTL, protocol, etc.).</p>
+          <p><b>Typical issues:</b> Wrong gateway, missing route, ACL drop, IP conflict, MTU/fragmentation, BGP misconfig, asymmetric routing.</p>
+
+          <h2>Layer 4 — Transport</h2>
+          <p><b>What:</b> End-to-end communication between processes. Multiplexing via PORT numbers, reliability, ordering, flow + congestion control.</p>
+          <p><b>Protocols:</b></p>
+          <ul>
+            <li><b>TCP</b> (Transmission Control Protocol) — connection-oriented, reliable byte stream. 3-way handshake (SYN, SYN-ACK, ACK).</li>
+            <li><b>UDP</b> (User Datagram Protocol) — connectionless datagram, fire-and-forget.</li>
+            <li><b>SCTP</b> (Stream Control Transmission Protocol) — used in telecom signaling.</li>
+            <li><b>QUIC</b> — Google-designed, UDP-based, used by HTTP/3.</li>
+          </ul>
+          <p><b>PDU:</b> <b>Segment</b> (TCP) or <b>Datagram</b> (UDP).</p>
+          <p><b>Typical issues:</b> Port blocked by firewall, TCP retransmissions, window-size issues, MSS (Maximum Segment Size) mismatch, RST resets.</p>
+
+          <h2>Layer 5 — Session</h2>
+          <p><b>What:</b> Manages dialogs / sessions between two endpoints. Opens, maintains, and tears down connections; handles synchronization and checkpointing.</p>
+          <p><b>Examples:</b></p>
+          <ul>
+            <li><b>NetBIOS</b> session service (port 139).</li>
+            <li><b>RPC</b> (Remote Procedure Call).</li>
+            <li><b>PPTP</b> / <b>L2TP</b> session establishment (legacy VPN).</li>
+            <li><b>SIP</b> session signaling (VoIP).</li>
+            <li>Database connection pooling logic.</li>
+          </ul>
+          <p><b>PDU:</b> <b>Data</b> (sometimes called "session PDU"). Most modern protocols handle Layer 5 + 6 inside the application protocol itself.</p>
+          <p><b>Typical issues:</b> Half-open sessions, idle timeouts, session-cookie loss, RPC endpoint mapper failure.</p>
+
+          <h2>Layer 6 — Presentation</h2>
+          <p><b>What:</b> Translates data formats between application and network. Encoding, compression, encryption / decryption.</p>
+          <p><b>Examples:</b></p>
+          <ul>
+            <li><b>TLS / SSL</b> — encryption + integrity for TCP-based traffic (HTTPS, IMAPS, SMTPS).</li>
+            <li>Character encodings: ASCII, UTF-8.</li>
+            <li>Data formats: JPEG, GIF, MPEG, MP3, JSON, XML.</li>
+            <li>Compression algorithms (gzip, brotli).</li>
+          </ul>
+          <p><b>PDU:</b> <b>Data</b>.</p>
+          <p><b>Typical issues:</b> Cert expired (TLS), cipher mismatch, charset corruption (mojibake).</p>
+
+          <h2>Layer 7 — Application</h2>
+          <p><b>What:</b> Network services that user-facing applications consume. NOT the application program itself — the protocol the app uses.</p>
+          <p><b>Protocols:</b> HTTP, HTTPS, FTP, SMTP, POP3, IMAP, DNS, DHCP, SSH, RDP, SNMP, LDAP, SIP, Telnet, NTP.</p>
+          <p><b>Devices / appliances:</b> WAF (Web Application Firewall), NGFW with app awareness, application gateways, load balancers in L7 mode, proxies, content filters.</p>
+          <p><b>PDU:</b> <b>Data</b> (sometimes called "message").</p>
+          <p><b>Typical issues:</b> Misconfigured server, wrong DNS record, expired API key, 500-class HTTP errors, app-layer DDoS.</p>
+
+          <h2>Encapsulation walkthrough — sending a web page</h2>
           <ol>
-            <li><b>Physical</b> — cables, signaling, hubs.</li>
-            <li><b>Data Link</b> — MAC addresses, frames, switches.</li>
-            <li><b>Network</b> — IP addresses, routing, routers.</li>
-            <li><b>Transport</b> — TCP/UDP, ports, segments.</li>
-            <li><b>Session</b> — set up/tear down.</li>
-            <li><b>Presentation</b> — encryption, encoding (TLS).</li>
-            <li><b>Application</b> — HTTP, DNS, SMTP.</li>
+            <li>L7 — Browser builds HTTP request "GET /index.html".</li>
+            <li>L6 — TLS encrypts it.</li>
+            <li>L5 — Session keeps track of which TCP connection it belongs to.</li>
+            <li>L4 — TCP wraps it in a segment with source port (random), destination port 443. SYN-ACK handshake established earlier.</li>
+            <li>L3 — IP adds source IP + destination IP, TTL, protocol field.</li>
+            <li>L2 — Ethernet adds source/destination MAC of next hop (ARP-resolved gateway), Ethertype, CRC.</li>
+            <li>L1 — NIC encodes the bits as voltage / light / RF on the medium.</li>
           </ol>
-          <p>Mnemonic top-down: <i>All People Seem To Need Data Processing.</i></p>
-          <h2>PDU per layer</h2>
-          <p>L1 bits → L2 frames → L3 packets → L4 segments/datagrams.</p>
+          <p>Receiver does the reverse: bits → frame → packet → segment → session → decrypt → app.</p>
+
+          <h2>PDU summary table</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PDU</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Address used</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Device</th></tr>
+            <tr><td>7 Application</td><td>Data / message</td><td>—</td><td>WAF, NGFW, proxy</td></tr>
+            <tr><td>6 Presentation</td><td>Data</td><td>—</td><td>TLS terminator</td></tr>
+            <tr><td>5 Session</td><td>Data</td><td>—</td><td>Gateway</td></tr>
+            <tr><td>4 Transport</td><td>Segment (TCP) / Datagram (UDP)</td><td>Port</td><td>L4 load balancer, stateful FW</td></tr>
+            <tr><td>3 Network</td><td>Packet</td><td>IP address</td><td>Router, L3 switch</td></tr>
+            <tr><td>2 Data Link</td><td>Frame</td><td>MAC address</td><td>Switch, AP, bridge, NIC</td></tr>
+            <tr><td>1 Physical</td><td>Bit</td><td>—</td><td>Hub, repeater, cable, SFP</td></tr>
+          </table>
+
+          <h2>TCP/IP model vs OSI</h2>
+          <p>The DoD TCP/IP model used in real-world networking has fewer layers, but maps roughly:</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">TCP/IP layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">OSI equivalent</th></tr>
+            <tr><td>Application</td><td>5–7 (Session, Presentation, Application)</td></tr>
+            <tr><td>Transport</td><td>4 (Transport)</td></tr>
+            <tr><td>Internet</td><td>3 (Network)</td></tr>
+            <tr><td>Network Access / Link</td><td>1–2 (Physical + Data Link)</td></tr>
+          </table>
+
+          <h2>Layer-aware troubleshooting</h2>
+          <p>Two common approaches:</p>
+          <ul>
+            <li><b>Bottom-up</b> — start at L1 (link lights, cables) and rise. Best when "I have no network at all".</li>
+            <li><b>Top-down</b> — start at L7 (does the app open?) and descend. Best when "this one app doesn't work, others do".</li>
+            <li><b>Divide and conquer</b> — start in the middle (can I ping the gateway? does DNS resolve?) and pick a direction.</li>
+          </ul>
+
+          <h2>Layer ↔ tool cheat sheet</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical diagnostic</th></tr>
+            <tr><td>L1</td><td>Link light, cable tester, certifier, OTDR, multimeter</td></tr>
+            <tr><td>L2</td><td>show mac address-table, arp -a, switch port counters, STP analyzer</td></tr>
+            <tr><td>L3</td><td>ping, traceroute, ip route, show ip route, ICMP</td></tr>
+            <tr><td>L4</td><td>nmap, Test-NetConnection, netstat -ano, telnet ip port, ss</td></tr>
+            <tr><td>L5–L7</td><td>curl, browser dev tools, Wireshark filters, log analysis, Postman</td></tr>
+          </table>
+
+          <h2>Common OSI exam mistakes</h2>
+          <ul>
+            <li>Confusing L3 (IP addressing) with L2 (MAC addressing).</li>
+            <li>Treating IPsec as L2 or L4 — it is L3.</li>
+            <li>Saying SSL/TLS is L7 — modern exam-correct answer is L6 (Presentation).</li>
+            <li>Listing routers as L2 — routers are L3 (and they DO read L2 to forward).</li>
+            <li>Forgetting that switches are L2 by default, but L3 switches exist.</li>
+            <li>Confusing the OSI Application layer (protocol) with an end-user app like Chrome.</li>
+          </ul>
+
+          <h2>Exam tips</h2>
+          <ul>
+            <li>Memorize the seven layers IN ORDER with PDUs + devices.</li>
+            <li>"MAC address" → L2; "IP address" → L3; "port number" → L4.</li>
+            <li>"TLS / SSL encryption" → typically L6 Presentation on the exam (some texts place it at 5/6/7 — pick Presentation if available).</li>
+            <li>"Frame" = L2, "Packet" = L3, "Segment / Datagram" = L4.</li>
+            <li>Hub = L1; Switch = L2; Router = L3.</li>
+            <li>Mnemonic top-down: "All People Seem To Need Data Processing."</li>
+            <li>"Customer's email client can't reach server" → walk it from L1 (cable) up through DNS (L7) and TCP/443 connectivity (L4).</li>
+          </ul>
         `
       },
       {
