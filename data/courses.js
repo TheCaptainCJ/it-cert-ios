@@ -18236,6 +18236,12 @@ Import-Clixml procs.xml                            # round-trip with types</code
       {
         title: '4. Flow Control & Functions',
         body: `
+          <h2>Why flow control + functions matter</h2>
+          <p>Flow-control keywords (<code>if</code>, <code>switch</code>, <code>for</code>, <code>foreach</code>, <code>while</code>, <code>do</code>, <code>break</code>, <code>continue</code>, <code>return</code>) let your script make decisions and iterate. <b>Functions</b> turn one-liners into reusable, parameterized building blocks. <b>Advanced functions</b> (with <code>[CmdletBinding()]</code>) make your code indistinguishable from a real cmdlet — pipeline-aware, parameter-validated, supports common parameters (<code>-Verbose</code>, <code>-WhatIf</code>, <code>-ErrorAction</code>).</p>
+
+          <h2>Conditionals</h2>
+
+          <h3>if / elseif / else</h3>
           <pre><code>if ($x -gt 10) {
   "big"
 } elseif ($x -gt 0) {
@@ -18244,38 +18250,236 @@ Import-Clixml procs.xml                            # round-trip with types</code
   "zero or negative"
 }
 
-switch ($status) {
-  "OK"      { "good" }
-  "Warn"    { "watch it" }
-  default   { "unknown" }
+# Ternary (PS 7+)
+$label = $x -gt 0 ? "positive" : "non-positive"
+
+# Null-coalescing (PS 7+)
+$name = $InputName ?? "default"</code></pre>
+          <p><b>Truthiness rules:</b> <code>$null</code>, <code>0</code>, <code>""</code>, empty array <code>@()</code>, and <code>$false</code> are falsy. A single-element array of <code>$false</code> wrapped is truthy (the array exists). String <code>"false"</code> is truthy (non-empty string).</p>
+
+          <h3>switch — pattern matcher</h3>
+          <p>Powerful: matches by value, wildcard, regex, scriptblock, or type. Handles arrays automatically.</p>
+          <pre><code>switch ($status) {
+  "OK"     { "good" }
+  "Warn"   { "watch it" }
+  default  { "unknown" }
 }
 
-foreach ($n in 1..5) { "Number $n" }
+# Wildcard mode
+switch -Wildcard ($file) {
+  "*.log" { "log file" }
+  "*.csv" { "csv file" }
+}
 
+# Regex mode + captured matches
+switch -Regex ($email) {
+  '^(\\w+)@(\\w+)' { "user=$($Matches[1]) domain=$($Matches[2])" }
+}
+
+# Process an array — each element runs all matching cases
+switch (1..10) {
+  { $_ -lt 5 }    { "small: $_" }
+  { $_ % 2 -eq 0 } { "even: $_" }
+}
+
+# Read file lines
+switch -File 'errors.log' {
+  "*FATAL*" { "FATAL line: $_" }
+}</code></pre>
+          <p><b>Switch options:</b> <code>-Wildcard</code>, <code>-Regex</code>, <code>-Exact</code>, <code>-CaseSensitive</code>, <code>-File</code>. Use <code>break</code> in a case to stop matching further cases on the same value.</p>
+
+          <h2>Loops</h2>
+
+          <h3>foreach statement (keyword) — collection iteration</h3>
+          <pre><code>foreach ($n in 1..5) { "Number $n" }
+foreach ($file in Get-ChildItem *.log) { $file.FullName }</code></pre>
+          <p>Distinct from <code>ForEach-Object</code> cmdlet: <code>foreach</code> statement eagerly evaluates the collection (loads it all); <code>ForEach-Object</code> streams one at a time.</p>
+
+          <h3>for — counter loop</h3>
+          <pre><code>for ($i = 0; $i -lt 10; $i++) { "i=$i" }</code></pre>
+
+          <h3>while + do/while + do/until</h3>
+          <pre><code>$i = 0
 while ($i -lt 5) { $i++; "loop $i" }
 
 do {
   $reply = Read-Host "y/n"
 } while ($reply -notin "y","n")
 
-function Get-Square {
+do {
+  $tries++
+  $ok = Try-Login
+} until ($ok -or $tries -ge 3)</code></pre>
+
+          <h3>Loop control</h3>
+          <ul>
+            <li><b>break</b> — exit current loop (or switch case).</li>
+            <li><b>continue</b> — skip to next iteration.</li>
+            <li><b>break LABEL / continue LABEL</b> — target an outer labeled loop (<code>:outer foreach (...)</code>).</li>
+            <li><b>return</b> — exit a function; returns the supplied value AND any prior implicit output of that function.</li>
+          </ul>
+
+          <h2>Functions</h2>
+
+          <h3>Basic function</h3>
+          <pre><code>function Get-Square {
   param([int]$n)
   return $n * $n
 }
-Get-Square -n 7    # 49
+Get-Square -n 7        # 49
+Get-Square 7           # positional</code></pre>
+          <p><b>Return value rule:</b> in PowerShell, EVERY uncaptured expression in the function body becomes output. <code>return</code> is rarely needed and is mostly a flow-control jump. Avoid <code>return $x</code> followed by more code — that code never runs but is misleading.</p>
 
-# Advanced function
-function Get-Status {
-  [CmdletBinding()]
+          <h3>Parameter declaration</h3>
+          <pre><code>function Do-Thing {
   param(
-    [Parameter(Mandatory)][string]$Name,
-    [switch]$Verbose
+    [string]$Name,                                 # untyped default
+    [int]$Count = 1,                               # default value
+    [string[]]$Tags,                               # typed array
+    [switch]$Force                                  # flag (no value)
   )
+  ...
+}</code></pre>
+
+          <h3>Advanced function — the [CmdletBinding()] superpowers</h3>
+          <pre><code>function Get-MyStatus {
+  [CmdletBinding(SupportsShouldProcess, ConfirmImpact='High')]
+  param(
+    [Parameter(Mandatory, Position=0, ValueFromPipeline,
+               ValueFromPipelineByPropertyName, HelpMessage='Service name')]
+    [ValidateNotNullOrEmpty()]
+    [Alias('ComputerName')]
+    [string[]]$Name,
+
+    [Parameter()]
+    [ValidateSet('Started','Stopped','Paused')]
+    [string]$ExpectedStatus = 'Started',
+
+    [Parameter()]
+    [ValidateRange(1, 60)]
+    [int]$TimeoutSec = 10,
+
+    [Parameter()]
+    [ValidatePattern('^\\S+\\.\\S+$')]
+    [string]$Pattern,
+
+    [Parameter()]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$Path
+  )
+  begin   { Write-Verbose "Starting $($MyInvocation.MyCommand.Name)" }
   process {
-    Write-Verbose "Checking $Name"
-    Get-Service -Name $Name -ErrorAction SilentlyContinue
+    foreach ($n in $Name) {
+      if ($PSCmdlet.ShouldProcess($n, 'Stop service')) {
+        Get-Service -Name $n -ErrorAction Stop
+      }
+    }
+  }
+  end     { Write-Verbose 'Done' }
+}</code></pre>
+          <p><b>What you get with <code>[CmdletBinding()]</code>:</b></p>
+          <ul>
+            <li>All Common Parameters automatic: <code>-Verbose</code>, <code>-Debug</code>, <code>-ErrorAction</code>, <code>-WarningAction</code>, <code>-WhatIf</code>, <code>-Confirm</code>, etc.</li>
+            <li><code>$PSCmdlet</code> automatic variable — gives access to <code>WriteVerbose</code>, <code>ShouldProcess</code>, etc.</li>
+            <li>Pipeline input support via <code>ValueFromPipeline</code> / <code>ValueFromPipelineByPropertyName</code>.</li>
+            <li>The <code>begin</code> / <code>process</code> / <code>end</code> block model — same as real cmdlets.</li>
+            <li>Validation attributes — fail fast on bad input.</li>
+          </ul>
+
+          <h3>Validation attributes (memorize)</h3>
+          <ul>
+            <li><b>[ValidateNotNull()]</b> / <b>[ValidateNotNullOrEmpty()]</b> — reject null / empty.</li>
+            <li><b>[ValidateSet('A','B','C')]</b> — only these values; gives tab completion.</li>
+            <li><b>[ValidateRange(min,max)]</b> — numeric range.</li>
+            <li><b>[ValidateLength(min,max)]</b> — string length.</li>
+            <li><b>[ValidatePattern('regex')]</b> — must match regex.</li>
+            <li><b>[ValidateScript({ ... })]</b> — arbitrary boolean check (e.g., file exists).</li>
+            <li><b>[ValidateCount(min,max)]</b> — array element count.</li>
+            <li><b>[AllowNull()]</b> / <b>[AllowEmptyString()]</b> / <b>[AllowEmptyCollection()]</b> — allow when paired with Mandatory.</li>
+          </ul>
+
+          <h3>Parameter sets — mutually exclusive parameter groups</h3>
+          <pre><code>function Get-Thing {
+  [CmdletBinding(DefaultParameterSetName='ByName')]
+  param(
+    [Parameter(ParameterSetName='ByName', Mandatory)][string]$Name,
+    [Parameter(ParameterSetName='ById',   Mandatory)][int]$Id
+  )
+  switch ($PSCmdlet.ParameterSetName) {
+    'ByName' { "lookup by name $Name" }
+    'ById'   { "lookup by id $Id" }
   }
 }</code></pre>
+
+          <h3>Pipeline-aware function (process block)</h3>
+          <pre><code>function Convert-ToMB {
+  param([Parameter(ValueFromPipeline)][long]$Bytes)
+  process { [math]::Round($Bytes / 1MB, 2) }
+}
+Get-ChildItem -File | Select-Object -ExpandProperty Length | Convert-ToMB</code></pre>
+
+          <h3>Splatting — pass parameters as a hashtable</h3>
+          <pre><code>$params = @{
+  Path        = 'C:\\Logs'
+  Filter      = '*.log'
+  Recurse     = $true
+  ErrorAction = 'SilentlyContinue'
+}
+Get-ChildItem @params</code></pre>
+          <p><b>Why use splatting:</b> long parameter lists become readable; reuse the same hashtable across multiple calls; build parameters conditionally.</p>
+
+          <h2>Scope</h2>
+          <p>PowerShell uses lexical scoping: <b>Global</b>, <b>Script</b> (current .ps1 file), <b>Function</b> (current function/block), <b>Local</b>. Use <code>$script:var</code> to reach the script scope; <code>$global:var</code> for global (rarely a good idea).</p>
+
+          <h2>Error handling preview (full lesson later)</h2>
+          <pre><code>try {
+  Get-Item NoSuchFile -ErrorAction Stop
+}
+catch [System.IO.FileNotFoundException] {
+  "file missing"
+}
+catch {
+  "other error: $_"
+}
+finally {
+  "cleanup runs always"
+}</code></pre>
+          <p><b>Critical:</b> <code>try/catch</code> only fires on <b>terminating</b> errors. Most cmdlets emit non-terminating errors — add <code>-ErrorAction Stop</code> to force them into the catch.</p>
+
+          <h2>Comment-based help</h2>
+          <p>Put a special comment block above a function and <code>Get-Help</code> automatically formats it. Tags: <code>.SYNOPSIS</code>, <code>.DESCRIPTION</code>, <code>.PARAMETER Name</code>, <code>.EXAMPLE</code>, <code>.INPUTS</code>, <code>.OUTPUTS</code>, <code>.NOTES</code>, <code>.LINK</code>.</p>
+          <pre><code>&lt;#
+.SYNOPSIS
+  Compute squared value.
+.DESCRIPTION
+  Long form description.
+.PARAMETER n
+  Number to square.
+.EXAMPLE
+  Get-Square -n 4
+  16
+#&gt;
+function Get-Square { param([int]$n) $n*$n }</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>CmdletBinding</b> — attribute turning a function into an "advanced function".</li>
+            <li><b>ShouldProcess / -WhatIf / -Confirm</b> — safety harness for destructive actions.</li>
+            <li><b>splatting</b> — passing a hashtable/array as parameters with <code>@</code>.</li>
+            <li><b>parameter set</b> — named group of mutually exclusive parameters.</li>
+            <li><b>$PSCmdlet</b> — auto variable inside advanced functions; gateway to ShouldProcess, ParameterSetName.</li>
+            <li><b>begin / process / end</b> — block lifecycle for pipeline-aware functions.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Every expression in a function = output. Do NOT debug with <code>Write-Host</code>; it bypasses streams (use <code>Write-Verbose</code>).</li>
+            <li><code>return</code> in PowerShell does not "purify" earlier output — it just stops execution.</li>
+            <li>Pipeline-aware functions need <code>process</code> block — without it, only the LAST piped object is seen.</li>
+            <li><code>foreach</code> statement loads everything; <code>ForEach-Object</code> streams. Choose based on memory.</li>
+            <li><code>switch -Regex</code> populates <code>$Matches</code>; numeric groups by index, named groups with <code>(?&lt;name&gt;...)</code>.</li>
+            <li>Splat key names must EXACTLY match parameter names (or aliases); typos pass silently as positional or fail with "unbound argument".</li>
+          </ul>
         `
       },
       {
