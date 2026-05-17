@@ -3080,6 +3080,200 @@ const COURSES = [
             <li>"Independent fault domain inside a region" → Availability Zone.</li>
             <li>"Pay only for what you use" → measured / metered service.</li>
           </ul>
+
+          <h2>Cloud service model responsibility split (drill the table)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">On-prem</th><th align="left" style="padding:4px;border-bottom:1px solid #444">IaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SaaS</th></tr>
+            <tr><td>Data + identity</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>App</td><td>You</td><td>You</td><td>Shared</td><td>Provider</td></tr>
+            <tr><td>Runtime</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>OS</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Virtualization</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Servers / network / DC</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+          </table>
+          <p><b>Examples:</b> EC2 / Azure VM = IaaS. App Service / Elastic Beanstalk / Cloud Run = PaaS. Microsoft 365 / Salesforce / Workday = SaaS. <b>FaaS</b> (Lambda / Azure Functions / Cloud Run Functions) sits inside PaaS / serverless category.</p>
+
+          <h2>Hypervisor compare table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Hypervisor</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Vendor / license</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical use</th></tr>
+            <tr><td>VMware ESXi + vSphere</td><td>Type 1</td><td>Broadcom (paid, subscription)</td><td>Enterprise datacenter</td></tr>
+            <tr><td>Microsoft Hyper-V</td><td>Type 1 (built into Win Server / Win 10/11 Pro)</td><td>Microsoft</td><td>Windows shops, Azure Stack HCI</td></tr>
+            <tr><td>KVM + QEMU</td><td>Type 1 (Linux kernel)</td><td>Open source</td><td>Cloud (AWS, GCP, Linode); Proxmox; oVirt</td></tr>
+            <tr><td>Xen / XCP-ng</td><td>Type 1</td><td>Open + Citrix</td><td>Legacy AWS, Citrix XenServer</td></tr>
+            <tr><td>Proxmox VE</td><td>Type 1 (KVM + LXC)</td><td>Open</td><td>SMB virtualization / homelab</td></tr>
+            <tr><td>Nutanix AHV</td><td>Type 1 (KVM-derived)</td><td>Vendor HCI</td><td>Hyper-converged appliances</td></tr>
+            <tr><td>VMware Workstation Pro / Fusion</td><td>Type 2</td><td>Free for personal (2024+)</td><td>Engineer desktop</td></tr>
+            <tr><td>VirtualBox</td><td>Type 2</td><td>Oracle open</td><td>Free desktop / training</td></tr>
+            <tr><td>Parallels Desktop</td><td>Type 2</td><td>Corel (paid)</td><td>macOS, Apple Silicon</td></tr>
+            <tr><td>UTM</td><td>Type 2 (QEMU front-end)</td><td>Open</td><td>macOS Apple Silicon ARM/x86 emulate</td></tr>
+            <tr><td>WSL2</td><td>Lightweight Type 1 utilizing Hyper-V</td><td>Microsoft</td><td>Linux on Windows for dev</td></tr>
+          </table>
+
+          <h2>VM core components</h2>
+          <ul>
+            <li><b>vCPU</b> — virtual CPU. Hypervisor schedules onto physical cores; oversubscription possible (more vCPUs than physical cores).</li>
+            <li><b>vRAM</b> — guaranteed (reservation) vs limit; ballooning + transparent page sharing reclaim under pressure.</li>
+            <li><b>Virtual disk (VMDK / VHDX / QCOW2 / RAW)</b> — flat file or block device; thin vs thick provisioning.</li>
+            <li><b>vNIC</b> — virtual NIC bound to a port group / vSwitch / bridge.</li>
+            <li><b>vSwitch / vSphere DSwitch</b> — virtual L2 fabric inside the host.</li>
+            <li><b>Snapshot</b> — point-in-time copy of disk + memory state.</li>
+            <li><b>Template / image</b> — golden master used to clone many VMs.</li>
+            <li><b>Guest tools / agents</b> — VMware Tools, integration services, qemu-guest-agent for time sync + clean shutdown + driver optimization.</li>
+            <li><b>Resource pool</b> — group of VMs with shared CPU/RAM allocation.</li>
+            <li><b>Affinity / anti-affinity rules</b> — keep certain VMs together OR apart on hosts.</li>
+          </ul>
+
+          <h2>Containers vs VMs (modern exam topic)</h2>
+          <ul>
+            <li><b>VM:</b> full guest OS kernel + userspace. Heavier (~GB) but full isolation.</li>
+            <li><b>Container:</b> shares host kernel; isolates only userspace. Lightweight (~MB), boots in seconds.</li>
+            <li><b>Docker</b> — most popular container runtime. <code>docker run</code>, Dockerfile, container registry (Docker Hub).</li>
+            <li><b>Kubernetes (K8s)</b> — container orchestrator; manages clusters of pods.</li>
+            <li><b>OCI</b> (Open Container Initiative) — image + runtime standard (containerd, runc, CRI-O).</li>
+            <li><b>Podman</b> — daemonless alternative to Docker on RHEL/Fedora.</li>
+            <li><b>WSL2 / Hyper-V Containers</b> on Windows.</li>
+            <li><b>Use case split:</b> VMs for "any OS / strict isolation / legacy apps", containers for "12-factor apps / microservices / fast scaling".</li>
+          </ul>
+
+          <h2>Cloud deployment models (memorize)</h2>
+          <ul>
+            <li><b>Public</b> — shared infrastructure on a hyperscaler (AWS / Azure / GCP / Oracle / Alibaba).</li>
+            <li><b>Private</b> — single-tenant; on-prem (VMware Cloud Foundation, OpenStack, Nutanix) or hosted.</li>
+            <li><b>Hybrid</b> — public + private connected (Direct Connect / ExpressRoute / Interconnect + VPN).</li>
+            <li><b>Community</b> — shared by orgs with common requirements (gov / healthcare consortium).</li>
+            <li><b>Multi-cloud</b> — multiple public clouds simultaneously (AWS + Azure + GCP). Avoids vendor lock, regional diversification, best-of-breed services.</li>
+            <li><b>Edge cloud</b> — compute near users (Cloudflare Workers, AWS Wavelength, Azure Stack Edge).</li>
+            <li><b>Sovereign cloud</b> — region-locked for legal jurisdiction (AWS GovCloud, Azure Government, Microsoft Cloud for EU).</li>
+          </ul>
+
+          <h2>Cloud service models — extras beyond IaaS/PaaS/SaaS</h2>
+          <ul>
+            <li><b>FaaS</b> — Function as a Service / serverless (Lambda, Azure Functions, Cloud Run Functions).</li>
+            <li><b>CaaS</b> — Container as a Service (EKS, AKS, GKE, Fargate, Cloud Run).</li>
+            <li><b>DBaaS</b> — managed databases (RDS, Azure SQL, Cloud SQL, DynamoDB, Cosmos DB).</li>
+            <li><b>DaaS</b> — Desktop as a Service (AVD, WorkSpaces, Citrix Cloud, W365).</li>
+            <li><b>STaaS</b> — Storage as a Service (S3, Azure Blob, Cloud Storage).</li>
+            <li><b>BaaS / MBaaS</b> — Backend / Mobile Backend as a Service (Firebase, Supabase).</li>
+            <li><b>IDaaS</b> — Identity as a Service (Entra ID, Okta, Auth0).</li>
+            <li><b>XaaS</b> — Anything as a Service umbrella term.</li>
+            <li><b>iPaaS</b> — Integration Platform as a Service (Mulesoft, Boomi).</li>
+            <li><b>Anthos / Arc / Outposts</b> — bring cloud control plane on-prem.</li>
+          </ul>
+
+          <h2>Cloud regions, AZs, edge — geography drill</h2>
+          <ul>
+            <li><b>Region</b> = collection of datacenters in one geographic area (e.g., AWS us-east-1 = N. Virginia, GCP us-central1 = Iowa).</li>
+            <li><b>AZ</b> = isolated DC inside a region with independent power/cooling/network. Most regions have 3 AZs.</li>
+            <li>Deploy across 2-3 AZs for HA; replicate across regions for DR.</li>
+            <li><b>Latency budget:</b> intra-AZ &lt; 1 ms, intra-region 1-3 ms, cross-region 50-150 ms.</li>
+            <li><b>POP / PoP / edge location</b> — global CDN nodes (CloudFront has 600+, Cloudflare 300+).</li>
+            <li><b>Local zones / wavelength</b> — sub-region presence (AWS Local Zones in major cities).</li>
+            <li><b>Data sovereignty regions</b> — Frankfurt, Dublin, London (GDPR-friendly); GovCloud, China regions for compliance.</li>
+          </ul>
+
+          <h2>Cloud cost optimization levers</h2>
+          <ul>
+            <li><b>Right-sizing</b> — match instance size to actual usage (Compute Optimizer, Azure Advisor).</li>
+            <li><b>Reservations / Savings Plans</b> — 1-3 year commit for 30-72% off.</li>
+            <li><b>Spot / Preemptible</b> — up to 90% off, can be reclaimed.</li>
+            <li><b>Auto-scaling</b> + scale-to-zero for serverless.</li>
+            <li><b>Storage tiering</b> — hot → cool → cold → archive (Glacier Deep Archive 1¢/GB-mo).</li>
+            <li><b>Lifecycle policies</b> auto-tier or delete old data.</li>
+            <li><b>Egress reduction</b> — cross-region + Internet egress is biggest hidden cost; use CloudFront / Cloudflare in front of S3.</li>
+            <li><b>Tagging</b> — chargeback / showback per team or project.</li>
+            <li><b>Budget alerts</b> + spend anomaly detection.</li>
+            <li><b>FinOps</b> discipline — cross-team accountability for cloud spend.</li>
+          </ul>
+
+          <h2>Identity + access in the cloud</h2>
+          <ul>
+            <li><b>Root account / global admin</b> — never use day-to-day; MFA mandatory; lock away credentials.</li>
+            <li><b>IAM users + roles</b> — least privilege; assume roles via STS / managed identities.</li>
+            <li><b>Service-linked roles</b> — service runs with scoped permissions (Lambda execution role, Pod IRSA).</li>
+            <li><b>Federation</b> — SAML / OIDC from corporate IdP (Entra, Okta) into cloud roles.</li>
+            <li><b>MFA</b> + <b>passkeys / FIDO2</b> for admins.</li>
+            <li><b>PIM / JIT elevation</b> — time-boxed admin rights with approvals.</li>
+            <li><b>SCPs / Azure Policy / Org Policies</b> — guardrails that prevent ANY user from taking forbidden actions.</li>
+            <li><b>Service Control Policies + permission boundaries</b> — limit what a role CAN do regardless of attached policies.</li>
+          </ul>
+
+          <h2>Cloud security patterns</h2>
+          <ul>
+            <li><b>Zero trust</b> — every request authenticated, authorized, encrypted; assume hostile network.</li>
+            <li><b>Encryption at rest</b> — default in S3, EBS, Blob, GCS; customer-managed keys via KMS.</li>
+            <li><b>Encryption in transit</b> — TLS everywhere, mutual TLS between services.</li>
+            <li><b>VPC / VNet flow logs</b> — packet metadata for IR + cost analytics.</li>
+            <li><b>WAF / Shield / Cloud Armor</b> — DDoS + L7 protection in front of public endpoints.</li>
+            <li><b>SCP guardrails</b> — block disabling logging, public S3 buckets, regions outside policy.</li>
+            <li><b>CSPM</b> (Cloud Security Posture Management) — Prisma Cloud, Wiz, Defender for Cloud, Lacework. Detects misconfig drift.</li>
+            <li><b>CWPP / CNAPP</b> — workload + cloud-native app protection.</li>
+            <li><b>CASB</b> — SaaS visibility + DLP (Netskope, Microsoft Defender for Cloud Apps).</li>
+          </ul>
+
+          <h2>Backup + DR in cloud</h2>
+          <ul>
+            <li><b>Snapshot</b> stored per region; cross-region copy for DR.</li>
+            <li><b>Cross-account backup</b> recommended to defend against rogue admin / ransomware.</li>
+            <li><b>Immutable / Object Lock</b> — WORM retention on backup buckets.</li>
+            <li><b>Pilot light</b> DR — minimal infrastructure running in DR region, scale up on incident.</li>
+            <li><b>Warm standby</b> — fully built but scaled down DR.</li>
+            <li><b>Multi-site active/active</b> — full DR with traffic split via DNS / Anycast.</li>
+            <li><b>Veeam / Druva / Rubrik / Cohesity</b> integrate with cloud APIs for cross-cloud backup.</li>
+            <li><b>Test failover</b> at least annually; tabletop quarterly.</li>
+          </ul>
+
+          <h2>Cloud networking quick reference</h2>
+          <ul>
+            <li><b>VPC / VNet</b> — your private network; CIDR block (e.g., 10.0.0.0/16).</li>
+            <li><b>Subnets</b> — public (has Internet GW route) vs private (NAT GW only).</li>
+            <li><b>Internet Gateway / NAT Gateway / Egress-only IGW</b> — Internet edge.</li>
+            <li><b>Route tables</b> + association to subnets.</li>
+            <li><b>NSG / Security Group</b> — stateful per-NIC firewall.</li>
+            <li><b>NACL</b> — stateless subnet-level ACL.</li>
+            <li><b>Peering</b> — connect two VPCs (non-transitive).</li>
+            <li><b>Transit Gateway / Virtual WAN</b> — hub-and-spoke routing across many VPCs / on-prem.</li>
+            <li><b>PrivateLink / Private Endpoints</b> — reach managed services without traversing public Internet.</li>
+            <li><b>Direct Connect / ExpressRoute / Interconnect</b> — dedicated private circuits.</li>
+          </ul>
+
+          <h2>Common cloud troubleshooting</h2>
+          <ul>
+            <li><b>"403 on S3 / Blob"</b> → bucket policy + IAM + public-access block + KMS perms; trace with Reachability Analyzer + Access Analyzer.</li>
+            <li><b>"VM can't reach Internet"</b> → public subnet w/ IGW route, or NAT GW; security group + NACL allowing egress.</li>
+            <li><b>"Billing surprise"</b> → check Cost Explorer top services + tags; check egress + NAT GW (very expensive).</li>
+            <li><b>"Service quota exceeded"</b> → submit quota increase ticket; some quotas hard-capped.</li>
+            <li><b>"Region down"</b> → use status page + Service Health; fail over to DR region per runbook.</li>
+            <li><b>"Lambda cold start slow"</b> → Provisioned Concurrency or move to container w/ warm pool.</li>
+            <li><b>"VPN tunnel up but no traffic"</b> → SG / route / NAT mismatch; check encryption domain + Phase 2 selectors.</li>
+            <li><b>"Wrong region by accident"</b> → use SCPs/Azure Policy to restrict region selection.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>VM / vCPU / vRAM / vNIC / vSwitch</b> — virtualization primitives.</li>
+            <li><b>VMM / VMDK / VHDX / QCOW2 / OVA-OVF</b> — hypervisor + disk + appliance formats.</li>
+            <li><b>OCI / CRI / runc / containerd / Docker / K8s / Podman</b> — container stack.</li>
+            <li><b>IaaS / PaaS / SaaS / FaaS / CaaS / DBaaS / DaaS / STaaS / IDaaS / XaaS / iPaaS</b> — service models.</li>
+            <li><b>VPC / VNet / NSG / NACL / IGW / NAT GW / Peering / Transit GW / PrivateLink</b> — cloud networking.</li>
+            <li><b>Direct Connect / ExpressRoute / Interconnect</b> — dedicated cloud links.</li>
+            <li><b>CSPM / CWPP / CNAPP / CASB</b> — cloud security categories.</li>
+            <li><b>HCI / SDN / SD-WAN / SASE / ZTNA</b> — modern infrastructure.</li>
+            <li><b>RPO / RTO / SLA / SLO / SLI</b> — service + reliability metrics.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Bare-metal hypervisor with central management" → ESXi + vCenter (or Hyper-V + SCVMM).</li>
+            <li>"OS patches are MY responsibility" → IaaS.</li>
+            <li>"Provider runs everything including app" → SaaS.</li>
+            <li>"Pay only when code executes" → FaaS / serverless.</li>
+            <li>"Independent fault domains in same region" → Availability Zones.</li>
+            <li>"Dedicated 10 Gbps fiber from datacenter to AWS" → Direct Connect.</li>
+            <li>"Discount up to 90% on interruptible jobs" → Spot / Preemptible instances.</li>
+            <li>"Block disabling logging or making S3 bucket public org-wide" → SCP (AWS) / Azure Policy.</li>
+            <li>"Container orchestrator" → Kubernetes.</li>
+            <li>"Replicate VMs to second region for DR" → cross-region snapshot + warm standby or pilot light.</li>
+          </ul>
         `
       },
       {
