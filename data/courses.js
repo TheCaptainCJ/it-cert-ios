@@ -2414,6 +2414,204 @@ const COURSES = [
             <li>"BIOS settings revert every boot" → dead CMOS battery.</li>
             <li>"AIO" implies liquid cooling.</li>
           </ul>
+
+          <h2>Current consumer socket table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Vendor</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Socket</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Generations</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RAM</th></tr>
+            <tr><td>Intel</td><td>LGA 1700</td><td>LGA</td><td>12th / 13th / 14th gen</td><td>DDR4 or DDR5</td></tr>
+            <tr><td>Intel</td><td>LGA 1851</td><td>LGA</td><td>Core Ultra (Meteor / Arrow Lake)</td><td>DDR5</td></tr>
+            <tr><td>Intel HEDT</td><td>LGA 2066</td><td>LGA</td><td>X299 / Cascade Lake-X</td><td>DDR4 quad-channel</td></tr>
+            <tr><td>Intel Xeon W</td><td>LGA 4677</td><td>LGA</td><td>Sapphire Rapids W</td><td>DDR5 ECC octa-channel</td></tr>
+            <tr><td>AMD</td><td>AM4</td><td>PGA</td><td>Ryzen 1000-5000 (Zen 1-3)</td><td>DDR4</td></tr>
+            <tr><td>AMD</td><td>AM5</td><td>LGA</td><td>Ryzen 7000-9000 (Zen 4 / 5)</td><td>DDR5 only</td></tr>
+            <tr><td>AMD HEDT</td><td>sTRX4 / sWRX8 / sTR5</td><td>LGA</td><td>Threadripper / Pro</td><td>DDR4/5 ECC quad-channel</td></tr>
+            <tr><td>AMD server</td><td>SP3 / SP5 / SP6</td><td>LGA</td><td>EPYC Naples-Genoa-Bergamo-Turin</td><td>DDR4/5 ECC 8-12 channel</td></tr>
+            <tr><td>Apple</td><td>—</td><td>SoC BGA</td><td>M1-M4 family</td><td>Unified LPDDR (soldered)</td></tr>
+            <tr><td>Qualcomm</td><td>—</td><td>SoC BGA</td><td>Snapdragon X (PC), 8 Gen 4 (mobile)</td><td>LPDDR5/5X</td></tr>
+          </table>
+          <p><b>LGA vs PGA vs BGA:</b> LGA = pins on motherboard; PGA = pins on CPU; BGA = balls soldered directly. <b>Bent pins on LGA</b> → motherboard ruined or careful reshape with a needle. <b>Bent pins on PGA</b> → CPU ruined. Mobile + Apple Silicon use BGA = no upgrades.</p>
+
+          <h2>CPU feature flags worth memorizing</h2>
+          <ul>
+            <li><b>VT-x / VT-d</b> (Intel) — virtualization extensions + IOMMU for PCIe passthrough.</li>
+            <li><b>AMD-V / AMD-Vi (IOMMU)</b> — equivalent.</li>
+            <li><b>SLAT / EPT / RVI</b> — Second Level Address Translation. Required by Hyper-V, modern hypervisors.</li>
+            <li><b>NX / XD</b> (No-Execute / eXecute Disable) — DEP marker; mandatory for Windows 8+.</li>
+            <li><b>SSE / AVX / AVX2 / AVX-512</b> — SIMD extensions.</li>
+            <li><b>AES-NI</b> — hardware AES encryption acceleration. Speeds up BitLocker, TLS, ZFS.</li>
+            <li><b>SHA-NI</b> — hardware SHA-1/256.</li>
+            <li><b>RDRAND / RDSEED</b> — on-die hardware RNG.</li>
+            <li><b>TXT / SGX</b> (Intel) — trusted execution / secure enclaves.</li>
+            <li><b>TME / SME / SEV</b> — full-memory encryption (Intel TME / AMD Secure Memory Encryption / SEV for VMs).</li>
+            <li><b>Hyper-Threading / SMT</b> — two threads per core; turn off if mitigating Spectre/MDS exotic threats.</li>
+            <li><b>E-cores vs P-cores</b> (Intel hybrid) — Performance (big) + Efficient (little) cores; Thread Director schedules.</li>
+          </ul>
+
+          <h2>UEFI / BIOS detailed feature set</h2>
+          <ul>
+            <li><b>Secure Boot</b> — only OS loaders signed by a trusted authority run.</li>
+            <li><b>TPM 2.0</b> — Trusted Platform Module; stores BitLocker keys, attestation.</li>
+            <li><b>fTPM / PTT</b> — firmware-based TPM on the CPU/chipset (Intel PTT / AMD fTPM). Same logical function as discrete TPM module.</li>
+            <li><b>Boot order</b> — disk, USB, network (PXE), CD/DVD.</li>
+            <li><b>UEFI shell</b> — pre-boot command environment, useful for diagnostics.</li>
+            <li><b>CSM</b> (Compatibility Support Module) — legacy BIOS emulation for booting older OS. Win 11 wants CSM OFF.</li>
+            <li><b>SATA mode</b> — AHCI vs RAID vs IDE legacy.</li>
+            <li><b>Above 4G Decoding / Resizable BAR (ReBAR / SAM)</b> — required for newer GPUs to access full VRAM.</li>
+            <li><b>XMP / EXPO</b> — memory profile.</li>
+            <li><b>Intel SpeedStep / EIST / Cool'n'Quiet</b> — P-state scaling.</li>
+            <li><b>C-states</b> — idle power-saving levels (C0 = active, C6 deeper sleep).</li>
+            <li><b>VT-x / SVM enable</b> — must be ON for VMs.</li>
+            <li><b>Boot password / supervisor password</b> — block firmware changes.</li>
+            <li><b>Drive encryption / OPAL</b> activation toggle.</li>
+            <li><b>Wake-on-LAN / WoWLAN</b> — wake device from network.</li>
+            <li><b>Fan curves</b> — temperature → RPM mapping.</li>
+          </ul>
+
+          <h2>POST / boot codes + indicator LEDs</h2>
+          <ul>
+            <li><b>POST code display</b> — 2-digit hex code shows BIOS phase; vendor manual decodes (e.g., 55 = memory not detected).</li>
+            <li><b>Q-LED / EZ-Debug</b> (ASUS / MSI / Gigabyte) — 4 LEDs labeled CPU, DRAM, VGA, BOOT; lit LED = component failing or missing.</li>
+            <li><b>PC speaker beep codes</b> — AMI: 1 beep = refresh failure; 3 = base 64K mem; 5 = CPU; 8 = display failure. Phoenix uses patterns like "1-3-1" (sequence of pauses).</li>
+            <li><b>UEFI logo with no boot</b> — bootloader missing; check boot order + drive detected.</li>
+            <li><b>Black screen post-logo</b> — could be GPU driver; try integrated graphics or safe mode.</li>
+          </ul>
+
+          <h2>Voltage regulation modules (VRM) — the silent hero</h2>
+          <ul>
+            <li>Step down +12 V from PSU to ~1.2 V CPU core voltage.</li>
+            <li>More <b>phases</b> = better load sharing, cooler operation. High-end boards = 18-22 phases.</li>
+            <li>Component quality (DrMOS / SPS chips) + heatsink size affect overclocking headroom.</li>
+            <li>Undersized VRM = throttle under sustained load, eventual failure.</li>
+            <li>VRM temperature monitoring exposed by HWInfo64.</li>
+          </ul>
+
+          <h2>Chipset functions on modern boards</h2>
+          <ul>
+            <li>Provides additional PCIe lanes (Gen3/4) for SSDs, USB controllers, networking.</li>
+            <li>SATA controller (typically 4-8 ports).</li>
+            <li>USB host controller (USB 3.2 Gen 2×2 20 Gbps, USB4 in some Z790 boards).</li>
+            <li>Integrated networking: Intel 2.5G/10G I225/I226 NICs, Realtek 2.5G common; Wi-Fi 6E/7 onboard.</li>
+            <li>Onboard audio (Realtek ALC4080 / ESS Sabre DAC).</li>
+            <li>HD Audio + S/PDIF; some boards add USB DAC.</li>
+            <li>Chipset connected to CPU via <b>DMI</b> (Intel) or <b>Infinity Fabric</b> (AMD).</li>
+            <li><b>Lane sharing</b>: enabling certain M.2 / SATA disables others — check manual carefully.</li>
+          </ul>
+
+          <h2>Cooling deep-dive</h2>
+
+          <h3>Heatsink anatomy</h3>
+          <ul>
+            <li><b>Base plate</b> contacts CPU IHS.</li>
+            <li><b>Heatpipes</b> — copper tubes with vaporizing fluid for fast heat transfer.</li>
+            <li><b>Vapor chamber</b> — flat heatpipe replacement, used on high-end air + GPU coolers.</li>
+            <li><b>Fin stack</b> — surface area for fan-driven convection.</li>
+            <li><b>Direct touch heatpipes</b> vs <b>nickel-plated base</b> — direct touch cheap, smooth base better contact pressure.</li>
+          </ul>
+
+          <h3>AIO liquid cooler anatomy</h3>
+          <ul>
+            <li><b>CPU block</b> — pump + cold plate.</li>
+            <li><b>Tubes</b> — usually rubber w/ nylon braid; some hard tubing.</li>
+            <li><b>Radiator</b> — 120 / 240 / 280 / 360 / 420 mm. Larger = more capacity. 240 mm minimum for 12th-gen i7+ / 7900X+.</li>
+            <li><b>Fans</b> — static-pressure-optimized for radiator (vs airflow fans for case).</li>
+            <li><b>Pump speed</b> — PWM-controlled; some have screen / LCD.</li>
+            <li><b>Permeation</b> — coolant slowly evaporates over 5-7 years; refillable models exist but most are sealed disposable.</li>
+          </ul>
+
+          <h3>Thermal Interface Material (TIM) types</h3>
+          <ul>
+            <li><b>Standard paste</b> (Arctic MX-6, Noctua NT-H1, Kryonaut) — non-conductive, easy.</li>
+            <li><b>Liquid metal</b> (Conductonaut) — best thermal conductivity but conductive; ruins boards on spill.</li>
+            <li><b>Thermal pads</b> — for VRAM / VRM / NVMe; specific thicknesses (0.5 / 1.0 / 1.5 mm).</li>
+            <li><b>Phase-change pads</b> (PTM7950) — solid at room temp, melts to fill gaps under load. Long-lasting; popular for laptops.</li>
+            <li><b>Apply pattern</b> — pea (center) or X / line; pressure spreads.</li>
+            <li><b>Replace</b> when CPU temps rise &gt; 10 °C over baseline; typically every 3-5 years.</li>
+          </ul>
+
+          <h3>Case airflow + positive pressure</h3>
+          <ul>
+            <li>Front intake + rear/top exhaust = standard layout.</li>
+            <li><b>Positive pressure</b> (more intake than exhaust CFM) → dust filtered at intakes; less ingress through unfiltered openings.</li>
+            <li><b>Negative pressure</b> → slightly better cooling but dust enters everywhere.</li>
+            <li><b>PWM fan control</b> via 4-pin headers; <b>DC voltage</b> via 3-pin.</li>
+            <li><b>RPM curves</b> tuned in BIOS or vendor software (Fan Xpert, Q-Fan, Smart Fan).</li>
+            <li><b>Noctua / Arctic / Phanteks / be quiet!</b> — popular case-fan brands.</li>
+          </ul>
+
+          <h2>CMOS battery + clearing methods</h2>
+          <ul>
+            <li><b>CR2032</b> coin cell powers RTC + holds BIOS settings when unplugged.</li>
+            <li>Lifespan ~5-10 years; weak battery symptom = clock reset to 2000-01-01 after power-off.</li>
+            <li><b>Clear CMOS:</b> jumper labeled CLR_CMOS / JBAT1 (short for 10 s with power off), OR remove battery for 5-10 minutes, OR rear-panel Clear CMOS button.</li>
+            <li>Useful after failed OC, password lockout, BIOS update going wrong.</li>
+          </ul>
+
+          <h2>BIOS update workflow + recovery</h2>
+          <ol>
+            <li>Download official firmware from motherboard vendor (NEVER 3rd party).</li>
+            <li>Verify checksum / SHA.</li>
+            <li>Update on stable power (UPS) — power loss mid-flash = brick.</li>
+            <li>Use vendor flash utility (USB BIOS Flashback, EZ Flash, M-Flash, Q-Flash) — many work without CPU/RAM installed (useful for new CPU support).</li>
+            <li>After update, settings reset to defaults; re-enable XMP, Secure Boot, virtualization.</li>
+            <li>Recovery: <b>BIOS Flashback button</b> on rear I/O (requires FAT32 USB with renamed firmware).</li>
+            <li><b>Dual BIOS</b> boards (Gigabyte / older ASUS) auto-fallback if main BIOS corrupts.</li>
+            <li><b>SPI programmer</b> (CH341A) — last-resort reflash directly to BIOS chip.</li>
+          </ol>
+
+          <h2>Overclocking + tuning fundamentals</h2>
+          <ul>
+            <li><b>Base clock × multiplier</b> = core speed. Most modern OC done via multiplier only.</li>
+            <li><b>P-states</b> / per-core ratios for fine-grained.</li>
+            <li><b>Voltage (Vcore)</b> — adaptive vs override. Higher voltage = more heat, faster degradation.</li>
+            <li><b>Stability tests:</b> Prime95 Small FFTs (max thermal), Linpack / y-cruncher (AVX), Cinebench (mixed), OCCT (CPU+RAM+GPU).</li>
+            <li><b>Thermal limit</b> — Intel TJ Max ~100 °C (throttle); AMD typical 95 °C TjMax.</li>
+            <li><b>Auto-tuning tools:</b> Intel XTU, AMD Ryzen Master, ASUS AI Overclock, Aorus EasyTune.</li>
+            <li><b>Curve Optimizer</b> (AMD Ryzen 5000+) — undervolt per-core for cooler operation + same boost.</li>
+            <li><b>BCLK overclock</b> — increases PCIe + memory simultaneously, risky.</li>
+            <li><b>OC tax</b> — quality vs quantity; not every CPU OCs same.</li>
+          </ul>
+
+          <h2>Common motherboard / CPU troubleshooting walkthroughs</h2>
+          <ul>
+            <li><b>No POST, all fans spin</b> → CPU power 8-pin EPS not connected, or CPU socket damage. Reseat / check pins.</li>
+            <li><b>POST OK but no display</b> → bad GPU, monitor on wrong input, GPU power cables, integrated graphics enabled but display on dGPU port.</li>
+            <li><b>Boot loop after BIOS update</b> → clear CMOS; if dual BIOS, flip switch.</li>
+            <li><b>USB ports dead</b> → BIOS / chipset USB controller disabled; or USB header damaged; test with rear ports.</li>
+            <li><b>NIC not detected</b> → onboard NIC disabled in BIOS, OR driver missing (Intel I225/I226 known driver issues).</li>
+            <li><b>"CPU Fan Error" at POST</b> → fan not connected to CPU_FAN header (must read RPM signal), or fan failed.</li>
+            <li><b>Crashes under heavy load</b> → CPU temps; reseat cooler, repaste, check fan/AIO pump RPM, undervolt.</li>
+            <li><b>Slow boot</b> → "Memory training" on DDR5 first boot; subsequent boots faster. Or USB enumeration on flaky drive.</li>
+            <li><b>Wrong CPU detected</b> → BIOS too old for CPU; update via BIOS Flashback before swap.</li>
+            <li><b>Some RAM slots dead</b> → bent pins on LGA socket (use magnifier + needle); or specific channel disabled in BIOS.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>ATX / mATX / mITX / EATX / SSI EEB</b> — board form factors.</li>
+            <li><b>LGA / PGA / BGA</b> — socket types.</li>
+            <li><b>TDP / cTDP / PL1/PL2 / TjMax</b> — power + thermal limits.</li>
+            <li><b>VT-x / AMD-V / IOMMU / SLAT / NX / DEP</b> — virtualization + security flags.</li>
+            <li><b>TPM 2.0 / fTPM / PTT / Secure Boot / CSM / SAM/ReBAR</b> — firmware features.</li>
+            <li><b>VRM / DrMOS</b> — voltage regulation.</li>
+            <li><b>DMI / Infinity Fabric</b> — CPU↔chipset interconnects.</li>
+            <li><b>AIO / TIM / IHS / PTM7950</b> — cooling.</li>
+            <li><b>CMOS / RTC / CR2032</b> — backup battery setup.</li>
+            <li><b>POST / EZ-Debug LEDs</b> — diagnostic indicators.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"New CPU not detected after install" → BIOS too old; use BIOS Flashback to update.</li>
+            <li>"Clock resets to 1/1/2000 after each shutdown" → dead CMOS battery (CR2032).</li>
+            <li>"Win 11 install refuses" → enable TPM 2.0 (fTPM / PTT) + Secure Boot + UEFI in BIOS.</li>
+            <li>"VMs fail to start in Hyper-V" → enable VT-x / AMD-V + SLAT.</li>
+            <li>"PC randomly shuts down under gaming load" → CPU thermal limit; reseat cooler + repaste; check fan curve.</li>
+            <li>"Front USB ports nonfunctional" → header not seated; check motherboard manual orientation.</li>
+            <li>"Mini-ITX board fits in ATX case" → yes (standoffs are a subset).</li>
+            <li>"Pin-grid array CPU bent pins" → AMD AM4 PGA; gently straighten with credit card / needle.</li>
+            <li>"Need ECC + 8 RAM slots + dual NIC" → server board (SSI CEB/EEB) + Xeon / EPYC.</li>
+            <li>"PSU 12VHPWR connector partially seated" → melt risk on RTX 40 series; push fully home until click.</li>
+          </ul>
         `
       },
       {
