@@ -19400,59 +19400,282 @@ Start-ThreadJob -ScriptBlock { ... }</code></pre>
       {
         title: '10. Error Handling, Modules, Scripting Best Practices',
         body: `
-          <h2>Error handling</h2>
-          <pre><code>try {
+          <h2>Why this lesson</h2>
+          <p>Production-grade scripts need three things one-liners never bother with: <b>predictable error semantics</b> (so failures fail loudly), <b>module structure</b> (so code is reusable, versioned, distributable), and <b>discipline</b> (signing, validation, logging, no plaintext secrets). This lesson closes the PowerShell Mastery track and turns you from "knows cmdlets" into "ships maintainable PowerShell."</p>
+
+          <h2>Error handling — terminating vs non-terminating</h2>
+          <p><b>Critical distinction PowerShell tests:</b></p>
+          <ul>
+            <li><b>Terminating errors</b> — stop execution immediately; trigger <code>try/catch</code>. Examples: syntax errors, throws via <code>throw</code>, type cast failures, <code>-ErrorAction Stop</code>.</li>
+            <li><b>Non-terminating errors</b> — append to <code>$Error</code> + write to error stream, but the next pipeline object continues. Most cmdlets default to non-terminating. <b>They will NOT trigger catch unless you force them.</b></li>
+          </ul>
+          <pre><code># Force non-terminating into try/catch
+try {
   Get-Item .\\missing.txt -ErrorAction Stop
 }
 catch [System.IO.FileNotFoundException] {
-  Write-Warning "File not found"
+  Write-Warning "File not found: $($_.TargetObject)"
+}
+catch [System.UnauthorizedAccessException] {
+  Write-Warning "Permission denied"
 }
 catch {
-  Write-Error "Unexpected: $_"
+  # Catch-all (last)
+  Write-Error "Unexpected: $($_.Exception.Message)"
+  throw                                                  # rethrow if needed
 }
 finally {
-  Write-Verbose "cleanup"
+  # Always runs — cleanup, release locks, dispose handles
+  Write-Verbose 'cleanup'
+}</code></pre>
+
+          <h3>Preference variables (script-wide error policy)</h3>
+          <pre><code>$ErrorActionPreference = 'Stop'             # default: 'Continue'
+$WarningPreference     = 'Continue'
+$VerbosePreference     = 'SilentlyContinue'
+$DebugPreference       = 'SilentlyContinue'
+$InformationPreference = 'Continue'
+$ProgressPreference    = 'SilentlyContinue'  # silence progress bars in CI</code></pre>
+          <p><b>Valid values:</b> <code>Continue</code>, <code>Stop</code>, <code>SilentlyContinue</code>, <code>Ignore</code>, <code>Inquire</code>, <code>Break</code>.</p>
+
+          <h3>Per-cmdlet error controls</h3>
+          <pre><code>Get-Process notepad -ErrorAction Stop -ErrorVariable err
+Get-Process notepad -ErrorAction SilentlyContinue        # alias SilentlyContinue = ignore quietly + log to $Error
+Get-Process -ErrorAction Ignore                          # do NOT even log to $Error</code></pre>
+
+          <h3>$Error and the error record</h3>
+          <pre><code>$Error[0]                                                # newest
+$Error[0].Exception.GetType().FullName                   # exception type
+$Error[0].CategoryInfo
+$Error[0].FullyQualifiedErrorId
+$Error[0].ScriptStackTrace
+$Error[0].InvocationInfo.PositionMessage
+$Error.Clear()</code></pre>
+
+          <h3>Throwing your own errors</h3>
+          <pre><code>throw 'fatal: db unreachable'                            # simplest
+throw [System.IO.FileNotFoundException]::new('not found','x.txt')
+
+# Inside an advanced function, prefer Write-Error + ThrowTerminatingError for typed errors
+function Test-Thing {
+  [CmdletBinding()]
+  param([string]$Path)
+  if (-not (Test-Path $Path)) {
+    $PSCmdlet.ThrowTerminatingError(
+      [System.Management.Automation.ErrorRecord]::new(
+        [System.IO.FileNotFoundException]::new("Missing $Path"),
+        'PathNotFound',
+        'ObjectNotFound',
+        $Path
+      )
+    )
+  }
+}</code></pre>
+
+          <h3>Trap (legacy)</h3>
+          <p><code>trap { ... }</code> catches any terminating error in scope. Rare in modern code — use <code>try/catch</code>.</p>
+
+          <h2>Logging + output streams</h2>
+          <p>PowerShell has 6 output streams. Use the right one for the right job:</p>
+          <ul>
+            <li><b>1 — Success</b> — <code>Write-Output</code> or implicit. Goes to the pipeline; this is data.</li>
+            <li><b>2 — Error</b> — <code>Write-Error</code>. To <code>$Error</code> + error stream.</li>
+            <li><b>3 — Warning</b> — <code>Write-Warning</code>.</li>
+            <li><b>4 — Verbose</b> — <code>Write-Verbose</code>. Visible only with <code>-Verbose</code>.</li>
+            <li><b>5 — Debug</b> — <code>Write-Debug</code>. Visible only with <code>-Debug</code>.</li>
+            <li><b>6 — Information</b> — <code>Write-Information</code> (PS5+). Use instead of <code>Write-Host</code> in scripts.</li>
+          </ul>
+          <p><b>Never use <code>Write-Host</code> in functions/modules</b> — it bypasses the pipeline and cannot be redirected/captured. Use <code>Write-Output</code> for data + <code>Write-Verbose</code>/<code>Write-Information</code> for status.</p>
+          <pre><code>Start-Transcript -Path .\\session.log -Append    # capture everything to a file
+# ... do work ...
+Stop-Transcript</code></pre>
+
+          <h2>Modules — package, version, distribute</h2>
+
+          <h3>Module types</h3>
+          <ul>
+            <li><b>Script module (.psm1)</b> — file containing functions/classes/variables. Most common.</li>
+            <li><b>Binary module (.dll)</b> — compiled .NET assembly with cmdlets.</li>
+            <li><b>Manifest module (.psd1)</b> — metadata file (version, author, dependencies, exported members). Required for the gallery.</li>
+            <li><b>Dynamic module</b> — created at runtime with <code>New-Module</code>.</li>
+          </ul>
+
+          <h3>Anatomy of a script module</h3>
+          <pre><code>MyTools/
+  MyTools.psd1               # manifest
+  MyTools.psm1               # root module — dot-sources public/private
+  Public/
+    Get-Foo.ps1              # exported
+    Set-Bar.ps1
+  Private/
+    helper.ps1               # internal only
+  Tests/
+    MyTools.Tests.ps1        # Pester tests</code></pre>
+          <pre><code># Generate a manifest
+New-ModuleManifest -Path .\\MyTools\\MyTools.psd1 \`
+  -RootModule MyTools.psm1 \`
+  -ModuleVersion '1.0.0' \`
+  -Author 'Chris' \`
+  -Description 'Internal helper cmdlets' \`
+  -FunctionsToExport @('Get-Foo','Set-Bar') \`
+  -PowerShellVersion '5.1'</code></pre>
+
+          <h3>Install / find / update from PowerShell Gallery</h3>
+          <pre><code>Find-Module Az                                              # search gallery
+Install-Module -Name Microsoft.Graph -Scope CurrentUser     # no admin needed
+Update-Module Az
+Uninstall-Module OldThing
+Get-InstalledModule
+Get-Module -ListAvailable                                   # everything resolvable
+Publish-Module -Path .\\MyTools -NuGetApiKey $env:GALLERY_KEY</code></pre>
+
+          <h3>Auto-loading + import</h3>
+          <p>If a module is on the <code>PSModulePath</code> and exports a cmdlet you call, PowerShell auto-imports it. Speed up startup by importing only what you need with <code>Import-Module -Name X -Function Y</code>.</p>
+
+          <h2>Script signing + execution policy</h2>
+          <pre><code># Create a self-signed code-signing cert (test only)
+$cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=Chris Dev' \`
+        -CertStoreLocation Cert:\\CurrentUser\\My
+
+# Sign
+Set-AuthenticodeSignature -FilePath .\\Deploy.ps1 -Certificate $cert
+
+# Verify
+Get-AuthenticodeSignature .\\Deploy.ps1                     # Status: Valid
+
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned         # require sig on downloaded</code></pre>
+
+          <h2>Secrets management</h2>
+          <p>Plain credentials in scripts = breach waiting to happen. Use:</p>
+          <pre><code>Install-Module Microsoft.PowerShell.SecretManagement      -Scope CurrentUser
+Install-Module Microsoft.PowerShell.SecretStore           -Scope CurrentUser
+
+Register-SecretVault -Name Local -ModuleName Microsoft.PowerShell.SecretStore -DefaultVault
+Set-Secret -Name 'db-prod' -Secret (Read-Host -AsSecureString)
+$cred = Get-Secret -Name 'db-prod' -AsPlainText                   # use in scripts</code></pre>
+          <p>Other vault providers exist: Azure Key Vault, HashiCorp Vault, KeePass, Bitwarden, AWS Secrets Manager, 1Password — install the corresponding <code>SecretManagement.*</code> module.</p>
+
+          <h2>Linting + testing</h2>
+
+          <h3>PSScriptAnalyzer (static analysis / linter)</h3>
+          <pre><code>Install-Module PSScriptAnalyzer -Scope CurrentUser
+Invoke-ScriptAnalyzer -Path .\\Deploy.ps1
+Invoke-ScriptAnalyzer -Path .\\ -Recurse -Severity Error,Warning
+Invoke-ScriptAnalyzer -Settings PSGallery .\\src              # use bundled ruleset</code></pre>
+          <p>Catches: unapproved verbs, plaintext passwords, missing OutputType, unused parameters, <code>Write-Host</code> usage, ShouldProcess missing, deprecated cmdlets.</p>
+
+          <h3>Pester — the test framework</h3>
+          <pre><code>Install-Module Pester -Scope CurrentUser -SkipPublisherCheck
+Invoke-Pester .\\Tests
+
+# A test file (Add.Tests.ps1)
+Describe 'Add-Numbers' {
+  It 'sums two ints' { (Add-Numbers 2 3) | Should -Be 5 }
+  It 'throws on null' { { Add-Numbers $null 1 } | Should -Throw }
+}</code></pre>
+
+          <h2>Style + best practices (production checklist)</h2>
+          <ul>
+            <li><b>Every script/function</b> starts with <code>[CmdletBinding()]</code> + typed <code>param()</code> block + validation attributes.</li>
+            <li><b>Approved verbs only</b> — <code>Get-Verb</code>; PSScriptAnalyzer flags violators.</li>
+            <li><b>Set <code>$ErrorActionPreference = 'Stop'</code></b> at the top of automation scripts so failures bubble up.</li>
+            <li><b>Use <code>SupportsShouldProcess</code></b> + <code>$PSCmdlet.ShouldProcess()</code> for destructive operations; gives free <code>-WhatIf</code> / <code>-Confirm</code>.</li>
+            <li><b>Output objects, not strings</b> — <code>[pscustomobject]@{ Name=...; Value=... }</code>. Lets callers pipe.</li>
+            <li><b>Avoid <code>Write-Host</code> in libraries</b> — use <code>Write-Output</code> for data, <code>Write-Verbose</code> for status.</li>
+            <li><b>Avoid aliases in scripts</b> — write <code>Where-Object</code> not <code>?</code>; <code>ForEach-Object</code> not <code>%</code>. PSScriptAnalyzer rule.</li>
+            <li><b>Comment-based help</b> (<code>.SYNOPSIS</code> / <code>.PARAMETER</code> / <code>.EXAMPLE</code>) on every public function.</li>
+            <li><b>One responsibility per function</b>. Compose with the pipeline.</li>
+            <li><b>Use <code>[OutputType()]</code></b> attribute so Get-Help shows the contract.</li>
+            <li><b>Test with Pester</b>; lint with PSScriptAnalyzer; CI via GitHub Actions.</li>
+            <li><b>Store secrets in <code>SecretManagement</code></b>; never hardcode passwords.</li>
+            <li><b>Sign published scripts</b>; use <code>RemoteSigned</code> or <code>AllSigned</code> execution policy.</li>
+            <li><b>Strict mode</b>: <code>Set-StrictMode -Version Latest</code> catches typos in property access and uninitialized vars.</li>
+            <li><b>Cross-version mindfulness</b>: target PS 7+ unless required to support 5.1.</li>
+          </ul>
+
+          <h2>End-to-end example — audit logon failures</h2>
+          <pre><code>[CmdletBinding()]
+[OutputType([pscustomobject])]
+param(
+  [Parameter(Position=0)]
+  [ValidateRange(1,30)]
+  [int]$Days = 1,
+
+  [Parameter()]
+  [ValidateNotNullOrEmpty()]
+  [string]$ExportPath = '.\\failed-logons.csv'
+)
+
+\$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+\$start = (Get-Date).AddDays(-\$Days)
+Write-Verbose "Querying Security log since \$start"
+
+try {
+  \$events = Get-WinEvent -FilterHashtable @{
+    LogName   = 'Security'
+    Id        = 4625
+    StartTime = \$start
+  }
+}
+catch [System.Exception] {
+  if (\$_.Exception.Message -match 'No events were found') {
+    Write-Information 'No failures in window.' -InformationAction Continue
+    return
+  }
+  throw
 }
 
-# Common parameters
-Get-Process -ErrorAction Stop -ErrorVariable err
-$ErrorActionPreference = "Stop"     # script-wide</code></pre>
-          <h2>Modules</h2>
-          <pre><code>Get-Module -ListAvailable
-Import-Module Az
-Install-Module -Name Microsoft.Graph -Scope CurrentUser
-Update-Module Az
-Get-InstalledModule</code></pre>
-          <h2>Script best practices</h2>
-          <ul>
-            <li>Use <code>[CmdletBinding()]</code> + <code>param()</code> with types and validation.</li>
-            <li>Set <code>$ErrorActionPreference = "Stop"</code> in production scripts.</li>
-            <li>Use <code>-WhatIf</code> and <code>-Confirm</code> for destructive cmdlets during testing.</li>
-            <li>Sign scripts and set <code>Set-ExecutionPolicy RemoteSigned -Scope CurrentUser</code>.</li>
-            <li>Use approved verbs (<code>Get-Verb</code>).</li>
-            <li>Lint with PSScriptAnalyzer: <code>Invoke-ScriptAnalyzer .\\script.ps1</code>.</li>
-            <li>Store secrets in <code>SecretManagement</code> module, never plaintext.</li>
-          </ul>
-          <h2>Example: audit logon failures</h2>
-          <pre><code>[CmdletBinding()]
-param([int]$Days = 1)
-
-$start = (Get-Date).AddDays(-$Days)
-Get-WinEvent -FilterHashtable @{
-  LogName   = 'Security'
-  Id        = 4625
-  StartTime = $start
-} |
-ForEach-Object {
-  [PSCustomObject]@{
-    Time     = $_.TimeCreated
-    User     = $_.Properties[5].Value
-    Source   = $_.Properties[19].Value
-    Workstation = $_.Properties[13].Value
+\$results = foreach (\$e in \$events) {
+  [pscustomobject]@{
+    Time        = \$e.TimeCreated
+    User        = \$e.Properties[5].Value
+    Domain      = \$e.Properties[6].Value
+    Source      = \$e.Properties[19].Value
+    Workstation = \$e.Properties[13].Value
+    LogonType   = \$e.Properties[10].Value
+    Failure     = \$e.Properties[8].Value
   }
-} |
-Export-Csv -Path .\\failed-logons.csv -NoTypeInformation
-Write-Host "Exported failed logons since $start"</code></pre>
+}
+
+\$results | Export-Csv -Path \$ExportPath -NoTypeInformation -Encoding utf8
+Write-Information "Exported \$(\$results.Count) records to \$ExportPath" -InformationAction Continue
+\$results                                                     # pipe to caller too</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>$Error / $LASTEXITCODE / $?</b> — error history / native exit code / success boolean.</li>
+            <li><b>$PSCmdlet</b> — auto var in advanced functions; gives <code>ShouldProcess</code>, <code>ThrowTerminatingError</code>, <code>ParameterSetName</code>.</li>
+            <li><b>PSGallery</b> — PowerShell module repository.</li>
+            <li><b>PSScriptAnalyzer</b> — static analysis / linter.</li>
+            <li><b>Pester</b> — BDD-style test framework.</li>
+            <li><b>SecretManagement / SecretStore</b> — secrets abstraction + local encrypted vault.</li>
+            <li><b>JEA</b> — Just Enough Administration (lesson 9).</li>
+            <li><b>SBOM</b> — Software Bill of Materials; <code>Save-Module</code> + commit module deps for reproducible installs.</li>
+            <li><b>StrictMode</b> — runtime mode that errors on undefined properties / variables.</li>
+          </ul>
+
+          <h2>Final gotchas</h2>
+          <ul>
+            <li><code>try/catch</code> only catches <b>terminating</b> errors. Add <code>-ErrorAction Stop</code> or <code>$ErrorActionPreference='Stop'</code>.</li>
+            <li><code>throw</code> stops the script; <code>Write-Error</code> writes to the error stream but continues (unless caller is in <code>Stop</code> mode).</li>
+            <li><code>return $x</code> does NOT replace prior pipeline output — every uncaptured expression in the function body is emitted.</li>
+            <li><code>Write-Host</code> bypasses the pipeline — output cannot be captured or redirected. Avoid in libraries; OK for interactive scripts.</li>
+            <li>Always include <code>-Encoding utf8</code> when writing files that other tools will read; PS 5.1 default is UTF-16 BOM.</li>
+            <li>Module auto-load fails if functions live in <code>Private/</code> and aren't exported — list them in <code>FunctionsToExport</code> in the manifest.</li>
+            <li><code>Install-Module -Scope AllUsers</code> needs admin; <code>-Scope CurrentUser</code> does not.</li>
+            <li>Always set <code>FunctionsToExport</code>, <code>CmdletsToExport</code>, <code>AliasesToExport</code>, <code>VariablesToExport</code> to explicit lists in the manifest — wildcards expand to everything.</li>
+          </ul>
+
+          <h2>What's next</h2>
+          <ul>
+            <li>Build a real internal module — wrap a domain-specific REST API.</li>
+            <li>Add Pester tests + a GitHub Actions workflow running PSScriptAnalyzer + Pester on every push.</li>
+            <li>Learn <b>DSC (Desired State Configuration)</b> for declarative config management.</li>
+            <li>Practice with the <b>Az</b> + <b>Microsoft.Graph</b> modules for cloud automation.</li>
+            <li>Read <b>The PowerShell Cookbook</b> (Lee Holmes) + <b>The PowerShell Style Guide</b> (poshcode).</li>
+          </ul>
         `
       }
     ],
