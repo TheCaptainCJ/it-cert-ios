@@ -18485,31 +18485,168 @@ function Get-Square { param([int]$n) $n*$n }</code></pre>
       {
         title: '5. Files, Registry, Providers',
         body: `
-          <pre><code># Files / dirs
-Get-ChildItem -Path C:\\Logs -Recurse -Filter *.log
-New-Item -Path .\\report.txt -ItemType File
-Set-Content -Path .\\report.txt -Value "hello"
-Add-Content -Path .\\report.txt -Value "line 2"
-Get-Content .\\report.txt
-Test-Path .\\report.txt
-Copy-Item src dst
-Move-Item src dst
-Remove-Item .\\report.txt -Confirm:$false
+          <h2>The unified provider model</h2>
+          <p>PowerShell exposes <i>any</i> hierarchical data store (filesystem, registry, env vars, certificates, IIS metabase, AD, SQL, WSMan config) as a navigable <b>PSDrive</b>. Same cmdlets — <code>Get-ChildItem</code>, <code>Get-Item</code>, <code>Set-Item</code>, <code>New-Item</code>, <code>Remove-Item</code>, <code>Copy-Item</code>, <code>Move-Item</code>, <code>Test-Path</code> — work everywhere. List drives with <code>Get-PSDrive</code>; list installed providers with <code>Get-PSProvider</code>.</p>
+          <pre><code>Get-PSProvider           # Alias, Environment, FileSystem, Function, Registry, Variable, Certificate
+Get-PSDrive              # all mounted drives including custom New-PSDrive ones</code></pre>
 
-# Encoding (avoid UTF-16 BOM surprises in PS 5.1)
-Out-File -FilePath data.txt -Encoding utf8
+          <h2>FileSystem provider — daily driver</h2>
+          <h3>Listing + filtering</h3>
+          <pre><code>Get-ChildItem                                            # current dir
+Get-ChildItem C:\\Logs -Recurse                          # recurse
+Get-ChildItem C:\\Logs -Recurse -Filter *.log            # provider-side filter (fast)
+Get-ChildItem -Force                                     # include hidden + system
+Get-ChildItem -File / -Directory                         # filter by item type
+Get-ChildItem -Recurse -Depth 2                          # limit recursion depth (PS5+)
+Get-ChildItem -Include *.log,*.txt -Recurse -Path C:\\Logs\\*</code></pre>
+          <p><b>-Filter vs -Include:</b> <code>-Filter</code> is one provider-evaluated pattern, pushed down to the filesystem (way faster on big trees); <code>-Include</code> is client-side and accepts arrays, but requires <code>-Recurse</code> or a wildcard <code>Path</code>.</p>
 
-# Registry as a drive
-Get-ChildItem HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
-Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*  |
-  Select-Object DisplayName, DisplayVersion
+          <h3>Reading + writing</h3>
+          <pre><code>Get-Content app.log                                      # array of lines
+Get-Content app.log -Raw                                 # one big string (preserves newlines)
+Get-Content app.log -TotalCount 100                      # head 100 lines
+Get-Content app.log -Tail 20                             # tail 20
+Get-Content app.log -Wait                                # tail -f equivalent
+Get-Content data.txt -Encoding utf8                      # specify encoding
 
-# Environment
-$env:USERNAME
+Set-Content report.txt "hello"                           # overwrite
+Add-Content report.txt "line 2"                          # append
+"line 3" | Out-File report.txt -Append -Encoding utf8</code></pre>
+
+          <h3>Encoding (the #1 file gotcha)</h3>
+          <ul>
+            <li><b>Windows PowerShell 5.1</b> default = <b>UTF-16 LE with BOM</b> for <code>Out-File</code> / <code>Set-Content</code>. Surprises every cross-platform script. Always pass <code>-Encoding utf8</code> explicitly.</li>
+            <li><b>PowerShell 7+</b> default = <b>UTF-8 without BOM</b>. Saner; matches the rest of the world.</li>
+            <li>Encodings to know: <code>utf8</code>, <code>utf8NoBOM</code>, <code>utf8BOM</code>, <code>unicode</code> (UTF-16 LE), <code>bigendianunicode</code>, <code>ascii</code>, <code>default</code> (system code page), <code>oem</code>.</li>
+            <li>Read with explicit encoding too: <code>Get-Content file -Encoding utf8</code>. Mismatches cause garbled non-ASCII characters.</li>
+          </ul>
+
+          <h3>Create / copy / move / delete</h3>
+          <pre><code>New-Item .\\report.txt -ItemType File
+New-Item .\\reports -ItemType Directory
+Copy-Item src.txt dst.txt
+Copy-Item .\\reports .\\backup -Recurse
+Move-Item src.txt subdir\\
+Remove-Item report.txt -Force
+Remove-Item .\\reports -Recurse -Force
+Rename-Item old.txt new.txt</code></pre>
+
+          <h3>WhatIf / Confirm safety harness</h3>
+          <p>Any cmdlet that supports ShouldProcess (most -Item ones) accepts <code>-WhatIf</code> (preview) and <code>-Confirm</code> (interactive yes/no). Use BEFORE destructive operations.</p>
+          <pre><code>Remove-Item *.tmp -WhatIf       # shows what WOULD be removed, removes nothing
+Remove-Item *.tmp -Confirm      # prompts per file</code></pre>
+
+          <h3>Path manipulation</h3>
+          <pre><code>Test-Path C:\\Logs                                       # boolean exists check
+Test-Path C:\\Logs -PathType Container                   # must be a directory
+Resolve-Path .\\subdir                                    # to absolute
+Split-Path C:\\dir\\file.txt -Parent                     # C:\\dir
+Split-Path C:\\dir\\file.txt -Leaf                       # file.txt
+Split-Path C:\\dir\\file.txt -LeafBase                   # file
+Split-Path C:\\dir\\file.txt -Extension                  # .txt
+Join-Path C:\\dir subdir\\file.txt                       # cross-platform safe joiner
+[System.IO.Path]::GetTempFileName()                       # temp file path</code></pre>
+
+          <h3>File metadata</h3>
+          <pre><code>Get-Item file.txt | Select-Object FullName, Length, LastWriteTime, CreationTime, Attributes
+(Get-Item file.txt).VersionInfo                          # for executables
+Get-ChildItem -Hidden                                    # show hidden
+Get-FileHash file.zip -Algorithm SHA256                  # integrity check
+Get-Acl file.txt                                         # ACL / NTFS permissions
+Set-Acl                                                  # apply ACL</code></pre>
+
+          <h3>Streams + ADS (NTFS alternate data streams)</h3>
+          <pre><code>Get-Content file.exe -Stream Zone.Identifier             # MOTW (Mark of the Web)
+Unblock-File downloaded.ps1                              # strips Zone.Identifier
+Get-Item file.exe -Stream *                              # list all streams</code></pre>
+
+          <h2>Registry provider — HKLM: / HKCU: / HKCR: / HKU: / HKCC:</h2>
+          <p><b>Important:</b> Use the PSDrive prefix (<code>HKLM:\\SOFTWARE\\...</code>) — <b>not</b> the raw <code>HKEY_LOCAL_MACHINE\\...</code> path. The PSDrives map to the hives:</p>
+          <ul>
+            <li><b>HKLM:</b> — HKEY_LOCAL_MACHINE (machine-wide).</li>
+            <li><b>HKCU:</b> — HKEY_CURRENT_USER (per-user).</li>
+            <li><b>HKCR:</b> — HKEY_CLASSES_ROOT (file associations, ProgIDs).</li>
+            <li><b>HKU:</b> — HKEY_USERS (all loaded user profiles).</li>
+            <li><b>HKCC:</b> — HKEY_CURRENT_CONFIG.</li>
+          </ul>
+
+          <h3>Reading</h3>
+          <pre><code>Get-ChildItem HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
+Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
+Get-ItemPropertyValue HKLM:\\... -Name OneDrive
+
+# Find installed apps via uninstall keys (both 64- and 32-bit views)
+Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* |
+  Where-Object DisplayName | Select-Object DisplayName, DisplayVersion, Publisher
+Get-ItemProperty HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* |
+  Where-Object DisplayName | Select-Object DisplayName, DisplayVersion</code></pre>
+
+          <h3>Writing</h3>
+          <pre><code>New-Item -Path HKCU:\\Software\\MyApp -Force
+New-ItemProperty -Path HKCU:\\Software\\MyApp -Name Mode -Value 'Dark' -PropertyType String
+Set-ItemProperty -Path HKCU:\\Software\\MyApp -Name Mode -Value 'Light'
+Remove-ItemProperty -Path HKCU:\\Software\\MyApp -Name Mode
+Remove-Item -Path HKCU:\\Software\\MyApp -Recurse</code></pre>
+          <p><b>PropertyType values:</b> <code>String</code>, <code>ExpandString</code> (REG_EXPAND_SZ), <code>Binary</code>, <code>DWord</code>, <code>QWord</code>, <code>MultiString</code> (REG_MULTI_SZ).</p>
+          <p><b>Privilege note:</b> writing under HKLM requires elevation (Run as Administrator).</p>
+
+          <h2>Environment variables — Env: drive</h2>
+          <pre><code>$env:USERNAME                            # read
 $env:PATH
-$env:NEW_VAR = "value"</code></pre>
-          <h2>Providers</h2>
-          <p>Drives like <code>HKLM:</code>, <code>Env:</code>, <code>Cert:</code>, <code>WSMan:</code> let you navigate registry, env vars, certs the same way you navigate <code>C:</code>.</p>
+$env:NEW_VAR = "value"                   # process-scope only (dies with shell)
+Get-ChildItem Env:                       # list all
+Get-Item Env:USERNAME
+
+# Persistent (machine / user) — use .NET
+[Environment]::SetEnvironmentVariable('FOO', 'bar', 'User')
+[Environment]::SetEnvironmentVariable('FOO', 'bar', 'Machine')   # needs admin
+[Environment]::GetEnvironmentVariable('PATH', 'Machine')</code></pre>
+          <p><b>Critical:</b> setting <code>$env:VAR</code> only affects the current process. Child shells inherit, but a new shell session does not. Use <code>[Environment]::SetEnvironmentVariable</code> with scope User or Machine for persistence; new sessions pick it up.</p>
+
+          <h2>Other useful providers</h2>
+          <ul>
+            <li><b>Cert:</b> — certificate stores: <code>Get-ChildItem Cert:\\LocalMachine\\My</code>, <code>Get-Item Cert:\\CurrentUser\\Root\\&lt;thumbprint&gt;</code>. Pair with <code>Import-PfxCertificate</code> / <code>Export-PfxCertificate</code>.</li>
+            <li><b>Function:</b> + <b>Alias:</b> — defined functions / aliases. <code>dir function:</code> lists every function.</li>
+            <li><b>Variable:</b> — your variables. <code>Remove-Item variable:foo</code>.</li>
+            <li><b>WSMan:</b> — WinRM configuration.</li>
+            <li><b>AD:</b> — Active Directory (with ActiveDirectory module).</li>
+            <li><b>IIS:</b> — IIS webserver (WebAdministration module).</li>
+          </ul>
+
+          <h2>Custom PSDrive</h2>
+          <pre><code>New-PSDrive -Name Logs -PSProvider FileSystem -Root C:\\App\\Logs
+Get-ChildItem Logs:\\
+Remove-PSDrive -Name Logs</code></pre>
+
+          <h2>Item vs ItemProperty (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>Concept</th><th>FileSystem</th><th>Registry</th></tr>
+            <tr><td><b>Item</b></td><td>file or directory</td><td>registry KEY</td></tr>
+            <tr><td><b>ItemProperty</b></td><td>file attribute (LastWriteTime, Length)</td><td>registry VALUE under a key</td></tr>
+          </table>
+          <p>So in the registry: <code>Get-Item HKCU:\\Software\\MyApp</code> returns the key; <code>Get-ItemProperty HKCU:\\Software\\MyApp</code> returns the values under it.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>PSDrive / PSProvider</b> — the abstraction + the implementation.</li>
+            <li><b>BOM</b> — Byte Order Mark; UTF-16 always has one, UTF-8 optional.</li>
+            <li><b>MOTW</b> — Mark of the Web; NTFS Zone.Identifier stream from downloaded files.</li>
+            <li><b>ADS</b> — Alternate Data Stream (NTFS feature).</li>
+            <li><b>ACL</b> — Access Control List (NTFS permissions).</li>
+            <li><b>REG_SZ / REG_EXPAND_SZ / REG_DWORD / REG_QWORD / REG_BINARY / REG_MULTI_SZ</b> — registry value types.</li>
+            <li><b>HKLM / HKCU / HKCR / HKU / HKCC</b> — registry hives.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Default encoding differs between PS 5.1 (UTF-16 BOM) and PS 7 (UTF-8 no BOM). Always pass <code>-Encoding</code> explicitly in scripts.</li>
+            <li><code>-Include</code> needs a wildcard <code>Path</code> or <code>-Recurse</code>. Otherwise it silently matches nothing.</li>
+            <li>Registry writes to HKLM require admin elevation; HKCU does not.</li>
+            <li><code>$env:VAR = 'x'</code> is process-scoped only. For permanent, use <code>[Environment]::SetEnvironmentVariable</code>.</li>
+            <li>UAC-elevated shell sees different HKCU than the user's normal shell — they are different SIDs.</li>
+            <li>32-bit installers register under <code>HKLM:\\SOFTWARE\\WOW6432Node</code> on 64-bit Windows — always check both views.</li>
+            <li><code>Remove-Item -Recurse -Force</code> on a deep path is destructive — preview with <code>-WhatIf</code> first.</li>
+          </ul>
         `
       },
       {
