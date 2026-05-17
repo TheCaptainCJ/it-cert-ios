@@ -6194,6 +6194,137 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"-70 RSSI roaming threshold" → acceptable signal; below = poor.</li>
             <li>"SSID hiding is security" → NO. Trivially defeated by any client probe sniffer.</li>
           </ul>
+
+          <h2>RF math — dBm, dBi, link budget</h2>
+          <p>RF power is logarithmic. Memorize these "ratio anchors":</p>
+          <ul>
+            <li><b>+3 dB</b> = 2× the power.</li>
+            <li><b>+10 dB</b> = 10× the power.</li>
+            <li><b>-3 dB</b> = ½ the power.</li>
+            <li><b>0 dBm</b> = 1 mW. <b>+20 dBm</b> = 100 mW. <b>+30 dBm</b> = 1 W. <b>-30 dBm</b> = 1 μW.</li>
+            <li><b>+6 dB rule</b> — every 6 dB of free-space-path-loss is a doubling of distance (roughly).</li>
+          </ul>
+          <p><b>Link budget formula:</b> <code>RX power = TX power + TX antenna gain − cable + path loss + RX antenna gain − cable</code>. Need RX power ≥ receiver sensitivity for the chosen MCS rate. Example: AP at +20 dBm + 5 dBi antenna − 2 dB cable − 70 dB FSPL = client RX -47 dBm — excellent.</p>
+          <p><b>FSPL (Free Space Path Loss) approximation</b> at 5 GHz: <code>FSPL(dB) ≈ 32.4 + 20 log10(f in MHz) + 20 log10(d in km)</code>. Useful for outdoor PtP design.</p>
+          <p><b>Fresnel zone</b> — for long PtP links, keep 60%+ of the first Fresnel zone clear of obstructions or signal degrades.</p>
+
+          <h2>EIRP regulatory ceilings (US FCC, indoor)</h2>
+          <ul>
+            <li><b>2.4 GHz</b> — up to +36 dBm (4 W) EIRP with high-gain antennas (specific rules); typical client +20 dBm.</li>
+            <li><b>UNII-1 (5.15–5.25 GHz)</b> — +30 dBm EIRP indoor (most APs).</li>
+            <li><b>UNII-2 / 2e (5.25–5.725 GHz)</b> — +30 dBm; DFS required.</li>
+            <li><b>UNII-3 (5.725–5.85 GHz)</b> — +36 dBm; widely used.</li>
+            <li><b>6 GHz LPI</b> — +30 dBm EIRP indoor only (no AFC required).</li>
+            <li><b>6 GHz VLP</b> — +14 dBm EIRP portable.</li>
+            <li><b>6 GHz Standard Power</b> — outdoor allowed via AFC coordination.</li>
+          </ul>
+
+          <h2>802.11 frame types you must recognize</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Examples</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>Management</td><td>Beacon, Probe Req/Resp, Auth, Assoc Req/Resp, Deauth, Disassoc</td><td>Establish + maintain BSS membership</td></tr>
+            <tr><td>Control</td><td>RTS, CTS, ACK, Block ACK, PS-Poll</td><td>Coordinate access to the medium</td></tr>
+            <tr><td>Data</td><td>QoS Data, Null Data</td><td>Carry payload (IP packet inside)</td></tr>
+          </table>
+          <p>Beacons advertise BSS capabilities every ~100 ms (TIM, supported rates, country code, RSN element).</p>
+
+          <h2>Probe + association exchange</h2>
+          <ol>
+            <li><b>Probe Request</b> (client) → optional, asks "any APs for SSID X?".</li>
+            <li><b>Probe Response</b> (AP) → capabilities, supported rates.</li>
+            <li><b>Open Authentication</b> request/response (legacy, all WPA personal/enterprise still do this 2-frame handshake).</li>
+            <li><b>Association Request</b> (client) — RSN element with chosen cipher.</li>
+            <li><b>Association Response</b> (AP).</li>
+            <li><b>4-Way Handshake</b> (WPA2/3) — derives PTK + GTK from PMK.</li>
+            <li>Or <b>SAE handshake</b> (WPA3-Personal) — Dragonfly key exchange replaces PSK 4-way; defeats offline cracking.</li>
+          </ol>
+
+          <h2>OFDMA vs MU-MIMO (Wi-Fi 6+)</h2>
+          <ul>
+            <li><b>OFDMA</b> — divides each channel into smaller <b>Resource Units (RUs)</b>; AP can serve multiple clients simultaneously in one transmit window. Improves latency + efficiency for many small packets (IoT, voice).</li>
+            <li><b>MU-MIMO</b> — uses spatial streams to serve multiple clients on different antennas at the same time. Improves throughput for many large flows.</li>
+            <li><b>BSS Coloring</b> — 6-bit ID lets co-channel APs ignore each other's frames as "noise" if SNR allows, reducing CCI.</li>
+            <li><b>TWT</b> (Target Wake Time) — schedules client wakeup windows → battery savings for IoT.</li>
+          </ul>
+
+          <h2>Channel planning recipes</h2>
+          <ul>
+            <li><b>Office, dense client count, 2.4 GHz mandatory</b> — disable 2.4 on every other AP, use only 1/6/11 at 20 MHz, low TX power.</li>
+            <li><b>Office, 5 GHz primary</b> — 40 MHz wide, channels: 36, 44, 52 (DFS), 60 (DFS), 100 (DFS), 108 (DFS), 116 (DFS), 132 (DFS), 149, 157. Avoid using 160 MHz indoors (too few slots).</li>
+            <li><b>Stadium / conference</b> — many low-power APs with narrow channels (20 MHz), aggressive cell sizing, dual-radio dedicated 6 GHz on Wi-Fi 6E clients.</li>
+            <li><b>Warehouse</b> — pole-mount directional APs at the roof; ensure dense overlap for forklift roaming; minimum data rate set to 12 Mbps to kill weak clients.</li>
+            <li><b>Outdoor PtP backhaul</b> — high-gain dish, 5 / 6 GHz, line-of-sight, Fresnel clearance, point-to-multipoint with sectors.</li>
+          </ul>
+
+          <h2>Minimum data rate (the "force them to roam" knob)</h2>
+          <p>Disable 802.11b low data rates (1, 2, 5.5, 11 Mbps) and slow OFDM (6, 9 Mbps). Set minimum to 12 or 24 Mbps:</p>
+          <ul>
+            <li>Faster beacon airtime (beacons use min rate).</li>
+            <li>Distant clients can't connect at weak SNR → forced to roam to a closer AP.</li>
+            <li>Improves overall airtime efficiency.</li>
+          </ul>
+
+          <h2>Wi-Fi 6/6E/7 client requirements</h2>
+          <ul>
+            <li>Wi-Fi 6 (ax) features (OFDMA, MU-MIMO uplink) need both AP + client support.</li>
+            <li>Wi-Fi 6E + 7 need new radios capable of 6 GHz; older client chips ignore the 6 GHz SSID.</li>
+            <li>WPA3 mandatory on 6 GHz — clients without WPA3 cannot use the band at all.</li>
+            <li>OSes that support 6 GHz: Windows 11, recent macOS, iOS 16+, Android 12+. Older OSes won't see the SSID.</li>
+          </ul>
+
+          <h2>Voice over Wi-Fi requirements</h2>
+          <ul>
+            <li><b>Coverage</b> — minimum -67 dBm everywhere voice clients roam.</li>
+            <li><b>SNR</b> ≥ 25 dB at the cell edge.</li>
+            <li><b>Channel utilization</b> &lt; 30 %.</li>
+            <li><b>Cell overlap</b> ~20% for seamless roaming.</li>
+            <li><b>QoS:</b> WMM enabled, voice mapped to AC_VO (UP 6/7), 802.1p / DSCP EF (46).</li>
+            <li><b>Fast roaming:</b> 802.11r FT mandatory; 802.11k neighbor list + 802.11v BTM ideally.</li>
+            <li><b>Power save:</b> U-APSD enabled; legacy PS off.</li>
+          </ul>
+
+          <h2>Wi-Fi 7 deep cuts</h2>
+          <ul>
+            <li><b>MLO</b> (Multi-Link Operation) — single client connects to AP on multiple bands simultaneously (e.g., 5 + 6 GHz). Reduces latency, increases throughput, instant failover if one band gets noisy.</li>
+            <li><b>320 MHz</b> channels in 6 GHz (where 6 GHz fully unlocked).</li>
+            <li><b>4096-QAM</b> — denser modulation = +20 % throughput in clean RF.</li>
+            <li><b>Multi-RU + Preamble Puncturing</b> — work around interference within a wide channel by skipping subcarriers under noise.</li>
+            <li><b>R-TWT</b> (Restricted TWT) — reserves airtime for low-latency apps (AR/VR).</li>
+          </ul>
+
+          <h2>Cellular vs Wi-Fi quick decision</h2>
+          <ul>
+            <li><b>Public mobility, vehicles</b> → cellular (4G/5G).</li>
+            <li><b>Indoor office / home</b> → Wi-Fi (cheaper, faster).</li>
+            <li><b>Dense IoT, low power, wide area</b> → LTE-M / NB-IoT (cellular) or LoRaWAN / Zigbee.</li>
+            <li><b>Industrial campus with no public coverage</b> → <b>Private 5G / CBRS</b>.</li>
+            <li><b>Backup uplink for a critical site</b> → cellular failover.</li>
+          </ul>
+
+          <h2>Bluetooth + adjacent wireless (you may see these on Net+)</h2>
+          <ul>
+            <li><b>Bluetooth Classic</b> — 2.4 GHz, up to ~3 Mbps, point-to-point.</li>
+            <li><b>BLE</b> (Bluetooth Low Energy) — small payloads, used by beacons (iBeacon, Eddystone).</li>
+            <li><b>Zigbee</b> — 2.4 GHz mesh, low power, smart home.</li>
+            <li><b>Z-Wave</b> — 908 MHz (US) sub-GHz mesh.</li>
+            <li><b>Thread</b> — IPv6 mesh for smart home (Matter standard sits on top).</li>
+            <li><b>NFC</b> — 13.56 MHz, &lt;10 cm, contactless payments / pairing.</li>
+            <li><b>UWB</b> (Ultra-Wideband) — precise distance / location (AirTag / Tile).</li>
+          </ul>
+
+          <h2>10 wireless troubleshooting scenarios</h2>
+          <ol>
+            <li><b>"Phone keeps connecting to far AP at -80 dBm instead of nearer -55 dBm"</b> → sticky client. Enable 802.11k/v, raise min RSSI on far AP, lower TX power, or use band steering.</li>
+            <li><b>"Wi-Fi 6E SSID not visible on new laptop"</b> → 6E needs WPA3 + driver / OS support; verify WPA3 enabled + check client supports 6 GHz radio.</li>
+            <li><b>"Voice calls drop when walking between conference rooms"</b> → 802.11r FT not enabled / VoWi-Fi roaming gap. Enable 802.11r on the SSID.</li>
+            <li><b>"Conference room slow when 80 people present"</b> → airtime saturation; deploy more low-power APs and / or enable OFDMA to serve small packets in parallel.</li>
+            <li><b>"Heatmap shows -55 dBm but throughput is awful"</b> → high channel utilization or non-Wi-Fi interferer; run spectrum analyzer to spot microwave / radar / Bluetooth.</li>
+            <li><b>"Random clients deauth then reconnect every few minutes"</b> → suspect deauth attack OR client buggy driver; enable PMF (802.11w) to authenticate management frames.</li>
+            <li><b>"EAP-TLS users fail after RADIUS server cert renewal"</b> → clients pinned old root or supplicant not trusting new chain; push new chain via MDM / GPO.</li>
+            <li><b>"Captive portal redirect doesn't fire on iPhone"</b> → DoH on by default; iOS hits captive.apple.com; allow that domain or force user to disable Private Relay.</li>
+            <li><b>"AP keeps changing channel by itself"</b> → DFS detected radar and vacated; switch to non-DFS channel or accept brief outages.</li>
+            <li><b>"Rogue AP detected in WIPS dashboard"</b> → physically locate using neighbor signal triangulation (heatmap) or by walking with a directional antenna; unplug or block at switch port.</li>
+          </ol>
         `
       },
       {
