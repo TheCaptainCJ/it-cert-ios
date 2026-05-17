@@ -19026,34 +19026,205 @@ Get-CimInstance -Query "SELECT * FROM Win32_Service WHERE State='Running' AND St
       {
         title: '8. Active Directory & User Management',
         body: `
-          <p>Requires the <code>ActiveDirectory</code> RSAT module.</p>
-          <pre><code>Import-Module ActiveDirectory
+          <h2>What is Active Directory?</h2>
+          <p><b>Active Directory Domain Services (AD DS)</b> is Microsoft's on-prem directory service. <b>What:</b> a hierarchical database of users, groups, computers, and policies, served by <b>Domain Controllers (DCs)</b> over LDAP, Kerberos, and DNS. <b>Why:</b> centralized authentication, authorization, and configuration (Group Policy) for every Windows machine joined to the domain. <b>How used:</b> domain join puts a computer object in AD; users sign in once at the workstation and that token is good for any service in the forest (SSO via Kerberos).</p>
 
-# Find users
-Get-ADUser -Filter * -Properties LastLogonDate |
-  Where-Object { $_.LastLogonDate -lt (Get-Date).AddDays(-90) -and $_.Enabled } |
-  Select-Object SamAccountName, LastLogonDate
+          <h3>Logical structure (vocabulary you must know)</h3>
+          <ul>
+            <li><b>Forest</b> — top-level security boundary; one or more domain trees sharing a schema + global catalog.</li>
+            <li><b>Tree</b> — domain hierarchy that shares a contiguous DNS namespace (<code>contoso.com → emea.contoso.com</code>).</li>
+            <li><b>Domain</b> — administrative + replication unit (<code>contoso.com</code>).</li>
+            <li><b>OU (Organizational Unit)</b> — container inside a domain that groups objects for delegation + Group Policy.</li>
+            <li><b>Object</b> — user, computer, group, contact, printer, GPO, OU.</li>
+            <li><b>DC (Domain Controller)</b> — server running AD DS; holds a writable copy of the domain database.</li>
+            <li><b>RODC</b> — Read-Only Domain Controller (branch office, reduced attack surface).</li>
+            <li><b>GC (Global Catalog)</b> — partial replica of every object in the forest; used by cross-domain lookups + Exchange.</li>
+            <li><b>FSMO</b> — Flexible Single Master Operations roles (Schema, Domain Naming, RID, PDCe, Infrastructure). Move with <code>Move-ADDirectoryServerOperationMasterRole</code>.</li>
+            <li><b>GPO (Group Policy Object)</b> — config policy linked to a Site/Domain/OU; applies to users + computers at login/boot.</li>
+            <li><b>Schema</b> — definition of object classes and attributes; rare to extend.</li>
+            <li><b>Trust</b> — cross-domain authentication relationship.</li>
+            <li><b>Site</b> — physical topology grouping for replication efficiency.</li>
+          </ul>
 
-# Create user
+          <h3>Identity attributes commonly confused</h3>
+          <ul>
+            <li><b>SamAccountName</b> — pre-Windows-2000 short name (<code>jdoe</code>), 20-char max, unique per domain.</li>
+            <li><b>UserPrincipalName (UPN)</b> — modern login name (<code>jdoe@contoso.com</code>), unique forest-wide.</li>
+            <li><b>DistinguishedName (DN)</b> — full LDAP path (<code>CN=Jane Doe,OU=Users,DC=contoso,DC=com</code>).</li>
+            <li><b>ObjectGUID</b> — immutable 128-bit identifier; survives renames/moves.</li>
+            <li><b>SID</b> — Security Identifier (<code>S-1-5-21-...</code>); what NTFS ACLs and Kerberos tokens use.</li>
+          </ul>
+
+          <h2>ActiveDirectory module — install + load</h2>
+          <p>Cmdlets ship in the <b>RSAT (Remote Server Administration Tools)</b> ActiveDirectory module. Install on Windows 10/11:</p>
+          <pre><code># Windows 10/11 (admin)
+Add-WindowsCapability -Online -Name 'Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0'
+
+# Windows Server
+Install-WindowsFeature RSAT-AD-PowerShell
+
+Import-Module ActiveDirectory
+Get-Command -Module ActiveDirectory | Measure-Object        # ~140 cmdlets</code></pre>
+
+          <h2>Users — search, create, modify</h2>
+
+          <h3>Searching with -Filter (preferred) vs -LDAPFilter</h3>
+          <pre><code># -Filter (PowerShell expression — server-side translated)
+Get-ADUser -Filter "Enabled -eq \\$true -and Department -eq 'Finance'"
+Get-ADUser -Filter "GivenName -like 'J*'" -Properties Department, Title
+
+# -LDAPFilter (raw LDAP query)
+Get-ADUser -LDAPFilter '(department=Finance)' -Properties department
+
+# Get a specific user
+Get-ADUser jdoe -Properties *                                # all attributes
+Get-ADUser -Identity jdoe -Properties LastLogonDate, MemberOf, PasswordLastSet
+
+# Stale accounts
+Get-ADUser -Filter 'Enabled -eq $true' -Properties LastLogonDate |
+  Where-Object { $_.LastLogonDate -lt (Get-Date).AddDays(-90) } |
+  Select-Object SamAccountName, LastLogonDate, DistinguishedName</code></pre>
+          <p><b>Note on LastLogonDate:</b> AD replicates <code>LastLogonTimestamp</code> only every 14 days by default, so it lags. For exact last logon per-DC use <code>lastLogon</code> attribute on each DC.</p>
+
+          <h3>Create + modify user</h3>
+          <pre><code>$pw = ConvertTo-SecureString 'P@ssw0rd!' -AsPlainText -Force
 New-ADUser \`
-  -Name "Jane Doe" \`
+  -Name 'Jane Doe' \`
+  -GivenName 'Jane' -Surname 'Doe' \`
   -SamAccountName jdoe \`
-  -UserPrincipalName "jdoe@contoso.com" \`
-  -AccountPassword (ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force) \`
-  -Enabled $true \`
-  -Path "OU=Users,DC=contoso,DC=com"
+  -UserPrincipalName 'jdoe@contoso.com' \`
+  -EmailAddress 'jane.doe@contoso.com' \`
+  -Title 'Engineer' -Department 'IT' \`
+  -Path 'OU=Users,DC=contoso,DC=com' \`
+  -AccountPassword $pw \`
+  -ChangePasswordAtLogon $true \`
+  -Enabled $true
 
-# Groups
-Add-ADGroupMember -Identity "IT-Admins" -Members jdoe
-Get-ADGroupMember "IT-Admins"
+Set-ADUser jdoe -Title 'Senior Engineer' -Department 'Platform'
+Set-ADUser jdoe -Replace @{ extensionAttribute1 = 'building-7' }
+Rename-ADObject -Identity (Get-ADUser jdoe) -NewName 'Jane Smith'
+Move-ADObject -Identity (Get-ADUser jdoe) -TargetPath 'OU=Engineering,DC=contoso,DC=com'</code></pre>
 
-# Lock / unlock
-Unlock-ADAccount -Identity jdoe
-Disable-ADAccount -Identity jdoe</code></pre>
-          <h2>Local user management</h2>
-          <pre><code>New-LocalUser -Name "tempuser" -NoPassword
-Add-LocalGroupMember -Group "Administrators" -Member "tempuser"
-Get-LocalUser</code></pre>
+          <h3>Password + account lockout</h3>
+          <pre><code>Set-ADAccountPassword jdoe -Reset -NewPassword (ConvertTo-SecureString 'New#Pass!' -AsPlainText -Force)
+Set-ADUser jdoe -ChangePasswordAtLogon $true
+Unlock-ADAccount jdoe
+Disable-ADAccount jdoe
+Enable-ADAccount jdoe
+Remove-ADUser jdoe -Confirm:$false</code></pre>
+
+          <h2>Groups — security vs distribution; scope</h2>
+          <ul>
+            <li><b>Security group</b> — used for permissions/ACLs.</li>
+            <li><b>Distribution group</b> — Exchange mail list; no permissions.</li>
+          </ul>
+          <p><b>Group scope (AGDLP rule):</b></p>
+          <ul>
+            <li><b>Global</b> — members from same domain; visible forest-wide.</li>
+            <li><b>Domain Local</b> — members from anywhere; usable only in same domain.</li>
+            <li><b>Universal</b> — members from anywhere; usable anywhere (replicated to Global Catalog).</li>
+          </ul>
+          <p><b>Best practice (AGDLP):</b> Accounts → Global → Domain Local → Permissions. Put users in <i>global</i> groups, nest those into <i>domain local</i> groups, assign permissions to <i>domain local</i> groups.</p>
+          <pre><code>New-ADGroup -Name 'IT-Admins' -GroupScope Global -GroupCategory Security -Path 'OU=Groups,DC=contoso,DC=com'
+Add-ADGroupMember -Identity 'IT-Admins' -Members jdoe, asmith
+Remove-ADGroupMember -Identity 'IT-Admins' -Members jdoe -Confirm:\$false
+
+Get-ADGroupMember 'IT-Admins'
+Get-ADGroupMember 'IT-Admins' -Recursive                     # flatten nested
+Get-ADUser jdoe -Properties MemberOf | Select-Object -ExpandProperty MemberOf
+Get-ADPrincipalGroupMembership jdoe                          # direct memberships
+Get-ADGroup -Filter "Name -like 'IT-*'"</code></pre>
+
+          <h2>Computers + OUs</h2>
+          <pre><code>Get-ADComputer -Filter * -Properties OperatingSystem, LastLogonDate
+Get-ADComputer -Filter "OperatingSystem -like '*Server 2012*'"  # find stale OS
+Disable-ADAccount -Identity 'OLD-SRV01\$'                      # disable computer (note trailing $)
+Reset-ComputerMachinePassword                                  # on the workstation, fix broken secure channel
+
+Get-ADOrganizationalUnit -Filter * | Select-Object Name, DistinguishedName
+New-ADOrganizationalUnit -Name 'Engineering' -Path 'DC=contoso,DC=com' -ProtectedFromAccidentalDeletion $true</code></pre>
+
+          <h2>Group Policy (GPO) via PowerShell</h2>
+          <pre><code>Import-Module GroupPolicy
+Get-GPO -All | Select-Object DisplayName, Id, ModificationTime
+Get-GPOReport -All -ReportType Html -Path C:\\reports\\gpos.html
+New-GPO -Name 'Lockscreen Timeout' -Comment 'Security baseline'
+New-GPLink -Name 'Lockscreen Timeout' -Target 'OU=Users,DC=contoso,DC=com'
+
+# Force GP refresh on a remote computer
+Invoke-GPUpdate -Computer 'WKS01' -Force</code></pre>
+
+          <h2>Reading raw LDAP — when AD module missing</h2>
+          <pre><code>$searcher = [adsisearcher]"(&amp;(objectClass=user)(samAccountName=jdoe))"
+$searcher.FindOne().Properties
+
+# Direct binding
+$user = [adsi]"LDAP://CN=Jane Doe,OU=Users,DC=contoso,DC=com"
+$user.title = 'New Title'
+$user.SetInfo()</code></pre>
+
+          <h2>Local accounts (no domain) — Microsoft.PowerShell.LocalAccounts</h2>
+          <pre><code>Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember -Group 'Administrators'
+
+New-LocalUser -Name 'tempuser' -Password (Read-Host -AsSecureString)
+New-LocalUser -Name 'svc_app' -NoPassword                       # passwordless (for testing only)
+Add-LocalGroupMember -Group 'Administrators' -Member 'tempuser'
+Disable-LocalUser -Name 'tempuser'
+Remove-LocalUser -Name 'tempuser'
+
+Set-LocalUser -Name 'svc_app' -Password (ConvertTo-SecureString 'P@ss!' -AsPlainText -Force)</code></pre>
+
+          <h2>Microsoft Entra ID (cloud) — Microsoft Graph PowerShell</h2>
+          <p>The old <code>AzureAD</code> and <code>MSOnline</code> modules are deprecated. Use <b>Microsoft Graph PowerShell SDK</b>.</p>
+          <pre><code>Install-Module Microsoft.Graph -Scope CurrentUser
+Connect-MgGraph -Scopes 'User.Read.All','Group.ReadWrite.All'
+
+Get-MgUser -All
+Get-MgUser -UserId jdoe@contoso.onmicrosoft.com -Property displayName,signInActivity
+
+New-MgUser -DisplayName 'Jane Doe' -UserPrincipalName 'jdoe@contoso.onmicrosoft.com' \`
+  -AccountEnabled \$true -MailNickname jdoe \`
+  -PasswordProfile @{ Password='TempP@ss1'; ForceChangePasswordNextSignIn=\$true }
+
+Update-MgUser -UserId jdoe@contoso.onmicrosoft.com -Department 'Engineering'
+Get-MgGroup -Filter "displayName eq 'IT-Admins'"
+New-MgGroupMember -GroupId &lt;guid&gt; -DirectoryObjectId (Get-MgUser -UserId jdoe).Id
+
+Disconnect-MgGraph</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>AD DS</b> — Active Directory Domain Services.</li>
+            <li><b>DC / RODC</b> — Domain Controller / Read-Only DC.</li>
+            <li><b>GC</b> — Global Catalog.</li>
+            <li><b>FSMO</b> — Flexible Single Master Operations.</li>
+            <li><b>OU</b> — Organizational Unit.</li>
+            <li><b>GPO</b> — Group Policy Object.</li>
+            <li><b>SAM</b> — Security Account Manager; <b>SamAccountName</b> = pre-Win2000 logon.</li>
+            <li><b>UPN</b> — User Principal Name (<code>user@domain</code>).</li>
+            <li><b>DN / CN / OU / DC</b> — Distinguished Name components: Common Name / Organizational Unit / Domain Component.</li>
+            <li><b>SID</b> — Security Identifier.</li>
+            <li><b>RSAT</b> — Remote Server Administration Tools.</li>
+            <li><b>LDAP / LDAPS</b> — Lightweight Directory Access Protocol (over TLS).</li>
+            <li><b>Kerberos / NTLM</b> — AD authentication protocols (Kerberos preferred; NTLM legacy).</li>
+            <li><b>AGDLP</b> — Account → Global → Domain Local → Permission (group nesting best practice).</li>
+            <li><b>gMSA</b> — group Managed Service Account.</li>
+            <li><b>Microsoft Graph</b> — unified REST API for Entra ID + M365 (replaces AzureAD / MSOnline).</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li><code>LastLogonDate</code> lags up to 14 days (replicated copy of <code>LastLogonTimestamp</code>). For real-time, query <code>lastLogon</code> on every DC and take max.</li>
+            <li>Computer accounts have a <code>$</code> suffix in <code>SamAccountName</code>: <code>WKS01$</code>.</li>
+            <li>Passwords stored as <code>SecureString</code> — never as plain text; use <code>ConvertTo-SecureString -AsPlainText -Force</code> for scripts (acceptable for non-production); for prod use <code>Read-Host -AsSecureString</code> or pull from Key Vault.</li>
+            <li><code>Remove-ADUser</code> is irreversible unless AD Recycle Bin is enabled (<code>Enable-ADOptionalFeature 'Recycle Bin Feature'</code>).</li>
+            <li><code>-Filter</code> uses PowerShell-style operators (<code>-eq</code>, <code>-like</code>) — quote them; <code>-LDAPFilter</code> uses LDAP syntax (<code>(samAccountName=jdoe)</code>).</li>
+            <li>Default cmdlets return a short attribute set. Add <code>-Properties</code> to get specific attributes, or <code>-Properties *</code> for everything (slow).</li>
+            <li><code>AzureAD</code> + <code>MSOnline</code> modules retired; migrate to <code>Microsoft.Graph</code>.</li>
+            <li><code>Disable-ADAccount</code> vs <code>Remove-ADUser</code>: HR off-boarding flow disables first, removes later — preserves SID + group memberships for forensics.</li>
+          </ul>
         `
       },
       {
