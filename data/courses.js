@@ -3420,6 +3420,199 @@ const COURSES = [
             <li>"Cannot resolve at your skill level" → Escalate.</li>
             <li>Always back up before making changes.</li>
           </ul>
+
+          <h2>Mnemonic + memory aid for 6-step</h2>
+          <p><b>"I Test Plans Very Daily"</b> (some prefer "<b>I Trust That People Verify Documents</b>"):</p>
+          <ol>
+            <li><b>I</b>dentify the problem.</li>
+            <li><b>T</b>heory of probable cause.</li>
+            <li><b>T</b>est the theory.</li>
+            <li><b>P</b>lan + implement.</li>
+            <li><b>V</b>erify functionality + preventive measures.</li>
+            <li><b>D</b>ocument findings.</li>
+          </ol>
+
+          <h2>Side-by-side: A+ 6-step vs Network+ 7-step (recognize both)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Step</th><th align="left" style="padding:4px;border-bottom:1px solid #444">A+ 6-step</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Net+ 7-step</th></tr>
+            <tr><td>1</td><td>Identify problem</td><td>Identify problem</td></tr>
+            <tr><td>2</td><td>Theory of probable cause</td><td>Establish theory of probable cause</td></tr>
+            <tr><td>3</td><td>Test theory</td><td>Test theory to determine cause</td></tr>
+            <tr><td>4</td><td>Plan + implement solution</td><td>Establish plan of action</td></tr>
+            <tr><td>5</td><td>Verify functionality + preventive measures</td><td><b>Implement</b> the solution / escalate</td></tr>
+            <tr><td>6</td><td>Document findings, actions, outcomes</td><td>Verify full system functionality + preventive measures</td></tr>
+            <tr><td>7</td><td>—</td><td>Document findings, actions, outcomes</td></tr>
+          </table>
+          <p>Net+ splits the "plan" + "implement" into two distinct steps; A+ combines them. Both end with verify → document.</p>
+
+          <h2>Question-the-obvious checklist (Step 2 first reflex)</h2>
+          <ul>
+            <li>Is it plugged in / powered on?</li>
+            <li>Is the cable seated on BOTH ends?</li>
+            <li>Did the user change anything recently? (Did they?)</li>
+            <li>Did anything change in the environment (power, AC, construction next door)?</li>
+            <li>Is the symptom reproducible? Always or only sometimes?</li>
+            <li>Has it happened to anyone else? Cluster of tickets suggests systemic issue.</li>
+            <li>What's the simplest plausible cause?</li>
+            <li>Has anyone touched this device recently?</li>
+            <li>Is the firmware / driver / OS current — or did they auto-update last night?</li>
+            <li>Are there beep codes, LED patterns, error messages you haven't decoded yet?</li>
+          </ul>
+
+          <h2>5 Whys + root-cause-analysis (RCA)</h2>
+          <ul>
+            <li>For each "symptom" ask "<i>why?</i>" five times to drill past the surface.</li>
+            <li>Example: "Printer offline" → why? Print server unreachable → why? DNS resolution failed → why? DC patched + service restarted → why? Patch cycle wasn't communicated → why? Change process gap.</li>
+            <li><b>Fishbone / Ishikawa diagram</b> — group causes under Methods / Machines / Materials / Manpower / Measurement / Environment.</li>
+            <li><b>Pareto principle</b> (80/20) — focus on the ~20% of causes producing ~80% of tickets.</li>
+            <li><b>Five Whys + Six Sigma DMAIC</b> common in formal RCA programs.</li>
+          </ul>
+
+          <h2>Information-gathering questions (Step 1 prompts)</h2>
+          <ul>
+            <li>"When did this start happening?"</li>
+            <li>"What were you doing right before it failed?"</li>
+            <li>"Has it ever worked correctly? When was the last time?"</li>
+            <li>"Did you recently install or update anything?"</li>
+            <li>"Are there any error messages or codes? Can you read them to me?"</li>
+            <li>"Does it happen on this device only or on others too?"</li>
+            <li>"Is the issue consistent or intermittent?"</li>
+            <li>"What changed recently in the room — new equipment, moved furniture, weather?"</li>
+            <li>"Can you reproduce it for me now?"</li>
+            <li>"Has the device been moved or dropped?"</li>
+          </ul>
+
+          <h2>Hardware troubleshooting checklist (quick refresh)</h2>
+          <ul>
+            <li><b>No power</b> — outlet/strip, AC cord, PSU rear switch, 24-pin seating, paperclip test PSU.</li>
+            <li><b>POST fails</b> — listen for beep codes; check EZ-Debug LEDs (CPU/DRAM/VGA/BOOT).</li>
+            <li><b>No display</b> — monitor on / right input; reseat GPU + power cables; try iGPU.</li>
+            <li><b>RAM error</b> — single stick in correct slot; MemTest86.</li>
+            <li><b>Storage</b> — reseat SATA/M.2; check SMART; chkdsk/fsck.</li>
+            <li><b>Overheating</b> — clean dust filters; check fan RPMs; repaste TIM if temps high under idle.</li>
+            <li><b>Random reboots</b> — PSU undersized/aging; thermal shutdown; memory errors; WHEA logs.</li>
+            <li><b>BSOD codes</b> — note stop code (e.g., <code>MEMORY_MANAGEMENT</code>, <code>KMODE_EXCEPTION_NOT_HANDLED</code>); look up + reproduce.</li>
+            <li><b>Slow boot</b> — DDR5 training; Fast Startup hibernation residue; antivirus boot scan; failed drive.</li>
+            <li><b>Peripheral dead</b> — different port, different cable; Device Manager error; driver reinstall.</li>
+          </ul>
+
+          <h2>Software / OS troubleshooting checklist</h2>
+          <ul>
+            <li><b>App won't launch</b> — Event Viewer error; permissions; reinstall; clean profile.</li>
+            <li><b>App slow</b> — Resource Monitor / Task Manager; AV scan in progress; disk almost full; defragged?</li>
+            <li><b>Profile corruption</b> — new profile to confirm; copy data; rebuild.</li>
+            <li><b>Driver issue</b> — Device Manager → roll back driver / DDU clean uninstall / vendor latest.</li>
+            <li><b>Updates failing</b> — Windows Update troubleshooter; check disk space; reset Update components.</li>
+            <li><b>Boot loop</b> — WinRE → Startup Repair → SFC/DISM → reinstall.</li>
+            <li><b>Slow shutdown</b> — Group Policy + scheduled tasks; pending updates.</li>
+            <li><b>Time skew</b> — NTP / Kerberos 5-min limit; check time zone.</li>
+            <li><b>Suspect malware</b> — disconnect from network, scan with second-opinion AV, rebuild if confirmed.</li>
+          </ul>
+
+          <h2>Network troubleshooting checklist (recap A+)</h2>
+          <ul>
+            <li><b>No IP</b> (169.254.x.x APIPA) → DHCP unreachable, cable/VLAN; check switch port.</li>
+            <li><b>Wrong gateway</b> → ipconfig + route print; static config?</li>
+            <li><b>DNS fails</b> → nslookup; try 8.8.8.8 vs local resolver.</li>
+            <li><b>Wi-Fi can't connect</b> → forget + rejoin; right SSID + PSK; PMF compatibility on old IoT.</li>
+            <li><b>Slow Internet</b> → wired speedtest from modem; saturation; Wi-Fi channel.</li>
+            <li><b>One website slow</b> → traceroute to identify hop; DNS cache.</li>
+            <li><b>VPN won't connect</b> → IKE/IPsec or TLS port blocked; certs current; client log.</li>
+            <li><b>Authentication intermittent</b> → time skew; account lockout policy; DC unreachable.</li>
+          </ul>
+
+          <h2>Mobile device troubleshooting checklist</h2>
+          <ul>
+            <li><b>Phone won't power on</b> → charge for 30 min on known-good brick; try different cable.</li>
+            <li><b>Slow charge</b> → port lint / liquid; cable; PD profile mismatch.</li>
+            <li><b>Battery drain</b> → Settings → Battery usage per app; disable background refresh; replace battery.</li>
+            <li><b>App crashes</b> → clear cache → reinstall → check OS compatibility.</li>
+            <li><b>Touchscreen unresponsive</b> → restart; remove screen protector; calibrate; replace digitizer if liquid contact.</li>
+            <li><b>Connectivity lost</b> → toggle airplane mode; reset network settings; SIM reinstall.</li>
+            <li><b>Random reboots</b> → swollen battery (DON'T puncture); OS update.</li>
+            <li><b>Lost in field</b> → Find My + remote wipe.</li>
+          </ul>
+
+          <h2>Printer troubleshooting checklist (220-1101 surfaces here)</h2>
+          <ul>
+            <li><b>Won't print</b> → printer online? queue stuck? "Use Printer Offline" toggled? Restart print spooler service.</li>
+            <li><b>Bad print quality</b> — laser: replace toner, clean fuser, calibrate. Inkjet: clean heads, replace cartridge, check head alignment. Thermal: clean printhead, replace ribbon. Dot-matrix: replace ribbon, check pins.</li>
+            <li><b>Paper jam</b> — clear all paper carefully (in direction of feed); inspect rollers + sensors; reset.</li>
+            <li><b>Ghost / shadow image</b> on laser → bad drum / cleaning blade.</li>
+            <li><b>Streaks vertical line</b> → scratch on drum.</li>
+            <li><b>Network printer unreachable</b> → ping its IP; check static / DHCP; firewall.</li>
+            <li><b>Wrong print driver</b> → install correct PCL/PostScript; clear queue.</li>
+            <li><b>3D printer</b> — bed leveling, nozzle clog, filament moisture.</li>
+            <li><b>MFP scan to email fails</b> → SMTP relay creds + port; firewall.</li>
+          </ul>
+
+          <h2>Common physical-layer + power-related issues (A+ exam favorite)</h2>
+          <ul>
+            <li><b>Burning smell</b> → power off + unplug immediately; do not power on; replace PSU + inspect mainboard.</li>
+            <li><b>Distended battery</b> → fire hazard; replace immediately; recycle properly.</li>
+            <li><b>Distended capacitors</b> on motherboard → board needs replacement.</li>
+            <li><b>Frequent shutdowns</b> → thermal (clean dust + repaste) or PSU (test under load, swap to known-good).</li>
+            <li><b>Sporadic crashes</b> → MemTest86 + driver verifier; could be RAM or PSU rail sag.</li>
+            <li><b>Dead pixels / discoloration</b> → LCD panel issue; replace.</li>
+            <li><b>Dim image</b> → backlight / inverter fail (older CCFL) or driver/firmware.</li>
+            <li><b>Image only with flashlight</b> → backlight inverter dead.</li>
+            <li><b>Sticking keys</b> → debris cleaned with compressed air; if stuck after, replace keyboard.</li>
+            <li><b>Yellow / amber light on switch port</b> → speed/duplex mismatch or PoE class issue (vendor-specific).</li>
+          </ul>
+
+          <h2>Soft-skills scenarios (memorize correct responses)</h2>
+          <ul>
+            <li><b>User panicking</b> → listen calmly; reassure ETA; gather facts; don't interrupt.</li>
+            <li><b>User offering opinion</b> "I think it's a virus" → take note; thank them; verify with evidence; don't argue.</li>
+            <li><b>Personal info visible on user's screen</b> → ignore + ask user to close before continuing.</li>
+            <li><b>User asks unrelated favor</b> → politely defer; stick to assigned scope.</li>
+            <li><b>Phone rings while on user's PC</b> → don't answer personal call; mute or silence.</li>
+            <li><b>Difficult escalation</b> → "Let me get someone with deeper access" — not "I don't know."</li>
+            <li><b>Bad news ("data is unrecoverable")</b> → deliver clearly + empathetically; explain restore-from-backup steps; document lessons learned.</li>
+            <li><b>Cultural / language difference</b> → speak clearly, avoid idioms / jargon; confirm understanding both ways.</li>
+            <li><b>Manage expectations</b> → set realistic ETAs; under-promise + over-deliver.</li>
+            <li><b>Hardest call</b> → "we can fix it but it takes a week" beats "5 minutes" that turns into 3 days.</li>
+          </ul>
+
+          <h2>Documentation artifacts you may produce</h2>
+          <ul>
+            <li><b>Ticket / case</b> — symptom, environment, steps tried, resolution, owner.</li>
+            <li><b>RCA / Post-mortem</b> — for Sev1/Sev2 incidents, blameless format.</li>
+            <li><b>Knowledge Base article</b> — searchable how-to for next time.</li>
+            <li><b>Runbook / SOP update</b> — formalize the fix into procedure.</li>
+            <li><b>Asset inventory update</b> — replaced part serials, new firmware version.</li>
+            <li><b>CMDB / IPAM update</b> — config snapshot.</li>
+            <li><b>User-facing notice</b> — status page / email about service back to normal.</li>
+            <li><b>Change ticket closure</b> with verification evidence.</li>
+            <li><b>Trend report</b> — repeat tickets surface problem-management work.</li>
+          </ul>
+
+          <h2>10 "which step is this?" exam patterns</h2>
+          <ul>
+            <li>"Tech asks user when problem began" → Step 1 Identify.</li>
+            <li>"Tech believes it's a corrupt driver" → Step 2 Theory.</li>
+            <li>"Tech rolls back the driver to test" → Step 3 Test theory.</li>
+            <li>"Tech plans 8 PM maintenance window + rollback plan" → Step 4 Plan + Implement.</li>
+            <li>"Tech reboots and runs user's app to confirm working" → Step 5 Verify.</li>
+            <li>"Tech updates KB + closes ticket with notes" → Step 6 Document.</li>
+            <li>"Theory disproven, what next?" → form new theory OR escalate (back to Step 2).</li>
+            <li>"User claims fix didn't hold" → restart at Identify (new problem? regression?).</li>
+            <li>"Tech doesn't know how to proceed" → escalate; don't guess in production.</li>
+            <li>"Before making changes" → BACK UP user data; check policy.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>RCA</b> — Root Cause Analysis.</li>
+            <li><b>RFC / CAB</b> — Request for Change / Change Advisory Board.</li>
+            <li><b>SOP / KB</b> — Standard Operating Procedure / Knowledge Base.</li>
+            <li><b>CMDB / IPAM / DCIM</b> — Configuration / IP / Datacenter management.</li>
+            <li><b>ITIL</b> — IT Infrastructure Library.</li>
+            <li><b>POST / BSOD / WHEA / SMART</b> — diagnostic indicators.</li>
+            <li><b>ESD / LOTO / MSDS / SDS</b> — safety standards.</li>
+            <li><b>MTBF / MTTR / MTTF / MTTD</b> — reliability metrics.</li>
+            <li><b>Sev 1-4 / P1-P4</b> — incident severity classifications.</li>
+          </ul>
         `
       }
     ],
