@@ -18652,31 +18652,182 @@ Remove-PSDrive -Name Logs</code></pre>
       {
         title: '6. Working with Services, Processes, Events',
         body: `
-          <pre><code># Services
-Get-Service
+          <h2>Why this lesson</h2>
+          <p>Services, processes, scheduled tasks, event logs, and perf counters are the day-to-day surface area of Windows administration. PowerShell wraps each as a typed object family with consistent verbs. Master these cmdlets and most "look at the server / make this stop / why did it crash" jobs collapse to one-liners.</p>
+
+          <h2>Services — Windows service control</h2>
+          <p><b>What is a service?</b> A Windows <b>service</b> is a long-running background process managed by the Service Control Manager (SCM), started before users log on, hosted under a service account (LocalSystem, NetworkService, LocalService, or a domain/MSA account). Examples: <code>Spooler</code> (print), <code>W32Time</code> (clock), <code>wuauserv</code> (Windows Update), <code>MSSQLSERVER</code> (SQL).</p>
+          <pre><code>Get-Service                                              # all services
 Get-Service spooler
+Get-Service -Name 'W*'                                   # name wildcard
+Get-Service -DisplayName 'Windows Update'
+Get-Service | Where-Object Status -eq 'Running'
+
 Start-Service spooler
 Stop-Service spooler -Force
 Restart-Service spooler
+Suspend-Service / Resume-Service                          # pause if supported
+
 Set-Service -Name spooler -StartupType Automatic
+Set-Service -Name spooler -StartupType AutomaticDelayedStart  # PS6+
+Set-Service -Name spooler -StartupType Disabled
 
-# Processes
-Get-Process
+# Cross-machine (uses RPC, requires admin on target)
+Get-Service -ComputerName SERVER01 -Name spooler
+
+# New-Service / Remove-Service (admin)
+New-Service -Name MyAgent -BinaryPathName 'C:\\Tools\\agent.exe' -DisplayName 'My Agent' -StartupType Automatic
+Remove-Service -Name MyAgent</code></pre>
+
+          <h3>StartupType values + service account</h3>
+          <ul>
+            <li><b>Automatic</b> — start at boot.</li>
+            <li><b>AutomaticDelayedStart</b> — start ~2 min after boot so the login flow stays fast.</li>
+            <li><b>Manual</b> — start on demand.</li>
+            <li><b>Disabled</b> — cannot start (admin block).</li>
+          </ul>
+          <p>Service accounts (in property <code>StartName</code>): <code>LocalSystem</code> = highest local privilege; <code>NT AUTHORITY\\NetworkService</code> = network-capable with low privs; <code>NT AUTHORITY\\LocalService</code> = lowest; <code>DOMAIN\\gMSA$</code> = group Managed Service Account (preferred for prod). Read full details via WMI/CIM (next lesson):</p>
+          <pre><code>Get-CimInstance Win32_Service -Filter "Name='spooler'" |
+  Select-Object Name, StartName, ProcessId, StartMode, State, PathName</code></pre>
+
+          <h2>Processes — running programs</h2>
+          <pre><code>Get-Process                                              # all
 Get-Process notepad
-Stop-Process -Name notepad -Force
-Start-Process notepad
-Wait-Process -Id 1234
+Get-Process -Id 1234
+Get-Process | Sort-Object CPU -Descending | Select-Object -First 5
+Get-Process | Where-Object WorkingSet -gt 500MB
 
-# Event log
+# Useful columns: Id, Name, CPU, WS (Working Set), VM (Virtual Mem), Handles, Threads, StartTime, Path
+Get-Process notepad | Format-List Id, Name, Path, StartTime, Company, CPU
+
+Start-Process notepad
+Start-Process -FilePath 'C:\\Tools\\app.exe' -ArgumentList '/quiet','/log'
+Start-Process powershell -Verb RunAs                     # elevated (UAC prompt)
+Start-Process notepad -Wait                              # block until exit
+$p = Start-Process notepad -PassThru                     # capture process object
+$p.WaitForExit()
+$p.ExitCode
+
+Stop-Process -Name notepad -Force
+Stop-Process -Id 1234
+
+Wait-Process -Id 1234 -Timeout 30                        # block until exit or timeout
+Debug-Process -Name app                                   # attach a debugger</code></pre>
+          <p><b>Note:</b> <code>Get-Process -IncludeUserName</code> needs admin. <code>Start-Process -Credential</code> can launch a process as another user (interactive sessions are limited by Windows).</p>
+
+          <h2>Scheduled tasks (Task Scheduler)</h2>
+          <p>Modern <code>ScheduledTasks</code> module (Server 2012+, Windows 8+) replaces the old <code>schtasks.exe</code>.</p>
+          <pre><code>Get-ScheduledTask
+Get-ScheduledTask -TaskName 'GoogleUpdateTaskMachineUA'
+Get-ScheduledTaskInfo -TaskName 'Backup'                 # last run + next run
+
+# Create
+$action  = New-ScheduledTaskAction  -Execute 'pwsh' -Argument '-File C:\\jobs\\backup.ps1'
+$trigger = New-ScheduledTaskTrigger -Daily -At 2am
+$prin    = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+$set     = New-ScheduledTaskSettingsSet -StartWhenAvailable
+Register-ScheduledTask -TaskName 'NightlyBackup' -Action $action -Trigger $trigger -Principal $prin -Settings $set
+
+# Run / unregister
+Start-ScheduledTask -TaskName 'NightlyBackup'
+Stop-ScheduledTask  -TaskName 'NightlyBackup'
+Unregister-ScheduledTask -TaskName 'NightlyBackup' -Confirm:$false</code></pre>
+
+          <h2>Event logs — investigate what happened</h2>
+          <p>Two cmdlets:</p>
+          <ul>
+            <li><b>Get-EventLog</b> — legacy <i>classic</i> logs only (Application, System, Security, Setup, ForwardedEvents). Windows PowerShell 5.1 only; not in PS 7.</li>
+            <li><b>Get-WinEvent</b> — modern; reads classic AND Crimson/ETW channels (thousands of provider-specific logs). <b>Use this.</b></li>
+          </ul>
+
+          <h3>Common patterns</h3>
+          <pre><code>Get-WinEvent -ListLog *                                   # all log names
+Get-WinEvent -ListLog System | Format-List
 Get-WinEvent -LogName System -MaxEvents 50
+
+# FAST filtering: use -FilterHashtable (server-side, like WHERE in SQL)
 Get-WinEvent -FilterHashtable @{
-  LogName='Security'
-  Id=4625              # failed logon
-  StartTime=(Get-Date).AddDays(-1)
+  LogName   = 'Security'
+  Id        = 4625                                       # failed logon
+  StartTime = (Get-Date).AddDays(-1)
 }
 
-# Performance counters
-Get-Counter '\\Processor(_Total)\\% Processor Time' -SampleInterval 1 -MaxSamples 5</code></pre>
+Get-WinEvent -FilterHashtable @{
+  LogName  = 'System'
+  Level    = 1,2                                          # Critical + Error
+  StartTime= (Get-Date).AddHours(-6)
+}
+
+# Slow but flexible: Where-Object (client-side)
+Get-WinEvent -LogName Application -MaxEvents 1000 |
+  Where-Object { $_.LevelDisplayName -eq 'Error' -and $_.ProviderName -like 'MSSQL*' }
+
+# XPath filter for advanced cases
+Get-WinEvent -LogName Security -FilterXPath "*[System[EventID=4624 and TimeCreated[timediff(@SystemTime) &lt;= 3600000]]]"</code></pre>
+
+          <h3>High-value Event IDs to memorize</h3>
+          <ul>
+            <li><b>Security 4624</b> — successful logon.</li>
+            <li><b>Security 4625</b> — failed logon (brute force / wrong password).</li>
+            <li><b>Security 4634 / 4647</b> — logoff / user-initiated logoff.</li>
+            <li><b>Security 4672</b> — special privileges assigned (admin token).</li>
+            <li><b>Security 4688</b> — process creation (if audit enabled).</li>
+            <li><b>Security 4720 / 4726</b> — account created / deleted.</li>
+            <li><b>Security 4728 / 4732 / 4756</b> — added to security group.</li>
+            <li><b>System 41</b> — unexpected shutdown (kernel power).</li>
+            <li><b>System 1074</b> — clean shutdown / restart initiated by user/service.</li>
+            <li><b>System 6005 / 6006</b> — event log started / stopped (boot / shutdown).</li>
+            <li><b>System 7036</b> — service entered Running/Stopped state.</li>
+            <li><b>Application 1000</b> — app crash; <b>1001</b> WER report.</li>
+            <li><b>PowerShell 4104</b> — script-block logging (very useful for IR).</li>
+          </ul>
+
+          <h3>Write your own events</h3>
+          <pre><code>New-EventLog -LogName Application -Source 'MyApp'
+Write-EventLog -LogName Application -Source 'MyApp' -EntryType Error -EventId 1001 -Message 'Job failed: timeout'</code></pre>
+
+          <h2>Performance counters — real-time + historical telemetry</h2>
+          <pre><code># Current value(s)
+Get-Counter '\\Processor(_Total)\\% Processor Time' -SampleInterval 1 -MaxSamples 5
+Get-Counter '\\Memory\\Available MBytes'
+
+# Multiple counters with continuous sampling
+$paths = '\\Processor(_Total)\\% Processor Time','\\Memory\\Available MBytes','\\LogicalDisk(C:)\\% Free Space'
+Get-Counter -Counter $paths -SampleInterval 5 -MaxSamples 10 -Continuous
+
+# List available counters
+Get-Counter -ListSet *                                    # every counter set
+Get-Counter -ListSet 'Processor' | Select-Object -ExpandProperty Paths</code></pre>
+          <p>Counter paths look like <code>\\Object(Instance)\\Counter</code>. Use a backslash, an object name, optional instance in parens, then the counter. <code>_Total</code> aggregates all instances.</p>
+
+          <h2>Reboots / shutdowns</h2>
+          <pre><code>Restart-Computer                                         # local
+Restart-Computer -ComputerName SRV1,SRV2 -Force -Wait -Timeout 600
+Stop-Computer
+Test-Connection SRV1 -Count 1                            # quick reachability</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>SCM</b> — Service Control Manager.</li>
+            <li><b>MSA / gMSA</b> — Managed / Group Managed Service Account.</li>
+            <li><b>WER</b> — Windows Error Reporting.</li>
+            <li><b>ETW</b> — Event Tracing for Windows; modern event channels are ETW-based.</li>
+            <li><b>SID</b> — Security Identifier (S-1-5-...).</li>
+            <li><b>WMI / CIM</b> — Windows Management Instrumentation / Common Information Model (next lesson).</li>
+            <li><b>UAC</b> — User Account Control; needed for elevation.</li>
+            <li><b>RPC</b> — Remote Procedure Call; how <code>-ComputerName</code> reaches remote SCM.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li><code>Set-Service -StartupType</code> requires admin and may need the SCM to refresh; verify with <code>Get-Service | Select StartType</code>.</li>
+            <li><code>Stop-Process -Force</code> kills uncleanly — data loss possible. Prefer graceful (<code>Stop-Service</code> for services, <code>CloseMainWindow()</code> for GUI apps).</li>
+            <li><code>Get-Process</code> alone does NOT return CPU instantly — first sample is the lifetime total; for current rate use <code>Get-Counter</code>.</li>
+            <li><code>-FilterHashtable</code> is ~100× faster than piping <code>Get-WinEvent</code> output through <code>Where-Object</code>; always prefer it.</li>
+            <li>Security log access requires admin + the SeSecurityPrivilege; otherwise you get "no events were found".</li>
+            <li><code>Get-EventLog</code> is gone in PS 7 — scripts must use <code>Get-WinEvent</code>.</li>
+            <li><code>schtasks.exe</code> still works but pre-dates objects — prefer the <code>ScheduledTasks</code> module for any new code.</li>
+          </ul>
         `
       },
       {
