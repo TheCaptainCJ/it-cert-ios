@@ -1488,6 +1488,202 @@ const COURSES = [
             <li>"Public services without exposing the LAN" → DMZ / screened subnet.</li>
             <li>NAS = files, SAN = blocks. Different use cases.</li>
           </ul>
+
+          <h2>OSI layer → device cheat (every device's home)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Devices</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PDU</th></tr>
+            <tr><td>L1 Physical</td><td>Hub, repeater, modem (in part), media converter, transceiver (SFP)</td><td>Bit</td></tr>
+            <tr><td>L2 Data Link</td><td>Switch, bridge, WAP, NIC</td><td>Frame</td></tr>
+            <tr><td>L3 Network</td><td>Router, L3 switch, basic firewall</td><td>Packet</td></tr>
+            <tr><td>L4 Transport</td><td>Stateful FW, L4 load balancer</td><td>Segment / Datagram</td></tr>
+            <tr><td>L5-L7</td><td>NGFW, WAF, reverse proxy, IDS/IPS, content filter, SBC</td><td>Data / Message</td></tr>
+          </table>
+
+          <h2>PoE deep-dive</h2>
+          <ul>
+            <li><b>802.3af (PoE / Type 1)</b> — 15.4 W at the source, ~12.95 W at the device.</li>
+            <li><b>802.3at (PoE+ / Type 2)</b> — 30 W source, ~25.5 W device. Powers Wi-Fi 5 APs, 802.11ac+ PoE+ phones, PTZ cameras.</li>
+            <li><b>802.3bt Type 3 (PoE++)</b> — 60 W source.</li>
+            <li><b>802.3bt Type 4 (PoE++)</b> — 100 W source. Powers Wi-Fi 6/6E APs, displays, thin clients, IoT lighting.</li>
+            <li><b>UPoE / UPoE+</b> — Cisco proprietary 60/90 W.</li>
+            <li><b>Endspan</b> — power injected by the switch port itself.</li>
+            <li><b>Midspan injector</b> — separate device sits inline (legacy switches w/o PoE).</li>
+            <li><b>PSE</b> (Power Sourcing Equipment) — the switch/injector providing power.</li>
+            <li><b>PD</b> (Powered Device) — phone, AP, camera.</li>
+            <li><b>Negotiation</b> — LLDP-MED / CDP / resistor signature classifies the PD's class so PSE delivers the right wattage.</li>
+            <li><b>Power budget gotcha:</b> a 24-port PoE+ switch may have only 370 W total — NOT 24 × 30 W. Plan deployment per-port + summed budget.</li>
+            <li><b>Verify on Cisco:</b> <code>show power inline</code>; on Aruba: <code>show poe-power</code>; on Mikrotik: <code>/interface ethernet poe print</code>.</li>
+          </ul>
+
+          <h2>Switch features admins must know</h2>
+          <ul>
+            <li><b>Auto-MDI/MDIX</b> — automatically detects straight vs crossover; you almost never need crossover cables anymore.</li>
+            <li><b>Auto-negotiation</b> for speed + duplex. Both ends should be auto OR both hard-set; mismatch = duplex error storm.</li>
+            <li><b>Jumbo frames</b> (9000 byte MTU) — useful in storage/iSCSI/SAN; must be enabled end-to-end.</li>
+            <li><b>Port mirroring / SPAN</b> — copy traffic from one port to another for IDS / capture.</li>
+            <li><b>Stacking</b> — multiple physical switches share control plane via stack cables; managed as one.</li>
+            <li><b>VLAN trunk allowed list</b> — prune unused VLANs to reduce broadcast load + attack surface.</li>
+            <li><b>Storm control</b> — caps broadcast / multicast / unknown unicast rate per port.</li>
+            <li><b>Port security</b> — limit MACs per port; sticky MAC.</li>
+            <li><b>DHCP snooping + DAI + IP source guard</b> — defeats rogue DHCP + ARP poisoning.</li>
+            <li><b>EtherChannel / LAG / LACP</b> — bundle 2-8 links for bandwidth + redundancy.</li>
+            <li><b>Console + AUX port</b> — out-of-band management via serial cable.</li>
+            <li><b>Out-of-band (OOB) management interface</b> — dedicated mgmt port separate from data.</li>
+          </ul>
+
+          <h2>Router platform features</h2>
+          <ul>
+            <li><b>Dual WAN / failover</b> — primary + backup ISP, automatic switchover on health check failure.</li>
+            <li><b>Static + dynamic routing</b> support (RIP, OSPF, EIGRP, BGP, IS-IS).</li>
+            <li><b>NAT / PAT / port forwarding / DMZ host / hairpin NAT</b>.</li>
+            <li><b>Firewall stateful inspection</b>, port-based / app-based rules.</li>
+            <li><b>Site-to-site IPsec VPN</b>, remote-access VPN.</li>
+            <li><b>QoS</b> — classification + marking + shaping + policing.</li>
+            <li><b>SD-WAN edge</b> — combines multiple transports w/ central policy.</li>
+            <li><b>VRRP/HSRP/GLBP</b> — first-hop redundancy.</li>
+            <li><b>DHCP server + DHCP relay</b>.</li>
+            <li><b>DNS forwarder / cache</b>.</li>
+            <li><b>UPnP + IGD</b> (consumer routers) — auto port-open requests from apps; disable for security.</li>
+            <li><b>Hardware acceleration / ASIC offload</b> — keeps line-rate forwarding at high throughput.</li>
+          </ul>
+
+          <h2>Firewall classes (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Class</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Sees</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td>Packet filter (stateless)</td><td>5-tuple</td><td>Cheap ACL on a router; legacy</td></tr>
+            <tr><td>Stateful inspection</td><td>5-tuple + connection state</td><td>Industry baseline (pfSense, Cisco ASA, Fortinet)</td></tr>
+            <tr><td>Circuit-level gateway</td><td>L4 / session</td><td>SOCKS proxy</td></tr>
+            <tr><td>Application-layer</td><td>L7 protocol decoding</td><td>Per-app rules; e.g., FTP ALG</td></tr>
+            <tr><td>NGFW</td><td>App-ID + User-ID + IPS + TLS inspection + threat intel</td><td>Modern enterprise (Palo Alto, FortiGate, Cisco FTD, Check Point Quantum)</td></tr>
+            <tr><td>UTM</td><td>FW + AV + content + VPN + IDS in one</td><td>SMB all-in-one</td></tr>
+            <tr><td>WAF</td><td>HTTP/S payload</td><td>Protects web apps from OWASP attacks</td></tr>
+            <tr><td>FWaaS</td><td>Cloud-delivered NGFW</td><td>SASE component</td></tr>
+            <tr><td>Host-based</td><td>Local processes + sockets</td><td>Windows Defender FW, ufw / nftables, pf</td></tr>
+          </table>
+
+          <h2>Wireless infrastructure architectures</h2>
+          <ul>
+            <li><b>Autonomous AP (fat AP)</b> — each AP configured individually. Small deployments.</li>
+            <li><b>Controller-based (thin AP)</b> — <b>WLC</b> centralizes config, RRM (Radio Resource Management), seamless roaming. Examples: Cisco WLC 9800, Aruba Mobility Controllers.</li>
+            <li><b>Cloud-managed</b> — same idea but controller in the cloud (Meraki MR, Aruba Central, Mist).</li>
+            <li><b>Mesh</b> — APs backhaul wirelessly to each other; useful when Ethernet to every AP is impractical.</li>
+            <li><b>Wi-Fi 6/6E/7</b> APs need PoE+ or PoE++ + 2.5/5/10G uplinks; many older 1G switches now bottleneck Wi-Fi capacity.</li>
+          </ul>
+
+          <h2>Load balancer types + features</h2>
+          <ul>
+            <li><b>L4 LB</b> — TCP/UDP only; fast; passes through TLS.</li>
+            <li><b>L7 LB</b> — HTTP/HTTPS; reads URL paths, headers, cookies; TLS termination.</li>
+            <li><b>Session persistence</b> ("sticky sessions") — sends same client to same backend (cookie / source-IP).</li>
+            <li><b>Health checks</b> — TCP, HTTP (status code + body), custom script.</li>
+            <li><b>SSL/TLS offload</b> — LB handles handshake, backends serve plain HTTP.</li>
+            <li><b>GSLB</b> (Global Server LB) — DNS-based geo-routing across regions.</li>
+            <li><b>Active/active vs active/passive</b> — two LBs share VIP via VRRP/HSRP or anycast.</li>
+            <li><b>Examples:</b> F5 BIG-IP, Citrix NetScaler, Kemp, HAProxy, NGINX Plus, AWS ELB/ALB/NLB, Azure Application Gateway.</li>
+          </ul>
+
+          <h2>Edge / SD-WAN appliance features</h2>
+          <ul>
+            <li>Multi-WAN load balance + failover.</li>
+            <li>Dynamic path selection by jitter / loss / latency per app.</li>
+            <li>Centralized orchestration (push policy to many sites).</li>
+            <li>Encrypted overlay (IPsec / WireGuard) between sites.</li>
+            <li>Zero-touch provisioning at branch.</li>
+            <li>Optional integrated NGFW / DPI.</li>
+            <li>Cloud on-ramp (Direct Connect / ExpressRoute / Interconnect handoffs).</li>
+          </ul>
+
+          <h2>NAS / SAN platform comparison</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Attribute</th><th align="left" style="padding:4px;border-bottom:1px solid #444">NAS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SAN</th></tr>
+            <tr><td>Access</td><td>File-level</td><td>Block-level</td></tr>
+            <tr><td>Protocol</td><td>NFS, SMB, AFP</td><td>iSCSI, FC, FCoE, NVMe-oF</td></tr>
+            <tr><td>Network</td><td>Same Ethernet as LAN</td><td>Dedicated fabric / VLAN</td></tr>
+            <tr><td>OS sees</td><td>Mounted share / drive letter</td><td>Local disk</td></tr>
+            <tr><td>Latency</td><td>Higher</td><td>Sub-millisecond</td></tr>
+            <tr><td>Typical use</td><td>File share, backups, media</td><td>Databases, VM datastores, exchange</td></tr>
+            <tr><td>Examples</td><td>Synology, QNAP, NetApp ONTAP NAS</td><td>Pure Storage, NetApp ONTAP SAN, Dell PowerStore</td></tr>
+          </table>
+
+          <h2>Cabling infrastructure components</h2>
+          <ul>
+            <li><b>MDF</b> (Main Distribution Frame) — primary cable entry + cross-connect.</li>
+            <li><b>IDF</b> (Intermediate Distribution Frame) — telecom closets fed by MDF.</li>
+            <li><b>Patch panel</b> — terminates horizontal cabling; short patch cords to switch ports.</li>
+            <li><b>Keystone jack</b> — wall outlet termination.</li>
+            <li><b>Cable tray / J-hook / ladder rack</b> — horizontal cable support.</li>
+            <li><b>Punch-down 66/110/Krone</b> blocks.</li>
+            <li><b>Fiber distribution panel</b> with LC/MPO bulkheads.</li>
+            <li><b>Power: UPS</b> (Uninterruptible Power Supply) + <b>PDU</b> (Power Distribution Unit) — racks need both.</li>
+            <li><b>Environmental sensors</b> — temperature, humidity, water leak (NetBotz, AKCP).</li>
+          </ul>
+
+          <h2>Identify-the-device exam patterns (quick recognition)</h2>
+          <ul>
+            <li>"Provides DHCP + NAT + Wi-Fi + switch in one box for small office" → SOHO router / wireless gateway.</li>
+            <li>"Distributes incoming connections across many web servers" → load balancer.</li>
+            <li>"Hardened device sitting in front of HTTP apps to block SQLi/XSS" → WAF.</li>
+            <li>"Aggregates traffic from many APs into one mgmt plane" → wireless LAN controller.</li>
+            <li>"Allows phones + APs to be powered over Ethernet at 30 W" → PoE+ switch (802.3at).</li>
+            <li>"Sends a copy of all traffic on a port to a security analyzer" → SPAN / port mirror.</li>
+            <li>"Inspects traffic, decides app identity, decrypts TLS" → NGFW.</li>
+            <li>"Provides block-level storage to VM hosts over a dedicated network" → SAN.</li>
+            <li>"Hardened single entry point for admin SSH into private network" → bastion host / jump box.</li>
+            <li>"Inserts inline, copies traffic without affecting it" → network tap (passive).</li>
+            <li>"Modulates digital signal onto coax / copper / fiber for ISP delivery" → modem / ONT.</li>
+            <li>"Translates analog phone lines to VoIP" → VoIP / FXO/FXS gateway.</li>
+          </ul>
+
+          <h2>Common network-hardware failures + symptoms</h2>
+          <ul>
+            <li><b>Failed PSU on switch</b> → entire chassis dark; check for amber LED + listen for fans; swap modular PSU or roll the whole switch.</li>
+            <li><b>Overheating router / switch</b> → throttled CPU, packet drops, eventual reboot. Check intake/exhaust airflow + dust filters; look at <code>show env temp</code>.</li>
+            <li><b>Dying SFP/SFP+ optic</b> → link flap, CRC errors only on one port. Swap optic + clean fiber end-face.</li>
+            <li><b>Fan failure</b> → loud noise then silence; switch may keep running but will overheat. Replace ASAP.</li>
+            <li><b>Capacitor plague / aging electrolytics</b> on consumer routers → spontaneous reboots after ~5 years.</li>
+            <li><b>Wi-Fi controller licensing expired</b> → APs go into standalone or lost mode.</li>
+            <li><b>UPS battery dead</b> → utility blip kills equipment; load-test UPS quarterly.</li>
+            <li><b>Power surge</b> → blown port, blown SFP, fried PoE injector. Replace + add surge protector + grounded UPS.</li>
+            <li><b>Fiber dirty / scratched end-face</b> → high BER, intermittent down; clean with one-click cleaner; replace patch cord; re-polish or replace pigtail.</li>
+            <li><b>Bad SFP+ DAC cable</b> → no link or CRC; copper DAC cables have a finite life w/ flex cycles.</li>
+          </ul>
+
+          <h2>Rack + datacenter physics</h2>
+          <ul>
+            <li><b>Rack U</b> = 1.75" (44.45 mm) vertical unit. Standard 42U full rack.</li>
+            <li><b>Hot aisle / cold aisle</b> — racks arranged so all intakes face one aisle, exhausts the other.</li>
+            <li><b>Containment</b> — physical panels seal hot aisle from cold to prevent recirculation.</li>
+            <li><b>PDU</b> kVA + circuit balancing — don't overload one phase.</li>
+            <li><b>Out-of-band (OOB) console server</b> — terminal server with cellular failover so you can reach gear when the network is dead.</li>
+            <li><b>Smart hands</b> — colo provider staff that act on your remote instructions.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>WAP / WLC / SPS / WIPS</b> — wireless access point / LAN controller / WIPS.</li>
+            <li><b>PoE / PoE+ / PoE++ / UPoE</b> — power-over-Ethernet tiers.</li>
+            <li><b>PSE / PD</b> — Power Sourcing Equipment / Powered Device.</li>
+            <li><b>SPAN / RSPAN / ERSPAN</b> — switched port analyzer variants.</li>
+            <li><b>VRRP / HSRP / GLBP</b> — first-hop redundancy protocols.</li>
+            <li><b>SAN / NAS / iSCSI / FC / NVMe-oF</b> — storage protocols.</li>
+            <li><b>NGFW / UTM / WAF / FWaaS</b> — firewall classes.</li>
+            <li><b>L4 / L7 LB / GSLB</b> — load balancer types.</li>
+            <li><b>MDF / IDF / PDU / UPS</b> — facility infrastructure.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Power phone over Ethernet cable" → PoE/PoE+/PoE++ depending on wattage.</li>
+            <li>"Layer 3 device sharing single public IP via PAT" → router (or NGFW).</li>
+            <li>"Block-level shared storage for VM datastore" → SAN.</li>
+            <li>"Copy traffic of one port to analyzer" → SPAN / port mirror.</li>
+            <li>"Centralized control of 500 APs" → wireless LAN controller.</li>
+            <li>"Cheap one-box solution for branch security" → UTM.</li>
+            <li>"Hide web origin + terminate TLS + cache static assets" → reverse proxy / CDN.</li>
+            <li>"Two firewalls in active/passive with shared virtual IP" → VRRP / HSRP.</li>
+            <li>"Compare attenuation + NEXT on horizontal cable" → cable certifier.</li>
+            <li>"Dual ISPs + app-aware steering at branch" → SD-WAN appliance.</li>
+          </ul>
         `
       },
       {
