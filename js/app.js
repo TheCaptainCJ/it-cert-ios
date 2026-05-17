@@ -6,6 +6,7 @@
   let state = {
     currentCert: null,
     currentLessonIdx: 0,
+    whiteboardOpen: false,
     progress: loadProgress()
   };
 
@@ -339,6 +340,27 @@
           <button class="btn ${isKnown ? 'primary' : ''}" id="cardKnown">${isKnown ? '✓ Known' : 'Mark known'}</button>
           <button class="btn" id="cardNext">Next ›</button>
         </div>
+        <button class="btn wb-toggle ${state.whiteboardOpen ? 'active' : ''}" id="cardWb">✏ ${state.whiteboardOpen ? 'Hide' : 'Whiteboard'}</button>
+        ${state.whiteboardOpen ? `
+          <div class="wb-wrap">
+            <div class="wb-toolbar">
+              <button class="wb-color" data-color="#111827" style="background:#111827"></button>
+              <button class="wb-color" data-color="#dc2626" style="background:#dc2626"></button>
+              <button class="wb-color" data-color="#2563eb" style="background:#2563eb"></button>
+              <button class="wb-color" data-color="#16a34a" style="background:#16a34a"></button>
+              <button class="wb-color" data-color="#f4f4f5" style="background:#f4f4f5;border-color:#aaa" title="Eraser"></button>
+              <select class="wb-stroke" id="wbStroke" aria-label="stroke">
+                <option value="2">Thin</option>
+                <option value="4" selected>Med</option>
+                <option value="8">Thick</option>
+                <option value="14">XL</option>
+              </select>
+              <button class="wb-btn" id="wbUndo">↶ Undo</button>
+              <button class="wb-btn danger" id="wbClear">Clear</button>
+            </div>
+            <canvas class="wb-canvas" id="wbCanvas"></canvas>
+            <div class="wb-hint">Draw the answer first, then flip the card.</div>
+          </div>` : ''}
       `;
       const fc = document.getElementById('flashcard');
       fc.addEventListener('click', () => { flipped = !flipped; render(); });
@@ -353,18 +375,133 @@
         saveProgress();
         render();
       };
+      document.getElementById('cardWb').onclick = (e) => {
+        e.stopPropagation();
+        state.whiteboardOpen = !state.whiteboardOpen;
+        render();
+      };
 
-      let touchStartX = null;
-      fc.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+      if (state.whiteboardOpen) {
+        initWhiteboard();
+      }
+
+      let touchStartX = null, touchStartY = null;
+      fc.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
       fc.addEventListener('touchend', (e) => {
         if (touchStartX === null) return;
         const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
         touchStartX = null;
-        if (Math.abs(dx) < 60) return;
+        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
         if (dx < 0) { idx++; flipped = false; render(); }
         else if (idx > 0) { idx--; flipped = false; render(); }
       });
     }
+  }
+
+  // ---------- Whiteboard ----------
+  function initWhiteboard() {
+    const canvas = document.getElementById('wbCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width  = Math.floor(rect.width  * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.scale(dpr, dpr);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    let color = '#111827';
+    let stroke = 4;
+    const history = [];
+    let drawing = false;
+    let last = null;
+
+    function snapshot() {
+      try { history.push(canvas.toDataURL()); if (history.length > 20) history.shift(); } catch (_) {}
+    }
+    function restore(dataUrl) {
+      const img = new Image();
+      img.onload = () => {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      };
+      img.src = dataUrl;
+    }
+    function clear() {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#f4f4f5';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+    function pos(ev) {
+      const r = canvas.getBoundingClientRect();
+      const p = ev.touches ? ev.touches[0] : ev;
+      return { x: p.clientX - r.left, y: p.clientY - r.top };
+    }
+    function start(ev) {
+      ev.preventDefault();
+      snapshot();
+      drawing = true;
+      last = pos(ev);
+    }
+    function move(ev) {
+      if (!drawing) return;
+      ev.preventDefault();
+      const p = pos(ev);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = stroke;
+      ctx.beginPath();
+      ctx.moveTo(last.x, last.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      last = p;
+    }
+    function end() { drawing = false; last = null; }
+
+    clear();
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mouseup', end);
+    canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+    canvas.addEventListener('touchcancel', end);
+
+    const colorBtns = document.querySelectorAll('.wb-color');
+    colorBtns.forEach((b, i) => {
+      if (i === 0) b.classList.add('active');
+      b.onclick = (e) => {
+        e.stopPropagation();
+        colorBtns.forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        color = b.getAttribute('data-color');
+      };
+    });
+    document.getElementById('wbStroke').onchange = (e) => {
+      stroke = parseInt(e.target.value, 10);
+    };
+    document.getElementById('wbUndo').onclick = (e) => {
+      e.stopPropagation();
+      if (history.length === 0) { clear(); return; }
+      const prev = history.pop();
+      restore(prev);
+    };
+    document.getElementById('wbClear').onclick = (e) => {
+      e.stopPropagation();
+      snapshot();
+      clear();
+    };
   }
 
   // ---------- Lesson ----------

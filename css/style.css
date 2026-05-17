@@ -216,5 +216,102 @@ body { padding-top: calc(56px + var(--safe-top)); padding-bottom: var(--safe-bot
 /* iOS-specific tweaks */
 @supports (-webkit-touch-callout: none) {
   body { -webkit-user-select: none; user-select: none; }
-  .lesson, .q-text, .q-explain { -webkit-user-select: text; user-select: text; }
+  .lesson, .q-text, .q-explain, .face-content { -webkit-user-select: text; user-select: text; }
 }
+
+/* ====== Flashcards ====== */
+.card-meta { color: var(--muted); font-size: 12px; margin: 0 0 10px; text-align: center; }
+.flashcard {
+  perspective: 1200px;
+  width: 100%;
+  min-height: 340px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
+}
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  min-height: 340px;
+  transition: transform 0.55s cubic-bezier(0.4, 0.0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-face {
+  position: absolute; inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 20px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.flashcard-face.front { background: linear-gradient(160deg, var(--bg-2) 0%, var(--bg-3) 100%); }
+.flashcard-face.back {
+  transform: rotateY(180deg);
+  background: linear-gradient(160deg, var(--bg-3) 0%, #1a1a26 100%);
+  border-color: var(--accent);
+}
+.face-label {
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px; font-weight: 600;
+}
+.flashcard-face.back .face-label { color: var(--accent); }
+.face-content {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 19px; line-height: 1.45; text-align: center;
+  font-weight: 500; padding: 4px;
+}
+.flashcard-face.front .face-content { font-size: 21px; }
+.card-actions {
+  display: flex; gap: 6px; margin-top: 12px;
+}
+.card-actions .btn { padding: 12px 8px; font-size: 13px; }
+
+/* ====== Whiteboard ====== */
+.wb-wrap {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.wb-toolbar {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+  align-items: center; padding: 4px;
+}
+.wb-toolbar .wb-btn {
+  background: var(--bg-3); border: 1px solid var(--border);
+  color: var(--fg); border-radius: 8px; padding: 8px 12px;
+  font-size: 13px; cursor: pointer; min-height: 36px; line-height: 1;
+}
+.wb-toolbar .wb-btn:active { background: var(--bg); }
+.wb-toolbar .wb-btn.active { background: var(--accent); color: #02101f; border-color: var(--accent); }
+.wb-toolbar .wb-btn.danger { color: var(--danger); }
+.wb-color {
+  width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border);
+  cursor: pointer; padding: 0; margin: 0;
+}
+.wb-color.active { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); }
+.wb-stroke {
+  background: var(--bg-3); border: 1px solid var(--border);
+  color: var(--fg); border-radius: 6px; padding: 4px 8px; font-size: 12px;
+}
+.wb-canvas {
+  width: 100%; height: 280px;
+  background: #f4f4f5;
+  border-radius: 10px;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+.wb-hint {
+  font-size: 11px; color: var(--muted); margin-top: 6px; text-align: center;
+}
+
+/* Toggle button to reveal whiteboard */
+.btn.wb-toggle { background: var(--bg-2); border-color: var(--accent); color: var(--accent); }
+.btn.wb-toggle.active { background: var(--accent); color: #02101f; }
