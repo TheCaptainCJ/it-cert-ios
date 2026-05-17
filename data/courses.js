@@ -7028,6 +7028,163 @@ tcp.analysis.retransmission</code></pre>
             <li>"Identify non-Wi-Fi RF interference" → spectrum analyzer.</li>
             <li>"Inspect TLS cert chain from CLI" → openssl s_client.</li>
           </ul>
+
+          <h2>Layer-by-layer diagnostic order (bottom-up)</h2>
+          <ol>
+            <li><b>L1 Physical</b> — link light on? Same color/speed on both sides? Cable seated? Run cable test if in doubt. Check SFP / DAC.</li>
+            <li><b>L2 Data Link</b> — correct VLAN on the port? Frames showing on switch (<code>show interfaces counters</code>)? MAC learned (<code>show mac address-table</code>)? Speed/duplex match? Spanning Tree blocking? Port err-disabled?</li>
+            <li><b>L3 Network</b> — correct IP/mask/gateway? Can ping default gateway? Routing table has path? ACL / firewall dropping? Check duplicate IP (gratuitous ARP / <code>arp -a</code> for two MACs).</li>
+            <li><b>L4 Transport</b> — port reachable? <code>nc -vz</code>, <code>Test-NetConnection</code>, <code>nmap -p</code>. App listening on server? <code>ss -tnlp</code>. Firewall rule? NAT?</li>
+            <li><b>L5–L7 Session/Pres/App</b> — DNS resolves? TLS handshake succeeds? Server returns 200 vs 4xx/5xx? Log on the server side?</li>
+          </ol>
+
+          <h2>Top-down diagnostic order (when one app fails but others work)</h2>
+          <ol>
+            <li>Reproduce on second device — is it user-specific or universal?</li>
+            <li>Check service status on server (running, listening on the right port).</li>
+            <li>Check DNS — is the client resolving the right IP?</li>
+            <li>Check TLS — cert valid, chain trusted, SNI right?</li>
+            <li>Test TCP port from a known-good network.</li>
+            <li>Trace path — has a route changed? New firewall rule?</li>
+            <li>Capture packet on client AND server simultaneously — compare.</li>
+          </ol>
+
+          <h2>"Divide and conquer" mid-layer approach</h2>
+          <p>Start in the middle: <i>can the client ping its gateway?</i></p>
+          <ul>
+            <li>Yes → problem is past the gateway. Try traceroute / DNS / port test.</li>
+            <li>No → problem is local segment. Drop to L1/L2 checks.</li>
+          </ul>
+
+          <h2>Common interface counter patterns (Cisco-style)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Counter rising</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Likely cause</th></tr>
+            <tr><td>CRC + input errors</td><td>Bad cable, EMI, dirty fiber, duplex mismatch under load</td></tr>
+            <tr><td>Runts + collisions</td><td>Half-duplex on one side; almost extinct except hubs/old gear</td></tr>
+            <tr><td>Late collisions</td><td>Duplex mismatch (full↔half)</td></tr>
+            <tr><td>Giants</td><td>Jumbo frame mismatch; one end supports jumbos and the other does not</td></tr>
+            <tr><td>Input drops + high pps</td><td>Buffer overrun on bursty traffic; CPU-bound or interface oversubscribed</td></tr>
+            <tr><td>Output drops</td><td>Egress congestion; QoS dropping low-priority class; check class-map</td></tr>
+            <tr><td>Pause frames (Ethernet flow control)</td><td>Receiver overwhelmed; downstream device asking sender to slow</td></tr>
+            <tr><td>Throttles / overruns / ignored</td><td>Software-switched packets exceeding control plane capacity</td></tr>
+            <tr><td>No counters increasing</td><td>Wrong interface; or actual L1 down (link light off)</td></tr>
+          </table>
+
+          <h2>DHCP troubleshooting walkthrough (DORA review)</h2>
+          <p><b>D</b>iscover (broadcast) → <b>O</b>ffer (server) → <b>R</b>equest (client) → <b>A</b>ck (server). Catch with <code>tcpdump -i any port 67 or port 68</code>.</p>
+          <ul>
+            <li><b>No Discover seen on server</b> → L2 issue, wrong VLAN, missing DHCP relay (<code>ip helper-address</code>) on router.</li>
+            <li><b>Offer sent but no Request</b> → client rejecting (wrong subnet for the segment, multiple offers conflict).</li>
+            <li><b>Ack not received by client</b> → unicast Ack blocked by ACL/firewall.</li>
+            <li><b>Pool exhausted</b> → too small scope, DHCP starvation attack, or lease time too long.</li>
+            <li><b>Stale reservation</b> → reservation IP doesn't match host MAC anymore.</li>
+            <li><b>Rogue DHCP</b> → second offer with wrong gateway/DNS; enable DHCP Snooping with trusted ports.</li>
+          </ul>
+
+          <h2>DNS troubleshooting decision tree</h2>
+          <ol>
+            <li><code>nslookup name</code> works from client → DNS is fine at client; problem is elsewhere.</li>
+            <li>Client fails but <code>nslookup name 8.8.8.8</code> works → local resolver/forwarder problem.</li>
+            <li>Both fail → record actually missing, or authoritative server unreachable.</li>
+            <li><code>dig +trace name</code> → walk root → TLD → authoritative; find where the chain breaks.</li>
+            <li><code>dig +short name @authoritative.ns</code> → bypasses cache; reveals stale TTL.</li>
+            <li>Check <code>nslookup -type=SOA domain</code> + serial number — should increment on every change.</li>
+            <li>For internal AD DNS — check that records register correctly (<code>ipconfig /registerdns</code>); split-horizon misconfig is common.</li>
+            <li><b>Encrypted DNS gotchas:</b> Windows DoH, iOS Private Relay, Cloudflare WARP can bypass corporate resolvers and break captive portals + filtering.</li>
+          </ol>
+
+          <h2>TLS handshake debugging</h2>
+          <pre><code># Inspect cert chain + cipher + ALPN
+openssl s_client -connect example.com:443 -servername example.com -alpn h2
+
+# Force TLS version to test compatibility
+openssl s_client -connect example.com:443 -tls1_2
+openssl s_client -connect example.com:443 -tls1_3
+
+# Show certificate end date
+openssl s_client -connect example.com:443 -servername example.com 2&gt;/dev/null | openssl x509 -noout -dates -subject -issuer
+
+# CRL / OCSP status
+openssl s_client -connect example.com:443 -status</code></pre>
+          <p><b>Common failures:</b></p>
+          <ul>
+            <li><b>Certificate expired</b> — biggest single cause of outages.</li>
+            <li><b>Hostname mismatch</b> — SAN missing the FQDN in use.</li>
+            <li><b>Untrusted chain</b> — intermediate cert not bundled on the server.</li>
+            <li><b>SNI bypass</b> — old client doesn't send SNI; server returns the wrong vhost cert.</li>
+            <li><b>Cipher mismatch</b> — server enforces TLS 1.3 only, client only supports 1.0/1.1.</li>
+            <li><b>Pinned cert</b> — mobile app refuses new cert chain (must update app).</li>
+          </ul>
+
+          <h2>Performance triage commands cheat</h2>
+          <pre><code># Linux throughput vs latency vs loss
+iperf3 -c server                          # raw TCP throughput
+iperf3 -c server -u -b 1G                 # UDP, see jitter + loss
+mtr server                                # per-hop loss + RTT live
+ping -i 0.2 -c 100 server                 # 20-sec ping flood at fine granularity
+ss -i                                     # TCP info: cwnd, rtt, retrans
+ethtool eth0                              # link speed/duplex/driver
+ethtool -S eth0                           # NIC counters
+tc -s qdisc                               # qdisc stats (drops, queue length)
+
+# Windows
+Test-NetConnection -ComputerName server -Port 443 -InformationLevel Detailed
+Get-NetAdapterStatistics
+pathping -n -p 200 -q 50 server           # 50 probes per hop, 200 ms spacing
+netsh interface tcp show global           # default TCP autotuning</code></pre>
+
+          <h2>Packet capture strategy</h2>
+          <ul>
+            <li><b>Capture at both ends</b> when possible. Compare timestamps to spot which side dropped.</li>
+            <li><b>Filter early</b> — capture only the conversation in question to avoid GB-sized pcaps. Example: <code>tcpdump -i eth0 host 10.0.0.5 and port 443 -w cap.pcap</code>.</li>
+            <li><b>Ring buffer</b> for long captures: <code>tcpdump -W 10 -C 100 -w cap.pcap</code> rotates 10 × 100 MB files.</li>
+            <li><b>Watch for retransmissions</b> in Wireshark (red lines): <code>tcp.analysis.retransmission</code>. High retrans = lossy path.</li>
+            <li><b>Duplicate ACKs</b> = receiver missing a segment → window pressure → throughput hit.</li>
+            <li><b>Zero window</b> from receiver → application not draining socket fast enough.</li>
+            <li><b>RST after SYN</b> = port closed (or load balancer rejecting); RST after Established = either side killed the session.</li>
+            <li><b>SACK / DSACK</b> blocks tell you the receiver got a duplicate or out-of-order segment.</li>
+          </ul>
+
+          <h2>The Wireshark "Expert Info" colors</h2>
+          <ul>
+            <li><b>Warning (yellow)</b> — retransmission, duplicate ACK, out-of-order.</li>
+            <li><b>Note (cyan)</b> — keepalive, window update.</li>
+            <li><b>Chat (blue)</b> — connect/reset/fin.</li>
+            <li><b>Error (red)</b> — malformed packet, decode failure.</li>
+          </ul>
+
+          <h2>Cloud-specific tools you may see</h2>
+          <ul>
+            <li><b>AWS VPC Reachability Analyzer / Network Insights</b> — symbolic path analysis between two ENIs across SGs/NACLs/route tables.</li>
+            <li><b>AWS VPC Flow Logs</b> — packet metadata to CloudWatch/S3 (like NetFlow).</li>
+            <li><b>Azure Network Watcher</b> + Connectivity Check + NSG Flow Logs.</li>
+            <li><b>GCP Connectivity Tests</b> + VPC Flow Logs.</li>
+            <li><b>Kubernetes:</b> <code>kubectl exec</code> into a pod and run <code>curl</code> / <code>nslookup</code> / <code>traceroute</code>; <code>kubectl get pod -o wide</code> for node + IP.</li>
+            <li><b>Cilium / Hubble</b> + <b>eBPF</b> — kernel-level visibility into pod-to-pod traffic.</li>
+          </ul>
+
+          <h2>Documentation during troubleshooting (do not skip)</h2>
+          <ol>
+            <li>Note what changed last (RFC #s, commit hashes, time of last config push).</li>
+            <li>Capture command outputs <i>before</i> mitigating — they're evidence + future runbook.</li>
+            <li>Record the symptom in user language ("can't open SharePoint") AND technical language ("HTTP 502 from reverse proxy").</li>
+            <li>Timeline each step + result.</li>
+            <li>After resolution, file an RCA + update runbook within 1-2 weeks.</li>
+          </ol>
+
+          <h2>10 cold-call troubleshooting scenarios</h2>
+          <ol>
+            <li><b>"My entire branch lost Internet 5 minutes ago"</b> → check ISP status (Service Health analog), router uptime, BFD logs, BGP neighbor; failover path.</li>
+            <li><b>"Phones lose audio mid-call only on Mondays at 9am"</b> → schedule conflict with backup or replication job saturating WAN; NetFlow top-talkers in that window.</li>
+            <li><b>"Slow login but fast web"</b> → DNS pointing to dead resolver; or AD domain controller unreachable; check Kerberos + DNS.</li>
+            <li><b>"VPN connects then disconnects in 60 s"</b> → IPsec Phase 2 lifetime mismatch; NAT-T not enabled; idle timeout.</li>
+            <li><b>"Site can ping by IP but not name"</b> → DNS resolver dead, hosts file overrides, split-DNS broken.</li>
+            <li><b>"One specific website is broken everywhere"</b> → check downforeveryoneorjustme; if up there, check local proxy / CDN / TLS interception.</li>
+            <li><b>"Wi-Fi works on phone but not laptop"</b> → laptop EAP supplicant cert problem; reinstall network profile or push via MDM.</li>
+            <li><b>"Cable runs at 100 Mbps despite Gig switch"</b> → patch cable is Cat3/Cat5 missing a pair; replace.</li>
+            <li><b>"Switch keeps shutting down a port"</b> → err-disabled by BPDU Guard or port security; identify cause + clear.</li>
+            <li><b>"After firewall upgrade, some apps slow"</b> → TLS inspection now decrypting; bypass cert-pinned apps + tune CPU allocation.</li>
+          </ol>
         `
       }
     ],
