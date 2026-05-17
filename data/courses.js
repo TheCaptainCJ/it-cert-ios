@@ -658,6 +658,195 @@ const COURSES = [
             <li>If you see ports 80 / 443, the question is usually about web traffic + cert handling.</li>
             <li>Port + protocol pairings are pure memorization — flashcards beat re-reading.</li>
           </ul>
+
+          <h2>The "must memorize" port grid (220-1101 heavy-test)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Port</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Role</th></tr>
+            <tr><td>20 / 21</td><td>FTP data / control</td><td>TCP</td><td>Legacy file xfer</td></tr>
+            <tr><td>22</td><td>SSH / SCP / SFTP</td><td>TCP</td><td>Secure shell + file</td></tr>
+            <tr><td>23</td><td>Telnet</td><td>TCP</td><td>Legacy plaintext shell</td></tr>
+            <tr><td>25</td><td>SMTP</td><td>TCP</td><td>Server-to-server mail</td></tr>
+            <tr><td>53</td><td>DNS</td><td>UDP/TCP</td><td>Name resolution</td></tr>
+            <tr><td>67 / 68</td><td>DHCP server / client</td><td>UDP</td><td>Auto IP assignment</td></tr>
+            <tr><td>69</td><td>TFTP</td><td>UDP</td><td>Boot, firmware push</td></tr>
+            <tr><td>80</td><td>HTTP</td><td>TCP</td><td>Plain web</td></tr>
+            <tr><td>88</td><td>Kerberos</td><td>UDP/TCP</td><td>AD ticketing</td></tr>
+            <tr><td>110 / 995</td><td>POP3 / POP3S</td><td>TCP</td><td>Pull mail</td></tr>
+            <tr><td>119</td><td>NNTP</td><td>TCP</td><td>Usenet (rare)</td></tr>
+            <tr><td>123</td><td>NTP</td><td>UDP</td><td>Time sync</td></tr>
+            <tr><td>137-139</td><td>NetBIOS</td><td>UDP/TCP</td><td>Legacy Windows name + session</td></tr>
+            <tr><td>143 / 993</td><td>IMAP / IMAPS</td><td>TCP</td><td>Sync mail</td></tr>
+            <tr><td>161 / 162</td><td>SNMP / SNMP trap</td><td>UDP</td><td>Device monitoring</td></tr>
+            <tr><td>179</td><td>BGP</td><td>TCP</td><td>Inter-AS routing</td></tr>
+            <tr><td>389 / 636</td><td>LDAP / LDAPS</td><td>TCP</td><td>Directory query</td></tr>
+            <tr><td>443</td><td>HTTPS</td><td>TCP</td><td>TLS-wrapped web</td></tr>
+            <tr><td>445</td><td>SMB / CIFS</td><td>TCP</td><td>Windows file share</td></tr>
+            <tr><td>465 / 587</td><td>SMTPS / Submission</td><td>TCP</td><td>Authenticated outbound mail</td></tr>
+            <tr><td>514</td><td>Syslog</td><td>UDP</td><td>Centralized logs</td></tr>
+            <tr><td>515</td><td>LPR / LPD</td><td>TCP</td><td>Line printer</td></tr>
+            <tr><td>548</td><td>AFP</td><td>TCP</td><td>Apple file (legacy)</td></tr>
+            <tr><td>631</td><td>IPP / CUPS</td><td>TCP</td><td>Internet Printing</td></tr>
+            <tr><td>853</td><td>DoT (DNS over TLS)</td><td>TCP</td><td>Encrypted DNS</td></tr>
+            <tr><td>1433 / 1434</td><td>MS SQL / SQL Browser</td><td>TCP / UDP</td><td>Microsoft SQL Server</td></tr>
+            <tr><td>1521</td><td>Oracle</td><td>TCP</td><td>Oracle DB listener</td></tr>
+            <tr><td>1701</td><td>L2TP</td><td>UDP</td><td>Tunneling protocol</td></tr>
+            <tr><td>1723</td><td>PPTP</td><td>TCP + GRE 47</td><td>Legacy VPN</td></tr>
+            <tr><td>1812 / 1813</td><td>RADIUS auth / acct</td><td>UDP</td><td>AAA over UDP</td></tr>
+            <tr><td>3268 / 3269</td><td>Global Catalog (AD) / GC SSL</td><td>TCP</td><td>Forest-wide search</td></tr>
+            <tr><td>3306</td><td>MySQL / MariaDB</td><td>TCP</td><td>Database</td></tr>
+            <tr><td>3389</td><td>RDP</td><td>TCP/UDP</td><td>Windows remote desktop</td></tr>
+            <tr><td>5060 / 5061</td><td>SIP / SIPS</td><td>UDP/TCP</td><td>VoIP signaling</td></tr>
+            <tr><td>5432</td><td>PostgreSQL</td><td>TCP</td><td>Database</td></tr>
+            <tr><td>5900</td><td>VNC</td><td>TCP</td><td>Cross-platform remote desktop</td></tr>
+            <tr><td>6514</td><td>Syslog/TLS</td><td>TCP</td><td>Encrypted log forwarding</td></tr>
+            <tr><td>8080 / 8443</td><td>Alt HTTP / HTTPS</td><td>TCP</td><td>Proxy / dev servers</td></tr>
+            <tr><td>49</td><td>TACACS+</td><td>TCP</td><td>Cisco AAA for device admin</td></tr>
+            <tr><td>500 / 4500</td><td>IKE / NAT-T</td><td>UDP</td><td>IPsec key exchange</td></tr>
+          </table>
+          <p><b>Memorize triplets first:</b> 20/21, 22 (SSH/SCP/SFTP), 23, 25/587/465, 53, 67/68, 80/443, 110/995, 143/993, 137-139/445, 161/162, 389/636, 3389, 5060/5061. Those 20 cover ~95% of A+ port questions.</p>
+
+          <h2>Plaintext vs encrypted variant pairs</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Plaintext</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Encrypted equivalent</th></tr>
+            <tr><td>Telnet (23)</td><td>SSH (22)</td></tr>
+            <tr><td>FTP (20/21)</td><td>SFTP (22) or FTPS (21 + 990 or via STARTTLS)</td></tr>
+            <tr><td>HTTP (80)</td><td>HTTPS (443)</td></tr>
+            <tr><td>SMTP (25)</td><td>SMTPS (465) or SMTP w/ STARTTLS (587)</td></tr>
+            <tr><td>POP3 (110)</td><td>POP3S (995)</td></tr>
+            <tr><td>IMAP (143)</td><td>IMAPS (993)</td></tr>
+            <tr><td>LDAP (389)</td><td>LDAPS (636) or LDAP w/ STARTTLS (389)</td></tr>
+            <tr><td>SNMPv1/v2c (161)</td><td>SNMPv3 (161, USM auth+priv)</td></tr>
+            <tr><td>DNS (53)</td><td>DoT (853) / DoH (443)</td></tr>
+            <tr><td>NTP (123)</td><td>NTS (123, RFC 8915)</td></tr>
+            <tr><td>Syslog (514 UDP)</td><td>Syslog/TLS (6514 TCP)</td></tr>
+          </table>
+
+          <h2>FTP modes — active vs passive (a real exam gotcha)</h2>
+          <ul>
+            <li><b>Active mode (PORT)</b> — client opens command on TCP 21, then SERVER initiates the data connection back to the CLIENT (from TCP 20). Breaks through NAT/firewalls on the client side because firewall sees an unsolicited inbound.</li>
+            <li><b>Passive mode (PASV)</b> — client opens command on TCP 21, then asks server for a data port. Server picks an ephemeral port; client initiates BOTH connections outbound. Firewall-friendly. Modern default for browsers + most FTP clients.</li>
+            <li><b>FTPS</b> wraps FTP in TLS — implicit (port 990 from the start) or explicit (port 21 + STARTTLS upgrade).</li>
+            <li><b>SFTP</b> is unrelated — it's FTP-style commands tunneled inside an SSH session on port 22.</li>
+          </ul>
+
+          <h2>DHCP DORA walkthrough (drilled)</h2>
+          <ol>
+            <li><b>D</b>iscover — client broadcasts UDP 67 from <code>0.0.0.0:68</code> → <code>255.255.255.255:67</code>. Contains MAC + (optionally) requested options.</li>
+            <li><b>O</b>ffer — server unicasts (or broadcasts) UDP 68 with proposed IP + mask + gateway + DNS + lease.</li>
+            <li><b>R</b>equest — client broadcasts to formally request that offer; other servers see it and withdraw their offers.</li>
+            <li><b>A</b>cknowledge — server confirms with options + lease ID.</li>
+          </ol>
+          <p><b>Lease renewal:</b> client tries to renew unicast at <b>T1 = 50%</b> of lease time; if no reply, broadcasts <b>REBIND at T2 = 87.5%</b>; if still nothing, falls back to APIPA at lease expiry.</p>
+          <p><b>DHCP relay / IP helper:</b> routers don't forward broadcasts by default, so a router on the client's segment runs an <b>ip helper-address &lt;DHCP server&gt;</b> command to forward DHCP traffic unicast to a server in another VLAN.</p>
+          <p><b>APIPA</b> — Automatic Private IP Addressing — <code>169.254.0.0/16</code>. Windows + many OSes self-assign when DHCP fails. Sees only local broadcasts; no Internet. Sure sign DHCP is broken or unreachable.</p>
+
+          <h2>DNS record types (memorize)</h2>
+          <ul>
+            <li><b>A</b> — IPv4 address record.</li>
+            <li><b>AAAA</b> — IPv6 address.</li>
+            <li><b>CNAME</b> — canonical name (alias). Cannot coexist with other records at the same name.</li>
+            <li><b>ALIAS / ANAME</b> — flattened CNAME at apex (vendor-specific).</li>
+            <li><b>MX</b> — mail exchanger; priority + hostname.</li>
+            <li><b>TXT</b> — text; carries SPF, DKIM selectors, DMARC policy, domain verification.</li>
+            <li><b>NS</b> — nameserver delegation.</li>
+            <li><b>SOA</b> — Start of Authority; serial number + refresh / retry / expire / minimum TTL.</li>
+            <li><b>PTR</b> — reverse DNS (IP → name) in <code>in-addr.arpa</code> / <code>ip6.arpa</code>.</li>
+            <li><b>SRV</b> — service location (host + port). Used heavily by AD (<code>_kerberos._tcp</code>, etc.).</li>
+            <li><b>CAA</b> — Certificate Authority Authorization; which CAs may issue for the domain.</li>
+            <li><b>DNSKEY / DS / RRSIG / NSEC / NSEC3</b> — DNSSEC chain of trust.</li>
+            <li><b>NAPTR</b> — Naming Authority Pointer (ENUM/SIP).</li>
+            <li><b>HTTPS / SVCB</b> — modern records advertising HTTP/3, ALPN, ECH hints.</li>
+          </ul>
+
+          <h2>DNS query types</h2>
+          <ul>
+            <li><b>Recursive</b> — client asks resolver "find me the answer no matter what", resolver does all the legwork.</li>
+            <li><b>Iterative</b> — server replies "I don't know, but ask X"; client follows referrals.</li>
+            <li><b>Authoritative</b> — answer from the domain's owning nameserver.</li>
+            <li><b>Cached / non-authoritative</b> — resolver replying from its cache.</li>
+            <li><b>Reverse lookup</b> — PTR record in <code>x.x.x.in-addr.arpa</code>.</li>
+            <li><b>Zone transfer</b> — AXFR (full) / IXFR (incremental) over TCP 53 between authoritative servers.</li>
+          </ul>
+
+          <h2>TLS basics (every encrypted protocol uses this layer)</h2>
+          <ul>
+            <li><b>TLS</b> = Transport Layer Security (successor to SSL). Versions: <b>1.0/1.1 dead</b>, <b>1.2</b> baseline, <b>1.3</b> current/preferred.</li>
+            <li><b>Handshake</b> (TLS 1.3 condensed): ClientHello → ServerHello + cert + key share → finished → encrypted application data. 1-RTT for new sessions, 0-RTT with resumption.</li>
+            <li><b>Cert chain:</b> Server cert ← Intermediate CA ← Root CA. Trust comes from the root CA being in the client's trust store.</li>
+            <li><b>SNI</b> (Server Name Indication) — client sends desired hostname in the unencrypted ClientHello so a multi-tenant server returns the correct cert. <b>ECH</b> (Encrypted Client Hello) hides SNI.</li>
+            <li><b>ALPN</b> — Application-Layer Protocol Negotiation; selects HTTP/1.1, HTTP/2, HTTP/3 during handshake.</li>
+            <li><b>Cipher suites</b> (TLS 1.3) — AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. AEAD only.</li>
+            <li><b>HSTS</b> — HTTP Strict Transport Security header tells browser "only use HTTPS to this domain for N seconds".</li>
+          </ul>
+
+          <h2>HTTP basics (the parts A+ tests)</h2>
+          <ul>
+            <li><b>Methods:</b> GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS.</li>
+            <li><b>Status codes:</b> 1xx info, 2xx success (200 OK), 3xx redirect (301 perm, 302/307 temp, 304 not modified), 4xx client error (400 bad req, 401 unauth, 403 forbidden, 404 not found, 408 timeout, 418 teapot, 429 rate limited), 5xx server error (500 generic, 502 bad gateway, 503 unavailable, 504 gw timeout).</li>
+            <li><b>Headers</b> — Cookie, Authorization (Bearer token), Content-Type, Accept, Referer, User-Agent, Set-Cookie, X-Forwarded-For (proxy), Strict-Transport-Security (HSTS).</li>
+            <li><b>HTTP/1.1</b> — text protocol, sequential or keep-alive pipelining.</li>
+            <li><b>HTTP/2</b> — binary, multiplexed streams over one TCP connection, server push, HPACK header compression. Almost always TLS.</li>
+            <li><b>HTTP/3</b> — uses <b>QUIC</b> over UDP/443. Faster handshake (0-RTT), better mobile mobility, immune to TCP head-of-line blocking.</li>
+          </ul>
+
+          <h2>VoIP signaling vs media</h2>
+          <ul>
+            <li><b>SIP</b> (Session Initiation Protocol) on 5060 (or 5061 SIPS) — call setup, teardown, registration.</li>
+            <li><b>RTP</b> (Real-time Transport Protocol) — actual voice/video packets, dynamic UDP ports (typically 16384-32767 or per-vendor).</li>
+            <li><b>SRTP</b> — encrypted RTP.</li>
+            <li><b>RTCP</b> — control/statistics for RTP.</li>
+            <li><b>MGCP / Megaco / H.248 / H.323</b> — legacy / interop signaling.</li>
+            <li><b>STUN / TURN / ICE</b> — NAT-traversal helpers for WebRTC + softphones.</li>
+            <li><b>SBC</b> (Session Border Controller) — sits at the trust boundary, protects + transcodes.</li>
+          </ul>
+
+          <h2>SSH key + cert basics</h2>
+          <ul>
+            <li><code>ssh-keygen -t ed25519</code> creates a key pair (private + .pub).</li>
+            <li>Public key → <code>~/.ssh/authorized_keys</code> on server.</li>
+            <li>Private key stays on client, optionally protected by passphrase + loaded into <code>ssh-agent</code>.</li>
+            <li><b>Host keys</b> in <code>~/.ssh/known_hosts</code> — first-connection TOFU (Trust On First Use). Mismatch warning = potential MITM or server reinstall.</li>
+            <li><b>SSH certificates</b> (preferred at scale) — short-lived signed certs issued by a CA so you don't manage <code>authorized_keys</code> per host.</li>
+            <li><b>Port forwarding:</b> <code>ssh -L 8080:db:5432 user@bastion</code> tunnels local 8080 to remote DB.</li>
+          </ul>
+
+          <h2>10 protocol gotchas</h2>
+          <ul>
+            <li>SMB on port 445 — disable SMBv1 (EternalBlue / WannaCry); enforce SMB encryption + signing on 3.x.</li>
+            <li>RDP exposed to Internet → top breach vector; front with VPN, RD Gateway, MFA, NLA.</li>
+            <li>Telnet console on a switch — only if the only way; replace ASAP with SSH + key auth.</li>
+            <li>Plaintext SNMPv1/v2c community strings → use SNMPv3 with AuthPriv (auth + encryption).</li>
+            <li>Open DNS resolver → abused for amplification DDoS. Restrict recursion to internal clients.</li>
+            <li>Mail leaking via SMTP relay → require auth + SPF/DKIM/DMARC + close open relays.</li>
+            <li>TFTP on Internet → no auth, used for firmware push only on trusted mgmt VLAN.</li>
+            <li>Active FTP through NAT → break; switch to passive or use SFTP.</li>
+            <li>NTP server "monlist" command leaks → amplification source; disable + restrict mode 6/7.</li>
+            <li>Plaintext LDAP queries — bind credentials sniffable; require LDAPS or StartTLS.</li>
+          </ul>
+
+          <h2>Subnet quick refresher (A+ Core 1 will test recognition)</h2>
+          <ul>
+            <li><b>RFC 1918 private ranges:</b> 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16.</li>
+            <li><b>APIPA:</b> 169.254.0.0/16.</li>
+            <li><b>Loopback:</b> 127.0.0.0/8 (typically 127.0.0.1).</li>
+            <li><b>Multicast:</b> 224.0.0.0/4.</li>
+            <li><b>CGN / shared:</b> 100.64.0.0/10.</li>
+            <li><b>Limited broadcast:</b> 255.255.255.255 (local only, never forwarded).</li>
+          </ul>
+
+          <h2>10 exam-pattern recognition lines</h2>
+          <ul>
+            <li>"Manage AD users from a script" → LDAP / LDAPS (389/636).</li>
+            <li>"Phone won't register with PBX" → SIP (5060/5061).</li>
+            <li>"User can't browse but ping works" → DNS broken.</li>
+            <li>"Address starts with 169.254" → DHCP unreachable; check helper / VLAN / DHCP service.</li>
+            <li>"Encrypted clone of HTTP" → HTTPS over 443.</li>
+            <li>"Centralize logs from switches" → Syslog UDP 514 (or TCP 6514 over TLS).</li>
+            <li>"Push firmware to a switch from CLI" → TFTP (69) on mgmt VLAN.</li>
+            <li>"Authenticate users to Wi-Fi via AAA" → RADIUS 1812 / 1813.</li>
+            <li>"Remote into a Windows server" → RDP 3389; pair with VPN/MFA.</li>
+            <li>"Phones losing time when domain controller resets" → NTP / Kerberos skew &gt; 5 min causes auth failure.</li>
+          </ul>
         `
       },
       {
