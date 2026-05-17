@@ -997,6 +997,137 @@ const COURSES = [
             <li>Evil twin defense = Enterprise mode + server cert validation.</li>
             <li>WPA2-PSK vs Enterprise: PSK = home, Enterprise = office with RADIUS.</li>
           </ul>
+
+          <h2>SOHO router setup walkthrough (techs must know cold)</h2>
+          <ol>
+            <li><b>Power + connect</b> — WAN port to modem, LAN port to PC for initial setup.</li>
+            <li><b>Default access</b> — usually <code>http://192.168.1.1</code> or <code>http://192.168.0.1</code>; printed on label. Default creds (admin/admin) MUST be changed.</li>
+            <li><b>Firmware update</b> — apply latest before configuring anything else. Many routers ship with critical CVEs from years ago.</li>
+            <li><b>Set strong admin password</b>; disable remote management if not needed.</li>
+            <li><b>SSID</b> — pick something not identifying (no last name / address). Disable "broadcast hidden" myth — does not add real security.</li>
+            <li><b>Security mode</b> — WPA3-Personal if all clients support it; otherwise WPA2/WPA3 mixed; never WEP.</li>
+            <li><b>Passphrase</b> — &gt; 14 chars, random; manage via password manager.</li>
+            <li><b>Band selection</b> — enable 2.4 + 5 (+ 6 GHz on Wi-Fi 6E/7); name same SSID for seamless roaming OR separate by suffix if IoT needs 2.4-only.</li>
+            <li><b>Channel</b> — auto on modern routers, OR manually pick 1/6/11 in 2.4 and a clean 5 GHz channel after scanning.</li>
+            <li><b>Channel width</b> — 20 MHz in 2.4 (always), 40/80 MHz in 5 GHz, 80/160 MHz in 6 GHz.</li>
+            <li><b>Guest network</b> — isolated VLAN for visitors; no access to LAN devices.</li>
+            <li><b>WPS</b> — disable (Reaver attack).</li>
+            <li><b>UPnP</b> — disable unless explicitly needed (auto-opens firewall ports to apps).</li>
+            <li><b>Remote admin / WAN management</b> — disable.</li>
+            <li><b>DHCP</b> — pick a sensible scope (e.g., .50–.200) leaving room for static reservations.</li>
+            <li><b>Static reservations</b> — for printer, NAS, cameras, smart-home hubs.</li>
+            <li><b>DNS</b> — use secure resolvers (1.1.1.1, 9.9.9.9, 8.8.8.8) or local DNS for filtering (NextDNS, Pi-hole).</li>
+            <li><b>QoS</b> — prioritize VoIP / video conferencing if bandwidth is limited.</li>
+            <li><b>Port forwarding</b> — only when required; use exact port + protocol; prefer VPN instead.</li>
+            <li><b>Logging / syslog</b> — enable, forward to a NAS or pi-hole for audit.</li>
+            <li><b>Backup config</b> — export periodically; you need it after factory reset.</li>
+          </ol>
+
+          <h2>Quick band picker (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Need</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Best band</th></tr>
+            <tr><td>Smart bulbs / thermostat / older IoT</td><td>2.4 GHz</td></tr>
+            <tr><td>Long range through walls / outdoor sensors</td><td>2.4 GHz</td></tr>
+            <tr><td>Streaming 4K / gaming / video calls</td><td>5 GHz</td></tr>
+            <tr><td>Dense apartment with many neighbor APs</td><td>5 / 6 GHz</td></tr>
+            <tr><td>Latency-sensitive AR/VR</td><td>6 GHz (Wi-Fi 6E/7)</td></tr>
+            <tr><td>One SSID, OS picks band</td><td>Band steering enabled</td></tr>
+          </table>
+
+          <h2>Range + attenuation cheat sheet</h2>
+          <ul>
+            <li>2.4 GHz penetrates drywall/wood with ~3-5 dB loss; brick/concrete ~10-15 dB.</li>
+            <li>5 GHz roughly +3-6 dB additional loss vs 2.4 in the same wall.</li>
+            <li>6 GHz +3-6 dB on top of 5 GHz; basically line-of-sight + one wall.</li>
+            <li>Water (aquariums, human bodies in crowds) heavily absorbs 2.4 GHz (microwave water resonance).</li>
+            <li>Metal/foil reflects RF — mirror, refrigerator, metal-backed insulation can create dead zones.</li>
+            <li>Microwave ovens spew 2.4 GHz noise while running.</li>
+            <li>Old cordless phones, baby monitors, Zigbee, Bluetooth all live in 2.4 GHz.</li>
+          </ul>
+
+          <h2>Roaming + multi-AP basics</h2>
+          <ul>
+            <li><b>Same SSID + same security on all APs</b> for clients to roam transparently.</li>
+            <li><b>Cell overlap ~15-20%</b> with -65 dBm at edge.</li>
+            <li><b>802.11k</b> — AP gives client a "neighbor list".</li>
+            <li><b>802.11v</b> — AP can tell client "go to AP X" (BSS Transition Mgmt).</li>
+            <li><b>802.11r</b> — Fast BSS Transition; pre-auths to neighbors so handoff is &lt; 50 ms (critical for VoWi-Fi).</li>
+            <li><b>Sticky client</b> — phone stays on far AP at low RSSI; tune min RSSI on the AP, lower TX power.</li>
+            <li><b>Band steering</b> — push dual-band clients to 5 GHz.</li>
+            <li><b>Mesh kit</b> (Eero, Orbi, TP-Link Deco, Asus AiMesh) — backhaul over Wi-Fi or wired; same SSID across nodes.</li>
+          </ul>
+
+          <h2>Mobile hotspot + tethering (real-world workflows)</h2>
+          <ul>
+            <li><b>Wi-Fi hotspot</b> — phone broadcasts SSID; other devices join. Uses cellular data; watch carrier cap + battery drain.</li>
+            <li><b>USB tethering</b> — phone connects via USB cable; appears as RNDIS NIC. Phone charges while in use.</li>
+            <li><b>Bluetooth tethering</b> — lowest throughput; useful for low-power IoT pairing.</li>
+            <li><b>5G FWA</b> (Fixed Wireless Access) — alternative to wired broadband; T-Mobile, Verizon home Internet.</li>
+            <li><b>Wi-Fi sharing across iOS/macOS</b> — Personal Hotspot via Continuity; one-tap pairing with Apple ID.</li>
+            <li><b>Carrier tethering caps</b> — many plans throttle hotspot at 5-15 Mbps after X GB even when phone has unlimited 5G.</li>
+          </ul>
+
+          <h2>IoT pairing patterns</h2>
+          <ul>
+            <li><b>2.4 GHz only</b> — many smart bulbs, plugs, cameras (cheaper radio). Phone must temporarily disconnect from 5 GHz, or you put it on a separate IoT SSID.</li>
+            <li><b>Bluetooth Low Energy (BLE)</b> — beacons, fitness, BLE Mesh.</li>
+            <li><b>Zigbee</b> — 2.4 GHz mesh (Philips Hue, SmartThings, Hue Bridge).</li>
+            <li><b>Z-Wave</b> — 908 MHz sub-GHz mesh (less RF crowded).</li>
+            <li><b>Thread</b> — IPv6 mesh underlying Matter standard.</li>
+            <li><b>Matter</b> — 2022 cross-vendor protocol (over Wi-Fi or Thread) for smart-home interop (Apple Home, Google Home, Alexa, SmartThings).</li>
+            <li><b>WPS push-button</b> — easier for casual users but disable in security-conscious environments.</li>
+            <li><b>QR code / app-based onboarding</b> — modern (Matter, Wyze, etc.).</li>
+          </ul>
+
+          <h2>Common home Wi-Fi troubleshooting</h2>
+          <ul>
+            <li><b>"Internet slow on only one device"</b> → device's NIC / driver / radio; test another device same spot.</li>
+            <li><b>"Slow only in back room"</b> → coverage issue; add AP / mesh / wired backhaul; remove obstacles; lower 2.4 GHz channel width.</li>
+            <li><b>"Drops every 5 minutes"</b> → check DHCP lease; verify channel auto-selection; check if neighbor on same channel hammering it; reboot router (kernel bug).</li>
+            <li><b>"Some IoT won't connect"</b> → likely needs 2.4 GHz-only SSID; disable PMF on guest SSID (older IoT can't handle).</li>
+            <li><b>"Roaming to wrong AP"</b> → enable 802.11k/v; raise min RSSI; reduce TX power overlap.</li>
+            <li><b>"Streaming buffers but speedtest is fine"</b> → bufferbloat; enable SQM / fq_codel on router.</li>
+            <li><b>"Phone shows weak signal even close to AP"</b> → faulty antenna in phone, defective AP radio, or 2.4 GHz noise saturating receiver.</li>
+            <li><b>"Wi-Fi disappears after a week"</b> → check if dual-band SSID issue, firmware bug; schedule auto-reboot or update.</li>
+          </ul>
+
+          <h2>Quick antenna picker</h2>
+          <ul>
+            <li><b>Office ceiling</b> → omnidirectional, 4-6 dBi.</li>
+            <li><b>Long hallway</b> → patch antenna pointed down the corridor.</li>
+            <li><b>Warehouse / high ceiling</b> → directional patch pointed at floor.</li>
+            <li><b>Building-to-building</b> → high-gain directional (20+ dBi), aligned with line-of-sight + Fresnel zone clear.</li>
+            <li><b>Outdoor courtyard</b> → outdoor-rated omnidirectional, weatherproof enclosure.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>WAP / AP</b> — Wireless Access Point.</li>
+            <li><b>SSID / BSSID / ESS</b> — service set ID / AP MAC / extended (multi-AP) service set.</li>
+            <li><b>ISM / UNII</b> — Industrial Scientific Medical / Unlicensed National Information Infrastructure.</li>
+            <li><b>DFS / TPC</b> — Dynamic Frequency Selection / Transmit Power Control.</li>
+            <li><b>WPA / WPA2 / WPA3 / WEP / WPS</b> — Wi-Fi security modes / setup feature.</li>
+            <li><b>PSK / SAE / OWE / PMF</b> — Pre-Shared Key / Simultaneous Auth Equals / Opportunistic Wireless Encryption / Protected Mgmt Frames.</li>
+            <li><b>RADIUS / EAP / EAP-TLS / PEAP / TTLS</b> — AAA + auth methods.</li>
+            <li><b>MIMO / MU-MIMO / OFDMA / TWT / BSS Color / MLO</b> — Wi-Fi RF tech.</li>
+            <li><b>RSSI / SNR / dBi / EIRP</b> — RF measurements.</li>
+            <li><b>FWA</b> — Fixed Wireless Access.</li>
+            <li><b>WIPS</b> — Wireless Intrusion Prevention System.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Cheap baby monitor causes Wi-Fi drops" → 2.4 GHz interference; switch primary devices to 5 GHz.</li>
+            <li>"Office wants per-user wireless auth via certs" → WPA2/3-Enterprise + EAP-TLS.</li>
+            <li>"Conference room Wi-Fi slow when full" → enable OFDMA (Wi-Fi 6), add more APs at lower power.</li>
+            <li>"Smart bulb won't connect to 6 GHz" → bulb is 2.4 GHz only; needs separate IoT SSID.</li>
+            <li>"User keeps connecting to old AP downstairs" → sticky client; enable 802.11k/v + raise minimum RSSI on the old AP.</li>
+            <li>"Hotspot battery dying fast on phone" → throttle screen + offload tethering to USB.</li>
+            <li>"WPA3 SSID invisible to older laptop" → laptop's chipset / driver doesn't support WPA3; offer mixed WPA2/3 or upgrade NIC.</li>
+            <li>"Building-to-building wireless link 1 km" → high-gain directional dish, clear line-of-sight + Fresnel zone.</li>
+            <li>"Wi-Fi calls drop at boundary between APs" → enable 802.11r Fast BSS Transition for VoWi-Fi.</li>
+            <li>"User can't see captive portal" → DNS hijack failing because client uses DoH; allow captive.apple.com (iOS), connectivitycheck.gstatic.com (Android), or prompt user to disable Private DNS.</li>
+          </ul>
         `
       },
       {
