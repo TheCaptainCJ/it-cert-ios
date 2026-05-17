@@ -1229,6 +1229,136 @@ const COURSES = [
             <li>"Asymmetric" wording typically points to DSL or cable.</li>
             <li>SAN vs LAN: SAN moves block storage between servers and storage arrays — NOT generic file traffic.</li>
           </ul>
+
+          <h2>Bandwidth vs throughput vs goodput</h2>
+          <ul>
+            <li><b>Bandwidth</b> — theoretical max link capacity (1 Gbps line rate).</li>
+            <li><b>Throughput</b> — actual measured payload rate.</li>
+            <li><b>Goodput</b> — application-level useful data after retransmits, overhead, encryption strip.</li>
+            <li>1 Gbps Ethernet line ≈ ~940 Mbps TCP throughput after L2/L3/TCP headers + IFG.</li>
+          </ul>
+
+          <h2>Latency / jitter / packet loss targets (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Workload</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Latency one-way</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Jitter</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Loss</th></tr>
+            <tr><td>VoIP</td><td>&lt; 150 ms</td><td>&lt; 30 ms</td><td>&lt; 1 %</td></tr>
+            <tr><td>Video conference</td><td>&lt; 200 ms</td><td>&lt; 50 ms</td><td>&lt; 0.5 %</td></tr>
+            <tr><td>Cloud gaming</td><td>&lt; 50 ms</td><td>&lt; 10 ms</td><td>&lt; 0.1 %</td></tr>
+            <tr><td>Web / SaaS</td><td>&lt; 400 ms</td><td>n/a</td><td>&lt; 1 %</td></tr>
+            <tr><td>Bulk file transfer</td><td>any (TCP-friendly)</td><td>n/a</td><td>recoverable</td></tr>
+          </table>
+
+          <h2>Speed-test reality checks</h2>
+          <ul>
+            <li>Plug a wired laptop directly into the modem to remove Wi-Fi variables when validating ISP speed.</li>
+            <li>Use multiple test servers (Ookla, Cloudflare, fast.com); ISP routing to one test server may be artificially favored.</li>
+            <li>Run during peak hours to see typical, not best-case.</li>
+            <li>iperf3 to a separate VPS for unbiased throughput tests.</li>
+            <li>Bufferbloat — high ping under load even with good idle ping — fix with SQM (fq_codel) on the router.</li>
+          </ul>
+
+          <h2>Modem vs router vs ONT vs gateway</h2>
+          <ul>
+            <li><b>Modem (cable / DSL)</b> — modulates / demodulates carrier signal. Single Ethernet output to your router.</li>
+            <li><b>ONT</b> (Optical Network Terminal) — fiber's equivalent of a modem.</li>
+            <li><b>Router</b> — does NAT, DHCP, firewall, sometimes Wi-Fi.</li>
+            <li><b>Gateway / "all-in-one"</b> — ISP-supplied combo (modem + router + Wi-Fi). Convenient but harder to swap; check if your ISP allows bridge mode + your own router.</li>
+            <li><b>Bridge mode</b> — disables NAT/DHCP/firewall on the ISP box; gives your downstream router a public IP. Required for double-NAT avoidance with consumer firewalls (UDM, pfSense, OPNsense).</li>
+          </ul>
+
+          <h2>ISP terms that show up on the exam</h2>
+          <ul>
+            <li><b>POP</b> (Point of Presence) — local carrier handoff facility.</li>
+            <li><b>CO</b> (Central Office) — telco facility housing DSLAMs / switches.</li>
+            <li><b>CMTS</b> (Cable Modem Termination System) — head-end gear at the cable ISP that serves DOCSIS subscribers.</li>
+            <li><b>OLT</b> (Optical Line Terminal) — head-end gear for PON.</li>
+            <li><b>NID</b> (Network Interface Device) — outside wall box where ISP wires hand off to building.</li>
+            <li><b>NIU / smart jack</b> — telco demarcation device with loopback test.</li>
+            <li><b>Demarc</b> — where carrier responsibility ends.</li>
+            <li><b>SLA</b> — Service Level Agreement (uptime + latency commitments).</li>
+            <li><b>BYOD modem</b> — ISP-approved customer-owned modem; saves monthly rental fees.</li>
+            <li><b>Static vs dynamic public IP</b> — static (extra fee) needed for hosted services / VPN endpoints.</li>
+          </ul>
+
+          <h2>Symmetric vs asymmetric (matters for cloud / VPN / streaming uploads)</h2>
+          <ul>
+            <li><b>Cable + ADSL</b> have asymmetric speeds (down ≫ up). Uploads to backup / video stream are the bottleneck.</li>
+            <li><b>FTTH / Metro Ethernet / 5G FWA SA mid-band</b> often symmetric.</li>
+            <li><b>Common upload caps on cable:</b> 10–50 Mbps even with 1 Gbps down. Plan accordingly for OBS streaming, photo upload, off-site backups.</li>
+          </ul>
+
+          <h2>Wired vs wireless deployment decision</h2>
+          <ul>
+            <li><b>Wired Ethernet</b> for: gaming desktops, NAS, security cameras, smart-home hub, Wi-Fi AP backhaul, anything stationary requiring &gt; 500 Mbps.</li>
+            <li><b>Wi-Fi</b> for: phones, tablets, laptops, IoT, guest devices.</li>
+            <li><b>MoCA</b> (Multimedia over Coax) — Ethernet over existing TV coax for whole-house gigabit without new drops.</li>
+            <li><b>Powerline (HomePlug / G.hn)</b> — Ethernet over AC wiring; convenient last-resort; varies wildly with circuit layout, &lt; 200 Mbps real.</li>
+            <li><b>Wi-Fi mesh with wired backhaul</b> — best of both for big houses.</li>
+          </ul>
+
+          <h2>VPN concentrators, remote access, SD-WAN at the SOHO edge</h2>
+          <ul>
+            <li><b>Site-to-site VPN</b> — two routers form an IPsec tunnel; transparent to users.</li>
+            <li><b>Remote access VPN</b> — client (AnyConnect, GlobalProtect, OpenVPN, WireGuard, Tailscale) connects to gateway.</li>
+            <li><b>Always-on / per-app VPN</b> — pushed via MDM, dials automatically.</li>
+            <li><b>Split tunnel</b> — only corp subnets route through VPN; Internet stays direct.</li>
+            <li><b>Full tunnel</b> — everything via VPN; heavier inspection.</li>
+            <li><b>SD-WAN appliance</b> — uses MPLS + broadband + 4G/5G transports together with central policy; common in branch offices.</li>
+            <li><b>ZTNA</b> (Zero-Trust Network Access) — per-app identity-checked access; replacing flat VPN.</li>
+          </ul>
+
+          <h2>Public IP / static / dynamic / IPv6 readiness</h2>
+          <ul>
+            <li><b>Dynamic public IP</b> — default residential; changes occasionally. <b>Dynamic DNS</b> services (No-IP, DuckDNS, Cloudflare API) point a hostname at your changing IP.</li>
+            <li><b>Static public IP</b> — fee per month from ISP; required to host inbound services without DDNS.</li>
+            <li><b>CGNAT</b> — many ISPs no longer give a real public IPv4. You sit behind 100.64.0.0/10. Port forwarding impossible; use VPN/tunnels (Tailscale, Cloudflare Tunnel, ngrok).</li>
+            <li><b>IPv6</b> rolling out widely; some carriers (T-Mobile, Comcast XFINITY) IPv6 by default. Test at <code>test-ipv6.com</code>; make sure firewall is correctly stateful for IPv6.</li>
+          </ul>
+
+          <h2>Internet connection troubleshooting checklist</h2>
+          <ol>
+            <li>Can the modem/ONT reach the ISP? Check link / sync lights (Sync, Online, Internet).</li>
+            <li>From a wired PC: <code>ipconfig /all</code> — got a public-ish or private IP from router? Got DNS?</li>
+            <li><code>ping</code> default gateway → ISP gateway → 8.8.8.8 → google.com (by name). First failure shows which hop is dead.</li>
+            <li><code>tracert / traceroute</code> to identify which hop loses traffic.</li>
+            <li>Speed test before vs after putting PC directly on modem to isolate router as the issue.</li>
+            <li>Reboot modem AND router (full power-cycle, not just reset).</li>
+            <li>If only some devices fail → DHCP scope exhausted, conflicting reservation, MAC filter, or firewall rule.</li>
+            <li>If all devices fail intermittently → DOCSIS T3/T4 timeouts (cable), DSL line attenuation, fiber connector issue. Pull modem stats page.</li>
+            <li>Power outage / split signal degraded → coax connectors corroded; replace + reseat.</li>
+            <li>Persistent issue → escalate to ISP with timestamps + ping/traceroute output; they often dispatch a tech.</li>
+          </ol>
+
+          <h2>Common ISP-side modem stats pages</h2>
+          <ul>
+            <li><b>Cable modems</b> at <code>http://192.168.100.1</code> — check downstream/upstream power (target 0 ± 7 dBmV down, ~38-50 dBmV up), SNR (target 35+ dB down), uncorrectables, T3/T4 timeouts.</li>
+            <li><b>DSL modems</b> at <code>http://192.168.1.1</code> typically — line attenuation (lower better), SNR margin (6+ dB OK, 12+ dB great), CRC errors.</li>
+            <li><b>Fiber ONTs</b> — RX optical power (typically -8 to -28 dBm range; outside = bad fiber / dirty connector).</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>ISP / POP / CO / CMTS / OLT / NID / NIU / Demarc</b> — provider terminology.</li>
+            <li><b>DOCSIS / HFC / GPON / XGS-PON / FTTH</b> — broadband tech.</li>
+            <li><b>FWA / WISP / LEO / GEO / MEO</b> — wireless / satellite.</li>
+            <li><b>MoCA / G.hn / HomePlug</b> — non-Wi-Fi home networking.</li>
+            <li><b>CGNAT / DDNS / SLA / BYOD modem</b> — service nuances.</li>
+            <li><b>Goodput / bufferbloat / SQM / fq_codel</b> — perf engineering.</li>
+          </ul>
+
+          <h2>10 exam scenarios</h2>
+          <ul>
+            <li>"User can't host game server from home" → likely CGNAT; use VPN/tunnel or request static IPv4.</li>
+            <li>"Customer cable speeds great daytime, terrible 7-10 pm" → DOCSIS shared with neighbors; check upstream noise.</li>
+            <li>"Office video calls choppy across DSL" → asymmetric upload; upgrade plan or move to fiber/Metro Ethernet.</li>
+            <li>"Rural site no fiber" → LEO satellite (Starlink) usually best modern option.</li>
+            <li>"5G FWA works in living room, dies in basement" → mmWave / mid-band 5G needs window-side placement; use signal app to aim.</li>
+            <li>"Ethernet over coax through whole house" → MoCA adapters at TV outlets.</li>
+            <li>"VPN slow even on gig fiber" → split-tunnel; or VPN concentrator CPU bottleneck; check encryption offload + protocol (WireGuard faster than IPsec).</li>
+            <li>"All devices behind one public IP have intermittent issues" → bufferbloat or NAT-table exhaustion on the router.</li>
+            <li>"Voice quality degrades when teen starts downloading" → enable QoS / SQM with voice priority class.</li>
+            <li>"Spotty Wi-Fi but wired works fine" → confined to wireless layer; speed-test directly from modem to confirm.</li>
+          </ul>
         `
       },
       {
