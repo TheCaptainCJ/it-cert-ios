@@ -1796,6 +1796,158 @@ const COURSES = [
             <li>DDR generations are NOT cross-compatible — different keying.</li>
             <li>Dual-channel needs matched modules in correct slot pairs.</li>
           </ul>
+
+          <h2>Channel architecture (single / dual / quad / octa)</h2>
+          <ul>
+            <li><b>Single-channel</b> — one DIMM per memory controller channel. 64-bit data path.</li>
+            <li><b>Dual-channel</b> — paired DIMMs in matching color slots (often A1+B1 OR A2+B2). 2× bandwidth.</li>
+            <li><b>Quad-channel</b> — Xeon W / Threadripper / EPYC; 4× bandwidth.</li>
+            <li><b>Octa-channel</b> — Sapphire Rapids Xeon / Genoa EPYC; 8× bandwidth, server only.</li>
+            <li><b>DDR5 dual-subchannel</b> — each DIMM has two independent 32-bit subchannels internally → better parallelism even on dual-channel boards.</li>
+          </ul>
+          <p><b>Recipe:</b> populate the BLACK (or "A2 + B2" / second-furthest) slots first when running 2 DIMMs on 4-slot board (per manual).</p>
+
+          <h2>Memory timings primer (CL, tRCD, tRP, tRAS)</h2>
+          <ul>
+            <li><b>CL / CAS Latency</b> — clock cycles between column-address strobe and data available. Lower = faster. Often the headline number on enthusiast kits.</li>
+            <li><b>tRCD</b> — RAS-to-CAS Delay.</li>
+            <li><b>tRP</b> — Row Precharge time.</li>
+            <li><b>tRAS</b> — Row Active Time.</li>
+            <li><b>Effective latency</b> in nanoseconds ≈ <code>CL × 2000 / DDR data rate (MT/s)</code>. E.g., DDR4-3200 CL16 → 16 × 2000 / 3200 = 10 ns.</li>
+            <li>Higher MT/s + higher CL can still be faster than lower MT/s + lower CL — always check effective latency.</li>
+          </ul>
+
+          <h2>XMP / EXPO / SPD</h2>
+          <ul>
+            <li><b>SPD</b> (Serial Presence Detect) — small EEPROM on every DIMM holding JEDEC-standard timings the BIOS reads at boot.</li>
+            <li><b>XMP</b> (Extreme Memory Profile) — Intel-defined "auto-overclock" profile (CL + speed) the BIOS can apply with one click. DDR4 = XMP 2.0, DDR5 = XMP 3.0.</li>
+            <li><b>EXPO</b> (Extended Profiles for Overclocking) — AMD equivalent for DDR5 (AM5).</li>
+            <li><b>DOCP</b> (DRAM OverClock Profile) — ASUS-flavored XMP on AMD boards.</li>
+            <li><b>JEDEC defaults</b> — the speeds the RAM is GUARANTEED to run at without XMP. Mismatched XMP kit + CPU lottery = boot failure; fall back to JEDEC.</li>
+          </ul>
+
+          <h2>Bank groups, ranks, density</h2>
+          <ul>
+            <li><b>Rank</b> — one set of chips driven by a single chip-select signal. <b>Single-rank (1R) / dual-rank (2R)</b> modules. Dual-rank often slightly slower at high speeds but allows more total RAM per channel.</li>
+            <li><b>Density</b> — bits per chip (8 Gb / 16 Gb / 24 Gb in DDR5). Affects max kit size per slot.</li>
+            <li><b>DIMMs per channel (DPC)</b> — 1DPC = both slots filled with one stick each per channel; 2DPC = all 4 filled. 2DPC often drops the supported speed (1 channel × 4 sticks at 3200 vs 1 channel × 2 sticks at 6400).</li>
+          </ul>
+
+          <h2>Module identifier decode</h2>
+          <p>Sticker like <code>16GB 2Rx8 PC4-25600U DDR4-3200 CL22</code> reads as:</p>
+          <ul>
+            <li><b>16 GB</b> capacity.</li>
+            <li><b>2Rx8</b> — 2 ranks × x8 chips (8-bit chips, 8 of them per rank).</li>
+            <li><b>PC4-25600</b> — DDR4 bandwidth: 25,600 MB/s (=3200 MT/s × 8 bytes).</li>
+            <li><b>U</b> at end = Unbuffered (R = Registered, LR = Load-Reduced, E = ECC).</li>
+            <li><b>DDR4-3200</b> — generation + data rate (MT/s).</li>
+            <li><b>CL22</b> — CAS Latency 22.</li>
+          </ul>
+
+          <h2>BIOS / UEFI memory settings to know</h2>
+          <ul>
+            <li><b>XMP / EXPO toggle</b> — enable to apply enthusiast profile.</li>
+            <li><b>Memory frequency</b> — manual override of speed.</li>
+            <li><b>Command Rate / 1T vs 2T</b> — 1T faster but less stable with 4 sticks.</li>
+            <li><b>Memory Training / Re-train</b> — DDR5 boards re-train timings on cold boot (longer POST), CMOS option may skip.</li>
+            <li><b>Memory Remap Feature</b> — required for &gt; 3.5 GB RAM on legacy 32-bit BIOS.</li>
+            <li><b>ECC enable</b> — must be ON in BIOS for servers; check status under "Memory" page.</li>
+            <li><b>Memory hole remapping</b> — relocate PCI MMIO above RAM.</li>
+            <li><b>Mirror / Sparing / Lockstep</b> — server reliability modes that halve usable capacity for resilience.</li>
+          </ul>
+
+          <h2>OS reporting + monitoring tools</h2>
+          <ul>
+            <li><b>Windows:</b> <code>wmic memorychip get banklabel,capacity,speed,manufacturer,partnumber</code>; Task Manager → Performance → Memory; <code>Get-CimInstance Win32_PhysicalMemory</code>.</li>
+            <li><b>Linux:</b> <code>dmidecode -t 17</code> (full SPD info); <code>free -h</code>; <code>cat /proc/meminfo</code>; <code>edac-util</code> for ECC error count.</li>
+            <li><b>macOS:</b> <code>system_profiler SPMemoryDataType</code>.</li>
+            <li><b>CPU-Z / HWiNFO64</b> — Windows GUI showing SPD + current timings + XMP profile applied.</li>
+            <li><b>Thaiphoon Burner</b> — read SPD directly to verify advertised vs actual.</li>
+          </ul>
+
+          <h2>Stability + diagnostic test tools</h2>
+          <ul>
+            <li><b>MemTest86 / MemTest86+</b> — bootable USB; runs comprehensive pattern tests. Run 4+ passes overnight for confidence; any error = bad stick or unstable XMP.</li>
+            <li><b>Windows Memory Diagnostic</b> — built-in; reboots and runs at boot. Less thorough than MemTest86.</li>
+            <li><b>HCI MemTest / Karhu RAM Test / TestMem5</b> — Windows app stress tests; faster than MemTest86 at finding XMP instability.</li>
+            <li><b>OCCT / Prime95 Blend / y-cruncher</b> — exercise CPU + memory subsystem together; reveals voltage/temperature edge cases.</li>
+            <li><b>linpack / mlc (Memory Latency Checker)</b> — Linux throughput / latency measurement.</li>
+            <li><b>EDAC counters</b> — track corrected (CE) + uncorrected (UE) ECC events; non-zero UE = replace DIMM.</li>
+          </ul>
+
+          <h2>Server reliability features</h2>
+          <ul>
+            <li><b>Chipkill / SDDC</b> — survive a single DRAM chip failure within a rank.</li>
+            <li><b>Memory mirroring</b> — two copies of the same data in different DIMMs (half usable capacity, but full DIMM failure tolerated).</li>
+            <li><b>Memory sparing</b> — keep a spare DIMM/rank reserved; auto-fail over on uncorrectable error.</li>
+            <li><b>Lockstep / Advanced ECC</b> — two channels operate as one wider channel for stronger correction.</li>
+            <li><b>Patrol scrub</b> — background process reads every cell + applies corrections to prevent silent bit rot.</li>
+            <li><b>Demand scrub</b> — corrects on the fly when a read returns a single-bit error.</li>
+          </ul>
+
+          <h2>Installation procedure (FRU-level)</h2>
+          <ol>
+            <li>ESD wrist strap, ground to chassis.</li>
+            <li>Power off + unplug + drain capacitors (press power button with PSU off).</li>
+            <li>Open slot latches at both ends.</li>
+            <li>Align notch on DIMM with key on slot (only one correct orientation).</li>
+            <li>Press straight down with even force until BOTH latches click closed.</li>
+            <li>Populate by motherboard manual (often A2 + B2 first for 2-DIMM config).</li>
+            <li>Boot to BIOS → confirm total capacity + speed → enable XMP/EXPO if applicable.</li>
+            <li>Run MemTest86 ≥ 1 pass before trusting in production.</li>
+            <li>Document module SKUs in inventory; matching kit when expanding later.</li>
+          </ol>
+
+          <h2>Common consumer + server gotchas</h2>
+          <ul>
+            <li><b>Mixing single-rank + dual-rank</b> often runs but at lower speed than QVL-tested.</li>
+            <li><b>4 sticks at DDR5 high speed</b> rarely POST at advertised XMP — accept a step down (e.g., 6000 → 5200).</li>
+            <li><b>Mixing ECC + non-ECC</b> — most platforms refuse; some run all-non-ECC.</li>
+            <li><b>UDIMMs in a server expecting RDIMMs</b> — won't POST.</li>
+            <li><b>LRDIMMs needed</b> beyond a certain capacity per channel (e.g., 16 DIMMs of 256 GB each).</li>
+            <li><b>QVL pickiness</b> — high-speed kits not on the QVL may fail to boot at XMP; either drop speed or pick a tested kit.</li>
+            <li><b>Cold-boot retraining</b> on DDR5 — first power-on of the day can take 30+ seconds; not a fault.</li>
+            <li><b>Heat</b> — top of stack runs hotter; ensure case airflow over DIMMs in high-clock builds.</li>
+            <li><b>Wrong slot for single stick</b> — many boards REQUIRE A2 (second from CPU) for first DIMM; A1 boots but underperforms.</li>
+            <li><b>Sleep / hibernate corruption</b> — RAM saved to disk on hibernate; corrupted RAM can poison the hiberfil → BSOD on resume.</li>
+          </ul>
+
+          <h2>Capacity recommendations (typical 2026 baselines)</h2>
+          <ul>
+            <li><b>Budget laptop / Chromebook</b> — 8 GB minimum, 16 GB comfortable.</li>
+            <li><b>General desktop / office</b> — 16 GB minimum, 32 GB comfortable.</li>
+            <li><b>Gaming PC</b> — 32 GB DDR5 mainstream.</li>
+            <li><b>Creator / video editing / VM lab</b> — 64-128 GB.</li>
+            <li><b>Server / virtualization host</b> — 128 GB+; size by VM consolidation ratio.</li>
+            <li><b>AI/ML local inference</b> — match model + KV cache to GPU VRAM separately; system RAM ≥ 64 GB.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>DRAM / SRAM / SDRAM / DDR / LPDDR</b> — chip types.</li>
+            <li><b>DIMM / SO-DIMM / CAMM2 / UDIMM / RDIMM / LRDIMM</b> — form factors / buffering.</li>
+            <li><b>ECC / SDDC / Chipkill</b> — error correction.</li>
+            <li><b>SPD / XMP / EXPO / DOCP</b> — DIMM metadata + auto-OC profiles.</li>
+            <li><b>CL / tRCD / tRP / tRAS</b> — primary timings.</li>
+            <li><b>1R / 2R</b> — single / dual rank.</li>
+            <li><b>MT/s</b> — Mega Transfers per second; quoted RAM speed.</li>
+            <li><b>QVL</b> — Qualified Vendor List (motherboard-tested memory kits).</li>
+            <li><b>BSOD / WHEA / EDAC</b> — fault reporting layers.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"PC won't POST after RAM upgrade" → re-seat with even force; populate correct slots per manual; try one stick.</li>
+            <li>"Random BSODs after working months" → run MemTest86; suspect dying DIMM.</li>
+            <li>"Server logs uncorrectable ECC error" → replace DIMM immediately; do not run production on it.</li>
+            <li>"32 GB kit shows only 16 GB usable" → either second stick failed to seat / one channel inactive / memory hole remapping disabled (legacy).</li>
+            <li>"Cannot install DDR5 in DDR4 board" → physical keying prevents; different platform required.</li>
+            <li>"XMP profile causes BSOD" → drop to JEDEC, run MemTest86; consider stable lower-speed kit.</li>
+            <li>"Server RAM with periodic background data integrity check" → patrol scrubbing.</li>
+            <li>"Buy RAM for HP ProLiant server" → use vendor part number + QVL; usually RDIMM/LRDIMM ECC.</li>
+            <li>"Why is laptop RAM smaller than desktop" → SO-DIMM form factor (~67 mm vs 133 mm).</li>
+            <li>"Convert PC4-25600 to MT/s" → divide by 8 → 3200 MT/s (DDR4-3200).</li>
+          </ul>
         `
       },
       {
