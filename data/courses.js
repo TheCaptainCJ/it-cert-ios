@@ -19230,26 +19230,171 @@ Disconnect-MgGraph</code></pre>
       {
         title: '9. Remoting & Sessions',
         body: `
-          <h2>Enable PSRemoting</h2>
-          <pre><code>Enable-PSRemoting -Force     # on the target, as admin
-Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value "server01"</code></pre>
-          <h2>One-off remote command</h2>
-          <pre><code>Invoke-Command -ComputerName server01 -ScriptBlock {
-  Get-Service spooler
-}
+          <h2>What is PowerShell Remoting?</h2>
+          <p><b>PowerShell Remoting (PSRemoting)</b> is the ability to run cmdlets and scripts on another machine as if you were sitting at its console. <b>Why it matters:</b> manage 1 or 1,000 servers without RDP or copying scripts around. Output returns as deserialized objects you can pipe locally. <b>How used:</b> three transports — <b>WinRM</b> (default Windows), <b>SSH</b> (cross-platform, PS7+), <b>Hyper-V VM</b>/<b>Container</b> (no network needed, for VMs without WinRM/SSH).</p>
 
-# Multi-target, parallel
-Invoke-Command -ComputerName (Get-Content servers.txt) -ScriptBlock {
-  Get-CimInstance Win32_OperatingSystem | Select PSComputerName, Caption
-}</code></pre>
-          <h2>Persistent session</h2>
-          <pre><code>$s = New-PSSession -ComputerName server01 -Credential (Get-Credential)
-Invoke-Command -Session $s -ScriptBlock { Get-Process | Measure-Object }
-Enter-PSSession $s    # interactive
+          <h2>Acronyms first</h2>
+          <ul>
+            <li><b>PSRemoting</b> — feature name; uses <b>WinRM</b> by default.</li>
+            <li><b>WinRM</b> — Windows Remote Management; HTTP/HTTPS-based wire protocol implementing <b>WS-Management</b> (DMTF SOAP-over-HTTP). Default ports <b>5985</b> (HTTP) + <b>5986</b> (HTTPS).</li>
+            <li><b>WS-Man</b> — the open standard WinRM implements.</li>
+            <li><b>CredSSP</b> — Credential Security Support Provider; lets remote session forward your creds to a third hop (the "double hop" problem).</li>
+            <li><b>JEA</b> — Just Enough Administration; constrained endpoint exposing only specific cmdlets to delegated users.</li>
+            <li><b>PSSession</b> — persistent connection object.</li>
+            <li><b>SSH</b> — cross-platform transport supported in PS 7.</li>
+          </ul>
+
+          <h2>Enable PSRemoting</h2>
+          <pre><code># On the target (admin elevated)
+Enable-PSRemoting -Force                            # starts WinRM, opens firewall, registers default config
+
+# Verify on target
+Get-Service WinRM
+Get-PSSessionConfiguration                          # default endpoints: Microsoft.PowerShell, PowerShell.7, ...
+Test-WSMan SERVER01                                 # confirm listener responds
+
+# On the client (workgroup, no AD-trusted SPN)
+Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value 'SERVER01' -Concatenate
+# or wildcard for a subnet — security trade-off
+Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value '*.lab.local'</code></pre>
+          <p><b>Domain vs workgroup:</b> domain-joined machines authenticate via Kerberos automatically; workgroup machines must register the remote in <code>TrustedHosts</code> and pass explicit credentials.</p>
+
+          <h2>One-off remote command — Invoke-Command</h2>
+          <pre><code>Invoke-Command -ComputerName SERVER01 -ScriptBlock { Get-Service spooler }
+
+# Multi-target — fans out in parallel (default throttle 32)
+Invoke-Command -ComputerName (Get-Content .\\servers.txt) -ScriptBlock {
+  [pscustomobject]@{
+    Host = $env:COMPUTERNAME
+    OS   = (Get-CimInstance Win32_OperatingSystem).Caption
+    Up   = ((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).Days
+  }
+} -ThrottleLimit 50
+
+# Pass parameters in
+$svc = 'spooler'
+Invoke-Command -ComputerName SRV1 -ScriptBlock { Get-Service $using:svc }
+Invoke-Command -ComputerName SRV1 -ScriptBlock { param($n) Get-Service $n } -ArgumentList $svc
+
+# Run a local script file on the remote
+Invoke-Command -ComputerName SRV1 -FilePath .\\Get-Inventory.ps1</code></pre>
+          <p><b>The $using: scope modifier:</b> remote scriptblocks run in a separate runspace; local vars are not visible. Prefix with <code>$using:</code> to reference them.</p>
+
+          <h2>Persistent sessions — New-PSSession</h2>
+          <pre><code>$cred = Get-Credential CONTOSO\\admin
+$s = New-PSSession -ComputerName SRV1 -Credential $cred
+
+# Run many commands without reconnecting (faster, preserves state)
+Invoke-Command -Session $s -ScriptBlock { $x = 42 }
+Invoke-Command -Session $s -ScriptBlock { $x }                  # 42 — state persists
+
+# Interactive
+Enter-PSSession $s                                              # prompt now is [SRV1]:
+Get-Service spooler
 Exit-PSSession
+
+# Reuse + tear down
+$s | Format-List Id, ComputerName, State, ConfigurationName, Availability
+Disconnect-PSSession $s                                          # leave it open server-side
+Connect-PSSession -ComputerName SRV1 -Name $s.Name              # reattach later
 Remove-PSSession $s</code></pre>
-          <h2>SSH-based PSRemoting</h2>
-          <p>PS 7 supports SSH transport for cross-platform: <code>Enter-PSSession -HostName host -UserName me -SSHTransport</code>.</p>
+
+          <h2>SSH-based remoting (PowerShell 7+, cross-platform)</h2>
+          <pre><code>Enter-PSSession -HostName ubuntu01 -UserName chris -SSHTransport
+Invoke-Command -HostName ubuntu01,debian02 -UserName chris -SSHTransport -ScriptBlock { uname -a }
+
+$s = New-PSSession -HostName ubuntu01 -UserName chris -SSHTransport
+Invoke-Command -Session $s -ScriptBlock { Get-Process | Sort CPU -Desc | Select -First 5 }</code></pre>
+          <p><b>Setup on Linux/macOS target:</b> install <code>pwsh</code> + OpenSSH server; add a <code>Subsystem powershell /usr/bin/pwsh -sshs -NoLogo</code> line in <code>/etc/ssh/sshd_config</code>; restart sshd. Authentication uses your normal SSH key.</p>
+
+          <h2>Hyper-V VM + container remoting</h2>
+          <pre><code>Enter-PSSession -VMName 'TestVM' -Credential (Get-Credential)           # no network needed
+Invoke-Command -VMName 'TestVM' -ScriptBlock { Get-Service }
+Enter-PSSession -ContainerId &lt;id&gt;                                       # into a running container</code></pre>
+
+          <h2>Implicit remoting (Import-PSSession)</h2>
+          <pre><code>$s = New-PSSession -ComputerName Exchange01 -ConfigurationName Microsoft.Exchange
+Import-PSSession $s -CommandName 'Get-Mailbox','Set-Mailbox' -Prefix Ex
+Get-ExMailbox jdoe                                                       # runs on Exchange, returns locally</code></pre>
+          <p><b>Why:</b> use a remote module without installing it locally. Common pattern for Exchange on-prem, SQL admin endpoints, custom JEA endpoints.</p>
+
+          <h2>The double-hop problem</h2>
+          <p><b>What:</b> credentials from your first remote hop are <i>not</i> automatically forwarded to a second hop. Symptom: open shell to SRV1, run command that touches SRV2 → "access denied" even though your account would normally have rights.</p>
+          <p><b>Solutions:</b></p>
+          <ul>
+            <li><b>CredSSP</b> — easiest but stores plaintext creds in memory; security risk. Enable per-host: <code>Enable-WSManCredSSP -Role Client -DelegateComputer SRV1</code> and on server <code>-Role Server</code>; then <code>Invoke-Command -Authentication CredSSP</code>.</li>
+            <li><b>Kerberos resource-based constrained delegation (RBCD)</b> — preferred; no creds stored. Configure on the resource computer: <code>Set-ADComputer SRV2 -PrincipalsAllowedToDelegateToAccount (Get-ADComputer SRV1)</code>.</li>
+            <li><b>Passing creds explicitly</b> — accept a <code>[PSCredential]</code> parameter and use it on every hop.</li>
+            <li><b>JEA virtual account</b> — endpoint runs under its own privileged identity; user does not pass creds.</li>
+          </ul>
+
+          <h2>JEA — Just Enough Administration</h2>
+          <p><b>What:</b> a constrained PSRemoting endpoint exposing a tightly defined set of cmdlets/parameters; the user connects with their own creds but the endpoint executes under a temporary <b>virtual account</b> (RunAs). <b>Why:</b> let helpdesk restart IIS app pools without granting them admin. <b>How used:</b> create a <code>.psrc</code> role capability file (cmdlets/functions allowed) + a <code>.pssc</code> session configuration file binding roles to AD groups, then register: <code>Register-PSSessionConfiguration -Name HelpDesk -Path .\\HelpDesk.pssc</code>. Users connect with <code>Enter-PSSession -ConfigurationName HelpDesk</code>.</p>
+
+          <h2>Authentication options</h2>
+          <ul>
+            <li><b>Default</b> — Kerberos (domain) or Negotiate (NTLM fallback).</li>
+            <li><b>Kerberos</b> — explicit Kerberos only.</li>
+            <li><b>Negotiate</b> — Kerberos then NTLM.</li>
+            <li><b>Basic</b> — username + password in HTTP header; <b>only over HTTPS</b>.</li>
+            <li><b>CredSSP</b> — delegates creds (double-hop).</li>
+            <li><b>Digest</b> — challenge-response (rarely used).</li>
+            <li><b>Certificate</b> — client cert auth over HTTPS.</li>
+          </ul>
+          <pre><code>Invoke-Command -ComputerName SRV1 -Authentication Kerberos -ScriptBlock { ... }
+Invoke-Command -ComputerName SRV1 -UseSSL -Credential $cred -ScriptBlock { ... }   # 5986</code></pre>
+
+          <h2>Output: live objects vs deserialized</h2>
+          <p>Objects returned across PSRemoting are <b>deserialized</b> — properties preserved, methods stripped (with a few exceptions like <code>ToString()</code>). <code>$o.GetType().Name</code> shows <code>Deserialized.System.Diagnostics.Process</code>. <b>Why care:</b> you cannot call <code>.Kill()</code> on a returned process — invoke methods inside the remote scriptblock.</p>
+          <pre><code># Wrong — Kill() not available on deserialized object
+$p = Invoke-Command SRV1 { Get-Process notepad }
+$p.Kill()                                                           # error
+
+# Right — kill on the remote
+Invoke-Command SRV1 { (Get-Process notepad).Kill() }</code></pre>
+
+          <h2>Background + long-running</h2>
+          <pre><code># PSJobs — local background jobs
+$j = Start-Job -ScriptBlock { Start-Sleep 30; Get-Process }
+Get-Job; Receive-Job $j -Wait; Remove-Job $j
+
+# Remote jobs
+Invoke-Command -ComputerName SRV1 -AsJob -ScriptBlock { 1..100000 | Measure-Object }
+
+# Scheduled jobs (PS 5.1 only)
+Register-ScheduledJob -Name Nightly -ScriptBlock { ... } -Trigger (New-JobTrigger -Daily -At 2am)
+
+# ThreadJobs (PS7+, lighter than PSJob)
+Start-ThreadJob -ScriptBlock { ... }</code></pre>
+
+          <h2>Throttling, timeouts, errors</h2>
+          <ul>
+            <li><code>-ThrottleLimit N</code> — concurrent fan-out cap (default 32).</li>
+            <li><code>-AsJob</code> — return immediately, fetch results later.</li>
+            <li><code>-SessionOption (New-PSSessionOption -OpenTimeout 30000 -IdleTimeout 7200000)</code> — tune timeouts (milliseconds).</li>
+            <li><code>-ErrorAction Continue</code> — keep running across hosts on per-host failure.</li>
+          </ul>
+
+          <h2>Security hardening checklist</h2>
+          <ul>
+            <li>Use <b>HTTPS listener (5986)</b> with a real cert; disable HTTP listener in untrusted networks.</li>
+            <li>Restrict who can connect via <code>Set-PSSessionConfiguration -ShowSecurityDescriptorUI</code> (or ACL).</li>
+            <li>Avoid <b>CredSSP</b> unless required; prefer Kerberos RBCD.</li>
+            <li>Enable <b>script-block logging</b> (Event 4104) + <b>module logging</b> via Group Policy for forensics.</li>
+            <li>Use <b>JEA</b> for delegated administration.</li>
+            <li>Constrain <code>TrustedHosts</code> to specific names, not <code>*</code>.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Workgroup machines: NTLM only, must add to <code>TrustedHosts</code> + pass <code>-Credential</code>.</li>
+            <li>Default WinRM port is 5985 (HTTP). 5986 = HTTPS. Both must be open in the path firewall.</li>
+            <li><code>$using:</code> only works inside <code>Invoke-Command</code> / scheduled jobs / <code>ForEach-Object -Parallel</code> — not in plain script blocks.</li>
+            <li>Deserialized objects have no methods — invoke methods on the remote side.</li>
+            <li><code>Enter-PSSession</code> changes the prompt; <code>Exit-PSSession</code> returns. <code>Ctrl+C</code> in interactive mode does NOT exit the session — it cancels the running command.</li>
+            <li>SSH transport works on Linux/macOS/Windows; install OpenSSH + register the PowerShell subsystem in sshd_config.</li>
+            <li>Output across sessions truncates very deep object graphs at depth 1 by default — use <code>ConvertTo-Json -Depth N</code> if you need full fidelity.</li>
+          </ul>
         `
       },
       {
