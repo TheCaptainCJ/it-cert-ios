@@ -3748,6 +3748,125 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>Mnemonic top-down: "All People Seem To Need Data Processing."</li>
             <li>"Customer's email client can't reach server" → walk it from L1 (cable) up through DNS (L7) and TCP/443 connectivity (L4).</li>
           </ul>
+
+          <h2>Ethernet II frame anatomy (memorize the byte budget)</h2>
+          <p>The most-tested L2 frame format. Total non-payload overhead = 26 bytes (with FCS) or 38 bytes (with preamble + IFG):</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bytes</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>Preamble</td><td>7</td><td>Clock-sync bit pattern <code>10101010 ×7</code>; ignored by upper layers</td></tr>
+            <tr><td>SFD (Start Frame Delimiter)</td><td>1</td><td><code>10101011</code> — marks end of preamble</td></tr>
+            <tr><td>Destination MAC</td><td>6</td><td>Target NIC, broadcast (<code>FF:FF:FF:FF:FF:FF</code>), or multicast</td></tr>
+            <tr><td>Source MAC</td><td>6</td><td>Sender's NIC</td></tr>
+            <tr><td>EtherType / Length</td><td>2</td><td>≥0x0600 = type; &lt;0x0600 = length (802.3)</td></tr>
+            <tr><td>Payload</td><td>46–1500</td><td>L3 packet (padded to 46 min)</td></tr>
+            <tr><td>FCS (CRC-32)</td><td>4</td><td>Frame Check Sequence — error detection</td></tr>
+            <tr><td>IFG (Inter-Frame Gap)</td><td>12</td><td>96-bit silence between frames; not in frame, but consumes wire time</td></tr>
+          </table>
+          <p>Standard Ethernet MTU 1500 + L2 overhead = max frame 1518 bytes (1522 with 802.1Q VLAN tag). Jumbo frames = 9000 byte MTU (often used in storage/iSCSI nets).</p>
+
+          <h2>Common EtherType values (the "what's inside this frame" tag)</h2>
+          <ul>
+            <li><b>0x0800</b> — IPv4.</li>
+            <li><b>0x0806</b> — ARP.</li>
+            <li><b>0x86DD</b> — IPv6.</li>
+            <li><b>0x8100</b> — 802.1Q VLAN-tagged frame.</li>
+            <li><b>0x88A8</b> — 802.1ad (Q-in-Q, double-tagged).</li>
+            <li><b>0x8847 / 0x8848</b> — MPLS unicast / multicast.</li>
+            <li><b>0x8863 / 0x8864</b> — PPPoE Discovery / PPPoE Session.</li>
+            <li><b>0x888E</b> — 802.1X EAPoL (port-based auth).</li>
+            <li><b>0x88CC</b> — LLDP (Link Layer Discovery Protocol).</li>
+          </ul>
+
+          <h2>MAC address structure (48-bit / 6-byte)</h2>
+          <p>Written as 6 hex pairs separated by colons or hyphens: <code>00:1A:2B:3C:4D:5E</code>.</p>
+          <ul>
+            <li><b>First 24 bits = OUI</b> (Organizationally Unique Identifier) — assigned by IEEE to a vendor.</li>
+            <li><b>Last 24 bits = NIC-specific</b> — vendor-assigned per device.</li>
+            <li><b>I/G bit</b> (LSB of first byte) — 0 = unicast, 1 = multicast/broadcast.</li>
+            <li><b>U/L bit</b> (2nd bit of first byte) — 0 = universally administered (real OUI), 1 = locally administered (LAA, hypervisor, random).</li>
+          </ul>
+          <p><b>Recognizable OUIs (helpful when reading captures):</b></p>
+          <ul>
+            <li><code>00:50:56</code> — VMware.</li>
+            <li><code>00:0C:29</code> — VMware.</li>
+            <li><code>00:1C:42</code> — Parallels.</li>
+            <li><code>08:00:27</code> — VirtualBox.</li>
+            <li><code>00:15:5D</code> — Microsoft Hyper-V.</li>
+            <li><code>00:1B:21</code> — Intel.</li>
+            <li><code>F0:18:98</code> — Apple.</li>
+            <li><code>FF:FF:FF:FF:FF:FF</code> — broadcast (all hosts in subnet).</li>
+            <li><code>01:00:5E:xx:xx:xx</code> — IPv4 multicast (last 23 bits = IP multicast group).</li>
+            <li><code>33:33:xx:xx:xx:xx</code> — IPv6 multicast.</li>
+          </ul>
+
+          <h2>ARP — Address Resolution Protocol (the L2↔L3 glue)</h2>
+          <p><b>What:</b> When a host has the destination IP but not the MAC, it broadcasts "Who has 192.168.1.1? Tell 192.168.1.42". The owner replies with its MAC. Cached for 2–4 minutes in the ARP table.</p>
+          <ul>
+            <li><b>ARP request</b> — broadcast (FF:FF:FF:FF:FF:FF) at L2; carries target IP at L3.</li>
+            <li><b>ARP reply</b> — unicast.</li>
+            <li><b>Gratuitous ARP</b> — host announces its own IP→MAC unprompted (used after IP change, HSRP failover, duplicate-IP detection).</li>
+            <li><b>Proxy ARP</b> — router answers for a host on another subnet (rarely used today).</li>
+            <li><b>RARP</b> (legacy) — given MAC, find IP. Replaced by DHCP.</li>
+          </ul>
+          <p><b>Inspect ARP table:</b> Windows <code>arp -a</code>; Linux <code>ip neigh</code> or <code>arp -n</code>.</p>
+          <p><b>ARP attacks:</b> ARP spoofing/poisoning (advertise wrong MAC to redirect traffic); detected by Dynamic ARP Inspection (DAI) on switches.</p>
+
+          <h2>ICMP message catalog (Layer 3 diagnostics)</h2>
+          <p>ICMP carries control/error messages inside IP packets. Each message has a <b>Type</b> + <b>Code</b>. Memorize the common ones:</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Used by</th></tr>
+            <tr><td>0</td><td>Echo Reply</td><td>ping response</td></tr>
+            <tr><td>3</td><td>Destination Unreachable</td><td>codes: 0=net, 1=host, 3=port, 4=frag-needed (Path MTU)</td></tr>
+            <tr><td>5</td><td>Redirect</td><td>"better next hop"</td></tr>
+            <tr><td>8</td><td>Echo Request</td><td>ping</td></tr>
+            <tr><td>11</td><td>Time Exceeded</td><td>traceroute (TTL=0 in transit)</td></tr>
+            <tr><td>13/14</td><td>Timestamp / Reply</td><td>clock probe (rare)</td></tr>
+            <tr><td>30</td><td>Traceroute</td><td>(historical)</td></tr>
+          </table>
+          <p><b>ICMPv6</b> adds Neighbor Discovery (NS/NA — IPv6's ARP equivalent, types 135/136) and Router Solicitation/Advertisement (types 133/134).</p>
+
+          <h2>Where attacks live by layer (huge exam theme)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Attack</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Defense</th></tr>
+            <tr><td>L1</td><td>Cable tap, wireless jamming, RF interference</td><td>Physical security, locked closets, spectrum analyzer</td></tr>
+            <tr><td>L2</td><td>MAC flooding (CAM table overflow), ARP spoofing, VLAN hopping (double-tagging, switch-spoofing), STP root-bridge takeover, DHCP starvation/rogue server</td><td>Port-security, DAI, DHCP snooping, BPDU guard, root guard, disable DTP</td></tr>
+            <tr><td>L3</td><td>IP spoofing, ICMP smurf/flood, Ping-of-Death, routing-table poisoning (BGP hijack)</td><td>Ingress filtering (BCP38), uRPF, ACLs, RPKI for BGP</td></tr>
+            <tr><td>L4</td><td>SYN flood, port scanning, RST injection, TCP session hijack</td><td>SYN cookies, stateful firewall, rate limit, encrypted transport</td></tr>
+            <tr><td>L5–L7</td><td>DNS cache poison, SSL strip, SQL injection, XSS, app-layer DDoS, credential stuffing</td><td>DNSSEC, HSTS, WAF, input validation, rate limit, MFA</td></tr>
+          </table>
+
+          <h2>SDN + overlay/underlay (modern context)</h2>
+          <ul>
+            <li><b>SDN</b> (Software-Defined Networking) — splits the <b>control plane</b> (decisions, routing) from the <b>data plane</b> (packet forwarding). Controller pushes flow rules to switches via OpenFlow / NETCONF / gNMI / vendor APIs.</li>
+            <li><b>Underlay</b> — physical L1/L2/L3 fabric (the actual switches/routers).</li>
+            <li><b>Overlay</b> — virtual network running on top (VXLAN, GENEVE, NVGRE). Uses L2-over-L3 tunneling so VMs in different physical locations look like one broadcast domain.</li>
+            <li><b>VXLAN</b> — UDP/4789, 24-bit VNI (~16M segments vs 4094 VLANs). Heavy in datacenters + cloud.</li>
+            <li><b>SD-WAN</b> — SDN applied to WAN; orchestrates multiple transports (MPLS + broadband + LTE) with policy-based steering.</li>
+            <li><b>Intent-based networking</b> — declarative ("Marketing must reach payroll only over MFA-authenticated TLS") translated to flow rules by the controller.</li>
+          </ul>
+
+          <h2>Scenario practice (work through each)</h2>
+          <ol>
+            <li><b>"User reports 'no Internet' on a wired desktop. Link light is OFF on the switch."</b> → L1 problem. Check cable, port, NIC.</li>
+            <li><b>"Two hosts in same VLAN can ping each other but not the gateway."</b> → L3 issue at gateway (router-on-stick down, ACL drop, wrong subinterface) OR L2 trunk-tag mismatch.</li>
+            <li><b>"Wireshark shows TCP SYN sent, no SYN-ACK back."</b> → Firewall dropping at L4, server not listening, or routing asymmetric.</li>
+            <li><b>"User says 'web site loads slowly, but works'."</b> → DNS slow (L7), TLS handshake slow (L6), or congestion (L4).</li>
+            <li><b>"Switch port shows 100,000 CRC errors."</b> → L1 — bad cable, EMI, duplex mismatch (which manifests as CRC under load).</li>
+            <li><b>"App opens, login succeeds, then disconnects after 60s idle."</b> → L5 session timeout (or L4 firewall idle timeout).</li>
+            <li><b>"All Windows hosts have 169.254.x.x addresses."</b> → APIPA fallback → DHCP server unreachable (L7 service down or L2 VLAN segregation).</li>
+            <li><b>"After plugging a switch into a switch, the whole building goes dark."</b> → STP loop / broadcast storm → BPDU guard, loop protection.</li>
+            <li><b>"Browser shows 'NET::ERR_CERT_AUTHORITY_INVALID'."</b> → L6 — TLS chain broken, expired root, or MITM intercept.</li>
+            <li><b>"Routing table has correct default route, but traceroute dies at hop 3."</b> → L3 path issue; could be MTU/black-hole, ACL, asymmetric return path.</li>
+          </ol>
+
+          <h2>Real-world layer recognition cheat (one-line scan)</h2>
+          <ul>
+            <li>Talking about <b>MAC, switches, VLANs, ARP, STP, frames, CRC errors</b> → L2.</li>
+            <li>Talking about <b>IP, routes, ping, traceroute, ACLs, BGP/OSPF</b> → L3.</li>
+            <li>Talking about <b>ports, TCP/UDP, SYN/ACK, firewall rules</b> → L4.</li>
+            <li>Talking about <b>HTTP codes, DNS records, SMTP, certificates</b> → L7 (HTTP/DNS) or L6 (TLS).</li>
+            <li>Talking about <b>cable, fiber, transceivers, light levels</b> → L1.</li>
+          </ul>
         `
       },
       {
