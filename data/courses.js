@@ -362,6 +362,181 @@ const COURSES = [
             <li><b>TDR</b> (Time-Domain Reflectometer) — measures distance to a copper fault.</li>
             <li><b>OTDR</b> (Optical TDR) — same for fiber.</li>
           </ul>
+
+          <h2>Copper cable category table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Cat</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Frequency</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Speed @ 100m</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Shielding</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td>Cat 3</td><td>16 MHz</td><td>10 Mbps</td><td>UTP</td><td>Phone lines (legacy)</td></tr>
+            <tr><td>Cat 5</td><td>100 MHz</td><td>100 Mbps</td><td>UTP</td><td>Obsolete (replaced by 5e)</td></tr>
+            <tr><td>Cat 5e</td><td>100 MHz</td><td>1 Gbps</td><td>UTP</td><td>Baseline modern</td></tr>
+            <tr><td>Cat 6</td><td>250 MHz</td><td>1 Gbps / 10 Gbps @55m</td><td>UTP, optional spline</td><td>New residential / SMB</td></tr>
+            <tr><td>Cat 6a</td><td>500 MHz</td><td>10 Gbps</td><td>F/UTP or S/FTP</td><td>10G horizontal runs, Wi-Fi 6 AP uplinks</td></tr>
+            <tr><td>Cat 7</td><td>600 MHz</td><td>10 Gbps</td><td>S/FTP</td><td>European builds; uses GG45 / TERA</td></tr>
+            <tr><td>Cat 7a</td><td>1000 MHz</td><td>10 Gbps</td><td>S/FTP</td><td>Short 40G/100G; rare in NA</td></tr>
+            <tr><td>Cat 8</td><td>2000 MHz</td><td>25/40 Gbps @30m</td><td>S/FTP</td><td>Datacenter top-of-rack only</td></tr>
+          </table>
+          <p>100 m channel is the standard rule: <b>90 m horizontal + 10 m total patch cords</b>. Cat 7 / 7a never blessed by TIA in NA — use Cat 6a or Cat 8 instead.</p>
+
+          <h2>Shielding code (E/F/S/U)</h2>
+          <p>New TIA/ISO shielding notation: <b>X/YTP</b> — X = overall shield, Y = pair shield, TP = twisted pair. Common variants:</p>
+          <ul>
+            <li><b>U/UTP</b> — unshielded overall + unshielded pairs (Cat 5e/6).</li>
+            <li><b>F/UTP</b> — overall foil + unshielded pairs (some Cat 6a).</li>
+            <li><b>S/FTP</b> — braided overall + foil per pair (Cat 7+, Cat 8). Heaviest shielding, hardest to terminate.</li>
+            <li><b>U/FTP</b> — unshielded overall + foil per pair.</li>
+            <li><b>F/FTP</b> — overall foil + foil per pair.</li>
+          </ul>
+          <p>Shielded cables need a continuous bond to ground — terminate the drain wire at both ends in a grounded jack/panel or you risk antenna behavior + noise pickup.</p>
+
+          <h2>Jacket types (building-code driven)</h2>
+          <ul>
+            <li><b>CMP / OFNP</b> — Plenum-rated for forced-air-handling spaces (above drop ceilings, return-air plenums). Fluorinated polymer (FEP); low-smoke, low-toxicity.</li>
+            <li><b>CMR / OFNR</b> — Riser-rated for vertical runs between floors. Less stringent than plenum.</li>
+            <li><b>CM / OFNG</b> — General-purpose indoor.</li>
+            <li><b>CMX</b> — limited use / residential.</li>
+            <li><b>LSZH</b> — Low-Smoke Zero-Halogen. Required by EU + some hospitals; releases no halide gases when burned. Not interchangeable with plenum in NEC.</li>
+            <li><b>OSP</b> — Outside Plant. UV + moisture resistant; often gel-filled for direct burial.</li>
+          </ul>
+          <p>NEC + local AHJ (Authority Having Jurisdiction) decide which rating where. Wrong jacket = failed building inspection = expensive rip-and-replace.</p>
+
+          <h2>RJ45 pinout (T568B — most installs)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Pin</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Color (T568B)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">10/100 use</th><th align="left" style="padding:4px;border-bottom:1px solid #444">1G/10G use</th></tr>
+            <tr><td>1</td><td>White/Orange</td><td>TX+</td><td>BI_DA+</td></tr>
+            <tr><td>2</td><td>Orange</td><td>TX−</td><td>BI_DA−</td></tr>
+            <tr><td>3</td><td>White/Green</td><td>RX+</td><td>BI_DB+</td></tr>
+            <tr><td>4</td><td>Blue</td><td>—</td><td>BI_DC+</td></tr>
+            <tr><td>5</td><td>White/Blue</td><td>—</td><td>BI_DC−</td></tr>
+            <tr><td>6</td><td>Green</td><td>RX−</td><td>BI_DB−</td></tr>
+            <tr><td>7</td><td>White/Brown</td><td>—</td><td>BI_DD+</td></tr>
+            <tr><td>8</td><td>Brown</td><td>—</td><td>BI_DD−</td></tr>
+          </table>
+          <p>1 Gbps and faster Ethernet uses ALL 4 pairs bidirectionally. <b>Split pair</b> error (pair separated incorrectly) passes a continuity test but fails certifier NEXT — symptom = link works at 100 Mbps but flaps at 1 Gbps. Always test with a certifier on new runs.</p>
+
+          <h2>RJ-11 vs RJ-45 vs RJ-48</h2>
+          <ul>
+            <li><b>RJ-11</b> — 6P2C / 6P4C, single phone line. Smaller body than RJ-45. Plugs into 4-pin or 6-pin.</li>
+            <li><b>RJ-45</b> — 8P8C, Ethernet + PoE.</li>
+            <li><b>RJ-48</b> — same physical 8P8C as RJ-45 BUT wired for T1/E1 WAN. NEVER plug a T1 RJ-48 into a switch — voltages differ, you can damage gear.</li>
+          </ul>
+
+          <h2>Punch-down blocks — 66 vs 110 vs Krone</h2>
+          <ul>
+            <li><b>66 block</b> — original 50-pair voice telco block. Two columns of clips per row connected by silver bus; bridging clip optional. Use a 66-blade punchdown tool.</li>
+            <li><b>110 block</b> — modern data block on patch panels + wall jacks. Lower crosstalk; supports Cat 6/6a. Uses 110-blade tool.</li>
+            <li><b>Krone (LSA-Plus)</b> — common European equivalent of 110.</li>
+            <li><b>BIX</b> — Nortel-flavored building-information cross-connect.</li>
+          </ul>
+          <p>Punch-down tools have <b>cut</b> and <b>no-cut</b> options — set cut to trim the wire flush on the back of the contact.</p>
+
+          <h2>USB versions + speeds (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Marketing name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Spec</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Speed</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Connector</th></tr>
+            <tr><td>USB 1.1 (Low/Full)</td><td>USB 1.1</td><td>1.5 / 12 Mbps</td><td>A, B</td></tr>
+            <tr><td>USB 2.0 Hi-Speed</td><td>USB 2.0</td><td>480 Mbps</td><td>A, B, Mini, Micro</td></tr>
+            <tr><td>USB 3.2 Gen 1 (SuperSpeed)</td><td>USB 3.0</td><td>5 Gbps</td><td>A blue, C, Micro-B SS</td></tr>
+            <tr><td>USB 3.2 Gen 2 (SuperSpeed+)</td><td>USB 3.1</td><td>10 Gbps</td><td>A, C, Micro-B SS</td></tr>
+            <tr><td>USB 3.2 Gen 2×2</td><td>USB 3.2</td><td>20 Gbps</td><td>C only</td></tr>
+            <tr><td>USB4 Gen 2×2</td><td>USB4 1.0</td><td>20 Gbps</td><td>C</td></tr>
+            <tr><td>USB4 Gen 3×2</td><td>USB4 1.0</td><td>40 Gbps</td><td>C</td></tr>
+            <tr><td>USB4 v2</td><td>USB4 2.0</td><td>80 Gbps (sym) / 120 Gbps (asym)</td><td>C</td></tr>
+          </table>
+          <p><b>Connector reality check:</b> port shape ≠ speed. A USB-C port can be USB 2.0 (480 Mbps) only — check the spec sheet. Many phone-charging USB-C ports drop down to 2.0.</p>
+
+          <h2>Thunderbolt evolution</h2>
+          <ul>
+            <li><b>TB1 / TB2</b> — Mini-DisplayPort connector. 10 / 20 Gbps.</li>
+            <li><b>TB3 / TB4</b> — USB-C connector. 40 Gbps both. TB4 mandates min 32 Gbps PCIe, dual 4K or one 8K, 100 W charging, daisy-chain support.</li>
+            <li><b>TB5</b> — USB-C. 80 Gbps symmetric, 120/40 Gbps asymmetric (for high-res displays), 240 W charging.</li>
+            <li>TB tunnels PCIe → enables eGPUs + external SSDs at near-native speeds.</li>
+          </ul>
+
+          <h2>Video connectors (most-tested A+ topic)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Connector</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Signal</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>VGA (DE-15)</td><td>Analog RGB</td><td>~2048×1536 @ 60 Hz</td><td>Blue 15-pin D-sub; legacy</td></tr>
+            <tr><td>DVI-A</td><td>Analog only</td><td>—</td><td>Same as VGA over DVI</td></tr>
+            <tr><td>DVI-D Single Link</td><td>Digital</td><td>1920×1200 @ 60 Hz</td><td>—</td></tr>
+            <tr><td>DVI-D Dual Link</td><td>Digital</td><td>2560×1600 @ 60 Hz</td><td>Extra pins activate second TMDS link</td></tr>
+            <tr><td>DVI-I</td><td>Analog + Digital</td><td>—</td><td>Has both signal types; "I" = integrated</td></tr>
+            <tr><td>HDMI 1.4</td><td>Digital A/V</td><td>4K @ 30 Hz</td><td>Ethernet, ARC</td></tr>
+            <tr><td>HDMI 2.0 / 2.0b</td><td>Digital A/V</td><td>4K @ 60 Hz</td><td>HDR static</td></tr>
+            <tr><td>HDMI 2.1</td><td>Digital A/V</td><td>4K @ 120 Hz / 8K @ 60 Hz</td><td>eARC, VRR, ALLM, dynamic HDR</td></tr>
+            <tr><td>DisplayPort 1.2</td><td>Digital A/V</td><td>4K @ 60 Hz</td><td>MST daisy-chain</td></tr>
+            <tr><td>DisplayPort 1.4</td><td>Digital A/V</td><td>4K @ 120 Hz HDR</td><td>DSC, 8K @ 30 Hz w/ DSC</td></tr>
+            <tr><td>DisplayPort 2.0/2.1</td><td>Digital A/V</td><td>16K @ 60 Hz w/ DSC</td><td>UHBR 20 (80 Gbps) over USB-C</td></tr>
+            <tr><td>USB-C DP Alt Mode</td><td>Digital A/V</td><td>same as native DP</td><td>Uses 4 lanes of USB-C for DP</td></tr>
+            <tr><td>S-Video / RCA composite</td><td>Analog</td><td>SD only</td><td>Legacy</td></tr>
+            <tr><td>Component (YPbPr)</td><td>Analog HD</td><td>1080i</td><td>Three RCA plugs (Y/Pb/Pr)</td></tr>
+          </table>
+          <p><b>HDCP</b> (High-bandwidth Digital Content Protection) — DRM on HDMI/DP/DVI. Older monitor + new source can blank-screen if HDCP version mismatches.</p>
+
+          <h2>Audio connectors</h2>
+          <ul>
+            <li><b>3.5 mm TRS / TRRS</b> — Tip-Ring-Sleeve (stereo) or Tip-Ring-Ring-Sleeve (stereo + mic).</li>
+            <li><b>6.35 mm (¼")</b> — pro / instrument.</li>
+            <li><b>S/PDIF</b> — Sony/Philips Digital Interface. <b>Coax</b> (RCA) or <b>Optical TOSLINK</b>. Compressed 5.1 surround.</li>
+            <li><b>HDMI ARC / eARC</b> — return digital audio from TV to AVR.</li>
+            <li><b>XLR</b> — pro mic; balanced.</li>
+          </ul>
+
+          <h2>Legacy connectors you may still see</h2>
+          <ul>
+            <li><b>PS/2</b> — 6-pin Mini-DIN; purple keyboard / green mouse. Found on servers + KVM only.</li>
+            <li><b>Serial RS-232 / DE-9 (DB-9)</b> — console ports on network gear; also industrial gear.</li>
+            <li><b>DB-25 / Parallel LPT</b> — old printer.</li>
+            <li><b>FireWire (IEEE 1394)</b> — 4/6/9-pin, 400/800 Mbps. Old video / external storage; dead.</li>
+            <li><b>eSATA</b> — external SATA, 6 Gbps; mostly replaced by USB-C / TB.</li>
+            <li><b>SCSI (parallel)</b> — multi-pin, terminated chains; legacy storage.</li>
+            <li><b>SAS</b> — Serial Attached SCSI; current server storage interconnect.</li>
+          </ul>
+
+          <h2>Fiber bend radius + handling rules</h2>
+          <ul>
+            <li>Minimum bend radius typically <b>10× outer diameter</b> for installation, <b>15-20×</b> in storage.</li>
+            <li><b>Bend-insensitive fiber</b> (OM3+ multimode, G.657 single-mode) tolerates tighter bends with low loss.</li>
+            <li>Single dust particle on a connector end-face can ruin a link at 10G+. ALWAYS inspect with a fiber scope + clean with one-click cleaners (Cletop) before plugging.</li>
+            <li>Never look directly into an active fiber — 1310/1550 nm laser is invisible AND damaging.</li>
+            <li>Mode mismatch (multimode patch on single-mode optic, or vice versa) = no link, OR works briefly then degrades.</li>
+            <li><b>UPC</b> (Ultra Polished, ferrule slightly domed) vs <b>APC</b> (Angled Polished, 8° angle, GREEN connector) — never cross-mate; APC must mate APC.</li>
+          </ul>
+
+          <h2>Cable patch-panel + management best practices</h2>
+          <ul>
+            <li>Label both ends of every cable consistently (room-rack-port).</li>
+            <li>Preserve twist within ½ inch of the termination point.</li>
+            <li>Use velcro, not zip-ties (kinks fiber + tight-bound copper).</li>
+            <li>Keep power and data separated; cross at 90° if they must meet.</li>
+            <li>Service loops at racks + IDFs (~1 m slack) for re-termination.</li>
+            <li>Color-code by purpose (yellow = uplink, red = SAN, blue = data, green = OOB).</li>
+            <li>Document in IPAM/DCIM as soon as cabled — not "later".</li>
+          </ul>
+
+          <h2>Common cable issues + symptoms</h2>
+          <ul>
+            <li><b>Link negotiates 100 Mbps not 1 Gbps</b> — split pair, cable too long, bad cable, Cat 5 in path, kinked jacket. Recertify.</li>
+            <li><b>Intermittent link</b> — marginal cable; check with cable tester at full speed (1G/10G); replace patch.</li>
+            <li><b>CRC errors rising</b> — bad cable / EMI / duplex mismatch; swap cable first (cheapest fix).</li>
+            <li><b>PoE device won't power</b> — Cat 3 patch cord in path (missing pairs), or PoE budget exhausted on switch.</li>
+            <li><b>Fiber link dark</b> — Tx/Rx swap (use crossover patch), wrong mode (SMF vs MMF), dirty endface, broken strand, wrong wavelength on transceiver.</li>
+            <li><b>Plenum violation</b> — wrong jacket above ceiling tiles; building inspector fails install.</li>
+            <li><b>Coax loose connection</b> — cable TV pixelation; tighten F-connector to torque spec.</li>
+            <li><b>USB device unreliable</b> — exceeding cable length spec (USB 3 max ~3 m passive); use active cable / hub.</li>
+          </ul>
+
+          <h2>Exam pattern cheat</h2>
+          <ul>
+            <li>"10 Gbps to 100 m" → Cat 6a.</li>
+            <li>"Plenum required" → CMP-rated jacket.</li>
+            <li>"Cable TV / cable modem connector" → F-type coax.</li>
+            <li>"Connector dominating modern SFP+ optics" → LC.</li>
+            <li>"Building-to-building 5 km fiber" → SMF + LR optic.</li>
+            <li>"Patch panel termination tool" → 110 punch-down.</li>
+            <li>"Locate jack from closet" → tone generator + probe.</li>
+            <li>"Difference between RJ-45 and RJ-48" → physically same 8P8C, RJ-48 is T1/E1.</li>
+            <li>"USB-C port at only 480 Mbps" → port is USB 2.0 spec even though connector is C.</li>
+            <li>"Green angled fiber connector" → APC polish; never mate to UPC.</li>
+          </ul>
         `
       },
       {
