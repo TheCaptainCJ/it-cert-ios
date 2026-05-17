@@ -97,6 +97,172 @@ const COURSES = [
 
           <h3>MicroSD / SD card</h3>
           <p><b>SD</b> = Secure Digital. Removable flash storage for cameras, drones, some Android phones. Speed classes (Class 10, U3, V30, V90) indicate sustained write speed for 4K video.</p>
+
+          <h2>Laptop chassis + form factors (220-1101 vocabulary)</h2>
+          <ul>
+            <li><b>Clamshell</b> — traditional fold-open laptop.</li>
+            <li><b>2-in-1 / convertible</b> — 360° hinge becomes a tablet (Lenovo Yoga, HP Spectre x360).</li>
+            <li><b>Detachable</b> — keyboard separates entirely (Surface Pro / Book).</li>
+            <li><b>Ultrabook / Ultra-thin</b> — &lt; 1 kg, all-soldered RAM/SSD, single-board.</li>
+            <li><b>Workstation / mobile workstation</b> — high-power CPU/GPU for CAD, video, ML. Heavier cooling.</li>
+            <li><b>Rugged</b> — MIL-STD-810G shock + IP-rated (Panasonic Toughbook, Getac).</li>
+            <li><b>Chromebook</b> — ChromeOS, often ARM, low cost.</li>
+          </ul>
+          <p><b>Form-factor service implications:</b> ultra-thin = soldered RAM (no upgrade), proprietary SSD shapes (M.2 2230 on Surface vs 2280 on most), heat-spread limits TDP, single ribbon cable for everything → handle carefully.</p>
+
+          <h2>Display panel details (memorize the table)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tech</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Acronym</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Strengths</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Weaknesses</th></tr>
+            <tr><td>TN</td><td>Twisted Nematic</td><td>Fastest response (1 ms), cheap</td><td>Bad viewing angles, washed-out color</td></tr>
+            <tr><td>IPS</td><td>In-Plane Switching</td><td>Great color + 178° viewing</td><td>Slightly slower (4-7 ms), "IPS glow"</td></tr>
+            <tr><td>VA</td><td>Vertical Alignment</td><td>Deep contrast, good for movies</td><td>Slow response, ghosting</td></tr>
+            <tr><td>OLED</td><td>Organic LED</td><td>True black, per-pixel light, thin</td><td>Burn-in, peak brightness limited</td></tr>
+            <tr><td>AMOLED</td><td>Active-Matrix OLED</td><td>Faster + brighter than passive OLED</td><td>Same burn-in risk; uses PWM dimming</td></tr>
+            <tr><td>Mini-LED</td><td>—</td><td>Local-dimming LCD with thousands of zones; near-OLED contrast</td><td>Halo / blooming around bright objects</td></tr>
+            <tr><td>Micro-LED</td><td>—</td><td>Self-emissive inorganic LED; no burn-in</td><td>Very expensive, large-display today</td></tr>
+            <tr><td>E-ink</td><td>—</td><td>Power-free static image, sunlight readable</td><td>Slow refresh, monochrome (mostly)</td></tr>
+          </table>
+          <p><b>Backlight:</b> LCD (TN/IPS/VA) needs a backlight; OLED does not. CCFL (cold cathode fluorescent) backlights are legacy and require a separate inverter board (often the failure point on old laptops — "screen lights when shined with a flashlight" is the classic dead-backlight clue). LED backlight uses DC, no inverter.</p>
+          <p><b>Touch + stylus tech:</b></p>
+          <ul>
+            <li><b>Capacitive</b> — touch via finger conductivity. Default on phones/tablets.</li>
+            <li><b>Resistive</b> — pressure-based; works with gloves or stylus; older POS / industrial.</li>
+            <li><b>Active digitizer</b> — separate layer detects active stylus (Apple Pencil, Wacom EMR, MPP). Pressure + tilt; palm-rejection.</li>
+            <li><b>In-cell / on-cell</b> — touch sensors built into the LCD/OLED stack, no separate touch layer → thinner panel.</li>
+          </ul>
+
+          <h2>Battery deep-dive (Li-ion chemistry + safety)</h2>
+          <ul>
+            <li><b>Cell chemistry:</b> Li-ion (cylindrical 18650/21700) vs Li-Po (pouch) — same chemistry, different package.</li>
+            <li><b>Nominal voltage:</b> 3.6–3.7 V per cell. Laptops series-stack 2-4 cells (7.2–14.8 V).</li>
+            <li><b>Capacity</b> measured in <b>mAh</b> (battery side) or <b>Wh</b> (regulatory side). 1 Wh = 1 V × 1 Ah. Wh limit for airline carry-on = 100 Wh (most laptops &lt; 99 Wh on purpose).</li>
+            <li><b>Cycle life:</b> 300-500 cycles to 80% capacity (typical). After ~1000 cycles, expect significant degradation.</li>
+            <li><b>Charge stages:</b> CC (constant current to ~70 %) → CV (constant voltage trickle to 100 %).</li>
+            <li><b>Swelling</b> from over-charge / age / heat — battery is a SAFETY hazard. Do NOT puncture; replace immediately, store in fireproof container until disposal.</li>
+            <li><b>Hazard codes (UN):</b> UN3480 (battery alone), UN3481 (battery in equipment) — restricts air shipping.</li>
+            <li><b>BMS</b> (Battery Management System) — IC that balances cells, prevents over/undercharge, reports SoC to OS.</li>
+            <li><b>Calibration:</b> "Charge to full, discharge to 0, charge to full" — modern smart batteries recalibrate themselves; users rarely need to do it.</li>
+            <li><b>Battery report:</b> Windows <code>powercfg /batteryreport</code>; macOS <code>system_profiler SPPowerDataType</code> or Settings → Battery → Battery Health.</li>
+          </ul>
+
+          <h2>Charging standards (memorize wattages)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Standard</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Connector</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max power</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>USB 2.0 / 3.x</td><td>USB-A</td><td>2.5 / 4.5 W</td><td>5 V × 0.5 / 0.9 A</td></tr>
+            <tr><td>USB Battery Charging 1.2</td><td>USB-A</td><td>7.5 W</td><td>1.5 A "DCP" port</td></tr>
+            <tr><td>USB-PD 2.0</td><td>USB-C</td><td>100 W</td><td>5 / 9 / 15 / 20 V profiles</td></tr>
+            <tr><td>USB-PD 3.1</td><td>USB-C</td><td>240 W</td><td>Adds 28 / 36 / 48 V EPR levels</td></tr>
+            <tr><td>USB-PD PPS</td><td>USB-C</td><td>varies</td><td>Programmable Power Supply — fine voltage steps; required for fast-charge phones</td></tr>
+            <tr><td>Qi (wireless)</td><td>—</td><td>5–15 W (Qi2 up to 15 W, Qi2.2 25–50 W)</td><td>Inductive, ~5 mm range, magnets in Qi2 for alignment (MagSafe)</td></tr>
+            <tr><td>MagSafe</td><td>Magnetic Lightning-style (laptop) / Qi2-style (iPhone)</td><td>15-30 W iPhone, 140 W MacBook</td><td>Snap-off safety</td></tr>
+            <tr><td>Qualcomm Quick Charge 4+/5</td><td>USB-C</td><td>up to 100 W</td><td>Backwards compat with PD on QC5</td></tr>
+          </table>
+          <p><b>USB-C cable gotcha:</b> not all USB-C cables carry all features. A cable rated 60 W (3 A) won't charge a 100 W laptop. <b>EPR</b> cables (240 W) have an e-marker chip + 5 A rating. Check cable spec before troubleshooting "slow charge" complaints.</p>
+
+          <h2>Mobile sync + cloud accounts</h2>
+          <ul>
+            <li><b>iCloud</b> — Apple. Syncs Photos, Contacts, Calendar, Reminders, Notes, Safari history, iMessage, Find My. Free 5 GB, paid 50 GB / 200 GB / 2 TB / 6 TB / 12 TB tiers (Apple One).</li>
+            <li><b>Google account</b> — Android default. Syncs Contacts, Calendar, Drive, Photos, Chrome, Keep, Authenticator backup, Find My Device. Free 15 GB shared across Drive/Photos/Gmail.</li>
+            <li><b>Microsoft account</b> — OneDrive 5 GB free, Office 365 Personal/Family adds 1 TB.</li>
+            <li><b>Exchange ActiveSync (EAS)</b> — push email + calendar + contacts for corporate mailboxes. Allows IT to enforce policies + remote-wipe.</li>
+            <li><b>MDM / EMM</b> (Mobile Device Management / Enterprise Mobility Management) — Intune, Jamf, Workspace ONE, Kandji. Push apps, Wi-Fi, VPN, certificates; enforce passcode + encryption; selective wipe.</li>
+            <li><b>iTunes / Finder backup</b> — local on Mac/PC. <b>Encrypted backup</b> preserves passwords + Health data.</li>
+            <li><b>Google Drive backup / Samsung Cloud / Smart Switch</b> — Android equivalents.</li>
+          </ul>
+
+          <h2>Cellular fundamentals (review N+ table)</h2>
+          <ul>
+            <li><b>SIM / eSIM</b> — Subscriber Identity Module. Holds IMSI + carrier credentials. eSIM = embedded chip programmed via QR / carrier app; supports multiple profiles.</li>
+            <li><b>IMEI</b> (International Mobile Equipment Identity) — unique 15-digit phone ID. Dial <code>*#06#</code> to display.</li>
+            <li><b>ICCID</b> — SIM card ID.</li>
+            <li><b>Generations:</b> 3G (HSPA+) legacy, 4G LTE common (sub-1 ms ping in cells), 5G NR sub-6 (100–900 Mbps mid-band) + mmWave (multi-gig, very short range).</li>
+            <li><b>VoLTE</b> (Voice over LTE) — voice calls over 4G data network. <b>VoWi-Fi</b> — calls over Wi-Fi when cellular weak.</li>
+            <li><b>Network bands</b> per carrier — phone must support the band (B2/B4/B12 etc.) to use that frequency.</li>
+            <li><b>Airplane mode</b> — disables all radios; OS still lets you re-enable Wi-Fi/Bluetooth individually.</li>
+          </ul>
+
+          <h2>Mobile accessory + dock taxonomy</h2>
+          <ul>
+            <li><b>Port replicator</b> — passive USB hub with extra ports; no display extension beyond what laptop allows.</li>
+            <li><b>Docking station</b> — full breakout with USB-C / Thunderbolt 4 uplink, multiple displays, GbE, audio.</li>
+            <li><b>USB-C hub</b> — small adapter (HDMI + USB-A + card reader).</li>
+            <li><b>KVM</b> (Keyboard-Video-Mouse switch) — share one set of peripherals across multiple PCs.</li>
+            <li><b>Smart-card reader</b> — CAC / PIV for government auth.</li>
+            <li><b>Webcam shutter / privacy slide</b> — physical cover.</li>
+            <li><b>External GPU enclosure (eGPU)</b> — Thunderbolt 3/4 attached desktop GPU for laptops.</li>
+            <li><b>Stylus</b> — Apple Pencil 1/2/USB-C, Surface Pen, Wacom Bamboo Ink. Pairing via Bluetooth or MPP.</li>
+            <li><b>External battery pack / power bank</b> — USB-PD output supports laptops up to 100 W now.</li>
+            <li><b>Stand / cooling pad</b> — improves airflow, reduces throttling.</li>
+            <li><b>Anti-glare film / privacy filter</b> — narrows viewing angle for sensitive screens.</li>
+          </ul>
+
+          <h2>Mobile device security features</h2>
+          <ul>
+            <li><b>Screen lock:</b> PIN, password, pattern, fingerprint (Touch ID / Pixel Imprint), face (Face ID / Windows Hello).</li>
+            <li><b>Full-device encryption:</b> on by default (iOS, Android 6+, Windows BitLocker Device Encryption).</li>
+            <li><b>Secure enclave / TEE / Titan M / SE / TPM</b> — separate chip protecting biometric templates + crypto keys.</li>
+            <li><b>Remote wipe + Find My</b> — Apple, Google, Microsoft, MDM all support.</li>
+            <li><b>App sandboxing</b> — apps cannot read other apps' data without permission grant.</li>
+            <li><b>App store gatekeeping</b> — code-signing + review (Apple strict, Google Play Protect + sideloading allowed).</li>
+            <li><b>Two-factor</b> — Apple's 6-digit trusted-device codes; Android trusted-device + Authenticator; FIDO2 passkeys.</li>
+            <li><b>Lockdown / restricted mode</b> — iOS Lockdown Mode for high-risk users; restricts attack surface.</li>
+            <li><b>Work profile / dual persona</b> — Android Work Profile / iOS User Enrollment for BYOD; separate keychain + apps.</li>
+          </ul>
+
+          <h2>Common mobile-device issues + fixes</h2>
+          <ul>
+            <li><b>Won't charge</b> → try other cable + brick; clean lint from Lightning/USB-C port (#1 cause); inspect for liquid damage; replace battery if BMS reports degraded.</li>
+            <li><b>Random reboots</b> → swollen / failing battery; thermal shutdown; corrupt OS update — reflash firmware.</li>
+            <li><b>Slow performance / battery drain</b> → check Settings → Battery (per-app usage); disable background refresh; reduce location accuracy.</li>
+            <li><b>Overheating</b> → remove case while charging; stop heavy app + close GPS; check if outside temp range (charging above 35°C reduces battery life).</li>
+            <li><b>Screen flicker / lines</b> → bad ribbon cable or LCD panel; check after drop history; replace assembly.</li>
+            <li><b>Wi-Fi keeps dropping</b> → forget network and rejoin; check 2.4 vs 5 GHz; reset network settings; check router DHCP scope.</li>
+            <li><b>Bluetooth won't pair</b> → un-pair on both sides; restart Bluetooth radio; clear cache on Android Settings → Apps → Bluetooth.</li>
+            <li><b>Speaker muffled</b> → debris in grille (toothpick or compressed-air gentle); water damage; replace speaker module.</li>
+            <li><b>Touchscreen unresponsive</b> → screen protector mis-applied; recalibrate (Android dev options); replace digitizer if liquid contacted.</li>
+            <li><b>App crashes after update</b> → clear app cache + data (Android); offload + reinstall (iOS); check OS version compatibility.</li>
+          </ul>
+
+          <h2>Mobile vs laptop teardown rules of thumb</h2>
+          <ul>
+            <li>Phone: ribbon cables run UNDER battery — never pry battery without first releasing pull-tabs / heat to soften adhesive.</li>
+            <li>Apply ESD wrist strap before touching boards.</li>
+            <li>Track every screw position — phones use 5-8 different screw lengths; wrong screw in deep hole punctures a battery.</li>
+            <li>iFixit / Hugh Jeffreys / JerryRigEverything teardowns are gold-standard references.</li>
+            <li>Replacement parts: OEM &gt; certified refurb &gt; aftermarket. Avoid &lt;$10 "aftermarket" screens — color shift + touch lag.</li>
+            <li>After repair, run full hardware diagnostics (Apple Diagnostics, Samsung Members → Device care → Diagnostics, Lenovo Vantage).</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>SO-DIMM</b> — Small Outline DIMM.</li>
+            <li><b>FRU</b> — Field Replaceable Unit.</li>
+            <li><b>FFC / FPC</b> — Flexible Flat / Printed Cable.</li>
+            <li><b>ZIF</b> — Zero Insertion Force socket.</li>
+            <li><b>CCFL</b> — Cold Cathode Fluorescent Lamp (legacy backlight).</li>
+            <li><b>LCD / OLED / AMOLED / VA / IPS / TN</b> — display tech.</li>
+            <li><b>USB-PD / EPR / PPS</b> — power delivery profiles.</li>
+            <li><b>NVMe / M.2 / SATA</b> — storage protocols/form factors.</li>
+            <li><b>SIM / eSIM / IMEI / ICCID</b> — cellular identifiers.</li>
+            <li><b>VoLTE / VoWi-Fi</b> — voice transport.</li>
+            <li><b>MDM / EMM / EAS</b> — enterprise device management protocols.</li>
+            <li><b>TEE / TPM / SE</b> — secure key storage.</li>
+            <li><b>BMS</b> — Battery Management System.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Image visible only with flashlight" → backlight failed (CCFL inverter or LED driver).</li>
+            <li>"Replace RAM in modern laptop" → confirm DDR generation + capacity + slot type; mismatched DIMM runs at slowest rating.</li>
+            <li>"Add storage to laptop with M.2 slot" → check if SATA or NVMe keyed (B / M / B+M); look at motherboard manual.</li>
+            <li>"USB-C charging slow" → check cable rating (60 W / 100 W / 240 W) + brick supports laptop's required wattage.</li>
+            <li>"Phone won't pair Bluetooth" → un-pair on both sides, toggle airplane mode, restart Bluetooth radio.</li>
+            <li>"Phone overheating + battery puffed" → STOP charging, do NOT puncture, replace battery; fire hazard.</li>
+            <li>"User can't authenticate to corp mail on phone" → Exchange ActiveSync auth issue, MFA conditional access, or MDM enrollment lapsed.</li>
+            <li>"Lost phone needs remote wipe" → Find My iPhone / Find My Device / MDM portal.</li>
+            <li>"Single antenna on Wi-Fi card after repair" → MIMO degraded, range cut in half. Always reconnect MAIN + AUX.</li>
+            <li>"Tap-to-pay not working" → NFC disabled, screen off, secure element not ready (reboot), or merchant terminal not NFC.</li>
+          </ul>
         `
       },
       {
