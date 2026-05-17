@@ -2734,6 +2734,174 @@ const COURSES = [
             <li>"Two PSUs in one server for HA" → redundant / hot-swap.</li>
             <li>"Wake-on-LAN works while powered off" → +5 VSB standby rail.</li>
           </ul>
+
+          <h2>PSU sizing math (real-world formula)</h2>
+          <ol>
+            <li><b>Sum component TDPs:</b> CPU max boost power + GPU TGP + motherboard ~25 W + DIMMs ~5 W each + drives 5-15 W each + fans 1-3 W each + USB peripherals.</li>
+            <li><b>Add transient headroom</b> — modern GPUs (RTX 30/40, RX 7000) spike to 2× TGP for &lt; 100 µs. ATX 3.0 / 3.1 PSUs handle this; older PSUs don't.</li>
+            <li><b>Add efficiency target</b> — design for ~50% load at typical use (best efficiency band on Gold+ PSU).</li>
+            <li><b>Add 20% margin</b> for capacitor aging + future upgrades.</li>
+          </ol>
+          <p><b>Example build:</b> i7-14700K (253 W PL2) + RTX 4080 (320 W TGP, 640 W spike) + 2 NVMe + 4 fans + 32 GB DDR5 → ~600 W typical, 1000 W spike. Pick <b>850-1000 W ATX 3.1 PSU</b>.</p>
+
+          <h2>ATX 3.0 / 3.1 standard (memorize)</h2>
+          <ul>
+            <li><b>Intel ATX 3.0</b> (2022) — defines <b>12VHPWR</b> 16-pin connector for GPUs up to 600 W, transient response requirements (200% of rated wattage for 100 µs spikes), tighter regulation.</li>
+            <li><b>ATX 3.1</b> (2024) — refines 12VHPWR into <b>12V-2x6</b> (shorter sense pins prevent ungrounded melt issue), better PCIe Gen5 transient profiles.</li>
+            <li><b>Older "RTX 30-ready" labels</b> on pre-ATX-3.0 PSUs are marketing only — they don't guarantee transient handling.</li>
+            <li><b>Adapter cables</b> 3× / 4× 8-pin to 12VHPWR exist but require fully seated connections + same PSU rail group.</li>
+          </ul>
+
+          <h2>Multi-rail vs single-rail deep view</h2>
+          <ul>
+            <li><b>Single-rail</b> — one big +12 V virtual pool; OCP set high (often 80+ A). Simpler, no shutdown surprises under spiky GPU loads. Most modern high-end PSUs.</li>
+            <li><b>Multi-rail</b> — multiple +12 V "virtual" rails each with its own OCP (~25-40 A). Safer in fault scenarios (less max current per cable) but can trip falsely under modern GPU transients.</li>
+            <li>Server PSUs frequently multi-rail with hot-swap redundancy.</li>
+          </ul>
+
+          <h2>Connector pinouts + lock mechanisms</h2>
+          <ul>
+            <li><b>24-pin ATX</b> — 20 pins original (P1) + extended 4-pin block. P1 + P2 = 24-pin. Latch is on motherboard side; release tab when removing.</li>
+            <li><b>4+4 / 8-pin EPS (CPU)</b> — splits into 4+4 so older boards take one half. High-end boards have <b>two</b> 8-pin EPS — populate both for 14900KS / 7950X.</li>
+            <li><b>PCIe 6+2 / 8-pin</b> — splits into 6 + 2 for backward compat.</li>
+            <li><b>12VHPWR / 12V-2x6</b> — 12 power pins + 4 sense pins. Sense pins tell GPU how much power source can provide (150 / 300 / 450 / 600 W via two CFG pins). 12V-2x6 shortens sense pins so partial seating = "no power negotiated" instead of "fire".</li>
+            <li><b>SATA power</b> 15-pin L-shaped — 5 V, 3.3 V, 12 V, ground. The 3.3 V pin can be used as "Power Disable" on enterprise drives (cut to factory reset SED).</li>
+            <li><b>Molex 4-pin</b> — 5 V + 12 V + grounds; legacy peripheral.</li>
+          </ul>
+
+          <h2>UPS deep-dive (run-time + sizing)</h2>
+          <ul>
+            <li><b>Topology types:</b>
+              <ul>
+                <li><b>Offline / Standby</b> — battery kicks in on outage; small 4-8 ms switch-over window; cheap; OK for home PC.</li>
+                <li><b>Line-Interactive</b> — adds AVR (Automatic Voltage Regulation) for under/over-voltage without switching to battery. Standard SMB choice.</li>
+                <li><b>Online / Double-Conversion</b> — load always runs off inverter; zero switchover; cleanest power; required for sensitive lab gear / VoIP servers.</li>
+              </ul>
+            </li>
+            <li><b>Sizing:</b> total load in watts × desired minutes = needed VA × 0.6 (typical PF). Add 25% margin for battery aging.</li>
+            <li><b>Run-time</b> drops nonlinearly — a 1500 VA at 200 W load runs ~20 min, at 1000 W &lt; 5 min.</li>
+            <li><b>Replace batteries</b> every 3-5 years; check load-test annually. UPS beeps + replace LED = imminent battery failure.</li>
+            <li><b>Network management</b> via SNMP / Network Management Card for clean shutdown via NUT / APC PowerChute / Eaton IPM.</li>
+            <li><b>Don't plug</b> laser printers (huge inrush) or AC units into UPS — overloads inverter.</li>
+            <li><b>ECO mode</b> — UPS bypasses inverter to save power; sacrifices clean output. Disable for critical gear.</li>
+            <li><b>External battery packs</b> extend run-time on rack UPS (3-5 kVA models).</li>
+          </ul>
+
+          <h2>Surge protector vs UPS vs power conditioner vs PDU</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Device</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What it does</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Doesn't do</th></tr>
+            <tr><td>Surge protector</td><td>Clamps voltage spikes via MOV</td><td>No outage backup, no sag/brownout protection</td></tr>
+            <tr><td>UPS (Standby)</td><td>Outage backup + surge</td><td>No sag regulation</td></tr>
+            <tr><td>UPS (Line-Interactive)</td><td>Backup + AVR for sag/swell</td><td>Slight switchover gap</td></tr>
+            <tr><td>UPS (Online)</td><td>Cleanest sine wave, zero gap</td><td>Most expensive, less efficient</td></tr>
+            <tr><td>Power conditioner</td><td>Filters noise, isolates ground loops</td><td>No battery backup unless combined with UPS</td></tr>
+            <tr><td>PDU (basic)</td><td>Distributes power to outlets</td><td>No filtering or backup</td></tr>
+            <tr><td>Smart PDU</td><td>Adds metering, switching, env sensors</td><td>Still no battery — feeds UPS output</td></tr>
+            <tr><td>Generator</td><td>Long-duration backup power</td><td>Dirty power; needs transfer switch + conditioner</td></tr>
+          </table>
+
+          <h2>Datacenter power infrastructure</h2>
+          <ul>
+            <li><b>Utility feed</b> → automatic transfer switch → generator backup → static UPS → PDU → rack PDU → server PSU.</li>
+            <li><b>A + B feeds</b> — two independent power paths to every rack; dual-PSU servers split between them.</li>
+            <li><b>RPP</b> (Remote Power Panel) — distribution downstream of room PDU.</li>
+            <li><b>STS</b> (Static Transfer Switch) — sub-cycle switching between A/B for single-PSU loads.</li>
+            <li><b>PUE</b> (Power Usage Effectiveness) = total facility power ÷ IT power. Best modern DCs ~1.1; legacy 1.8-2.0.</li>
+            <li><b>kVA → kW</b> via power factor (modern PFC near 1).</li>
+            <li><b>Branch circuit balancing</b> across phases (L1/L2/L3) prevents neutral overload.</li>
+          </ul>
+
+          <h2>Electrical safety + grounding</h2>
+          <ul>
+            <li><b>ESD</b> (Electrostatic Discharge) — kills components silently; wear wrist strap clipped to chassis ground.</li>
+            <li><b>Anti-static bag</b> — store components inside.</li>
+            <li><b>Anti-static mat</b> + ground clip.</li>
+            <li><b>Equipotential bonding</b> — everything at same ground; avoid working in carpeted, low-humidity room without ESD precautions.</li>
+            <li><b>PSU capacitors</b> hold charge after unplug; discharge by pressing power button or wait 30 s.</li>
+            <li><b>Lockout/tagout (LOTO)</b> — electrical/mechanical safety procedure for service.</li>
+            <li><b>MSDS / SDS</b> sheet for battery / cleaning fluid disposal.</li>
+            <li><b>OSHA + NEC + NFPA 70</b> dictate safety standards in commercial installs.</li>
+          </ul>
+
+          <h2>Region-specific electrical</h2>
+          <ul>
+            <li><b>NA:</b> 120 V (15/20 A) standard outlets; 208/240 V available for high-power gear; NEMA 5-15 / 5-20 / L5-20 / L6-30 plug types.</li>
+            <li><b>EU/UK:</b> 230 V standard. UK uses BS 1363 with fused plugs. Schuko / CEE 7/7 common on continent.</li>
+            <li><b>Japan:</b> 100 V at 50/60 Hz (varies east/west).</li>
+            <li><b>India:</b> 230 V, Type D/M plugs.</li>
+            <li><b>Servers:</b> commonly run 200-240 V single-phase or 208 V 3-phase for efficiency.</li>
+            <li><b>Auto-ranging PSU</b> handles 100-240 V; legacy needed 115/230 V switch.</li>
+          </ul>
+
+          <h2>PSU testing tools + procedures</h2>
+          <ul>
+            <li><b>Paperclip test</b> — short green PS_ON to a ground pin on the 24-pin connector; PSU fan should spin if alive. Quick "is it dead?" check.</li>
+            <li><b>PSU tester</b> — handheld device shows all rail voltages + presence.</li>
+            <li><b>Multimeter</b> — measure each rail under load; tolerance ±5%.</li>
+            <li><b>Power supply analyzer / load tester</b> — sweeps load points, plots regulation + ripple. Lab-only.</li>
+            <li><b>Oscilloscope</b> — view ripple/noise (target &lt; 50 mV pk-pk on 12 V).</li>
+            <li><b>Smart plug + Kill-A-Watt</b> — measure real-time wall draw vs spec; verify PSU efficiency.</li>
+          </ul>
+
+          <h2>PSU-related component damage indicators</h2>
+          <ul>
+            <li>Burnt smell — PSU or motherboard MOSFET; do not power on again.</li>
+            <li>Bulging or leaking capacitors on motherboard ("capacitor plague") — often caused by chronic voltage spikes from cheap PSU.</li>
+            <li>Random reboots under GPU spike — PSU OPP tripping; upgrade to ATX 3.x.</li>
+            <li>SATA drives randomly disconnecting — undervolting 5 V rail.</li>
+            <li>USB devices powering off — 5 VSB or 5 V rail under-spec.</li>
+            <li>Coil whine, especially at idle 100-200 Hz on GPU — VRM/inductor harmonics; not failure, irritating.</li>
+            <li>Fans spinning briefly then stopping ("short cycle") — PSU protection trip; unplug, check for shorts, replace PSU.</li>
+          </ul>
+
+          <h2>Workstation + laptop AC adapters</h2>
+          <ul>
+            <li><b>Output voltage + current</b> printed on label; replacement must match voltage exactly + meet/exceed amperage.</li>
+            <li><b>Polarity</b> on barrel connectors marked with a diagram — wrong polarity destroys laptop.</li>
+            <li><b>USB-PD</b> universal: laptops with USB-C charge from any PD-compliant brick of sufficient wattage; some require specific PD profiles (Dell sometimes wants 20 V negotiated).</li>
+            <li><b>MagSafe</b> (Apple) returned in 2021 — magnetic snap-off saves dropped laptops.</li>
+            <li><b>Slim laptops</b> use 65-100 W bricks; gaming + workstation 180-330 W; signature Razer / Alienware uses 240+ W.</li>
+            <li><b>GaN chargers</b> — Gallium Nitride; smaller + cooler than silicon; same wattage in half the size.</li>
+            <li><b>Replacement bricks:</b> OEM or certified 3rd party (Anker, Belkin, UGREEN); avoid no-name knockoffs.</li>
+          </ul>
+
+          <h2>Server + rack power</h2>
+          <ul>
+            <li><b>Hot-swap PSU</b> — pull dead unit, slot new one, no downtime.</li>
+            <li><b>Redundancy modes:</b> 1+1 (one backup, full load on one), 2+1 (two active, one backup), 2+2.</li>
+            <li><b>BMC / iLO / iDRAC</b> exposes PSU health: input voltage/current, output watts, fan speed, temp.</li>
+            <li><b>Power capping</b> — set max watts per server to fit branch circuit budget.</li>
+            <li><b>208 V vs 120 V at rack</b> — 208 V gives ~3% better PSU efficiency.</li>
+            <li><b>C13 / C14 / C19 / C20</b> IEC connectors — C13 to server PSUs (10 A); C19 for higher-current PDU outlets.</li>
+            <li><b>L5-30P / L6-30P / L21-20P</b> twist-lock plugs supply rack PDUs.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>PSU / SMPS / PFC / AVR</b> — Power Supply Unit / Switched-Mode Power Supply / Power Factor Correction / Automatic Voltage Regulation.</li>
+            <li><b>OPP / OCP / OVP / UVP / OTP / SCP / SIP</b> — protections.</li>
+            <li><b>UPS / VA / W / PF</b> — battery backup terms.</li>
+            <li><b>PDU / RPP / STS / ATS</b> — datacenter distribution.</li>
+            <li><b>ATX / SFX / TFX / EPS</b> — form factors + CPU power.</li>
+            <li><b>12VHPWR / 12V-2x6</b> — modern GPU power connector.</li>
+            <li><b>ESD / LOTO / MSDS / NEC / NFPA 70 / OSHA</b> — safety standards.</li>
+            <li><b>BMC / iLO / iDRAC</b> — server out-of-band management.</li>
+            <li><b>C13/C14 / C19/C20 / NEMA 5-15 / L6-30</b> — connectors / plugs.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"650 W PSU randomly shuts down with new RTX 4080" → undersized + non-ATX-3 transient handling; upgrade to 1000 W ATX 3.1.</li>
+            <li>"Highest efficiency tier" → 80 PLUS Titanium (94%+ at 50% load).</li>
+            <li>"Switch protects against brief power dip without going to battery" → Line-Interactive UPS with AVR.</li>
+            <li>"Cleanest output, mission-critical lab gear" → Online / double-conversion UPS.</li>
+            <li>"Server has dual PSU but both plug into same outlet" → no real redundancy; need A + B feeds.</li>
+            <li>"PSU fan won't spin even with paperclip test" → PSU dead; replace.</li>
+            <li>"Laptop barrel-connector polarity wrong" → device damage; verify center-positive (most common) before plugging.</li>
+            <li>"USB-C 65 W brick won't full-speed-charge gaming laptop" → laptop wants ≥ 100 W PD; upgrade brick + cable to EPR-rated.</li>
+            <li>"All servers in rack tripped breaker" → imbalance across L1/L2/L3 phases or over-budget rack PDU; redistribute.</li>
+            <li>"Bulging caps on motherboard 3 yrs in" → bad PSU likely cause; replace both.</li>
+          </ul>
         `
       },
       {
