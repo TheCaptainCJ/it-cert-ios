@@ -5859,6 +5859,150 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Single hardened entry point for admin SSH" → jump box / bastion host.</li>
             <li>"Tunnel mode IPsec vs Transport" → tunnel = encrypt entire packet + new outer IP header; transport = encrypt payload only.</li>
           </ul>
+
+          <h2>The 5-tuple + 7-tuple firewall rule</h2>
+          <p>Stateful firewalls match the canonical <b>5-tuple</b>: <code>(src IP, dst IP, src port, dst port, protocol)</code>. NGFWs extend to a <b>7-tuple</b> by adding <b>user identity</b> + <b>application ID</b>. The user identity is resolved from AD logon events / 802.1X / agent (Palo Alto User-ID, Fortinet FSSO). App-ID inspects payload signatures to classify "this TCP/443 flow is actually Zoom, not HTTPS web."</p>
+
+          <h2>Stateful firewall state table fields (real-world)</h2>
+          <ul>
+            <li><b>Conn ID</b>, <b>protocol</b>, <b>src/dst IP + port</b>.</li>
+            <li><b>Direction</b> + initiating zone.</li>
+            <li><b>TCP state</b> — Listen / Syn-Sent / Syn-Recv / Established / Fin-Wait / Time-Wait / Closed.</li>
+            <li><b>Idle timer</b> — UDP defaults ~30 s, TCP ~3600 s, ICMP ~30 s. Configurable per policy.</li>
+            <li><b>Bytes / packets</b> counters.</li>
+            <li>Match flags: NAT translation, QoS class, IPS verdict.</li>
+          </ul>
+
+          <h2>NAT in security context</h2>
+          <ul>
+            <li><b>Source NAT (SNAT)</b> outbound — masquerade interior IPs.</li>
+            <li><b>Destination NAT (DNAT)</b> inbound — port-forward / static one-to-one to internal server in DMZ.</li>
+            <li><b>Hairpin / NAT loopback</b> — clients inside reaching their own public IP.</li>
+            <li><b>Identity NAT (no-NAT exemption)</b> — leave VPN traffic untranslated.</li>
+            <li>Stateful firewalls automatically allow return traffic for established NAT mappings; PAT timeout decides session aging.</li>
+          </ul>
+
+          <h2>TLS inspection (decrypt + re-encrypt)</h2>
+          <p>NGFW / SWG terminate the client's TLS, inspect plaintext, then re-encrypt to the server. Required to actually see content inside HTTPS.</p>
+          <ul>
+            <li>Client must trust the firewall's CA (push the cert via GPO / MDM).</li>
+            <li><b>Bypass list</b> required for banking, healthcare, certificate pinning apps (Microsoft 365 endpoints, banking apps, mobile banking).</li>
+            <li><b>Privacy + legal</b> implications — encrypted traffic is opened; document policy + user notice.</li>
+            <li><b>ECH</b> (Encrypted Client Hello, formerly ESNI) increasingly hides the SNI, defeating SNI-based filtering. ECH inspection requires full decrypt.</li>
+            <li><b>QUIC / HTTP/3</b> over UDP/443 needs separate decrypt support — many older firewalls just block it.</li>
+          </ul>
+
+          <h2>AAA protocols deep-dive</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Encrypts</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Separates AuthN/AuthZ</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical use</th></tr>
+            <tr><td><b>RADIUS</b></td><td>UDP 1812 auth / 1813 acct (legacy 1645/1646)</td><td>Password only</td><td>No (combined)</td><td>Network access (802.1X, VPN, Wi-Fi)</td></tr>
+            <tr><td><b>TACACS+</b></td><td>TCP 49</td><td>Entire body</td><td>Yes (per-command authz)</td><td>Network device admin</td></tr>
+            <tr><td><b>Diameter</b></td><td>TCP/SCTP 3868</td><td>TLS/IPsec</td><td>Yes</td><td>Mobile carrier AAA</td></tr>
+            <tr><td><b>LDAP/LDAPS</b></td><td>389 / 636</td><td>StartTLS or LDAPS</td><td>—</td><td>Directory lookup</td></tr>
+            <tr><td><b>Kerberos</b></td><td>UDP/TCP 88</td><td>Tickets</td><td>—</td><td>AD authentication</td></tr>
+            <tr><td><b>SAML</b></td><td>HTTP-POST/Redirect</td><td>Signed XML</td><td>—</td><td>SSO to SaaS</td></tr>
+            <tr><td><b>OAuth 2.0</b></td><td>HTTPS</td><td>JWT/JWS</td><td>—</td><td>Delegated API access</td></tr>
+            <tr><td><b>OpenID Connect</b></td><td>HTTPS (on OAuth)</td><td>JWT</td><td>—</td><td>Identity layer on OAuth</td></tr>
+          </table>
+
+          <h2>Kerberos exchange (the AD SSO core)</h2>
+          <ol>
+            <li><b>AS-REQ</b> — client sends username + timestamp encrypted with password-derived key.</li>
+            <li><b>AS-REP</b> — KDC returns a <b>TGT</b> (Ticket-Granting Ticket) encrypted with KDC's krbtgt key.</li>
+            <li><b>TGS-REQ</b> — client presents TGT + asks for service ticket for SPN (e.g., <code>HTTP/web01.contoso.com</code>).</li>
+            <li><b>TGS-REP</b> — KDC returns service ticket encrypted with service account's key.</li>
+            <li><b>AP-REQ</b> — client sends service ticket to service; service decrypts with its own key, validates.</li>
+            <li>Optional <b>AP-REP</b> for mutual auth.</li>
+          </ol>
+          <p><b>Known abuses:</b> <b>Pass-the-Ticket</b> (stolen TGT/TGS reuse), <b>Kerberoasting</b> (request SPN service ticket → offline crack), <b>Golden Ticket</b> (forge TGT after krbtgt hash theft), <b>Silver Ticket</b> (forge service ticket).</p>
+
+          <h2>MFA factor types (real-world)</h2>
+          <ul>
+            <li><b>Knowledge</b> — password, PIN, security question. Weakest alone.</li>
+            <li><b>Possession</b> — phone (push notification, SMS code), hardware token (YubiKey, FIDO2 key), smart card.</li>
+            <li><b>Inherence</b> — biometric (fingerprint, face).</li>
+            <li><b>Location</b> — geo-fence / IP / GPS.</li>
+            <li><b>Behavior</b> — typing cadence, mouse pattern.</li>
+          </ul>
+          <p><b>Strength ranking (current):</b> FIDO2 / passkeys &gt; hardware OTP &gt; authenticator app push &gt; TOTP code &gt; SMS / voice (SS7 + SIM swap). NIST SP 800-63 deprecates SMS for high-assurance auth.</p>
+
+          <h2>Cyber kill chain (Lockheed) + MITRE ATT&amp;CK</h2>
+          <p><b>Cyber kill chain steps:</b> Reconnaissance → Weaponization → Delivery → Exploitation → Installation → Command &amp; Control → Actions on Objectives.</p>
+          <p><b>MITRE ATT&amp;CK</b> is the modern, granular tactics+techniques matrix used by SOCs. 14 enterprise tactics:</p>
+          <ul>
+            <li>Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Collection, Command &amp; Control, Exfiltration, Impact, Reconnaissance, Resource Development.</li>
+          </ul>
+          <p>Used to map detection coverage + plan purple-team exercises.</p>
+
+          <h2>Honeypot / honeynet / honeytoken</h2>
+          <ul>
+            <li><b>Honeypot</b> — single decoy system designed to be probed/attacked; logs everything.</li>
+            <li><b>Honeynet</b> — entire decoy network.</li>
+            <li><b>Honeytoken</b> — fake credential / API key / database row whose use triggers an alert.</li>
+            <li><b>Low- vs high-interaction</b> — low = emulates a service (Cowrie, Conpot); high = full real OS (T-Pot).</li>
+            <li>Place in DMZ or internal segment to catch lateral-movement attempts.</li>
+          </ul>
+
+          <h2>DDoS deep cuts</h2>
+          <ul>
+            <li><b>Reflection</b> — attacker spoofs victim's IP and queries an amplifier (DNS, NTP, Memcached, CLDAP, SNMP). Amplification factors: DNS ~28×, NTP ~556×, Memcached ~51000×.</li>
+            <li><b>Carpet bombing</b> — distribute traffic over a /24 instead of one IP; bypasses single-target rate limits.</li>
+            <li><b>L7 slowloris</b> — keep TCP connections open with partial HTTP headers; exhausts worker threads. Defense: connection limits, async web servers, request-time deadlines.</li>
+            <li><b>HTTP/2 Rapid Reset (CVE-2023-44487)</b> — flood RST frames after sending requests, overwhelming reset handling. Patched in modern stacks.</li>
+            <li><b>BGP flowspec</b> — push filter rules upstream to absorb attack traffic at the ISP.</li>
+            <li><b>Blackholing / RTBH</b> — drop all traffic to victim IP at ISP edge as last resort.</li>
+            <li><b>Anycast scrubbing</b> — Cloudflare/Akamai/AWS Shield Advanced terminate at edge, send clean traffic on.</li>
+          </ul>
+
+          <h2>NetFlow / sFlow / IPFIX details</h2>
+          <ul>
+            <li><b>NetFlow v5 / v9</b> (Cisco) — flow records exported from routers: src/dst IP + port, protocol, bytes, packets, AS, ToS, timestamps.</li>
+            <li><b>IPFIX</b> — IETF standard derived from NetFlow v9.</li>
+            <li><b>sFlow</b> — packet sampling (1 in N) instead of flow caching. Lower CPU, but probabilistic.</li>
+            <li>Sent over UDP to a <b>collector</b> (SolarWinds NTA, ntopng, ElastiFlow). Visualize traffic, top talkers, anomalies, DDoS spikes.</li>
+            <li>Pair with <b>NDR</b> tools (Darktrace, Vectra, Cisco Secure Network Analytics) for behavior-based threat detection.</li>
+          </ul>
+
+          <h2>SIEM correlation patterns (high-signal)</h2>
+          <ul>
+            <li>Multiple failed logins followed by success → password spray success.</li>
+            <li>Login from impossible geography in &lt;1 hour → travel anomaly.</li>
+            <li>Service account interactive login → standing rule "service accounts must never log in interactively".</li>
+            <li>Outbound traffic to known C2 IP / domain (threat-intel feed) → compromised host.</li>
+            <li>Large data egress to single external IP outside business hours → exfiltration.</li>
+            <li>4624 type 10 (RDP) from internet → exposed RDP.</li>
+            <li>Process spawning unusual child (Word → PowerShell) → macro malware.</li>
+          </ul>
+
+          <h2>Email security stack (DMARC trio)</h2>
+          <ul>
+            <li><b>SPF</b> (Sender Policy Framework) — DNS TXT record lists IPs allowed to send for your domain.</li>
+            <li><b>DKIM</b> (DomainKeys Identified Mail) — DNS-published public key; sender signs outbound mail header. Verify integrity + source.</li>
+            <li><b>DMARC</b> — DNS policy that says "if SPF+DKIM fail, do X (none/quarantine/reject)" + RUA/RUF aggregate reports.</li>
+            <li><b>MTA-STS + TLS-RPT</b> — enforce + report TLS between mail servers.</li>
+            <li><b>BIMI</b> (Brand Indicators) — display logo in inbox once DMARC reject reached.</li>
+          </ul>
+
+          <h2>Out-of-band management hardening</h2>
+          <ul>
+            <li>Dedicated management VLAN + separate physical port on devices.</li>
+            <li>Mgmt traffic over IPsec or dedicated serial console servers.</li>
+            <li>Restrict source IPs in ACL (jump host only).</li>
+            <li>Use TACACS+ for command-level authz + accounting.</li>
+            <li>Disable Telnet / HTTP; enable SSH (key auth preferred) + HTTPS.</li>
+            <li>Console logging + rotate to central syslog.</li>
+            <li>Backup configs to immutable Git or vendor cloud (Cisco Catalyst Center, Aruba Central).</li>
+          </ul>
+
+          <h2>Incident response phases (NIST SP 800-61)</h2>
+          <ol>
+            <li><b>Preparation</b> — runbooks, contact list, jump kits, baselines, training.</li>
+            <li><b>Detection &amp; Analysis</b> — alert triage, scoping, evidence collection.</li>
+            <li><b>Containment</b> — short-term (isolate host) + long-term (block IOCs, patch).</li>
+            <li><b>Eradication</b> — remove malware, rotate credentials, rebuild systems.</li>
+            <li><b>Recovery</b> — restore services, monitor for re-infection.</li>
+            <li><b>Lessons Learned</b> — post-mortem within 1-2 weeks, update controls.</li>
+          </ol>
         `
       },
       {
