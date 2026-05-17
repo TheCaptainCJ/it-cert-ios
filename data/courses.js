@@ -5475,6 +5475,149 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Replace VPN with per-app identity-based access" → ZTNA.</li>
             <li>"Where carrier responsibility ends" → demarc.</li>
           </ul>
+
+          <h2>MPLS label stack + control plane</h2>
+          <p>The 32-bit MPLS header sits between L2 and L3 (sometimes called "Layer 2.5"):</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bits</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>Label</td><td>20</td><td>Forwarding key in the LFIB</td></tr>
+            <tr><td>EXP / TC</td><td>3</td><td>Traffic Class (QoS marking)</td></tr>
+            <tr><td>S (bottom of stack)</td><td>1</td><td>1 = innermost label</td></tr>
+            <tr><td>TTL</td><td>8</td><td>Decrement per hop</td></tr>
+          </table>
+          <p>Multiple labels stack — L3VPN uses 2 labels (transport + VPN), MPLS TE adds tunnel labels on top.</p>
+          <ul>
+            <li><b>LFIB</b> (Label Forwarding Information Base) — the forwarding table P routers use, indexed by label.</li>
+            <li><b>LDP</b> (Label Distribution Protocol) — neighbors exchange label bindings.</li>
+            <li><b>RSVP-TE</b> — explicit traffic-engineered paths with bandwidth reservation.</li>
+            <li><b>Segment Routing / SR-MPLS</b> — modern source-routed replacement; encodes path as a stack of labels (SIDs) without LDP.</li>
+            <li><b>PHP</b> (Penultimate Hop Popping) — second-to-last router strips outer label so egress PE does only one lookup.</li>
+            <li><b>VRF</b> + <b>route-distinguisher</b> + <b>route-target</b> — separate customers in an L3VPN.</li>
+            <li><b>VPLS</b> (Virtual Private LAN Service) — provider delivers an Ethernet broadcast domain across the MPLS core (L2VPN).</li>
+          </ul>
+
+          <h2>Carrier Ethernet vocabulary (MEF)</h2>
+          <ul>
+            <li><b>EVC</b> (Ethernet Virtual Connection) — the logical connection.</li>
+            <li><b>UNI</b> (User-Network Interface) — customer hand-off port.</li>
+            <li><b>NNI</b> (Network-Network Interface) — carrier-to-carrier handoff.</li>
+            <li><b>CIR</b> (Committed Information Rate) — guaranteed throughput.</li>
+            <li><b>EIR</b> (Excess Information Rate) — burst above CIR, drop-eligible.</li>
+            <li><b>OAM</b> (Operations, Administration, Maintenance) — protocols like 802.1ag CFM, Y.1731 for fault + performance.</li>
+            <li><b>Jumbo frames</b> commonly supported (9216 bytes); negotiate during UNI provisioning.</li>
+          </ul>
+
+          <h2>Fiber types + transceivers (Net+ heavy testing area)</h2>
+          <ul>
+            <li><b>SMF</b> (Single-Mode Fiber, ~9 μm core) — long reach (km–100 km+), 1310/1550 nm. Yellow jacket usually.</li>
+            <li><b>MMF</b> (Multi-Mode Fiber, ~50/62.5 μm core) — shorter reach (&lt;550 m), 850 nm dominant. Aqua/orange jackets:
+              <ul>
+                <li><b>OM1</b> 62.5/125, orange — 1 Gbps to 275 m.</li>
+                <li><b>OM2</b> 50/125, orange — 1 Gbps to 550 m, 10G to 82 m.</li>
+                <li><b>OM3</b> 50/125 laser-optimized, aqua — 10G to 300 m, 40G/100G to 100 m.</li>
+                <li><b>OM4</b> aqua / violet — 10G to 400 m, 100G to 150 m.</li>
+                <li><b>OM5</b> lime green — SWDM short wavelength division multiplex (multiple λ on multimode).</li>
+              </ul>
+            </li>
+            <li><b>Connectors:</b> LC (most common, small), SC (square), ST (bayonet, legacy), MPO/MTP (12/24-fiber ribbon for 40G/100G/400G), FC (screw, telco).</li>
+            <li><b>Polish:</b> UPC (Ultra) vs APC (Angled, green connectors, lower back-reflection for high-speed/long-haul).</li>
+            <li><b>Pluggable transceivers:</b> SFP (1G), SFP+ (10G), SFP28 (25G), QSFP+ (40G, 4×10G breakout), QSFP28 (100G, 4×25G), QSFP-DD (400G, 8 lanes), OSFP (400G/800G).</li>
+            <li><b>BiDi</b> transceivers use a single fiber strand with different λ each direction (e.g., 1310/1550). Useful when fiber count is tight.</li>
+            <li><b>DAC</b> (Direct Attach Copper, twinax) — short range (≤7 m), cheap for top-of-rack.</li>
+            <li><b>AOC</b> (Active Optical Cable) — built-in transceivers, 10-30 m.</li>
+          </ul>
+
+          <h2>Fiber operations + diagnostic tools</h2>
+          <ul>
+            <li><b>Light meter / power meter</b> — measure dBm received; compare to vendor min/max budget.</li>
+            <li><b>OTDR</b> (Optical Time-Domain Reflectometer) — pulse-and-listen trace showing splice loss, breaks, bends with distance.</li>
+            <li><b>VFL</b> (Visible Fault Locator) — red laser to spot a break/bend visually.</li>
+            <li><b>Fusion splicer</b> — fuses two fibers; loss &lt;0.1 dB.</li>
+            <li><b>Cleaver + cleaner</b> — prep fiber end-face; dirty connectors are the #1 fiber issue.</li>
+            <li><b>Loss budget</b> = transmitter power − receiver sensitivity − margin. Account for connector loss (~0.5 dB), splice loss (~0.1 dB), fiber loss (~0.35 dB/km @1310nm SMF).</li>
+          </ul>
+
+          <h2>Copper standards refresher (you'll see these on the WAN/LAN edge)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Category</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max speed @100m</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>Cat 5e</td><td>1 Gbps</td><td>Minimum acceptable today</td></tr>
+            <tr><td>Cat 6</td><td>1 Gbps @100m, 10 Gbps @55m</td><td>Better NEXT</td></tr>
+            <tr><td>Cat 6a</td><td>10 Gbps @100m</td><td>Shielded common for 10G long runs</td></tr>
+            <tr><td>Cat 7 / 7a</td><td>10 Gbps / 100 Gbps short</td><td>Shielded; uses GG45/TERA, rarely deployed</td></tr>
+            <tr><td>Cat 8</td><td>25/40 Gbps @30 m</td><td>DC top-of-rack; uses RJ45</td></tr>
+          </table>
+          <p>Always-true: 100 m channel = 90 m horizontal cable + 10 m patch cords. <b>EIA/TIA 568A vs 568B</b> — pin order on RJ45; both ends same = straight-through, different = crossover (mostly obsolete with Auto-MDIX). <b>PoE+/++</b> use all 4 pairs (Type 3/4).</p>
+
+          <h2>SD-WAN architecture in detail</h2>
+          <ul>
+            <li><b>vEdge / SD-WAN router</b> at each site terminates one or more transports (MPLS, broadband, LTE).</li>
+            <li><b>Orchestrator</b> — pushes policy + ZTP onboarding.</li>
+            <li><b>Controller</b> — maintains overlay tunnel control plane (vSmart in Cisco Viptela / Catalyst SD-WAN; vCO in Velocloud).</li>
+            <li><b>Data plane</b> — IPsec tunnels between sites in a full mesh / hub-spoke / dynamic topology.</li>
+            <li><b>App-aware path selection</b> — measures latency, loss, jitter per transport in real time; steers each app to the best one. Voice/Office365 → MPLS; YouTube → broadband.</li>
+            <li><b>FEC + packet duplication</b> — send the same packet over two paths for critical real-time traffic.</li>
+            <li><b>Direct Internet Access (DIA)</b> — branch breakouts to cloud SaaS without hairpinning through data center.</li>
+            <li><b>Security integration</b> — local NGFW + cloud-delivered SWG/CASB (SASE).</li>
+            <li><b>BFD / IPSLA</b> probes drive sub-second failover.</li>
+          </ul>
+
+          <h2>SASE component stack (memorize the alphabet soup)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Acronym</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Long form</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Job</th></tr>
+            <tr><td>FWaaS</td><td>Firewall as a Service</td><td>Cloud-delivered NGFW</td></tr>
+            <tr><td>SWG</td><td>Secure Web Gateway</td><td>URL filter, AV, sandbox</td></tr>
+            <tr><td>CASB</td><td>Cloud Access Security Broker</td><td>SaaS visibility + DLP + posture</td></tr>
+            <tr><td>ZTNA</td><td>Zero Trust Network Access</td><td>Per-app identity-checked access (VPN replacement)</td></tr>
+            <tr><td>DLP</td><td>Data Loss Prevention</td><td>Stop sensitive data exfil</td></tr>
+            <tr><td>RBI</td><td>Remote Browser Isolation</td><td>Render risky web sessions in cloud sandbox</td></tr>
+            <tr><td>SD-WAN</td><td>Software-Defined WAN</td><td>Transport / steering layer</td></tr>
+          </table>
+
+          <h2>VPN protocol comparison</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Status</th></tr>
+            <tr><td><b>IPsec (IKEv2)</b></td><td>UDP 500/4500, ESP/AH</td><td>Site-to-site + remote access</td><td>Standard</td></tr>
+            <tr><td><b>SSL/TLS VPN (OpenVPN, AnyConnect, GlobalProtect)</b></td><td>TCP 443 / UDP 443</td><td>Remote access through firewalls</td><td>Common</td></tr>
+            <tr><td><b>WireGuard</b></td><td>UDP 51820 default</td><td>Fast, simple, modern</td><td>Growing</td></tr>
+            <tr><td><b>L2TP/IPsec</b></td><td>UDP 1701 + IPsec</td><td>Legacy remote access</td><td>Aging</td></tr>
+            <tr><td><b>PPTP</b></td><td>TCP 1723 + GRE</td><td>Old Windows VPN</td><td>Broken / forbidden</td></tr>
+            <tr><td><b>SSTP</b></td><td>TCP 443</td><td>Microsoft, traverses NAT/proxies</td><td>Windows shops only</td></tr>
+            <tr><td><b>GRE</b></td><td>IP proto 47</td><td>Generic tunnel (no encryption alone)</td><td>Pairs with IPsec</td></tr>
+            <tr><td><b>DMVPN</b></td><td>NHRP + IPsec + mGRE</td><td>Hub-and-spoke dynamic mesh (Cisco)</td><td>Niche</td></tr>
+          </table>
+
+          <h2>IPsec phases (memorize)</h2>
+          <ol>
+            <li><b>IKE Phase 1</b> — peers authenticate (PSK or cert) + build a secure management channel (ISAKMP SA). Modes: <b>Main</b> (6 messages, identity protection) or <b>Aggressive</b> (3 messages, less secure). IKEv2 collapses this.</li>
+            <li><b>IKE Phase 2</b> — negotiate IPsec SAs that protect actual user traffic. Modes: <b>Quick mode</b> (IKEv1) or <b>Child SA</b> (IKEv2). Defines proxy IDs, encryption (AES-GCM/CBC), integrity (SHA-256/384), DH group (14/19/20), lifetime.</li>
+            <li>Two protocol options inside Phase 2:
+              <ul>
+                <li><b>AH</b> (Authentication Header, IP proto 51) — integrity + auth, NO encryption. Breaks through NAT.</li>
+                <li><b>ESP</b> (Encapsulating Security Payload, IP proto 50) — encryption + integrity. The one actually used.</li>
+              </ul>
+            </li>
+            <li><b>Modes:</b>
+              <ul>
+                <li><b>Transport</b> — encrypts only payload; original IP header kept. Host-to-host.</li>
+                <li><b>Tunnel</b> — encrypts entire packet, adds new outer IP header. Gateway-to-gateway. Standard for site-to-site.</li>
+              </ul>
+            </li>
+            <li><b>NAT-T</b> (NAT Traversal, RFC 3947) — encapsulates ESP in UDP 4500 so NAT devices don't mangle it.</li>
+          </ol>
+
+          <h2>WAN troubleshooting scenarios (mapped)</h2>
+          <ol>
+            <li><b>"MPLS L3VPN reachable but one site can't reach prefix X"</b> → check route-target / route-distinguisher on the PE; the prefix is probably in the wrong VRF or filtered.</li>
+            <li><b>"Site has 1 Gbps Internet but downloads cap at 100 Mbps"</b> → duplex/speed on ISP handoff, half-duplex hub-and-spoke, or QoS shaper on ISP side; ISP CIR less than line rate.</li>
+            <li><b>"5G FWA flaky during heavy rain"</b> → mmWave rain fade, signal attenuation; mid-band more stable.</li>
+            <li><b>"Starlink latency spikes 1× per second"</b> → satellite handover; expected for LEO; tune real-time apps.</li>
+            <li><b>"IPsec tunnel up but no traffic"</b> → Phase 2 mismatch (proxy ID / encryption domain). Check both ends agree on encryption + lifetime + crypto-map ACL.</li>
+            <li><b>"WireGuard peer not connecting through firewall"</b> → UDP 51820 blocked or NAT timeout; lower keepalive interval to ~25 s.</li>
+            <li><b>"Direct Connect / ExpressRoute up at L2 but BGP not establishing"</b> → BGP password mismatch, wrong AS, missing private peering IP.</li>
+            <li><b>"SD-WAN over broadband + LTE — voice quality bad despite policy"</b> → measure jitter/loss; verify FEC/duplication on real-time class; check ISP QoS dropping marked traffic.</li>
+            <li><b>"Cable modem reports T3/T4 timeouts in logs"</b> → upstream RF issues; modem can't reach CMTS; call ISP to check signal levels.</li>
+            <li><b>"DSL sync drops every night at 2am"</b> → likely ISP DSLAM reset; or environmental (temperature). Capture SNR margin over time.</li>
+          </ol>
         `
       },
       {
