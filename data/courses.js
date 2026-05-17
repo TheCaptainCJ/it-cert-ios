@@ -2102,6 +2102,193 @@ const COURSES = [
             <li>Degaussing wipes magnetic media (HDD) — does NOT wipe SSDs. Use crypto-erase or shred for SSD.</li>
             <li>Clicking sound on HDD = imminent failure. Back up NOW.</li>
           </ul>
+
+          <h2>M.2 keys, lengths, signal types (memorize)</h2>
+          <ul>
+            <li><b>M.2 length</b> codes: 2230 / 2242 / 2260 / 2280 / 22110 → 22 mm wide × {30, 42, 60, 80, 110} mm long. 2280 is the desktop default.</li>
+            <li><b>Key B</b> — left of center notch; SATA, PCIe x2, USB. Common for older M.2 SATA SSDs + LTE modems.</li>
+            <li><b>Key M</b> — right of center notch; PCIe x4. Modern NVMe SSDs.</li>
+            <li><b>Key B+M</b> — both notches; module fits either slot, runs at narrowest bus available.</li>
+            <li><b>Key A / Key E</b> — Wi-Fi + Bluetooth modules (2230 size).</li>
+            <li><b>Slot capability:</b> a Key-M slot may be SATA-only, PCIe-only, or both. Check motherboard manual — installing a SATA M.2 in a PCIe-only slot = no detection (and vice versa).</li>
+          </ul>
+
+          <h2>Enterprise SSD form factors</h2>
+          <ul>
+            <li><b>U.2 / U.3</b> — 2.5" drive shape, SFF-8639 connector. U.3 is universal — accepts SAS, SATA, and NVMe in same bay.</li>
+            <li><b>EDSFF (Enterprise &amp; Data Center SSD Form Factor)</b>:
+              <ul>
+                <li><b>E1.S</b> — 1U ruler; replaces M.2 in dense servers; hot-swap.</li>
+                <li><b>E1.L</b> — longer 1U ruler for max density.</li>
+                <li><b>E3.S / E3.L</b> — 3U short/long; replacing U.2 in next-gen servers.</li>
+              </ul>
+            </li>
+            <li><b>mSATA</b> — legacy mini SATA card. Replaced by M.2.</li>
+            <li><b>SATA Express</b> — never gained traction; killed by NVMe.</li>
+          </ul>
+
+          <h2>SSD endurance metrics (TBW vs DWPD)</h2>
+          <ul>
+            <li><b>TBW</b> (Total Bytes Written) — manufacturer-rated lifetime writes. Consumer drives 300-1200 TBW typical; enterprise 10× higher.</li>
+            <li><b>DWPD</b> (Drive Writes Per Day) — full-drive writes per day over warranty. Consumer 0.3-0.5 DWPD; mixed-use enterprise 1-3; write-intensive enterprise 5-10+.</li>
+            <li><b>P/E cycles</b> — flash cells survive limited program/erase cycles (SLC 100k+, MLC 10k, TLC 1-3k, QLC ~500).</li>
+            <li><b>Over-provisioning (OP)</b> — drive reserves spare capacity (7-28%) hidden from OS for garbage collection + wear leveling. Manually leave 10-20% unallocated for higher sustained write performance on consumer SSDs.</li>
+            <li><b>Write amplification</b> — actual NAND writes &gt; host writes due to garbage collection. Modern controllers minimize via SLC cache + smart GC.</li>
+          </ul>
+
+          <h2>SSD performance dynamics</h2>
+          <ul>
+            <li><b>SLC cache</b> — TLC/QLC drives reserve part of NAND in SLC mode for burst writes. Once cache fills, sustained writes drop to native TLC/QLC speeds (often &lt; 200 MB/s on cheap QLC).</li>
+            <li><b>Thermal throttling</b> — NVMe drives slow when controller hits ~70-80 °C; use heatsink + airflow for sustained workloads.</li>
+            <li><b>Mixed read/write workloads</b> — published "up to" sequential numbers misleading for databases / VM hosts; check 4K random IOPS at QD32.</li>
+            <li><b>DRAM cache vs HMB</b> — drives with onboard DRAM are faster than DRAM-less drives using Host Memory Buffer (HMB borrows ~64 MB of system RAM).</li>
+            <li><b>Idle low power</b> — laptops use ASPM L1.2 + PCIe L1 sub-states for &lt;5 mW idle.</li>
+          </ul>
+
+          <h2>SMART attributes worth watching</h2>
+          <ul>
+            <li><b>Reallocated Sectors (5)</b> — bad sectors remapped from spare pool; non-zero = drive aging fast.</li>
+            <li><b>Current Pending Sectors (197)</b> — soft errors waiting; could go to reallocated.</li>
+            <li><b>Uncorrectable Errors (198)</b> — non-zero = data loss already occurred.</li>
+            <li><b>Reported Uncorrectable Errors (187)</b> — Backblaze-famous indicator on enterprise HDDs.</li>
+            <li><b>End-to-End Errors (184)</b> — data path corruption.</li>
+            <li><b>Wear Leveling Count (177 / 173)</b> — SSD wear; near 0 = end-of-life.</li>
+            <li><b>Total LBAs Written / Host Writes (241)</b> — divide by 2 billion to get TB written, compare to TBW spec.</li>
+            <li><b>Available Spare</b> (NVMe ID 0x03) — drops below threshold = imminent failure.</li>
+            <li><b>Percentage Used</b> (NVMe ID 0x05) — expected life used as %.</li>
+            <li><b>Temperature</b> — HDD &lt; 50 °C ideal, SSD &lt; 70 °C.</li>
+            <li><b>Power-on Hours</b> — drive age.</li>
+          </ul>
+
+          <h2>SMART tools per OS</h2>
+          <ul>
+            <li><b>Windows</b> — CrystalDiskInfo (GUI), <code>smartctl -a /dev/sda</code> via smartmontools, vendor utilities (Samsung Magician, WD Dashboard, Crucial Storage Executive).</li>
+            <li><b>Linux</b> — <code>smartctl -a /dev/sda</code>, <code>nvme smart-log /dev/nvme0</code>, GNOME Disks GUI.</li>
+            <li><b>macOS</b> — DriveDx, Disk Utility "First Aid" (limited).</li>
+            <li><b>BMC / iDRAC / iLO</b> — server out-of-band reports SMART status of every drive.</li>
+          </ul>
+
+          <h2>Hardware encryption — SED + OPAL + eDrive</h2>
+          <ul>
+            <li><b>SED</b> (Self-Encrypting Drive) — controller has AES-256 hardware engine; all data on NAND always encrypted with internal DEK.</li>
+            <li><b>OPAL 2.0</b> (TCG standard) — defines secure boot password + multiple logical bands.</li>
+            <li><b>eDrive</b> (Microsoft) — IEEE-1667 + OPAL combo letting BitLocker offload encryption to drive hardware. Faster, less CPU.</li>
+            <li><b>ATA Security</b> — drive password set in BIOS; older, weaker.</li>
+            <li><b>Crypto-erase</b> on SED = throw away DEK in ~seconds; entire drive instantly unreadable.</li>
+            <li><b>Pyrite</b> — simpler subset of OPAL; locks/unlocks but doesn't manage bands.</li>
+          </ul>
+
+          <h2>BitLocker / FileVault / LUKS keys + recovery</h2>
+          <ul>
+            <li><b>BitLocker recovery key</b> — 48-digit numeric. Stored in AD / Entra ID / Microsoft account / printed copy. ALWAYS escrow before deployment.</li>
+            <li><b>BitLocker key protectors:</b> TPM only, TPM + PIN, TPM + USB, password, recovery key, network unlock.</li>
+            <li><b>FileVault</b> — recovery key stored in iCloud or institutional key.</li>
+            <li><b>LUKS</b> — multiple key slots (slot 0 password + slot 1 USB token + slot 2 escrow).</li>
+            <li><b>Veracrypt</b> — open-source successor of TrueCrypt; volume / system encryption.</li>
+          </ul>
+
+          <h2>Secure erase methods (SSD vs HDD)</h2>
+          <ul>
+            <li><b>HDD overwrite</b> — single pass of zeros (DoD 5220.22-M and similar 3-pass methods are largely obsolete; one pass is sufficient on modern HDDs).</li>
+            <li><b>SSD ATA Secure Erase</b> — issues a command that triggers internal flash reset + key destroy. Run via vendor tool or hdparm in Linux.</li>
+            <li><b>NVMe Format / Sanitize</b> — <code>nvme format -s 1 /dev/nvme0n1</code> (user-data erase) or <code>-s 2</code> (cryptographic erase) per NVMe spec.</li>
+            <li><b>Cryptographic erase</b> on SEDs — instant.</li>
+            <li><b>Degaussing</b> — strong magnetic field destroys HDD platters. <b>Does NOT work on SSDs</b>.</li>
+            <li><b>Physical destruction</b> — shredder, drill, incinerator. NIST 800-88 "Destroy" tier; required for classified data.</li>
+          </ul>
+
+          <h2>Backup strategies (3-2-1 + variants)</h2>
+          <ul>
+            <li><b>3-2-1</b> — 3 copies of data, on 2 different media, with 1 copy off-site.</li>
+            <li><b>3-2-1-1-0</b> (Veeam) — adds 1 immutable / air-gapped + 0 recovery test failures.</li>
+            <li><b>Full</b> — copies everything. Fastest restore, biggest storage.</li>
+            <li><b>Differential</b> — changes since last full. Restore = full + latest differential.</li>
+            <li><b>Incremental</b> — changes since last backup (full or incremental). Smallest backup; restore needs full + every incremental.</li>
+            <li><b>Synthetic full</b> — server reconstructs a "full" from older backups; client only sends increments.</li>
+            <li><b>Snapshots</b> (ZFS / Btrfs / VSS / VMware) — point-in-time copy on the same storage. Fast but not a real backup; need replication off-array.</li>
+            <li><b>Immutability / WORM</b> — Object Lock on S3, S3 Object Lock equivalents, Veeam Hardened Repository.</li>
+            <li><b>Air-gapped</b> — tape, removable USB, offline storage; survives ransomware.</li>
+            <li><b>RTO / RPO</b> — Recovery Time Objective / Recovery Point Objective drive backup frequency.</li>
+          </ul>
+
+          <h2>Cloud + hybrid backup landscape</h2>
+          <ul>
+            <li><b>Backup-as-a-Service</b> — Veeam Cloud Connect, Druva, Backblaze B2, AWS Backup, Azure Backup, GCP Backup &amp; DR.</li>
+            <li><b>Object storage tiers</b> — Hot / Warm / Cold / Archive (Glacier). Cheaper to store, more to restore.</li>
+            <li><b>Replication</b> — synchronous (zero RPO, distance-limited) vs asynchronous (some RPO, any distance).</li>
+            <li><b>Replication is NOT backup</b> — replicates ransomware encryption too.</li>
+            <li><b>Test restores quarterly</b>; "backup that hasn't been tested = no backup".</li>
+          </ul>
+
+          <h2>Drive cloning + migration</h2>
+          <ul>
+            <li><b>Macrium Reflect / Acronis True Image / Clonezilla / dd / SystemRescue</b> — popular tools.</li>
+            <li><b>Sector vs file clone</b> — sector preserves everything (incl. unused), file copies only allocated blocks (faster).</li>
+            <li><b>Shrink source partition</b> before cloning to smaller disk.</li>
+            <li><b>After clone</b> — boot once; let OS expand partition to new drive's full size; reset BitLocker recovery key (if applicable).</li>
+            <li><b>MBR → GPT conversion</b> — Windows <code>mbr2gpt.exe</code> non-destructive; required when moving from BIOS to UEFI.</li>
+          </ul>
+
+          <h2>Performance benchmarks worth knowing</h2>
+          <ul>
+            <li><b>IOPS</b> (Input/Output Operations Per Second) — random access metric.</li>
+            <li><b>MB/s</b> — sequential throughput.</li>
+            <li><b>Queue Depth (QD)</b> — number of outstanding I/Os; high QD reveals controller parallelism.</li>
+            <li><b>Latency (μs / ms)</b> — completion time per I/O.</li>
+            <li><b>Tools:</b> CrystalDiskMark (Windows), Iometer, ATTO, fio (Linux gold standard), diskspd (Microsoft).</li>
+            <li><b>Real workload baselines:</b> NVMe Gen4 ~1M random read IOPS, SATA SSD ~80k, 7200 RPM HDD ~150-250.</li>
+          </ul>
+
+          <h2>RAID rebuild + URE math</h2>
+          <ul>
+            <li><b>URE</b> (Uncorrectable Read Error) rate: consumer HDDs ~1 in 10^14 bits.</li>
+            <li>Reading a 12 TB drive = 9.6 × 10^13 bits → ~96% chance of hitting at least 1 URE during full rebuild.</li>
+            <li>Why <b>RAID 5</b> is risky on large drives — a second URE during rebuild = data loss. Use RAID 6 or RAID 10 instead for big arrays.</li>
+            <li><b>Hot-spare</b> reduces window of vulnerability.</li>
+            <li><b>Patrol read / scrub</b> proactively finds + repairs latent errors.</li>
+          </ul>
+
+          <h2>Common storage troubleshooting</h2>
+          <ul>
+            <li><b>"Drive not detected"</b> → check SATA cable both ends, power, BIOS detection, M.2 slot mode (SATA vs PCIe), try different slot.</li>
+            <li><b>"Slow file copy"</b> → SLC cache filled (cheap SSD), thermal throttle, fragmented HDD, USB cable speed-limiting.</li>
+            <li><b>"Pending sectors rising"</b> → drive failing; image + replace.</li>
+            <li><b>"Random freezes"</b> → SMART check; could be I/O timeout on dying disk.</li>
+            <li><b>"Cannot delete file"</b> → file in use, permissions; or filesystem corruption — run <code>chkdsk /f</code> (Windows), <code>fsck</code> (Linux).</li>
+            <li><b>"Drive shows wrong capacity"</b> → MBR vs GPT (2 TB limit on MBR), HPA/DCO host-protected area, manufacturer scam (rare).</li>
+            <li><b>"BitLocker recovery prompt at boot"</b> → TPM state changed (BIOS update, hardware swap); enter recovery key, then suspend + resume protection.</li>
+            <li><b>"RAID degraded"</b> → identify failed member, hot-swap if supported, monitor rebuild progress, plan to replace ASAP.</li>
+            <li><b>"S.M.A.R.T. status BAD"</b> at POST → drive already past threshold; image + replace.</li>
+            <li><b>"USB drive read-only"</b> → physical switch, registry policy, or filesystem corruption.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>HDD / SSD / NVMe / SATA / SAS</b> — drive types + interfaces.</li>
+            <li><b>SLC / MLC / TLC / QLC / 3D NAND</b> — flash cell density.</li>
+            <li><b>M.2 / U.2 / U.3 / EDSFF / mSATA</b> — form factors.</li>
+            <li><b>RAID 0/1/5/6/10/50/60 / JBOD</b> — array levels.</li>
+            <li><b>TBW / DWPD / P/E / OP</b> — endurance metrics.</li>
+            <li><b>SMART / SCSI ENCLOSURE / BMC / iDRAC / iLO</b> — health + management.</li>
+            <li><b>SED / OPAL / eDrive / TCG</b> — hardware encryption.</li>
+            <li><b>BitLocker / FileVault / LUKS / Veracrypt</b> — software FDE.</li>
+            <li><b>RTO / RPO / WORM / 3-2-1</b> — backup planning.</li>
+            <li><b>URE / chkdsk / fsck / dd / fio</b> — diagnostic + erasure tools.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Fastest consumer SSD interface" → NVMe over PCIe Gen 4/5.</li>
+            <li>"Allows secure instant erase of SSD" → SED cryptographic erase / NVMe sanitize -s 2.</li>
+            <li>"RAID level for read-heavy 4-drive array tolerating 1 failure" → RAID 5.</li>
+            <li>"RAID for VM datastore needing IOPS + redundancy" → RAID 10.</li>
+            <li>"M.2 NVMe SSD speed cap" → set by PCIe generation and lane count of the slot (Gen3 x4 ≈ 3.5 GB/s).</li>
+            <li>"Tracks drive health attributes" → SMART (via smartmontools / CrystalDiskInfo).</li>
+            <li>"Drive shows clicking + Reallocated Sectors climbing" → HDD failing; back up + replace.</li>
+            <li>"Backup must be safe from ransomware" → immutable / air-gapped copy.</li>
+            <li>"Wipe SSD before disposal" → NVMe format with crypto erase or vendor tool's Secure Erase — NOT degauss.</li>
+            <li>"Recover BitLocker drive after motherboard swap" → 48-digit recovery key from AD/Microsoft account.</li>
+          </ul>
         `
       },
       {
