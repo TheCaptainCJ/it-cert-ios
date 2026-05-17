@@ -4380,6 +4380,134 @@ nslookup -type=AAAA example.com  # IPv6 DNS record</code></pre>
             <li>Common transition: dual stack.</li>
             <li>NAT64 lets IPv6-only client reach IPv4-only server.</li>
           </ul>
+
+          <h2>Compression worked examples (drills)</h2>
+          <p><b>A.</b> Compress <code>2001:0db8:0000:0000:0000:ff00:0042:8329</code>:</p>
+          <ol>
+            <li>Drop leading zeros: <code>2001:db8:0:0:0:ff00:42:8329</code>.</li>
+            <li>Collapse longest run of zeros: <code>2001:db8::ff00:42:8329</code>.</li>
+          </ol>
+          <p><b>B.</b> Compress <code>fe80:0000:0000:0000:0202:b3ff:fe1e:8329</code> → <code>fe80::202:b3ff:fe1e:8329</code>.</p>
+          <p><b>C.</b> Expand <code>2001:db8::1</code> → <code>2001:0db8:0000:0000:0000:0000:0000:0001</code> (fill the <code>::</code> gap with enough zero groups to reach 8 total).</p>
+          <p><b>D. Invalid:</b> <code>2001::db8::1</code> — two <code>::</code> is ambiguous, rejected.</p>
+          <p><b>E.</b> Identify type:
+            <code>fe80::1</code> = link-local;
+            <code>fd12:3456::1</code> = ULA;
+            <code>2001:db8::1</code> = doc-only global;
+            <code>ff02::1</code> = link-local multicast (all nodes);
+            <code>::1</code> = loopback;
+            <code>::</code> = unspecified.
+          </p>
+
+          <h2>EUI-64 step-by-step (memorize)</h2>
+          <p><b>Given MAC</b> <code>00:1a:2b:3c:4d:5e</code>:</p>
+          <ol>
+            <li>Split: <code>001a:2b</code> | <code>3c:4d:5e</code>.</li>
+            <li>Insert <code>ff:fe</code>: <code>001a:2bff:fe3c:4d5e</code>.</li>
+            <li>Flip the 7th bit (U/L) of the first byte. <code>00</code> = <code>0000 0000</code> → flip bit 7 → <code>0000 0010</code> = <code>02</code>.</li>
+            <li>Result: <code>021a:2bff:fe3c:4d5e</code> — the 64-bit interface ID.</li>
+            <li>Prepend a /64 prefix (link-local <code>fe80::</code>): <code>fe80::21a:2bff:fe3c:4d5e</code>.</li>
+          </ol>
+          <p><b>Pattern recognition:</b> any IPv6 address containing <code>ff:fe</code> in the middle of the lower 64 bits = EUI-64 derived. Hosts using <b>privacy extensions</b> show random interface IDs instead and rotate every ~24 hours.</p>
+
+          <h2>SLAAC vs DHCPv6 decision flow</h2>
+          <ol>
+            <li>Host boots; sends <b>Router Solicitation</b> to <code>ff02::2</code>.</li>
+            <li>Router replies with <b>RA</b> containing prefix info + M-flag + O-flag + lifetime.</li>
+            <li>If <b>M-flag = 1</b> → use <b>DHCPv6 stateful</b> for the address. (And usually all options.)</li>
+            <li>If <b>M = 0, O = 1</b> → SLAAC for the address, <b>DHCPv6 stateless</b> for DNS/NTP.</li>
+            <li>If <b>M = 0, O = 0</b> → pure SLAAC; DNS comes from RDNSS option in the RA (RFC 8106).</li>
+            <li>Host runs <b>DAD</b> (Duplicate Address Detection) by sending NS for its tentative address; if no NA returns, the address is owned.</li>
+          </ol>
+
+          <h2>Solicited-node multicast (how ND scales without broadcast)</h2>
+          <p>ARP in IPv4 broadcasts to every host. IPv6 avoids that: each host listens on a <b>solicited-node multicast group</b> derived from the last 24 bits of each of its addresses:</p>
+          <p><code>ff02::1:ff</code> + last-24-bits-of-target. Example for <code>fe80::21a:2bff:fe3c:4d5e</code> → solicited-node group = <code>ff02::1:ff3c:4d5e</code>.</p>
+          <p>When a host needs the MAC of that target, it sends NS to that multicast — only hosts sharing the last 24 bits even see the frame.</p>
+
+          <h2>IPv6 header walkthrough (40 bytes fixed)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Bytes</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>0</td><td>Version (4 bits)</td><td>Always 6</td></tr>
+            <tr><td>0–1</td><td>Traffic Class (8)</td><td>DSCP + ECN (QoS)</td></tr>
+            <tr><td>1–3</td><td>Flow Label (20)</td><td>Identifies a flow for fast-path / load balancing</td></tr>
+            <tr><td>4–5</td><td>Payload Length (16)</td><td>Bytes after this header</td></tr>
+            <tr><td>6</td><td>Next Header (8)</td><td>Like IPv4 Protocol — 6 TCP, 17 UDP, 58 ICMPv6, 0/43/44/50/51 = ext headers</td></tr>
+            <tr><td>7</td><td>Hop Limit (8)</td><td>Replaces TTL</td></tr>
+            <tr><td>8–23</td><td>Source Address (128)</td><td>—</td></tr>
+            <tr><td>24–39</td><td>Destination Address (128)</td><td>—</td></tr>
+          </table>
+          <p><b>Removed vs IPv4:</b> no header checksum (faster routers), no IHL (always 40), no fragmentation fields (Path MTU Discovery only). Options moved to <b>Extension Headers</b> chained via Next Header.</p>
+
+          <h2>Common ICMPv6 message types (mapped)</h2>
+          <ul>
+            <li><b>1</b> Destination Unreachable.</li>
+            <li><b>2</b> Packet Too Big (drives Path MTU Discovery).</li>
+            <li><b>3</b> Time Exceeded (traceroute).</li>
+            <li><b>128 / 129</b> Echo Request / Reply (ping).</li>
+            <li><b>133 / 134</b> Router Solicitation / Advertisement.</li>
+            <li><b>135 / 136</b> Neighbor Solicitation / Advertisement.</li>
+            <li><b>137</b> Redirect.</li>
+          </ul>
+          <p><b>Firewall note:</b> blocking <i>all</i> ICMPv6 breaks IPv6. Must allow at minimum types 1, 2, 3, 128, 129, 133–137.</p>
+
+          <h2>Transition mechanisms — pick the right one</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Scenario</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Best tool</th></tr>
+            <tr><td>Enterprise rolling out IPv6 internally</td><td><b>Dual stack</b></td></tr>
+            <tr><td>IPv6-only mobile network reaching legacy IPv4 sites</td><td><b>NAT64 + DNS64</b> (and 464XLAT on the handset)</td></tr>
+            <tr><td>Two IPv6 sites connected over IPv4-only ISP</td><td><b>6in4</b> manual tunnel or <b>GRE</b></td></tr>
+            <tr><td>Single home gateway with public IPv4 reaching IPv6 sites (legacy)</td><td><b>6to4</b> (deprecated)</td></tr>
+            <tr><td>Microsoft DirectAccess clients behind NAT</td><td><b>Teredo</b> (legacy)</td></tr>
+            <tr><td>ISP delivering IPv4 service over IPv6 infra</td><td><b>MAP-T / MAP-E</b> or <b>DS-Lite</b></td></tr>
+          </table>
+
+          <h2>IPv6 DNS basics</h2>
+          <ul>
+            <li><b>AAAA record</b> (quad-A) — maps name → IPv6 address.</li>
+            <li><b>PTR</b> reverse lookup uses <code>ip6.arpa</code> with each hex digit reversed and dot-separated.</li>
+            <li><b>Dual-stack hosts</b> typically try AAAA first; if it fails, fall back to A (Happy Eyeballs RFC 8305).</li>
+          </ul>
+
+          <h2>Subnetting IPv6 (much simpler than IPv4)</h2>
+          <ul>
+            <li>Standard host subnet = <b>/64</b>. Don't break this unless forced (SLAAC requires it).</li>
+            <li>For point-to-point links, /127 is acceptable (RFC 6164).</li>
+            <li>A /48 site allocation gives <b>65,536 /64 subnets</b>.</li>
+            <li>A /56 home gives <b>256 /64 subnets</b>.</li>
+            <li>No host arithmetic gymnastics — every /64 has 2⁶⁴ addresses, more than the entire IPv4 internet, so "usable hosts" calculations are a non-issue.</li>
+          </ul>
+
+          <h2>Common IPv6 troubleshooting issues</h2>
+          <ul>
+            <li><b>Rogue RA</b> on a guest VLAN — every host suddenly gets an extra default route. Fix with <b>RA Guard</b>.</li>
+            <li><b>SLAAC + DHCPv6 confusion</b> — if both M-flag and DHCPv6 server present, OSes may pick either. Choose one model.</li>
+            <li><b>No AAAA fallback</b> — slow site = AAAA returned but no IPv6 connectivity. Happy Eyeballs should solve it; if not, audit IPv6 routing.</li>
+            <li><b>Tunnel-broker MTU</b> — 6in4 reduces effective MTU; needs Path MTU Discovery to work (which means ICMPv6 type 2 must be allowed).</li>
+            <li><b>Privacy address rotation</b> breaking access logs / firewall rules — disable if pinning is required.</li>
+            <li><b>Wrong default gateway</b> — gateway must be link-local of the router (<code>fe80::1</code> typically), not a global address.</li>
+          </ul>
+
+          <h2>IPv6 attacker mindset (NDP/RA threats)</h2>
+          <ul>
+            <li><b>RA spoofing</b> — attacker advertises themselves as router → MITM. Mitigation: RA Guard, SEND.</li>
+            <li><b>NS spoofing</b> — equivalent of ARP poisoning. Mitigation: ND Inspection.</li>
+            <li><b>DAD DoS</b> — attacker replies to every DAD probe → victim cannot configure an address. Mitigation: SeND, port security.</li>
+            <li><b>Multicast amplification</b> — spoofed source in NS to <code>ff02::1</code> = huge reply storm. Mitigation: source filtering.</li>
+            <li><b>Extension header abuse</b> — chaining headers to evade IDS or for fragmentation games. Mitigation: drop unknown ext headers at perimeter.</li>
+          </ul>
+
+          <h2>Real-world recognition cheat (one-line scan)</h2>
+          <ul>
+            <li>Starts with <b>fe80:</b> → link-local.</li>
+            <li>Starts with <b>fd</b> → ULA (private).</li>
+            <li>Starts with <b>2</b> or <b>3</b> → global unicast.</li>
+            <li>Starts with <b>ff</b> → multicast.</li>
+            <li>Contains <b>ff:fe</b> in middle of lower 64 bits → EUI-64.</li>
+            <li>Is <b>::1</b> → loopback.</li>
+            <li>Is <b>::</b> → unspecified.</li>
+            <li>Starts with <b>2001:db8</b> → documentation only; never deploy.</li>
+          </ul>
         `
       },
       {
