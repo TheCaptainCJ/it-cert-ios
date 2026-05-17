@@ -4045,6 +4045,132 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>VLSM = right-sized subnets within one parent net.</li>
             <li>PAT = many internal hosts behind one public IP, distinguished by source port.</li>
           </ul>
+
+          <h2>Binary math foundation (the rosetta stone)</h2>
+          <p>Subnetting is binary. Memorize these two rows cold — every shortcut comes from them.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Bit position (within octet)</th><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr>
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Mask octet if N bits set</th><td>10000000 = 128</td><td>11000000 = 192</td><td>11100000 = 224</td><td>11110000 = 240</td><td>11111000 = 248</td><td>11111100 = 252</td><td>11111110 = 254</td><td>11111111 = 255</td></tr>
+          </table>
+          <p><b>Three mental tables to internalize:</b></p>
+          <ul>
+            <li><b>Powers of 2 (1–10):</b> 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024.</li>
+            <li><b>Subnet mask values:</b> 128, 192, 224, 240, 248, 252, 254, 255.</li>
+            <li><b>Block sizes:</b> 128, 64, 32, 16, 8, 4, 2, 1. (Same numbers, reverse order — block = 256 − mask.)</li>
+          </ul>
+
+          <h2>The 7-step subnetting algorithm (memorize the flow)</h2>
+          <ol>
+            <li><b>Identify the interesting octet</b> — the octet where the mask transitions from 255 to less-than-255. /17–/24 → 3rd octet; /25–/30 → 4th octet.</li>
+            <li><b>Compute block size</b> = 256 − (interesting-octet mask value). /27 (mask 224) → 256 − 224 = 32.</li>
+            <li><b>List subnet starts</b> — multiples of block size in the interesting octet: 0, 32, 64, 96, 128, 160, 192, 224.</li>
+            <li><b>Identify the target subnet</b> — the largest multiple ≤ the host's address in that octet. Host 10.0.0.100 with /27 → 100 falls between 96 and 128 → subnet = 10.0.0.96/27.</li>
+            <li><b>Network address</b> = the multiple itself (host bits all 0). → <code>10.0.0.96</code>.</li>
+            <li><b>Broadcast</b> = next multiple − 1. → next is 128, so broadcast = <code>10.0.0.127</code>.</li>
+            <li><b>Usable range</b> = network + 1 through broadcast − 1. → <code>10.0.0.97</code> through <code>10.0.0.126</code> (30 hosts).</li>
+          </ol>
+
+          <h2>Worked example A — "Which subnet is 172.16.45.180/22 in?"</h2>
+          <ol>
+            <li>/22 = 16 (full) + 6 borrowed in the 3rd octet. Mask = 255.255.252.0.</li>
+            <li>Interesting octet = 3rd. Mask value 252 → block size = 256 − 252 = 4.</li>
+            <li>3rd-octet subnet starts: 0, 4, 8, ..., 44, 48, ..., 252.</li>
+            <li>Host's 3rd octet = 45. Largest multiple of 4 ≤ 45 = 44.</li>
+            <li>Network = 172.16.44.0; broadcast = 172.16.47.255 (next is 48, minus 1).</li>
+            <li>Usable: 172.16.44.1 → 172.16.47.254 (1022 hosts).</li>
+          </ol>
+
+          <h2>Worked example B — "Given /24 network 192.168.50.0, how many /28 subnets and list the first 4."</h2>
+          <ol>
+            <li>Borrowing 4 bits (/24 → /28) → 2⁴ = 16 subnets.</li>
+            <li>Block size for /28 = 256 − 240 = 16.</li>
+            <li>First four subnet networks: <code>.0</code>, <code>.16</code>, <code>.32</code>, <code>.48</code>.</li>
+            <li>First subnet: net <code>192.168.50.0</code>, usable <code>.1–.14</code>, bcast <code>.15</code>.</li>
+            <li>Second: net <code>.16</code>, usable <code>.17–.30</code>, bcast <code>.31</code>. (Pattern continues.)</li>
+          </ol>
+
+          <h2>Worked example C — Full VLSM build</h2>
+          <p><b>Given:</b> 192.168.0.0/24. Need subnets for: Sales (60 hosts), Eng (28 hosts), HR (12 hosts), three point-to-point WAN links (2 hosts each).</p>
+          <ol>
+            <li><b>Sort largest-first:</b> Sales 60 → Eng 28 → HR 12 → 3× WAN.</li>
+            <li><b>Sales (60 hosts):</b> need 62+ → /26 (62 usable). Start at .0 → <code>192.168.0.0/26</code>, usable .1–.62, bcast .63.</li>
+            <li><b>Eng (28 hosts):</b> need 30+ → /27 (30 usable). Next free = .64 → <code>192.168.0.64/27</code>, usable .65–.94, bcast .95.</li>
+            <li><b>HR (12 hosts):</b> need 14+ → /28 (14 usable). Next free = .96 → <code>192.168.0.96/28</code>, usable .97–.110, bcast .111.</li>
+            <li><b>WAN #1 (2 hosts):</b> /30 (2 usable). Next free = .112 → <code>192.168.0.112/30</code>, usable .113–.114, bcast .115.</li>
+            <li><b>WAN #2:</b> <code>192.168.0.116/30</code>, usable .117–.118.</li>
+            <li><b>WAN #3:</b> <code>192.168.0.120/30</code>, usable .121–.122.</li>
+            <li><b>Remaining free</b> = .124–.255 (132 addresses for future growth).</li>
+          </ol>
+
+          <h2>The "minimum prefix for N hosts" cheat</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Hosts needed</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Min prefix</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Total / usable</th></tr>
+            <tr><td>1</td><td>/30 or /32 host route</td><td>4 / 2 (or 1)</td></tr>
+            <tr><td>2 (p2p)</td><td>/30 (or /31 RFC 3021)</td><td>4 / 2 (or 2)</td></tr>
+            <tr><td>3–6</td><td>/29</td><td>8 / 6</td></tr>
+            <tr><td>7–14</td><td>/28</td><td>16 / 14</td></tr>
+            <tr><td>15–30</td><td>/27</td><td>32 / 30</td></tr>
+            <tr><td>31–62</td><td>/26</td><td>64 / 62</td></tr>
+            <tr><td>63–126</td><td>/25</td><td>128 / 126</td></tr>
+            <tr><td>127–254</td><td>/24</td><td>256 / 254</td></tr>
+            <tr><td>255–510</td><td>/23</td><td>512 / 510</td></tr>
+            <tr><td>511–1022</td><td>/22</td><td>1024 / 1022</td></tr>
+            <tr><td>1023–2046</td><td>/21</td><td>2048 / 2046</td></tr>
+            <tr><td>2047–4094</td><td>/20</td><td>4096 / 4094</td></tr>
+          </table>
+          <p><b>Memory hook:</b> doubling hosts = subtract 1 from prefix. Each step you "rent" one more bit from the network.</p>
+
+          <h2>Supernetting walkthrough</h2>
+          <p><b>Given:</b> Combine 192.168.4.0/24, 192.168.5.0/24, 192.168.6.0/24, 192.168.7.0/24 into one announcement.</p>
+          <ol>
+            <li>Convert 3rd octets to binary: 4=00000100, 5=00000101, 6=00000110, 7=00000111.</li>
+            <li>Common prefix = <code>000001</code> (first 6 bits match).</li>
+            <li>16 (1st+2nd full) + 6 = 22-bit prefix.</li>
+            <li>Aggregate: <code>192.168.4.0/22</code>. Covers .4 through .7 (block size 4 in 3rd octet).</li>
+          </ol>
+          <p><b>Common ISP shortcut:</b> the parent must be a multiple of the block size. Aggregate of 192.168.5.0/24 + 192.168.6.0/24 + 192.168.7.0/24 + 192.168.8.0/24 will NOT collapse to one /22 — boundaries are 0/4/8/12, so they straddle. Either accept multiple advertisements or pick correct boundaries.</p>
+
+          <h2>NAT/PAT detailed walkthrough</h2>
+          <p><b>What happens when 192.168.1.100 visits api.example.com (203.0.113.50:443) through a PAT router with public IP 198.51.100.10:</b></p>
+          <ol>
+            <li>Client SYN: src <code>192.168.1.100:51234</code> → dst <code>203.0.113.50:443</code>.</li>
+            <li>Router rewrites src: <code>198.51.100.10:51234</code> (or maps to a different port if 51234 in use). Adds row to translation table.</li>
+            <li>Server replies to <code>198.51.100.10:51234</code>.</li>
+            <li>Router looks up table, rewrites dst back to <code>192.168.1.100:51234</code>, forwards inside.</li>
+          </ol>
+          <p>Translation table grows linearly with active flows; ~65K source ports per public IP → CGNAT often pools multiple public IPs for thousands of subscribers.</p>
+
+          <h2>IPv4 header byte budget (memorize, exam test)</h2>
+          <p>Minimum 20 bytes (no options); maximum 60 bytes:</p>
+          <ul>
+            <li><b>Bytes 0–3:</b> Version (4 bits, =4) | IHL (4) | DSCP/ECN (8) | Total Length (16).</li>
+            <li><b>Bytes 4–7:</b> Identification (16) | Flags (3) | Fragment Offset (13).</li>
+            <li><b>Bytes 8–11:</b> TTL (8) | Protocol (8) | Header Checksum (16).</li>
+            <li><b>Bytes 12–15:</b> Source IP.</li>
+            <li><b>Bytes 16–19:</b> Destination IP.</li>
+            <li><b>Bytes 20–59:</b> Options (rare; pad to 4-byte boundary).</li>
+          </ul>
+
+          <h2>Common subnetting gotchas</h2>
+          <ul>
+            <li>Off-by-one in usable count — always subtract 2 (network + broadcast) EXCEPT /31 (RFC 3021) and /32.</li>
+            <li>Block size ≠ usable hosts. /26 block = 64, usable = 62.</li>
+            <li>Subnet boundaries land on multiples of block size — 192.168.1.50/26 is INVALID as a network address; the network is 192.168.1.0/26 and .50 is a host.</li>
+            <li>Asking "broadcast of <i>x</i>" — find the network first, then broadcast = network + block size − 1.</li>
+            <li>NAT does NOT count as subnetting; it's an unrelated translation function.</li>
+            <li>0.0.0.0 is "any/default route" or "unspecified", not a host.</li>
+            <li>Loopback (127.0.0.0/8) is for the local stack only — never sent on the wire.</li>
+          </ul>
+
+          <h2>30-second subnetting answer template</h2>
+          <p>Given any "what subnet/broadcast/usable for IP X with mask Y":</p>
+          <ol>
+            <li>Find interesting octet (where mask &lt; 255).</li>
+            <li>Block = 256 − interesting-octet mask value.</li>
+            <li>Subnet network = largest multiple of block ≤ host's value in that octet.</li>
+            <li>Broadcast = network + block − 1 in that octet.</li>
+            <li>Usable = (network + 1) → (broadcast − 1).</li>
+          </ol>
         `
       },
       {
