@@ -18833,27 +18833,194 @@ Test-Connection SRV1 -Count 1                            # quick reachability</c
       {
         title: '7. Networking & WMI/CIM',
         body: `
-          <pre><code># Network basics
-Test-Connection google.com -Count 4
-Test-NetConnection www.microsoft.com -Port 443
-Resolve-DnsName github.com
-Get-NetIPAddress
-Get-NetAdapter
-Get-NetRoute
+          <h2>Why this lesson</h2>
+          <p>Helpdesk + sysadmin work lives on two surfaces: <b>the network stack</b> (TCP/IP, DNS, routes, firewalls, REST calls) and <b>system inventory</b> (CPU, RAM, BIOS, disks, OS, network adapters). PowerShell wraps the first with the <b>Net*</b> cmdlets and the second with <b>CIM/WMI</b>. Master both and you can diagnose any "is it up?", "what's installed?", or "why can't I reach X?" without leaving the shell.</p>
 
-# REST API
-$resp = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/PowerShell"
+          <h2>Connectivity testing</h2>
+
+          <h3>Test-Connection — ICMP ping (and more)</h3>
+          <pre><code>Test-Connection google.com -Count 4
+Test-Connection google.com -Quiet                        # boolean
+Test-Connection google.com -Count 1 -TimeoutSeconds 2
+Test-Connection -TargetName 'SRV1','SRV2','SRV3'         # batch
+
+# PS7+ extras
+Test-Connection google.com -Traceroute                   # full traceroute object
+Test-Connection google.com -MtuSize                      # path MTU discovery
+Test-Connection 8.8.8.8 -Repeat                          # continuous (Ctrl+C to stop)</code></pre>
+          <p><b>What:</b> wraps ICMP echo (the classic <code>ping</code>). <b>Why:</b> verify reachability + round-trip latency. <b>Limitation:</b> ICMP often blocked at firewalls — failure ≠ host down.</p>
+
+          <h3>Test-NetConnection — TCP-level reachability</h3>
+          <p>Windows-only, more useful than ping for real services.</p>
+          <pre><code>Test-NetConnection www.microsoft.com -Port 443           # specific port (TCP handshake)
+Test-NetConnection 8.8.8.8 -CommonTCPPort HTTP           # HTTP/RDP/SMB/WINRM/PING shortcuts
+Test-NetConnection www.microsoft.com -InformationLevel Detailed
+Test-NetConnection -ComputerName SRV1 -DiagnoseRouting   # local interface + route</code></pre>
+          <p>Returns <code>TcpTestSucceeded</code> (boolean) — the property to gate on. Replace shell scripts that grep nmap output.</p>
+
+          <h3>Resolve-DnsName — DNS lookup</h3>
+          <pre><code>Resolve-DnsName github.com
+Resolve-DnsName github.com -Type MX                      # mail records
+Resolve-DnsName github.com -Type TXT
+Resolve-DnsName github.com -Server 1.1.1.1               # bypass local resolver
+Resolve-DnsName github.com -DnsOnly                      # skip hosts file / cache
+Resolve-DnsName -Name _kerberos._tcp.contoso.com -Type SRV</code></pre>
+          <p>Replaces <code>nslookup</code> with proper object output (Address, Type, TTL, Section).</p>
+
+          <h3>Net* adapters / IP / routes</h3>
+          <pre><code>Get-NetAdapter                                           # NIC list
+Get-NetAdapter | Where-Object Status -eq 'Up' | Format-Table Name, MacAddress, LinkSpeed
+Get-NetAdapter Ethernet | Restart-NetAdapter
+
+Get-NetIPAddress                                         # IPv4 + IPv6 addresses
+Get-NetIPAddress -AddressFamily IPv4
+Get-NetIPConfiguration                                   # combined view: adapter + IP + gateway + DNS
+
+Get-NetRoute -AddressFamily IPv4                         # routing table
+Get-DnsClientServerAddress                               # configured DNS servers
+
+# Modify (admin)
+New-NetIPAddress -InterfaceIndex 12 -IPAddress 10.0.0.5 -PrefixLength 24 -DefaultGateway 10.0.0.1
+Set-DnsClientServerAddress -InterfaceIndex 12 -ServerAddresses 1.1.1.1,8.8.8.8
+Remove-NetIPAddress -IPAddress 10.0.0.5
+
+# Firewall
+Get-NetFirewallProfile
+Get-NetFirewallRule -DisplayName '*Remote Desktop*'
+New-NetFirewallRule -DisplayName 'Allow App on 8080' -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow
+
+# TCP sessions, listeners
+Get-NetTCPConnection -State Listen
+Get-NetTCPConnection -RemoteAddress 192.168.1.100</code></pre>
+
+          <h2>HTTP / REST from PowerShell</h2>
+
+          <h3>Invoke-WebRequest (web scraping / downloads)</h3>
+          <pre><code>$r = Invoke-WebRequest -Uri 'https://example.com'
+$r.StatusCode
+$r.Headers
+$r.Content                                               # raw body string
+$r.ParsedHtml                                            # IE-engine HTML DOM (PS 5.1 Windows only)
+
+Invoke-WebRequest -Uri 'https://example.com/file.zip' -OutFile .\\file.zip
+Invoke-WebRequest -Uri 'https://example.com/api' -Method POST -Body 'x=1&amp;y=2' -ContentType 'application/x-www-form-urlencoded'
+
+# Auth + retries (PS7+)
+Invoke-WebRequest -Uri $url -Authentication Bearer -Token (ConvertTo-SecureString $tok -AsPlainText -Force)
+Invoke-WebRequest -Uri $url -MaximumRetryCount 3 -RetryIntervalSec 5</code></pre>
+
+          <h3>Invoke-RestMethod (typed REST client)</h3>
+          <pre><code>$resp = Invoke-RestMethod -Uri 'https://api.github.com/repos/microsoft/PowerShell'
 $resp.full_name
 $resp.stargazers_count
 
-# Download
-Invoke-WebRequest -Uri "https://example.com/file.zip" -OutFile .\\file.zip
+# POST JSON
+$body = @{ name='alice'; role='admin' } | ConvertTo-Json
+Invoke-RestMethod -Uri 'https://api.example.com/users' -Method POST -Body $body -ContentType 'application/json'
 
-# CIM (replacement for WMI)
-Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture
+# Headers + bearer
+$headers = @{ Authorization = "Bearer $token"; Accept = 'application/json' }
+Invoke-RestMethod -Uri 'https://api.example.com/me' -Headers $headers
+
+# Pagination loop
+$next = 'https://api.example.com/items'
+while ($next) {
+  $r = Invoke-RestMethod -Uri $next
+  $r.items
+  $next = $r.next_page
+}</code></pre>
+          <p><b>Difference:</b> <code>Invoke-WebRequest</code> returns the full HTTP response object (status, headers, raw body). <code>Invoke-RestMethod</code> parses JSON / XML responses into PowerShell objects automatically. Use <i>WebRequest</i> when you need response metadata; <i>RestMethod</i> for clean API consumption.</p>
+
+          <h2>CIM vs WMI — the inventory layer</h2>
+          <p><b>Acronyms:</b> <b>WMI</b> = Windows Management Instrumentation (Microsoft's classic management API); <b>CIM</b> = Common Information Model (DMTF open standard WMI is based on). The classes are the same (<code>Win32_*</code>, <code>CIM_*</code>); the protocol differs.</p>
+          <ul>
+            <li><b>Get-WmiObject</b> (legacy) — uses DCOM over RPC. Removed in PowerShell 7. Avoid in new code.</li>
+            <li><b>Get-CimInstance</b> (modern) — uses WS-Management (WinRM) by default; falls back to DCOM via <code>New-CimSession</code>. Cross-platform (PS 7 talks to WS-MAN servers).</li>
+          </ul>
+          <p>Rule: always use <code>Get-CimInstance</code> in new scripts.</p>
+
+          <h3>Common classes (memorize)</h3>
+          <pre><code>Get-CimInstance Win32_OperatingSystem |
+  Select-Object Caption, Version, OSArchitecture, LastBootUpTime, InstallDate
+
+Get-CimInstance Win32_ComputerSystem |
+  Select-Object Manufacturer, Model, TotalPhysicalMemory, NumberOfLogicalProcessors
+
+Get-CimInstance Win32_BIOS |
+  Select-Object Manufacturer, SerialNumber, SMBIOSBIOSVersion
+
+Get-CimInstance Win32_Processor |
+  Select-Object Name, NumberOfCores, MaxClockSpeed
+
 Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
-  Select-Object DeviceID, @{n='FreeGB';e={[math]::Round($_.FreeSpace/1GB,2)}}
-Get-CimInstance Win32_BIOS | Select-Object Manufacturer, SerialNumber</code></pre>
+  Select-Object DeviceID, VolumeName,
+    @{ n='SizeGB'; e={ [math]::Round($_.Size/1GB,1) } },
+    @{ n='FreeGB'; e={ [math]::Round($_.FreeSpace/1GB,1) } },
+    @{ n='Used%';  e={ [math]::Round(($_.Size-$_.FreeSpace)/$_.Size*100,1) } }
+
+Get-CimInstance Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=TRUE' |
+  Select-Object Description, IPAddress, DefaultIPGateway, DNSServerSearchOrder, MACAddress
+
+Get-CimInstance Win32_Service -Filter "Name='spooler'" |
+  Select-Object Name, StartName, StartMode, State, PathName, ProcessId
+
+Get-CimInstance Win32_Product                            # installed MSIs (SLOW + triggers reconfig — see gotcha)
+Get-CimInstance Win32_QuickFixEngineering | Sort-Object InstalledOn -Descending  # hotfixes
+Get-CimInstance Win32_Volume -Filter 'DriveType=3'       # volumes (incl. mount points)</code></pre>
+
+          <h3>DriveType codes for Win32_LogicalDisk</h3>
+          <p><b>0</b>=Unknown, <b>1</b>=No root, <b>2</b>=Removable, <b>3</b>=Local fixed disk, <b>4</b>=Network drive, <b>5</b>=CD-ROM, <b>6</b>=RAM disk.</p>
+
+          <h3>Remote CIM sessions (WinRM)</h3>
+          <pre><code>$sess = New-CimSession -ComputerName SRV1,SRV2 -Credential (Get-Credential)
+Get-CimInstance -CimSession $sess Win32_LogicalDisk -Filter 'DriveType=3'
+Remove-CimSession $sess
+
+# Pre-PS7 / legacy targets (DCOM fallback)
+$opt = New-CimSessionOption -Protocol Dcom
+New-CimSession -ComputerName OLDBOX -SessionOption $opt</code></pre>
+
+          <h3>CIM methods (Invoke-CimMethod)</h3>
+          <pre><code># Reboot a remote machine via CIM
+Invoke-CimMethod -CimSession $sess -ClassName Win32_OperatingSystem -MethodName Reboot
+
+# Run a process on the remote host
+Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = 'notepad.exe' }</code></pre>
+
+          <h2>Namespaces, queries, filtering</h2>
+          <pre><code>Get-CimInstance -ClassName Win32_OperatingSystem -Namespace root\\cimv2
+Get-CimClass Win32_*                                     # list classes in a namespace
+
+# WQL query (SQL-like dialect)
+Get-CimInstance -Query "SELECT * FROM Win32_Service WHERE State='Running' AND StartMode='Auto'"</code></pre>
+          <p><b>Tip:</b> always pass <code>-Filter</code> (server-side) instead of piping into <code>Where-Object</code> (client-side). For Win32_LogicalDisk on a SAN host, the difference is seconds vs minutes.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>ICMP</b> — Internet Control Message Protocol (used by ping/traceroute).</li>
+            <li><b>MTU</b> — Maximum Transmission Unit (largest packet on a path).</li>
+            <li><b>DNS / SRV / MX / TXT / PTR</b> — record types.</li>
+            <li><b>NIC</b> — Network Interface Card.</li>
+            <li><b>REST / HTTP / JSON / XML</b> — API protocol / format.</li>
+            <li><b>WMI</b> — Windows Management Instrumentation.</li>
+            <li><b>CIM</b> — Common Information Model (DMTF).</li>
+            <li><b>WQL</b> — WMI Query Language (SQL-like).</li>
+            <li><b>WinRM / WS-Man</b> — Windows Remote Management (HTTP-based; default 5985/5986).</li>
+            <li><b>DCOM / RPC</b> — legacy distributed object protocols WMI used.</li>
+            <li><b>QFE</b> — Quick Fix Engineering (Windows hotfix term).</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li><code>Test-Connection</code> exit semantics changed in PS7 — use <code>-Quiet</code> for clean boolean.</li>
+            <li><code>Test-NetConnection</code> is Windows-only. Use <code>Test-Connection -TcpPort</code> (PS7+) for cross-platform TCP checks.</li>
+            <li>Avoid <code>Win32_Product</code> — querying it triggers Windows Installer to re-evaluate every MSI's repair check (CPU + slow + can repair packages!). Use Add/Remove Programs registry keys instead (HKLM:\\SOFTWARE\\...\\Uninstall) — see lesson 5.</li>
+            <li>WMI vs CIM date format: WMI uses CIMDateTime (<code>20260516120000.000000+000</code>); <code>Get-CimInstance</code> returns real <code>[datetime]</code> objects. Saves you from manual parsing.</li>
+            <li><code>Get-WmiObject</code> removed in PowerShell 7 — port scripts to <code>Get-CimInstance</code>.</li>
+            <li>Always prefer <code>-Filter</code> (WQL string) over <code>Where-Object</code> for CIM — server-side filtering.</li>
+            <li>Remote CIM needs WinRM enabled on the target (<code>Enable-PSRemoting</code> covers it).</li>
+            <li><code>Invoke-WebRequest</code> in PS 5.1 uses IE's HTML parser; if IE is uninstalled (Win11 24H2+), pass <code>-UseBasicParsing</code>.</li>
+          </ul>
         `
       },
       {
