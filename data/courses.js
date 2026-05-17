@@ -6550,6 +6550,162 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Statistical average recovery time" → MTTR.</li>
             <li>"Stratum 0 in NTP" → reference clock (atomic / GPS).</li>
           </ul>
+
+          <h2>SNMP OID anatomy (memorize the prefix)</h2>
+          <p>Every SNMP object lives at an <b>OID</b> (Object Identifier) — a dotted-decimal path through a tree:</p>
+          <ul>
+            <li><b>1.3.6.1</b> — <code>iso.org.dod.internet</code>. Almost everything you query starts here.</li>
+            <li><b>1.3.6.1.2.1</b> — <b>MIB-II</b> (RFC 1213), the standard set every device must support.</li>
+            <li><b>1.3.6.1.4.1.<i>X</i></b> — Private/enterprise tree under IANA-assigned vendor ID. Cisco = 9, HP = 11, VMware = 6876, MikroTik = 14988.</li>
+          </ul>
+          <p><b>Top OIDs you will actually see:</b></p>
+          <ul>
+            <li><code>sysDescr (1.3.6.1.2.1.1.1)</code> — device hostname/OS string.</li>
+            <li><code>sysUpTime (1.3.6.1.2.1.1.3)</code> — uptime in 1/100ths of a second.</li>
+            <li><code>ifIndex (1.3.6.1.2.1.2.2.1.1)</code> — interface table.</li>
+            <li><code>ifInOctets / ifOutOctets (.10 / .16)</code> — 32-bit byte counters (replaced by 64-bit <code>ifHCInOctets</code> for &gt;1 Gbps).</li>
+            <li><code>ifOperStatus (.8)</code> — 1 up / 2 down / 7 lower-layer-down, etc.</li>
+            <li>Vendor MIBs: <code>cpmCPUTotalPhysicalIndex</code> (Cisco CPU), <code>hpicfSensorObjectValue</code> (HP temperature), etc.</li>
+          </ul>
+          <p><b>SNMPv3 security parameters (USM):</b></p>
+          <ul>
+            <li><b>NoAuthNoPriv</b> — username only, no integrity, no encryption.</li>
+            <li><b>AuthNoPriv</b> — HMAC-MD5/SHA integrity, no encryption.</li>
+            <li><b>AuthPriv</b> — HMAC + encryption (DES/3DES/AES). Production setting.</li>
+          </ul>
+
+          <h2>Syslog message anatomy (BSD RFC 3164 / RFC 5424)</h2>
+          <p>Classic format: <code>&lt;PRI&gt; TIMESTAMP HOST PROGRAM[PID]: MESSAGE</code>.</p>
+          <ul>
+            <li><b>PRI</b> = facility × 8 + severity. E.g., <code>&lt;30&gt;</code> = facility 3 (daemon) × 8 + severity 6 (info).</li>
+            <li><b>Facilities (0–23):</b> 0 kern, 1 user, 2 mail, 3 daemon, 4 auth, 6 lpr, 10 authpriv, 16–23 local0–local7. Most Cisco devices use local6/local7.</li>
+            <li><b>Reliable transports:</b> classic UDP 514 = unreliable (drops in storms). Modern stacks use <b>TCP 6514 + TLS</b> (RFC 5425) or <b>RELP</b> for guaranteed delivery.</li>
+            <li><b>Structured data</b> (RFC 5424) lets fields like <code>[exampleSDID@32473 iut="3" eventID="1011"]</code> ride alongside the message.</li>
+          </ul>
+
+          <h2>Streaming telemetry (replacing legacy polling)</h2>
+          <ul>
+            <li><b>gNMI</b> (gRPC Network Management Interface) — push-based telemetry over HTTP/2 + protobuf. Subscribe to YANG paths; device streams updates.</li>
+            <li><b>OpenConfig</b> — vendor-neutral YANG models.</li>
+            <li><b>NETCONF</b> over SSH (port 830) — XML-based config + state.</li>
+            <li><b>RESTCONF</b> — HTTPS + JSON/XML rendering of NETCONF.</li>
+            <li><b>Telegraf / Prometheus / Grafana stack</b> — modern OSS metrics pipeline. Prometheus scrapes via SNMP_exporter or gNMI; Grafana visualizes.</li>
+            <li><b>Observability "three pillars":</b> Metrics, Logs, Traces.</li>
+          </ul>
+
+          <h2>NetFlow record fields (memorize the v5 7-tuple)</h2>
+          <p>NetFlow v5 keys each flow by 7 fields:</p>
+          <ol>
+            <li>Source IP</li>
+            <li>Destination IP</li>
+            <li>Source port</li>
+            <li>Destination port</li>
+            <li>L3 protocol (TCP/UDP/ICMP)</li>
+            <li>ToS / DSCP</li>
+            <li>Input interface (ifIndex)</li>
+          </ol>
+          <p>v9 + IPFIX use templates so providers can add MPLS labels, BGP next-hop AS, MAC addresses, etc.</p>
+
+          <h2>NTP authentication + security</h2>
+          <ul>
+            <li><b>Symmetric keys</b> (legacy) — pre-shared key MD5/SHA1 between client + server.</li>
+            <li><b>Autokey</b> (PKI-based, deprecated — broken).</li>
+            <li><b>NTS</b> (Network Time Security, RFC 8915) — TLS-based key exchange + authenticated UDP. Modern choice.</li>
+            <li><b>Restrict</b> the upstream NTP servers configured; do not run an open NTP server (used in amplification DDoS).</li>
+            <li>Block <code>monlist</code> (NTPv2 mode 6/7) on Internet-facing servers.</li>
+            <li>Use <b>at least 3 stratum-1 sources</b> for sanity / Byzantine tolerance.</li>
+          </ul>
+
+          <h2>Network diagrams — what each layer should show</h2>
+          <ul>
+            <li><b>L1 physical</b> — rack elevations, cable trays, patch panel labels, fiber polishing types, wall jack IDs, room numbers.</li>
+            <li><b>L2 link</b> — switch hostnames, port speeds, VLAN allowed lists per trunk, STP root, LACP bundles.</li>
+            <li><b>L3 routing</b> — subnets, gateways, routing protocol areas/ASNs, OSPF Area 0 boundary, default route source.</li>
+            <li><b>L4–L7 service</b> — load balancers, firewalls, DNS hierarchy, app endpoints, certs, WAF.</li>
+            <li><b>WAN / Internet</b> — circuits, ASNs, BGP peers, ISP contacts.</li>
+            <li><b>Wireless</b> — heatmap, AP locations, channel assignments, controller IP.</li>
+            <li><b>Trust + security</b> — zones, segmentation, ACL boundaries, identity stores.</li>
+          </ul>
+
+          <h2>IPAM + DCIM (the modern stack)</h2>
+          <ul>
+            <li><b>IPAM</b> (IP Address Management) — single source of truth for subnets, VLANs, gateways, DNS. Tools: NetBox, phpIPAM, Infoblox, BlueCat, Microsoft IPAM (built into Windows Server).</li>
+            <li><b>DCIM</b> (Data Center Infrastructure Management) — rack U slots, power draw, cooling, asset relationships. Tools: NetBox (free), Sunbird, Nlyte, Device42.</li>
+            <li><b>Source of truth</b> philosophy — IPAM/DCIM is authoritative; configs/diagrams are generated from it via automation.</li>
+            <li>Integrate with DNS (auto-create A/PTR), DHCP scopes, monitoring system, CMDB.</li>
+          </ul>
+
+          <h2>Change-management quality checks</h2>
+          <ul>
+            <li><b>Pre-checks</b>: routing-table snapshot, OSPF/BGP neighbor list, ping baselines, interface up counts, error counter delta.</li>
+            <li><b>Post-checks</b>: re-run the exact same probes; diff results.</li>
+            <li><b>Backout test</b>: actually verify the rollback worked in lab.</li>
+            <li><b>Communication template</b>: site, start/end window, scope, expected impact, owner, contact, backout decision time.</li>
+            <li><b>Maintenance windows</b>: align to lowest business impact (e.g., Sun 2-4am local).</li>
+            <li><b>Freeze periods</b>: avoid changes during year-end close, peak retail, election day, etc.</li>
+          </ul>
+
+          <h2>Service performance targets (memorize the numbers)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Metric</th><th align="left" style="padding:4px;border-bottom:1px solid #444">VoIP</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Video conf</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Web/SaaS</th></tr>
+            <tr><td>Latency one-way</td><td>&lt; 150 ms</td><td>&lt; 200 ms</td><td>&lt; 400 ms</td></tr>
+            <tr><td>Jitter</td><td>&lt; 30 ms</td><td>&lt; 50 ms</td><td>n/a</td></tr>
+            <tr><td>Packet loss</td><td>&lt; 1 %</td><td>&lt; 0.5 %</td><td>&lt; 1 %</td></tr>
+            <tr><td>MOS (voice quality)</td><td>&gt; 4.0 (toll quality)</td><td>n/a</td><td>n/a</td></tr>
+          </table>
+
+          <h2>Uptime ↔ downtime table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Uptime</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Downtime / year</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Downtime / month</th></tr>
+            <tr><td>99 % (two 9s)</td><td>3 d 15 h</td><td>7 h 18 m</td></tr>
+            <tr><td>99.9 % (three 9s)</td><td>8 h 45 m</td><td>43 m 49 s</td></tr>
+            <tr><td>99.95 %</td><td>4 h 22 m</td><td>21 m 54 s</td></tr>
+            <tr><td>99.99 % (four 9s)</td><td>52 m 35 s</td><td>4 m 22 s</td></tr>
+            <tr><td>99.999 % (five 9s)</td><td>5 m 15 s</td><td>26 s</td></tr>
+          </table>
+
+          <h2>Disaster recovery + business continuity quick math</h2>
+          <ul>
+            <li><b>RTO</b> (Recovery Time Objective) — how long can the service be down? Drives infra design (cold vs warm vs hot site, cluster, multi-region).</li>
+            <li><b>RPO</b> (Recovery Point Objective) — how much data loss is acceptable? Drives backup frequency + replication mode (async vs sync).</li>
+            <li><b>MTTD</b> (Mean Time To Detect) — how quickly alerts fire.</li>
+            <li><b>MTTR</b> (Mean Time To Repair / Recovery).</li>
+            <li><b>BIA</b> (Business Impact Analysis) — feeds RTO/RPO values per service.</li>
+            <li><b>Sites:</b> cold (hardware ready, no data), warm (data current, partial spin-up), hot (live failover, sync replication).</li>
+          </ul>
+
+          <h2>NaaS, ChatOps, NetDevOps (modern operating models)</h2>
+          <ul>
+            <li><b>NaaS</b> (Network as a Service) — vendor delivers network capabilities (SD-WAN/SASE/firewalls) on consumption pricing.</li>
+            <li><b>NetDevOps</b> — apply software engineering (Git, CI/CD, code review, IaC) to network config.</li>
+            <li><b>ChatOps</b> — operational tasks + alerts routed through Slack/Teams; bots run commands with audit trail.</li>
+            <li><b>GitOps</b> — desired state in Git; controller reconciles devices to match.</li>
+            <li><b>Source of truth</b> integrations: NetBox → Nornir / Ansible → device config push.</li>
+          </ul>
+
+          <h2>Ticketing best practice</h2>
+          <ul>
+            <li>Capture: who, what, when, where, screenshot, exact error wording.</li>
+            <li>Reproduction steps + impact (1 user / department / site / org).</li>
+            <li>Workaround documented even if root cause pending.</li>
+            <li>Tag with category (network/server/app), affected service, owning team.</li>
+            <li>SLA timer starts at ticket open; pause for vendor wait if allowed.</li>
+            <li>Close ticket only after user confirms resolution.</li>
+          </ul>
+
+          <h2>10 ops scenarios</h2>
+          <ol>
+            <li><b>"All firewall logs lost during last incident"</b> → log forwarding to remote syslog wasn't enabled; add ≥ 2 collectors, retain 1 yr min.</li>
+            <li><b>"SNMP polls timing out at peak load"</b> → polling too aggressive; tune to 1-2 min, prefer bulk gets, consider streaming telemetry.</li>
+            <li><b>"NTP drift on critical server causes Kerberos failures"</b> → server using broken stratum-15 source; configure ≥ 3 stratum-1/2 sources or NTS.</li>
+            <li><b>"Network change broke prod and rollback procedure unclear"</b> → mandatory rollback plan in every RFC; lab-test the rollback before CAB approval.</li>
+            <li><b>"Random switch in IDF rebooting nightly"</b> → review CDP/LLDP neighbor history, check temperature, PSU + uptime; correlate with PoE budget changes.</li>
+            <li><b>"Bandwidth report shows 10× more traffic than expected"</b> → check NetFlow top talkers; could be backup job, ransomware exfil, or misconfigured replication.</li>
+            <li><b>"Auditor asks for config from 18 months ago"</b> → produce from Git history of nightly config archive (Rancid/Oxidized/NetBox-DataSync).</li>
+            <li><b>"Outage hit RTO of 4h but recovery actually 6h"</b> → BIA revision needed; warm site insufficient — consider hot site with continuous replication.</li>
+            <li><b>"Stratum-1 GPS time server lost lock indoors"</b> → relocate antenna with sky view + lightning protection; add NTS-based secondary upstream.</li>
+            <li><b>"Major incident with no post-mortem"</b> → enforce blameless RCA within 1-2 weeks of every Sev1/2; update runbooks + alerts.</li>
+          </ol>
         `
       },
       {
