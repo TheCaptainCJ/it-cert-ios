@@ -4724,6 +4724,128 @@ interface Gi0/24
             <li>"Up to 100 W per port" → 802.3bt Type 4 (PoE++).</li>
             <li>"Defenses against VLAN hopping" → disable DTP, tag native VLAN, change native VLAN from 1.</li>
           </ul>
+
+          <h2>802.1Q tag — the 4 bytes that make trunks work</h2>
+          <p>Inserted into the Ethernet frame between the Source MAC and the EtherType. Total <b>4 bytes</b>, bumping max frame size to 1522.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bits</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>TPID (Tag Protocol Identifier)</td><td>16</td><td><code>0x8100</code> — marks an 802.1Q tag. (<code>0x88A8</code> for Q-in-Q outer)</td></tr>
+            <tr><td>PCP (Priority Code Point)</td><td>3</td><td>802.1p CoS, 0–7 (higher = more important)</td></tr>
+            <tr><td>DEI (Drop Eligible)</td><td>1</td><td>Mark frame as drop-eligible under congestion</td></tr>
+            <tr><td>VID (VLAN ID)</td><td>12</td><td>1–4094 (0 + 4095 reserved). VLAN 1 = default; VLAN 1002–1005 historically Token Ring</td></tr>
+          </table>
+          <p><b>Native VLAN gotcha:</b> default is VLAN 1 — untagged on a trunk. Both sides must match. Mismatch logs <code>%CDP-4-NATIVE_VLAN_MISMATCH</code>. Best practice: pick an unused VLAN ID (e.g., 999) and configure <code>vlan dot1q tag native</code> so even the native is tagged — defeats double-tag hopping.</p>
+
+          <h2>VLAN hopping attacks — drilled</h2>
+          <h3>Switch-spoofing</h3>
+          <ol>
+            <li>Attacker connects laptop to an access port that's still in default DTP mode (<code>dynamic auto</code> or <code>dynamic desirable</code>).</li>
+            <li>Laptop sends DTP advertising itself as a switch wanting a trunk.</li>
+            <li>Port flips to trunk → attacker now sees frames from <i>every</i> VLAN on the switch.</li>
+            <li><b>Fix:</b> <code>switchport mode access</code> + <code>switchport nonegotiate</code> on every access port. Never leave DTP at default.</li>
+          </ol>
+          <h3>Double-tagging (RFC informal "dot1q tunnel abuse")</h3>
+          <ol>
+            <li>Attacker on access port in <b>native VLAN 1</b> crafts a frame with TWO 802.1Q headers: outer = VLAN 1 (matching the native), inner = victim VLAN 10.</li>
+            <li>First switch sees an untagged-looking frame (the outer matches its native), strips the outer tag.</li>
+            <li>Frame is forwarded into the trunk still carrying the inner VLAN 10 tag.</li>
+            <li>Receiving switch reads the inner tag and delivers the frame to VLAN 10.</li>
+            <li><b>One-way attack</b> — replies don't come back unless reflective. Used for spoofed broadcasts / discovery scans.</li>
+            <li><b>Fix:</b> change native VLAN off VLAN 1, force-tag the native, or use a dedicated unused VLAN for "native" that no host belongs to.</li>
+          </ol>
+
+          <h2>STP state machine — exact timers</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">State</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Duration (STP)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What happens</th></tr>
+            <tr><td>Disabled</td><td>—</td><td>Port admin-down</td></tr>
+            <tr><td>Blocking</td><td>up to 20 s Max Age</td><td>Listens for BPDUs, no forwarding</td></tr>
+            <tr><td>Listening</td><td>15 s</td><td>Sends + receives BPDUs, no MAC learning</td></tr>
+            <tr><td>Learning</td><td>15 s</td><td>Builds MAC table, still no forwarding</td></tr>
+            <tr><td>Forwarding</td><td>—</td><td>Normal operation</td></tr>
+          </table>
+          <p>Classic 802.1D STP convergence ≈ <b>30–50 seconds</b> total (Listening + Learning + Max Age). RSTP (802.1w) reduces to ~3–6 s by replacing timer-based transitions with proposal/agreement handshake on point-to-point links.</p>
+          <p><b>Hello</b> = 2 s; <b>Forward Delay</b> = 15 s; <b>Max Age</b> = 20 s. Memorize 2-15-20.</p>
+
+          <h2>BPDU + Bridge ID details</h2>
+          <ul>
+            <li><b>Bridge ID</b> = <b>Priority (2 B) + MAC (6 B)</b>. Lower wins root election. Priority default 32768; tunable in increments of 4096. With "extended system ID" the lower 12 bits encode VLAN, so per-VLAN STP uses one root per VLAN.</li>
+            <li><b>BPDU types:</b> <b>Configuration BPDU</b> (root advertisement, every 2 s) and <b>TCN BPDU</b> (Topology Change Notification, sent on link change).</li>
+            <li><b>Path cost</b> defaults: 1 Gbps = 4, 10 Gbps = 2, 100 Mbps = 19, 10 Mbps = 100 (IEEE long-cost mode differs).</li>
+            <li><b>Root port</b> = port with lowest cumulative cost to root. <b>Designated port</b> = best port on a segment. <b>Alternate / backup ports</b> in RSTP fill the role of "blocking".</li>
+          </ul>
+
+          <h2>STP enhancement features — what each one stops</h2>
+          <ul>
+            <li><b>PortFast</b> — skip listening + learning on access ports so end hosts don't wait 30 s. Mandatory on user-facing ports.</li>
+            <li><b>BPDU Guard</b> — if a port receives a BPDU (it shouldn't, it's an access port), err-disable it. Prevents rogue switches.</li>
+            <li><b>BPDU Filter</b> — drop incoming/outgoing BPDUs. Use with care.</li>
+            <li><b>Root Guard</b> — block superior BPDUs from being accepted, preserving root location. Apply on ports facing partner / customer switches.</li>
+            <li><b>Loop Guard</b> — if a non-designated port stops receiving BPDUs (one-way link), put it in loop-inconsistent state instead of letting it transition.</li>
+            <li><b>UDLD</b> (Unidirectional Link Detection) — detects unidirectional fiber failure and shuts the port.</li>
+            <li><b>BackboneFast</b> + <b>UplinkFast</b> — legacy STP convergence helpers (predate RSTP).</li>
+          </ul>
+          <p><b>Rule of thumb:</b> access ports = PortFast + BPDU Guard. Trunks/uplinks = Root Guard + UDLD.</p>
+
+          <h2>LACP frame + state details</h2>
+          <ul>
+            <li>LACPDU sent every 1 s (Fast) or 30 s (Slow). Both ends must agree on rate.</li>
+            <li>Each side advertises Actor + Partner state flags: <b>Activity</b> (Active/Passive), <b>Timeout</b> (Short/Long), <b>Aggregatable</b>, <b>Synchronization</b>, <b>Collecting</b>, <b>Distributing</b>.</li>
+            <li>Bundle forms only if both sides agree on speed, duplex, VLAN list, MTU, native VLAN.</li>
+            <li><b>System priority + MAC</b> elects the "decision side" if there's a tie; the lower wins.</li>
+            <li><b>Hash modes:</b> src-MAC, dst-MAC, src-dst-MAC, src-IP, dst-IP, src-dst-IP, L4 ports. Choose to spread traffic across members. Single TCP flow always goes over ONE member — bundle ≠ faster single flow.</li>
+          </ul>
+
+          <h2>802.1X — port-based network access control</h2>
+          <ol>
+            <li>Switch port is "controlled" — only EAPoL (EtherType <code>0x888E</code>) can flow until auth completes.</li>
+            <li>Supplicant (endpoint) sends EAPoL-Start (or switch sends EAP-Request Identity on link-up).</li>
+            <li>Switch (Authenticator) wraps EAP messages in RADIUS Access-Request to AAA server.</li>
+            <li>EAP method runs (PEAP, EAP-TLS, EAP-FAST, MSCHAPv2 inside).</li>
+            <li>AAA server returns Access-Accept (+ optional VLAN/ACL via RADIUS attributes) or Access-Reject.</li>
+            <li>Switch opens or keeps the port closed; can place in <b>guest VLAN</b>, <b>auth-fail VLAN</b>, or <b>critical VLAN</b> if RADIUS down.</li>
+          </ol>
+          <p><b>MAB</b> (MAC Authentication Bypass) — fallback for printers/cameras that don't speak 802.1X. Switch sends the MAC as username/password to RADIUS.</p>
+
+          <h2>Storm control + port security details</h2>
+          <ul>
+            <li><b>Storm control</b> — caps broadcast / multicast / unknown-unicast bandwidth per port (e.g., 1%). Action = drop or shutdown.</li>
+            <li><b>Port Security</b> — limit number of MAC addresses learned on a port. Modes: <b>protect</b> (silently drop), <b>restrict</b> (drop + log), <b>shutdown</b> (err-disable).</li>
+            <li><b>Sticky MAC</b> — switch auto-learns the first allowed MACs and writes them to running-config so they persist across reboots.</li>
+            <li><b>DHCP Snooping</b> — switch tracks DHCP DISCOVER/OFFER per port; only "trusted" ports can answer. Blocks rogue DHCP servers.</li>
+            <li><b>DAI</b> (Dynamic ARP Inspection) — verifies ARP replies against DHCP Snooping binding table; drops ARP poisoning.</li>
+            <li><b>IP Source Guard</b> — drops packets whose source IP/MAC don't match the snooping binding.</li>
+          </ul>
+
+          <h2>Voice VLAN + LLDP-MED</h2>
+          <ul>
+            <li><b>Voice VLAN</b> — a switch port can carry one access VLAN for the PC + a separate "voice" tagged VLAN for an IP phone daisy-chained behind it.</li>
+            <li><b>LLDP-MED</b> (Media Endpoint Discovery) — phone learns voice VLAN, QoS markings (CoS 5, DSCP EF/46), and PoE class from the switch automatically.</li>
+            <li><b>CDP</b> (Cisco) does the same on Cisco gear.</li>
+          </ul>
+
+          <h2>Switch show commands you must know</h2>
+          <pre><code>show interfaces status                  # quick port table
+show interface gi1/0/24                 # counters, duplex, errors
+show mac address-table
+show vlan brief
+show spanning-tree
+show spanning-tree summary
+show etherchannel summary
+show port-security
+show power inline
+show cdp neighbors / show lldp neighbors
+show errdisable detect / recovery</code></pre>
+
+          <h2>Real-world switching gotchas</h2>
+          <ul>
+            <li>Two interfaces with hardcoded different duplex → "duplex mismatch" — symptoms are late collisions, CRC errors, slow throughput under load. Fix: leave both auto or hardcode both.</li>
+            <li>MTU mismatch on a trunk drops frames silently — both sides must agree (jumbo frames require ALL hops to support).</li>
+            <li>Port becomes err-disabled — <code>show errdisable recovery</code> + <code>shutdown</code>/<code>no shutdown</code> only after root cause fixed (port security, BPDU Guard, etc.).</li>
+            <li>Spanning Tree blocks the wrong link → manually set root bridge priority on the core switch (e.g., 4096) so it always wins.</li>
+            <li>EtherChannel won't form → most often duplex/speed mismatch or one member configured access while the other is trunk.</li>
+            <li>Voice VLAN works, but PCs lose connectivity when phone unplugged → check that <code>switchport voice vlan</code> doesn't break the underlying access VLAN config.</li>
+            <li>VLAN traffic crosses a router but not back → trunk allowed list missing the return VLAN, or sub-interface IP/VLAN mismatch (router-on-a-stick).</li>
+          </ul>
         `
       },
       {
