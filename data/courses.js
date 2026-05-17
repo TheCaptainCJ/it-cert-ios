@@ -5093,6 +5093,172 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Validate BGP route origins cryptographically" → RPKI.</li>
             <li>"Detect link down sub-second" → BFD.</li>
           </ul>
+
+          <h2>OSPF LSA type catalog (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Origin</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Scope</th></tr>
+            <tr><td>1</td><td>Router</td><td>Every router</td><td>Area</td></tr>
+            <tr><td>2</td><td>Network</td><td>DR on multi-access</td><td>Area</td></tr>
+            <tr><td>3</td><td>Summary (Network)</td><td>ABR</td><td>Other areas</td></tr>
+            <tr><td>4</td><td>Summary (ASBR)</td><td>ABR</td><td>Other areas</td></tr>
+            <tr><td>5</td><td>External</td><td>ASBR (redistribution)</td><td>Whole AS (except stubs)</td></tr>
+            <tr><td>7</td><td>NSSA External</td><td>ASBR in NSSA</td><td>NSSA only; ABR translates to Type 5</td></tr>
+            <tr><td>9–11</td><td>Opaque</td><td>Various</td><td>Extensions (MPLS TE)</td></tr>
+          </table>
+
+          <h2>OSPF DR / BDR election</h2>
+          <ol>
+            <li>On multi-access networks (Ethernet, broadcast), every router would form n×(n−1) full adjacencies. Wasteful.</li>
+            <li>Routers elect a <b>DR</b> (Designated Router) and <b>BDR</b> (Backup DR). Everyone forms adjacency only with DR + BDR; DR floods LSAs to the rest via 224.0.0.5.</li>
+            <li><b>Election rule:</b> highest OSPF priority wins (0–255, default 1). Priority 0 = "never DR". Tiebreaker: highest <b>Router ID</b>.</li>
+            <li>Router ID source order: <code>router-id</code> command → highest loopback IP → highest active interface IP.</li>
+            <li>Election is <b>NOT preemptive</b> — if a higher-priority router joins later, the existing DR keeps the role. Reload to force re-election.</li>
+            <li>On point-to-point or P2MP links, no DR/BDR — direct adjacency.</li>
+          </ol>
+
+          <h2>OSPF neighbor state machine</h2>
+          <p><b>Down → Init → 2-Way → ExStart → Exchange → Loading → Full.</b></p>
+          <ul>
+            <li><b>2-Way</b> — bidirectional hello seen; on multi-access, DROther↔DROther stays here (no full DB exchange).</li>
+            <li><b>ExStart</b> — master/slave election for DBD exchange. Stuck here often = <b>MTU mismatch</b>.</li>
+            <li><b>Exchange / Loading</b> — DBD / LSR / LSU exchange.</li>
+            <li><b>Full</b> — adjacency complete; routing happens here.</li>
+          </ul>
+
+          <h2>EIGRP DUAL terminology drill</h2>
+          <ul>
+            <li><b>Feasible Distance (FD)</b> — best metric from this router to the destination.</li>
+            <li><b>Reported Distance (RD)</b> / Advertised Distance — metric the neighbor reports.</li>
+            <li><b>Successor</b> — neighbor with the lowest FD; the route installed in the routing table.</li>
+            <li><b>Feasible Successor (FS)</b> — backup neighbor whose RD &lt; current FD. Already loop-free, so failover is instant (no recomputation).</li>
+            <li><b>Active route</b> — EIGRP doing a "query" to neighbors to find a new path; usually transient. Stuck-in-Active (SIA) = upstream not responding.</li>
+            <li><b>K values</b> — bandwidth (K1), load (K2), delay (K3), reliability (K4), MTU (K5). Default uses K1+K3 only. Must match between neighbors or no adjacency.</li>
+          </ul>
+
+          <h2>BGP state machine (FSM)</h2>
+          <ol>
+            <li><b>Idle</b> — no resources allocated.</li>
+            <li><b>Connect</b> — waiting for TCP 3-way handshake.</li>
+            <li><b>Active</b> — actively trying TCP again (paradoxically NOT "everything working" — name is confusing).</li>
+            <li><b>OpenSent</b> — sent BGP OPEN, waiting for OPEN reply.</li>
+            <li><b>OpenConfirm</b> — got OPEN, waiting for KEEPALIVE.</li>
+            <li><b>Established</b> — adjacency up, exchanging UPDATEs.</li>
+          </ol>
+          <p><b>Stuck in Active</b> = TCP/179 isn't completing. Check ACL/firewall, source IP (must match neighbor statement), TTL (eBGP defaults TTL=1 — use ebgp-multihop if not directly connected).</p>
+
+          <h2>BGP path-selection algorithm — the 13-step long form</h2>
+          <ol>
+            <li><b>Highest Weight</b> (Cisco-only, local to one router).</li>
+            <li><b>Highest LOCAL_PREF</b> — set by inbound policy; influences outbound traffic for an AS.</li>
+            <li><b>Locally originated</b> (via <code>network</code> / aggregate / redistribute) preferred over learned.</li>
+            <li><b>Shortest AS_PATH</b>.</li>
+            <li><b>Lowest Origin code</b> — IGP (i) &lt; EGP (e) &lt; Incomplete (?).</li>
+            <li><b>Lowest MED</b> (Multi-Exit Discriminator) — only compared between paths from the same neighboring AS.</li>
+            <li><b>eBGP preferred over iBGP</b>.</li>
+            <li><b>Lowest IGP metric</b> to next-hop.</li>
+            <li>For eBGP, <b>oldest route</b> preferred (path stability).</li>
+            <li><b>Lowest Router ID</b>.</li>
+            <li><b>Shortest Cluster List length</b> (route-reflector environments).</li>
+            <li><b>Lowest neighbor IP</b>.</li>
+          </ol>
+          <p><b>Mnemonic:</b> "<b>W</b>e <b>L</b>ove <b>O</b>ranges <b>A</b>S <b>O</b>ranges <b>M</b>ean <b>P</b>ure <b>R</b>efreshment" — Weight, Local-Pref, Originate, AS-path, Origin, MED, Path (eBGP/iBGP), Router-ID.</p>
+
+          <h2>BGP attribute classes</h2>
+          <ul>
+            <li><b>Well-known mandatory</b> — every UPDATE must include: AS_PATH, NEXT_HOP, ORIGIN.</li>
+            <li><b>Well-known discretionary</b> — LOCAL_PREF, ATOMIC_AGGREGATE.</li>
+            <li><b>Optional transitive</b> — passed along even if unsupported: COMMUNITY, AGGREGATOR.</li>
+            <li><b>Optional non-transitive</b> — dropped if unsupported: MED, ORIGINATOR_ID, CLUSTER_LIST.</li>
+          </ul>
+
+          <h2>First-hop redundancy detailed</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Feature</th><th align="left" style="padding:4px;border-bottom:1px solid #444">HSRP</th><th align="left" style="padding:4px;border-bottom:1px solid #444">VRRP</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GLBP</th></tr>
+            <tr><td>Vendor</td><td>Cisco</td><td>IETF (RFC 5798)</td><td>Cisco</td></tr>
+            <tr><td>Active routers</td><td>1 active + 1 standby</td><td>1 master + N backup</td><td>Multiple active (load balance)</td></tr>
+            <tr><td>Virtual MAC</td><td>0000.0C07.AC<i>xx</i></td><td>0000.5E00.01<i>xx</i></td><td>0007.B400.<i>xxyy</i></td></tr>
+            <tr><td>Multicast</td><td>224.0.0.2 (v1) / 224.0.0.102 (v2)</td><td>224.0.0.18</td><td>224.0.0.102</td></tr>
+            <tr><td>UDP/IP protocol</td><td>UDP 1985</td><td>IP proto 112</td><td>UDP 3222</td></tr>
+            <tr><td>Hello / Hold</td><td>3 s / 10 s</td><td>1 s / 3 s</td><td>3 s / 10 s</td></tr>
+          </table>
+          <p><b>States (HSRP):</b> Initial → Listen → Speak → Standby → Active. <b>Preempt</b> must be enabled for higher-priority router to take over after recovery.</p>
+
+          <h2>Routing-loop prevention (distance-vector toolkit)</h2>
+          <ul>
+            <li><b>Split horizon</b> — don't advertise a route back out the interface you learned it on.</li>
+            <li><b>Poison reverse</b> — advertise the route back, marked unreachable (metric 16 in RIP), to explicitly cancel it.</li>
+            <li><b>Hold-down timer</b> — ignore updates about a failed route for N seconds.</li>
+            <li><b>Triggered updates</b> — send immediate change rather than waiting for periodic timer.</li>
+            <li><b>Max hop count</b> — RIP's 15-hop cap.</li>
+          </ul>
+
+          <h2>VRF — Virtual Routing and Forwarding</h2>
+          <p><b>What:</b> Multiple independent routing tables on one router. Each VRF acts like a separate router. <b>Why:</b> Multi-tenant networks, MPLS L3 VPN, management vs production separation, customer isolation. <b>How:</b> Interfaces assigned to a VRF, all routes for that VRF live in its own RIB/FIB. Optional <b>route-target</b> + <b>route-distinguisher</b> for MPLS VPN.</p>
+
+          <h2>Policy-Based Routing (PBR)</h2>
+          <p><b>What:</b> Forward packets based on source/policy instead of destination only — e.g., voice traffic over Link A, bulk over Link B. <b>How:</b> route-map matched on source IP / DSCP / ACL → set next-hop or interface. Overrides the RIB for matching traffic.</p>
+
+          <h2>Asymmetric routing pitfalls</h2>
+          <ul>
+            <li>Forward path uses Router A, return path uses Router B.</li>
+            <li>Stateful firewalls / NAT see only half the flow → drop session.</li>
+            <li>Fixes: route-affinity policy, source-NAT on a single edge, ensure both paths see both directions.</li>
+          </ul>
+
+          <h2>Route summarization (best practice)</h2>
+          <ul>
+            <li>Aggregate at area / AS boundaries to shrink upstream tables.</li>
+            <li>OSPF: <code>area X range</code> on ABR; <code>summary-address</code> on ASBR.</li>
+            <li>EIGRP: <code>ip summary-address eigrp</code> on outbound interface.</li>
+            <li>BGP: <code>aggregate-address</code>.</li>
+            <li>Trade-off: tighter summary = less detail upstream but less responsive to internal flaps.</li>
+          </ul>
+
+          <h2>Modern fast-convergence stack</h2>
+          <ul>
+            <li><b>BFD</b> (Bidirectional Forwarding Detection) — sub-second link-fault detection (300–500 ms typical).</li>
+            <li><b>OSPF / EIGRP / BGP timers tuning</b> — hellos at sub-second.</li>
+            <li><b>Graceful Restart / NSF</b> — keeps forwarding table during a control-plane reboot.</li>
+            <li><b>LFA</b> (Loop-Free Alternates) — precomputed backup paths for instant failover.</li>
+            <li><b>IP Fast Reroute (IP-FRR)</b> — &lt;50 ms reroute.</li>
+            <li><b>SR-MPLS / Segment Routing</b> — modern source-routed traffic engineering replacing classic MPLS TE.</li>
+          </ul>
+
+          <h2>NAT traversal + ALG</h2>
+          <ul>
+            <li><b>ALG</b> (Application Layer Gateway) — NAT helper that rewrites embedded IPs inside protocols (FTP, SIP, H.323). Sometimes breaks SIP — disable ALG and use SBC instead.</li>
+            <li><b>STUN / TURN / ICE</b> — client-side NAT discovery used by WebRTC.</li>
+            <li><b>Hairpin NAT</b> — internal client reaches an internal server via its public IP; router NATs the source so reply comes back through it.</li>
+            <li><b>NAT loopback</b> = same as hairpin.</li>
+          </ul>
+
+          <h2>Multicast routing concepts</h2>
+          <ul>
+            <li><b>IGMP</b> (v2/v3) — host signals it wants a multicast group at L2/L3 edge.</li>
+            <li><b>PIM</b> (Protocol Independent Multicast): Sparse Mode (RP-based), Dense Mode (flood-and-prune), Bidirectional, Source-Specific.</li>
+            <li><b>RP</b> (Rendezvous Point) — meeting point in PIM-SM.</li>
+            <li><b>IGMP Snooping</b> — switches track group memberships to avoid flooding multicast to all ports.</li>
+          </ul>
+
+          <h2>QoS at L3</h2>
+          <ul>
+            <li><b>DSCP</b> markings in the IP header (6 bits in DS field): EF (46) for voice, AF41 (34) for video, AF21 (18) for transactional, CS6 (48) for routing.</li>
+            <li><b>Queues + scheduling:</b> LLQ (Low Latency Queue) for voice, WFQ / CBWFQ for the rest.</li>
+            <li><b>Shaping vs Policing:</b> shape = buffer + slow; police = drop + remark when over budget.</li>
+            <li><b>Trust boundary</b> — first hop that re-marks; usually the access switch closest to the IP phone.</li>
+          </ul>
+
+          <h2>Common routing/exam scenarios</h2>
+          <ol>
+            <li><b>"OSPF neighbors stuck in ExStart"</b> → MTU mismatch on the link.</li>
+            <li><b>"BGP stays in Active"</b> → TCP/179 blocked; check ACL, NAT, neighbor IP, ebgp-multihop.</li>
+            <li><b>"Routes installed but pings fail"</b> → ACL or stateful firewall dropping return; check reverse path.</li>
+            <li><b>"Static route active even though dynamic learned same prefix"</b> → static AD (1) beats dynamic (90+); use floating static (AD 200) for backup.</li>
+            <li><b>"Internet traffic going out wrong ISP"</b> → tune BGP outbound via LOCAL_PREF or AS_PATH prepend.</li>
+            <li><b>"Inbound traffic asymmetric"</b> → use MED + community tagging with upstream ISPs.</li>
+            <li><b>"DR is wrong router after reload"</b> → election non-preemptive; manually clear OSPF process to re-elect.</li>
+            <li><b>"Network gets summarized to /16 but I need /24 visibility"</b> → undo summary or use specific filter.</li>
+          </ol>
         `
       },
       {
