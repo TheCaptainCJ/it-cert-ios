@@ -412,6 +412,190 @@ const LABS = {
           answer: 1,
           explain: 'PortFast moves ports straight to forwarding for end devices. PAIR with BPDU guard to block accidental switch plug-ins.' }
       ]
+    },
+    {
+      id: 'n-pbq1',
+      title: 'PBQ: VLSM Plan for Branch Office',
+      objective: '1.4 — IPv4 + VLSM',
+      steps: [
+        { type: 'note', text: 'Given 192.168.0.0/24. Subnets needed: Sales (60 hosts), Eng (28 hosts), HR (12 hosts), 3 point-to-point WAN links (2 hosts each).' },
+        { type: 'fillblank',
+          prompt: 'Smallest prefix that supports 60 hosts?',
+          answer: ['/26', '26'],
+          placeholder: '/xx',
+          explain: '/26 = 62 usable. /27 = 30 usable (not enough). Always size for usable count (subtract 2 for network + broadcast).' },
+        { type: 'order',
+          prompt: 'Assign VLSM subnets in CORRECT VLSM order (largest first, lowest address first):',
+          items: [
+            'Sales 192.168.0.0/26 (.1-.62, bcast .63)',
+            'Eng 192.168.0.64/27 (.65-.94, bcast .95)',
+            'HR 192.168.0.96/28 (.97-.110, bcast .111)',
+            'WAN1 192.168.0.112/30 (.113-.114, bcast .115)',
+            'WAN2 192.168.0.116/30 (.117-.118, bcast .119)',
+            'WAN3 192.168.0.120/30 (.121-.122, bcast .123)'
+          ],
+          explain: 'VLSM rule: sort by host count DESC, assign starting at lowest address, advance by block size. /26 block=64, /27 block=32, /28 block=16, /30 block=4.' },
+        { type: 'multiselect',
+          prompt: 'Which addresses are USABLE host IPs in 192.168.0.64/27?',
+          options: ['192.168.0.64', '192.168.0.65', '192.168.0.80', '192.168.0.94', '192.168.0.95', '192.168.0.96'],
+          answers: [1, 2, 3],
+          explain: '/27 block=32. Network=.64, broadcast=.95. Usable .65-.94. .64 is network, .95 is broadcast, .96 is next subnet.' },
+        { type: 'fillblank',
+          prompt: 'How many /30 subnets fit in a /22?',
+          answer: ['256', '2^8'],
+          placeholder: 'Number',
+          explain: '2^(30-22) = 2^8 = 256. Useful for WAN-link planning.' }
+      ]
+    },
+    {
+      id: 'n-pbq2',
+      title: 'PBQ: VLAN + Trunk Config',
+      objective: '2.3 — VLAN + 802.1Q',
+      steps: [
+        { type: 'note', text: 'You configure access port + trunk port. PC plugs into access port; uplink to another switch is a trunk.' },
+        { type: 'dragmatch',
+          prompt: 'Match each frame condition with the correct switch port behavior.',
+          pairs: [
+            { left: 'Untagged frame on access port VLAN 10', right: 'Forwarded as VLAN 10' },
+            { left: 'Tagged frame VLAN 99 on trunk allowing only 10,20,30', right: 'Dropped (VLAN 99 not allowed)' },
+            { left: 'Untagged frame on a trunk', right: 'Placed into native VLAN' },
+            { left: 'Tagged frame VLAN 10 on access port VLAN 20', right: 'Dropped (access port expects untagged)' }
+          ],
+          explain: 'Access ports: 1 untagged VLAN. Trunks: tagged + 1 native (untagged) VLAN. Tag/access mismatch = drop. Allowed-VLAN-list filters trunks.' },
+        { type: 'choice',
+          prompt: 'Best practice for trunk native VLAN to defeat double-tagging hop?',
+          options: [
+            'Leave native as default VLAN 1',
+            'Change native to an unused VLAN ID and tag it (vlan dot1q tag native)',
+            'Disable VLANs entirely',
+            'Use ISL instead of 802.1Q'
+          ],
+          answer: 1,
+          explain: 'Double-tag attack works against default VLAN 1 native. Move native to an unused ID + force-tag. ISL is Cisco-only + deprecated.' },
+        { type: 'multiselect',
+          prompt: 'Pick STP enhancement features ALL access ports should have:',
+          options: ['PortFast', 'BPDU Guard', 'Root Guard', 'UDLD', 'Loop Guard', 'DTP enabled'],
+          answers: [0, 1],
+          explain: 'Access ports: PortFast (skip listening/learning) + BPDU Guard (err-disable on rogue BPDU). Root Guard goes on partner-facing trunks. UDLD + Loop Guard on uplinks/fiber. DTP should be DISABLED to defeat VLAN hopping.' },
+        { type: 'order',
+          prompt: 'STP port states from initial to forwarding:',
+          items: ['Blocking', 'Listening', 'Learning', 'Forwarding'],
+          explain: 'Classic 802.1D order: Blocking → Listening (15s) → Learning (15s) → Forwarding. RSTP merges to Discarding → Learning → Forwarding.' }
+      ]
+    },
+    {
+      id: 'n-pbq3',
+      title: 'PBQ: Routing + ACL Drop',
+      objective: '2.5 — Routing tables + ACL evaluation',
+      steps: [
+        { type: 'note', text: 'Router has these entries: 0.0.0.0/0 via ISP, 10.0.0.0/8 via R2, 10.1.0.0/16 via R3, 10.1.5.0/24 via R4. Packet destined 10.1.5.42 arrives.' },
+        { type: 'fillblank',
+          prompt: 'Which next-hop wins for destination 10.1.5.42?',
+          answer: ['r4', 'R4'],
+          placeholder: 'R2 / R3 / R4',
+          explain: 'Longest-prefix match. 10.1.5.0/24 is the most specific match for 10.1.5.42 → R4.' },
+        { type: 'choice',
+          prompt: 'Routes installed from multiple protocols (OSPF + RIP) — which gets used?',
+          options: ['OSPF (AD 110 < 120)', 'RIP (lower metric)', 'Both load balance', 'Whichever was first'],
+          answer: 0,
+          explain: 'Administrative Distance breaks ties between protocols. OSPF AD = 110, RIP AD = 120. Lower wins.' },
+        { type: 'multiselect',
+          prompt: 'Stateful firewall: which direction must explicitly permit return traffic for a new outbound TCP session?',
+          options: ['Outbound (allow SYN)', 'Inbound (allow SYN-ACK)', 'Neither — state table handles it', 'Both must be explicit'],
+          answers: [2],
+          explain: 'Stateful firewall tracks the outbound SYN, auto-allows the matching SYN-ACK return. Only outbound rule needs explicit permit.' },
+        { type: 'order',
+          prompt: 'ACL evaluation rules — apply in this order:',
+          items: [
+            '1. Evaluate top-down, FIRST match wins',
+            '2. Implicit DENY at end if no match',
+            '3. Place most specific entries above broader ones',
+            '4. Recompile / push after edit'
+          ],
+          explain: 'Top-down + first-match + implicit-deny is THE rule. Order matters — broad permits above specific denies = denies never fire.' },
+        { type: 'fillblank',
+          prompt: 'Static route preferred over OSPF as backup ONLY. What AD lets it sit dormant?',
+          answer: ['200', '255'],
+          placeholder: 'Number',
+          explain: 'Floating static = static route with AD raised above the dynamic protocol (e.g., 200) so it activates only when dynamic disappears. Default static AD = 1.' }
+      ]
+    },
+    {
+      id: 'n-pbq4',
+      title: 'PBQ: Wi-Fi Site Plan',
+      objective: '2.4 — Wireless deployment',
+      steps: [
+        { type: 'note', text: 'Office with 50 users, 2.4 + 5 GHz APs, dense neighbor APs above + below.' },
+        { type: 'multiselect',
+          prompt: 'Which non-overlapping 20 MHz channels for 2.4 GHz in the US?',
+          options: ['1', '3', '6', '8', '11', '13'],
+          answers: [0, 2, 4],
+          explain: 'Only 1, 6, 11 are non-overlapping at 20 MHz in US/Canada (FCC 11-channel allocation). 13 + 14 used in EU/Japan only.' },
+        { type: 'choice',
+          prompt: 'WPA security choice for new deployment with all modern client devices?',
+          options: ['WEP', 'WPA personal w/ TKIP', 'WPA2-Personal w/ AES-CCMP', 'WPA3-Personal w/ SAE'],
+          answer: 3,
+          explain: 'WPA3 SAE handshake defeats offline cracking. Use WPA3 personal where supported, WPA2/3 mixed for legacy IoT.' },
+        { type: 'order',
+          prompt: 'Site-survey workflow in correct sequence:',
+          items: [
+            '1. Predictive (Ekahau/Hamina) model from floor plan',
+            '2. Pre-installation passive survey',
+            '3. Install APs per design',
+            '4. Post-install active survey + heatmap validation',
+            '5. Tune channels + power + min-data-rate'
+          ],
+          explain: 'Predictive → passive → install → active → tune. Skipping post-install validation guarantees dead spots.' },
+        { type: 'fillblank',
+          prompt: 'Min RSSI target for VoWi-Fi at cell edge?',
+          answer: ['-65', '-67', '-65 dbm', '-67 dbm'],
+          placeholder: 'dBm',
+          explain: 'Best practice: ≥ -65 dBm everywhere for voice. -67 acceptable; below = poor MOS scores + dropped calls.' },
+        { type: 'multiselect',
+          prompt: 'Pick countermeasures for evil-twin AP attack:',
+          options: ['WPA3-Personal SAE', 'WPA2/3-Enterprise with server cert validation', 'MAC filtering only', 'WIPS (Wireless IPS)', 'Disable SSID broadcast'],
+          answers: [1, 3],
+          explain: 'Enterprise mode with cert validation prevents client from associating with rogue AP. WIPS detects + alerts. MAC filtering + hidden SSID are trivially bypassed.' }
+      ]
+    },
+    {
+      id: 'n-pbq5',
+      title: 'PBQ: Troubleshoot Slow Web',
+      objective: '5.5 — Network performance issues',
+      steps: [
+        { type: 'note', text: 'User: "internet feels slow only on this one site." Ping to gateway is fine. Speedtest passes.' },
+        { type: 'order',
+          prompt: 'Apply top-down troubleshooting steps:',
+          items: [
+            '1. Test access from another device on same network',
+            '2. Check DNS resolution: nslookup site.com',
+            '3. TLS handshake: openssl s_client -connect site:443',
+            '4. Traceroute to identify failing hop',
+            '5. Check for proxy / TLS inspection rule applied',
+            '6. Report to ISP or website owner with evidence'
+          ],
+          explain: 'Top-down isolates fast: reproduce → DNS → TLS → network path → middlebox → upstream.' },
+        { type: 'multiselect',
+          prompt: 'Which Wireshark filters help diagnose retransmit symptoms?',
+          options: ['tcp.analysis.retransmission', 'tcp.analysis.duplicate_ack', 'tcp.window_size == 0', 'ip.ttl == 1', 'http.request.method == GET'],
+          answers: [0, 1, 2],
+          explain: 'Retransmission, duplicate ACK, and zero-window indicate packet loss or receiver buffer pressure. TTL=1 is normal traceroute. GET filter is unrelated.' },
+        { type: 'fillblank',
+          prompt: 'Acronym for "high ping under load with otherwise fast link":',
+          answer: ['bufferbloat'],
+          placeholder: 'one word',
+          explain: 'Bufferbloat = oversized buffer queues at bottleneck creating latency under load. Fix: enable fq_codel / SQM on the router.' },
+        { type: 'choice',
+          prompt: 'iperf3 test: 940 Mbps over 1 Gbps link. Healthy?',
+          options: [
+            'No — should hit 1000 Mbps exactly',
+            'Yes — ~94% of line rate is the expected TCP goodput after headers + IFG',
+            'No — should be at least 1.1 Gbps',
+            'Cable is bad'
+          ],
+          answer: 1,
+          explain: 'TCP goodput on 1 Gbps Ethernet caps near 940 Mbps after L2/L3/L4 headers, ACKs, and IFG. Anything ≥ 900 Mbps = healthy.' }
+      ]
     }
   ],
 
