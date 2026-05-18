@@ -6069,6 +6069,163 @@ BackupToAAD-BitLockerKeyProtector -MountPoint C: -KeyProtectorId &lt;ID&gt;</cod
             <li>"Strongest mobile auth factor" → FIDO2 / passkey or hardware-backed biometric (Face ID, Touch ID) + passcode.</li>
             <li>"Threat where attacker steals SMS OTPs by porting your number" → SIM swap.</li>
           </ul>
+
+          <h2>iOS security architecture (memorize layers)</h2>
+          <ul>
+            <li><b>Secure Boot Chain</b> — Boot ROM (immutable) → LLB (Low-Level Bootloader) → iBoot → kernel; each verifies next signature with Apple Root CA.</li>
+            <li><b>Secure Enclave Processor (SEP)</b> — separate ARM chip; stores Touch ID/Face ID templates, Apple Pay keys, BitLocker-equivalent disk keys; never visible to main CPU.</li>
+            <li><b>System Coprocessor</b> — Apple T2 (Intel Macs) / Apple Silicon SoC integrates SEP.</li>
+            <li><b>App Sandbox</b> — each app gets isolated container at <code>/var/mobile/Containers/Data/Application/&lt;UUID&gt;</code>; cannot read others without entitlement.</li>
+            <li><b>Code signing + Notarization</b> — every executable must be signed by Apple-trusted cert; sideloaded apps re-sign every 7 days (unless paid dev account).</li>
+            <li><b>Pointer Authentication Codes (PAC)</b> on Apple Silicon — defeats ROP/JOP exploits.</li>
+            <li><b>Memory Tagging Extension (MTE)</b> — A17 Pro+ adds tag bits to detect use-after-free.</li>
+            <li><b>Pluton-style isolation</b> via SEP keys never exported.</li>
+            <li><b>Data Protection Classes</b>: NSFileProtectionComplete (unlocks at unlock), NSFileProtectionCompleteUnlessOpen, NSFileProtectionCompleteUntilFirstUserAuthentication, None.</li>
+          </ul>
+
+          <h2>iOS Lockdown Mode (high-risk users)</h2>
+          <ul>
+            <li>Strips functionality to reduce attack surface — disables most attachment types in Messages, blocks FaceTime from unknown callers, removes shared photo albums, restricts JIT JS in WebKit, blocks unknown configuration profiles + MDM enrollment, USB accessory connections require unlock.</li>
+            <li>Toggle: Settings → Privacy &amp; Security → Lockdown Mode.</li>
+            <li>Recommended for journalists, activists, executives, government officials.</li>
+            <li>Compatible with Apple's Mercenary Spyware notification program.</li>
+          </ul>
+
+          <h2>Android security architecture</h2>
+          <ul>
+            <li><b>Verified Boot 2.0</b> — bootloader checks every partition; "Yellow / Orange / Red" states indicate verification status.</li>
+            <li><b>SELinux Enforcing mode</b> on every Android since 5.0 (Lollipop).</li>
+            <li><b>Trusty TEE / TrustZone</b> — ARM TrustZone secure world for keystore, biometric matching.</li>
+            <li><b>StrongBox Keymaster</b> — tamper-resistant chip (Pixel 3+, Samsung S20+).</li>
+            <li><b>Verified Apps</b> — Google Play Protect scans installed apps daily.</li>
+            <li><b>Hardware-backed Keystore</b> — keys never leave SE / TEE.</li>
+            <li><b>Scoped Storage</b> (Android 10+) — apps can't see other apps' files outside their sandbox.</li>
+            <li><b>App permissions</b>: install-time (manifest) + runtime (user prompt) + one-time permissions (Android 11+).</li>
+            <li><b>Background location</b> requires explicit grant + visible reminder.</li>
+            <li><b>Private Compute Core</b> (Pixel) — on-device AI never sends data off-device.</li>
+          </ul>
+
+          <h2>Android Work Profile + Enterprise modes</h2>
+          <ul>
+            <li><b>Work Profile</b> (BYOD) — fully isolated container; corp data wipe removes only work side.</li>
+            <li><b>Fully Managed</b> (corp-owned) — entire device under MDM.</li>
+            <li><b>Fully Managed with Work Profile</b> — corp + isolated personal area.</li>
+            <li><b>Dedicated Device (COBO / kiosk)</b> — single-purpose lockdown.</li>
+            <li>Samsung Knox augments these with hardware-isolated container.</li>
+          </ul>
+
+          <h2>iOS Supervision + Configuration Profiles</h2>
+          <ul>
+            <li><b>Supervised mode</b> — set via Apple Configurator at first activation or ABM auto-enroll; unlocks restrictions (silent app install, lock to single app, restrict App Store, force Wi-Fi profile).</li>
+            <li><b>Configuration profile</b> — XML / mobileconfig delivering Wi-Fi, VPN, mail, cert, restrictions.</li>
+            <li><b>MDM commands</b> — Lock, Erase, Clear Passcode, Install Profile, Install App, Lost Mode.</li>
+            <li><b>User Enrollment</b> (BYOD) — limited MDM commands; managed Apple ID separates from personal.</li>
+            <li><b>Account-Driven User Enrollment</b> (iOS 15+) — no profile needed; tied to managed Apple ID.</li>
+            <li><b>Web Push Notifications</b> require entitlement.</li>
+          </ul>
+
+          <h2>Mobile threat detection (MTD) stack</h2>
+          <ul>
+            <li><b>Lookout, Zimperium, Wandera, Microsoft Defender for Endpoint Mobile, Check Point Harmony Mobile</b> — leading MTD vendors.</li>
+            <li>Detect: malicious apps, OS exploits, jailbreak/root, network MITM, phishing URLs, configuration drift.</li>
+            <li>Integrate with MDM/EMM for automatic conditional access / quarantine.</li>
+            <li>Use OS-level APIs (NetworkExtension for VPN on-demand on iOS; VpnService on Android) for real-time URL filtering.</li>
+          </ul>
+
+          <h2>App vetting + supply chain</h2>
+          <ul>
+            <li><b>App Store review</b> — Apple manual + automated review; not perfect (Pegasus zero-click reached devices via iMessage, not store).</li>
+            <li><b>Google Play Protect</b> — automated scans; reactive to threats.</li>
+            <li><b>Sideloading</b> — Android allows after warning; iOS only via TestFlight / Enterprise Cert / EU sideload (EU DMA 2024).</li>
+            <li><b>Enterprise Distribution</b> — Apple Developer Enterprise Program (ADEP) for in-house apps; Google managed Play.</li>
+            <li><b>SBOM</b> (Software Bill of Materials) — increasingly required for mobile apps; identify vulnerable libraries.</li>
+            <li><b>AppScan / MobSF / Veracode</b> — static + dynamic mobile app testing.</li>
+          </ul>
+
+          <h2>Cryptography on mobile</h2>
+          <ul>
+            <li><b>iOS Data Protection</b> — every file encrypted with class key derived from device UID + passcode; unlock decrypts class keys.</li>
+            <li><b>File Vault (macOS) on Apple Silicon</b> — uses SEP-backed keys; volume encryption always-on; FileVault adds passphrase requirement.</li>
+            <li><b>Android File-Based Encryption (FBE)</b> — per-user keys; Device Encrypted (DE) for boot + Credential Encrypted (CE) for user data.</li>
+            <li><b>TLS pinning</b> — apps embed expected cert public-key; defeats MITM via fake CA.</li>
+            <li><b>Certificate Transparency</b> requirement on iOS since 2018 for new certs.</li>
+            <li><b>End-to-end</b> messaging — iMessage Contact Key Verification; Signal Protocol in WhatsApp / Signal; RCS Universal Profile + Signal Protocol (Google Messages).</li>
+          </ul>
+
+          <h2>OS update + EOL timelines</h2>
+          <ul>
+            <li><b>iOS</b> — typically 5-7 years OS updates for iPhone (iPhone 8 = iOS 16 last; iPhone XR/XS = iOS 17/18).</li>
+            <li><b>Android</b> — Pixel 8/9 promise 7 years OS + security; Samsung Galaxy S24+ same; older devices 2-3 years typical.</li>
+            <li><b>Security Patch Level (SPL)</b> on Android — Settings → About; should be &lt; 3 months old.</li>
+            <li><b>EOL devices</b> = retire from corp use; cannot apply mitigations.</li>
+            <li>MDM compliance policy: block enrollment if OS &lt; minimum supported version.</li>
+          </ul>
+
+          <h2>Mobile-specific attacks (recognize each)</h2>
+          <ul>
+            <li><b>Jailbreak / root</b> — removes OS sandbox; allows unsigned code, low-level access.</li>
+            <li><b>Tethered vs untethered jailbreak</b> — tethered requires PC reconnect each reboot.</li>
+            <li><b>Mobile RATs / spyware</b> — Cerberus, Anubis, BRATA, Joker; Pegasus / Predator / Reign (commercial).</li>
+            <li><b>Smishing</b> — SMS phishing; FluBot, MoqHao.</li>
+            <li><b>WhatsApp + Telegram phishing</b> — fake support, OTP theft, contact-list scraping.</li>
+            <li><b>iMessage zero-click</b> — Operation Triangulation 2023.</li>
+            <li><b>OTP interceptor apps</b> — banking trojans request SMS read permission.</li>
+            <li><b>Fake banking apps</b> — Play Store impostors with logo copy.</li>
+            <li><b>QR code phishing (quishing)</b> — parking meters, restaurant tables.</li>
+            <li><b>Juice jacking</b> — malicious USB charging stations install spyware. <b>Defense:</b> use USB power-only "data block" adapter or your own charger.</li>
+            <li><b>Evil maid + cold-boot</b> — physical access to extract keys before lock; modern SE chips make harder but high-end forensics tools (Cellebrite, Grayshift) still extract from older devices.</li>
+            <li><b>Frequency hijacking</b> on car keys / NFC payments — RFID skimming.</li>
+          </ul>
+
+          <h2>Forensic acquisition + chain of custody</h2>
+          <ul>
+            <li><b>Logical extraction</b> — backup-based; needs unlocked device.</li>
+            <li><b>File system extraction</b> — exploits + jailbreak to get more.</li>
+            <li><b>Physical extraction</b> — bit-for-bit image; requires advanced tools (Cellebrite UFED, Grayshift GrayKey, MSAB XRY).</li>
+            <li><b>Modern iOS / Pixel</b> — Secure Enclave + Data Protection make extraction without passcode very hard.</li>
+            <li><b>Faraday bag</b> + airplane mode + battery preserved during transport to prevent remote wipe.</li>
+            <li><b>Chain of custody documentation</b> — date/time, custodian transfers, hash of acquired image, tool versions.</li>
+            <li><b>Mobile-specific OS forensic artifacts</b>: KnowledgeC.db (iOS), Notifications, Call History, iMessage, photo metadata; Android databases at <code>/data/data/&lt;app&gt;</code>.</li>
+            <li><b>Cloud iCloud / Google Takeout</b> — alternative when device locked.</li>
+          </ul>
+
+          <h2>Privacy + regulatory compliance angles</h2>
+          <ul>
+            <li><b>GDPR Art. 32</b> — appropriate technical measures including encryption + access control.</li>
+            <li><b>HIPAA Security Rule</b> — encrypt mobile PHI at rest + in transit.</li>
+            <li><b>PCI-DSS</b> — mobile POS must follow tokenization + EMV requirements.</li>
+            <li><b>CCPA / CPRA</b> — California privacy; users can opt out of data sale.</li>
+            <li><b>FTC + Apple privacy nutrition labels</b> — app must disclose data collected.</li>
+            <li><b>App Tracking Transparency (ATT)</b> on iOS — user explicit opt-in to IDFA tracking.</li>
+            <li><b>Privacy Sandbox</b> on Android (Google) — replacing Advertising ID with per-app topics.</li>
+            <li><b>Cross-border data residency</b> — many countries require user data stay in-country.</li>
+          </ul>
+
+          <h2>Mobile incident-response playbook</h2>
+          <ol>
+            <li>Identify suspicious behavior (battery drain, data egress, new apps).</li>
+            <li>Isolate device — airplane mode + Faraday bag if forensics needed.</li>
+            <li>Collect evidence — MDM logs, MTD alerts, mobile backup if available.</li>
+            <li>Contain — remote lock, wipe corp profile, revoke OAuth tokens, rotate passwords.</li>
+            <li>Eradicate — factory reset; restore from clean backup pre-compromise.</li>
+            <li>Recover — re-enroll in MDM with new credentials, verify compliance.</li>
+            <li>Educate user + update detection rules.</li>
+            <li>Report to legal / compliance per regulatory timeline.</li>
+          </ol>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Highest-risk users on iOS need maximum protection" → Lockdown Mode + latest iOS.</li>
+            <li>"BYOD wipe should remove only corp data" → Work Profile (Android) or User Enrollment (iOS) + selective wipe.</li>
+            <li>"Stop sideloaded apps on Android" → MDM device policy disabling Unknown Sources / Install Unknown Apps.</li>
+            <li>"App reads SMS for OTP" → review app permissions; revoke or uninstall; report.</li>
+            <li>"Public charging station compromises phone" → juice jacking; use USB data-blocker / power bank.</li>
+            <li>"SIM swap risk" → carrier PIN + remove SMS-based MFA, prefer app/FIDO.</li>
+            <li>"Forensic image of locked iPhone" → Cellebrite / Grayshift; modern devices resistant w/o passcode.</li>
+            <li>"Encrypted iMessage account-wide" → enable Advanced Data Protection (iOS 16.2+).</li>
+            <li>"Patch immediately when security update drops" → MDM compliance forces install within X days.</li>
+            <li>"Lost phone, prevent reactivation" → Activation Lock / FRP keep tied to original account.</li>
+          </ul>
         `
       },
       {
