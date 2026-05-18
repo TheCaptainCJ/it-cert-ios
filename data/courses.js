@@ -4709,6 +4709,267 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
             <li>"Add Linux user to sudo group keeping existing groups" → usermod -aG sudo user (the -a is critical).</li>
             <li>"Generate strong SSH key" → ssh-keygen -t ed25519.</li>
           </ul>
+
+          <h2>macOS architecture deep-dive</h2>
+          <ul>
+            <li><b>Darwin</b> = open-source Unix-y core (XNU kernel = Mach + BSD).</li>
+            <li><b>System Integrity Protection (SIP)</b> — protects <code>/System</code>, <code>/usr</code>, <code>/bin</code>, <code>/sbin</code>; admins can't write even as root. Toggle in Recovery via <code>csrutil disable</code>.</li>
+            <li><b>Gatekeeper</b> — checks signed + notarized status before running downloaded apps. Override: System Settings → Privacy &amp; Security → "Open Anyway".</li>
+            <li><b>XProtect</b> — built-in signature-based AV. Updates silently.</li>
+            <li><b>Sealed System Volume (SSV)</b> — read-only OS volume cryptographically verified at boot (Big Sur+). User data on separate volume.</li>
+            <li><b>APFS containers + volumes</b> — multiple volumes share a container's free space; snapshots; cloning.</li>
+            <li><b>Spotlight</b> — system-wide search; <code>mdfind "query"</code> CLI; reindex with <code>sudo mdutil -E /</code>.</li>
+            <li><b>Mission Control</b> — desktop spaces + window overview (F3).</li>
+            <li><b>Stage Manager</b> — windowing model; macOS Ventura+.</li>
+            <li><b>iCloud Drive + Optimized Storage</b> — offloads rarely-used files to cloud.</li>
+            <li><b>Continuity</b> — Handoff, Universal Clipboard, AirDrop, Sidecar, Universal Control across Apple devices.</li>
+          </ul>
+
+          <h2>macOS service management</h2>
+          <ul>
+            <li><b>launchd</b> — init system (PID 1). Replaces cron/init.d.</li>
+            <li><b>LaunchDaemons</b> (<code>/Library/LaunchDaemons</code>) — system-wide services run as root.</li>
+            <li><b>LaunchAgents</b> (<code>~/Library/LaunchAgents</code> per-user; <code>/Library/LaunchAgents</code> all users) — run when user logs in.</li>
+            <li><b>plist</b> — XML / binary property list defining the job.</li>
+            <li><b>launchctl list</b>, <b>launchctl load -w plist</b>, <b>launchctl unload -w plist</b>, <b>launchctl bootstrap user/&lt;UID&gt; plist</b> (Big Sur+).</li>
+          </ul>
+
+          <h2>macOS keychain + secrets</h2>
+          <ul>
+            <li><b>Keychain Access</b> app — stores passwords, certs, secure notes.</li>
+            <li><b>login keychain</b> — unlocked at sign-in.</li>
+            <li><b>System keychain</b> — machine-level (Wi-Fi PSKs, certs).</li>
+            <li><b>iCloud Keychain</b> — syncs across Apple devices.</li>
+            <li><b>security</b> CLI: <code>security find-internet-password -s server -w</code> reveals stored PSK.</li>
+            <li><b>Reset corrupted keychain</b>: Keychain Access → File → Delete Keychain → Reset Default Keychain. User must re-enter credentials.</li>
+          </ul>
+
+          <h2>macOS recovery + reset methods</h2>
+          <ul>
+            <li><b>Intel Macs:</b> hold <b>Cmd+R</b> at boot → Recovery. <b>Cmd+Option+R</b> → Internet Recovery (latest compatible macOS). <b>Cmd+Option+Shift+R</b> → original macOS shipped.</li>
+            <li><b>Apple Silicon:</b> press + hold power until "Loading startup options" → Options.</li>
+            <li><b>Disk Utility</b> in Recovery — repair / erase APFS volumes.</li>
+            <li><b>Reinstall macOS</b> — keeps data; preserves user folder unless erased.</li>
+            <li><b>Reset NVRAM / PRAM</b> (Intel): Cmd+Option+P+R at boot ~20 sec. Apple Silicon: no NVRAM reset, just reboot.</li>
+            <li><b>SMC reset</b> (Intel notebooks with T2): shut down + hold left Ctrl+Opt+right Shift 7 sec + Power 7 sec. Apple Silicon: power-cycle.</li>
+            <li><b>Apple Configurator 2 (DFU)</b> — restore firmware on Apple Silicon / T2 via second Mac.</li>
+            <li><b>Lost Mac password</b>: boot Recovery → Terminal → <code>resetpassword</code>.</li>
+          </ul>
+
+          <h2>Linux distros + when to pick which</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Distro</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Family</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Package mgr</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use case</th></tr>
+            <tr><td>Ubuntu LTS</td><td>Debian</td><td>apt</td><td>Servers, desktops, cloud</td></tr>
+            <tr><td>Debian</td><td>Debian</td><td>apt</td><td>Stable servers</td></tr>
+            <tr><td>Linux Mint</td><td>Ubuntu</td><td>apt</td><td>Desktop replacement for Windows users</td></tr>
+            <tr><td>Pop!_OS</td><td>Ubuntu</td><td>apt</td><td>Developer laptops, NVIDIA-friendly</td></tr>
+            <tr><td>RHEL</td><td>Red Hat</td><td>dnf / rpm</td><td>Enterprise servers w/ support</td></tr>
+            <tr><td>AlmaLinux / Rocky</td><td>RHEL clone</td><td>dnf</td><td>Free RHEL-compatible after CentOS pivot</td></tr>
+            <tr><td>Fedora</td><td>Red Hat</td><td>dnf</td><td>Leading-edge Linux, RHEL preview</td></tr>
+            <tr><td>SUSE Linux Enterprise</td><td>SUSE</td><td>zypper / rpm</td><td>SAP-friendly enterprise</td></tr>
+            <tr><td>openSUSE Tumbleweed</td><td>SUSE</td><td>zypper</td><td>Rolling release</td></tr>
+            <tr><td>Arch / Manjaro</td><td>Arch</td><td>pacman</td><td>Power-user / custom</td></tr>
+            <tr><td>Alpine</td><td>independent</td><td>apk</td><td>Containers (~5 MB base)</td></tr>
+            <tr><td>NixOS</td><td>independent</td><td>nix</td><td>Reproducible immutable systems</td></tr>
+            <tr><td>Kali / Parrot</td><td>Debian</td><td>apt</td><td>Pen-testing / forensics</td></tr>
+            <tr><td>Raspberry Pi OS</td><td>Debian-based</td><td>apt</td><td>Pi single-board computers</td></tr>
+          </table>
+
+          <h2>Filesystem hierarchy (FHS) — memorize</h2>
+          <ul>
+            <li><b>/</b> — root.</li>
+            <li><b>/bin</b> — essential user binaries (symlinked to /usr/bin on modern distros).</li>
+            <li><b>/sbin</b> — system admin binaries.</li>
+            <li><b>/etc</b> — system-wide config files.</li>
+            <li><b>/var</b> — variable data (logs, mail, spool).</li>
+            <li><b>/var/log</b> — log files.</li>
+            <li><b>/tmp</b> — ephemeral (cleared on boot).</li>
+            <li><b>/home</b> — user home directories.</li>
+            <li><b>/root</b> — root user's home.</li>
+            <li><b>/usr</b> — read-only user programs + libs. <b>/usr/local</b> — locally installed.</li>
+            <li><b>/opt</b> — optional 3rd-party packages.</li>
+            <li><b>/boot</b> — kernel, initramfs, GRUB config.</li>
+            <li><b>/dev</b> — device nodes (block, char).</li>
+            <li><b>/proc</b> — pseudo-FS exposing kernel + process state.</li>
+            <li><b>/sys</b> — sysfs; modern interface to kernel objects.</li>
+            <li><b>/run</b> — runtime data (PID files, sockets).</li>
+            <li><b>/mnt</b>, <b>/media</b> — mount points.</li>
+            <li><b>/lib</b>, <b>/lib64</b>, <b>/usr/lib</b> — shared libraries.</li>
+            <li><b>/srv</b> — service data (web roots).</li>
+          </ul>
+
+          <h2>Permissions deep-dive</h2>
+          <p><b>Each file:</b> 3 sets of 3 bits → <code>owner | group | other</code> × <code>r|w|x</code>. Numeric:</p>
+          <ul>
+            <li>4 = r, 2 = w, 1 = x. Sum per set.</li>
+            <li><code>755</code> = rwx r-x r-x (script/dir default).</li>
+            <li><code>644</code> = rw- r-- r-- (file default).</li>
+            <li><code>700</code> = rwx --- --- (private dir; SSH keys).</li>
+            <li><code>600</code> = rw- --- --- (sensitive file; ~/.ssh/id_ed25519).</li>
+            <li><code>777</code> = rwx rwx rwx (avoid — every user can edit; security risk).</li>
+          </ul>
+          <p><b>Special bits:</b></p>
+          <ul>
+            <li><b>setuid (4xxx)</b> — execute as the file's owner. <code>passwd</code> uses 4755 to update <code>/etc/shadow</code> as root.</li>
+            <li><b>setgid (2xxx)</b> — execute as the file's group; on a directory, new files inherit that group.</li>
+            <li><b>sticky bit (1xxx)</b> — on a directory, only the file owner can delete their own files (used on <code>/tmp</code>; shown as <code>t</code>).</li>
+            <li><b>chattr +i file</b> — immutable; even root can't modify until <code>-i</code>.</li>
+            <li><b>POSIX ACLs</b> via <code>setfacl -m u:bob:rwx file</code>; <code>getfacl file</code>.</li>
+            <li><b>SELinux contexts</b> (RHEL) — <code>ls -Z</code>, <code>chcon</code>, <code>restorecon</code>, <code>semanage</code>.</li>
+            <li><b>AppArmor profiles</b> (Ubuntu) — alternative MAC; <code>aa-status</code>.</li>
+          </ul>
+
+          <h2>systemd unit files</h2>
+          <ul>
+            <li><b>Unit types:</b> <code>.service</code>, <code>.socket</code>, <code>.timer</code>, <code>.mount</code>, <code>.target</code>, <code>.path</code>, <code>.slice</code>.</li>
+            <li><b>System units:</b> <code>/etc/systemd/system/</code> (admin), <code>/lib/systemd/system/</code> (vendor).</li>
+            <li><b>User units:</b> <code>~/.config/systemd/user/</code> + <code>systemctl --user</code>.</li>
+            <li><b>Targets</b> replace runlevels: <code>multi-user.target</code> = old runlevel 3; <code>graphical.target</code> = 5.</li>
+            <li><b>journalctl filters:</b> <code>-u sshd</code>, <code>--since "2 days ago"</code>, <code>-p err</code>, <code>-f</code> follow, <code>-k</code> kernel only.</li>
+            <li><b>systemd-analyze blame</b> — slowest services at boot.</li>
+            <li><b>systemd-analyze critical-chain</b> — dependency-aware boot tree.</li>
+            <li><b>systemctl mask service</b> — strongest disable (creates /dev/null symlink).</li>
+            <li><b>systemctl daemon-reload</b> after editing unit files.</li>
+            <li><b>Drop-in overrides:</b> <code>/etc/systemd/system/sshd.service.d/override.conf</code> — additive customization.</li>
+          </ul>
+
+          <h2>Package management cheat (memorize all 3 family flavors)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Task</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Debian/Ubuntu</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RHEL/Fedora</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SUSE</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Arch</th></tr>
+            <tr><td>Refresh index</td><td>apt update</td><td>dnf check-update</td><td>zypper refresh</td><td>pacman -Sy</td></tr>
+            <tr><td>Upgrade all</td><td>apt upgrade</td><td>dnf upgrade</td><td>zypper update</td><td>pacman -Syu</td></tr>
+            <tr><td>Install pkg</td><td>apt install pkg</td><td>dnf install pkg</td><td>zypper in pkg</td><td>pacman -S pkg</td></tr>
+            <tr><td>Remove pkg</td><td>apt remove pkg</td><td>dnf remove pkg</td><td>zypper rm pkg</td><td>pacman -R pkg</td></tr>
+            <tr><td>Search</td><td>apt search foo</td><td>dnf search foo</td><td>zypper search foo</td><td>pacman -Ss foo</td></tr>
+            <tr><td>List installed</td><td>dpkg -l</td><td>rpm -qa</td><td>rpm -qa</td><td>pacman -Q</td></tr>
+            <tr><td>Package info</td><td>apt show pkg</td><td>dnf info pkg</td><td>zypper info pkg</td><td>pacman -Si pkg</td></tr>
+            <tr><td>Who owns this file</td><td>dpkg -S /path</td><td>rpm -qf /path</td><td>rpm -qf /path</td><td>pacman -Qo /path</td></tr>
+            <tr><td>List files in pkg</td><td>dpkg -L pkg</td><td>rpm -ql pkg</td><td>rpm -ql pkg</td><td>pacman -Ql pkg</td></tr>
+          </table>
+          <p><b>Universal formats:</b> <b>Flatpak</b> (Flathub), <b>Snap</b> (Canonical), <b>AppImage</b> (portable), <b>Homebrew</b> (macOS+Linux).</p>
+
+          <h2>Linux network config</h2>
+          <ul>
+            <li><b>NetworkManager</b> — default GUI/CLI on most desktops. <code>nmcli</code> + <code>nmtui</code>.</li>
+            <li><b>systemd-networkd</b> — minimal alternative; common on cloud images.</li>
+            <li><b>netplan</b> (Ubuntu) — YAML in <code>/etc/netplan/*.yaml</code> generates NetworkManager / networkd config.</li>
+            <li><b>ifupdown</b> (Debian legacy) — <code>/etc/network/interfaces</code>.</li>
+            <li><b>/etc/resolv.conf</b> — DNS resolver config (often a symlink to systemd-resolved).</li>
+            <li><b>/etc/hosts</b> — static name mappings.</li>
+            <li><b>/etc/nsswitch.conf</b> — resolution order (files vs DNS vs LDAP).</li>
+            <li><b>ip neigh</b> — ARP/ND cache.</li>
+            <li><b>tcpdump -i eth0 host 10.0.0.5 and port 443 -w cap.pcap</b> — packet capture.</li>
+            <li><b>nftables</b> / <b>iptables</b> — kernel firewall. <b>ufw</b> on Debian/Ubuntu is a friendly front-end. <b>firewalld</b> on RHEL.</li>
+            <li><b>ufw allow 22/tcp</b>, <b>ufw enable</b>.</li>
+            <li><b>firewall-cmd --add-service=http --permanent</b>, <b>firewall-cmd --reload</b>.</li>
+          </ul>
+
+          <h2>Linux user + group internals</h2>
+          <ul>
+            <li><b>/etc/passwd</b> — username, UID, GID, GECOS, home, shell.</li>
+            <li><b>/etc/shadow</b> — hashed passwords + aging (root only).</li>
+            <li><b>/etc/group</b> — group memberships.</li>
+            <li><b>/etc/gshadow</b> — group passwords.</li>
+            <li><b>/etc/sudoers</b> + <b>/etc/sudoers.d/*</b> — visudo to edit safely.</li>
+            <li><b>PAM</b> (Pluggable Authentication Modules) — <code>/etc/pam.d/</code> stacks auth/account/password/session policies.</li>
+            <li><b>UID 0</b> = root; service accounts &lt; 1000; humans ≥ 1000.</li>
+            <li><b>su -</b> = switch user (full login). <b>sudo cmd</b> = run as elevated.</li>
+            <li><b>SSSD</b> — System Security Services Daemon; joins Linux to AD or LDAP.</li>
+            <li><b>realm join domain</b> — AD-join Linux box.</li>
+          </ul>
+
+          <h2>Disk + LVM basics</h2>
+          <ul>
+            <li><b>lsblk -f</b> — block devices + filesystems + UUIDs.</li>
+            <li><b>blkid</b> — UUID + label + type per device.</li>
+            <li><b>fdisk -l</b> + <b>parted -l</b> — partition listing.</li>
+            <li><b>mount + /etc/fstab</b> — persistent mounts (use UUID, not /dev/sdX which can shift).</li>
+            <li><b>systemctl daemon-reload + mount -a</b> after editing fstab.</li>
+            <li><b>LVM</b>: physical volumes (<code>pvcreate</code>), volume groups (<code>vgcreate</code>), logical volumes (<code>lvcreate</code>). Extend with <code>lvextend -r -L +20G</code> (resize FS too).</li>
+            <li><b>swapon -s</b> + <b>/etc/fstab swap entries</b>; <b>fallocate -l 4G /swapfile; mkswap; swapon</b>.</li>
+            <li><b>ext4</b> default. <b>XFS</b> on RHEL. <b>Btrfs</b> on openSUSE / Fedora root. <b>ZFS</b> via OpenZFS on Linux.</li>
+            <li><b>fsck -y /dev/sdb1</b> — repair filesystem (unmount first).</li>
+          </ul>
+
+          <h2>Shell scripting primer (bash)</h2>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail        # exit on error, unset var, pipe failure
+
+name="alice"
+echo "Hello $name"
+
+# Conditional
+if [[ -f /etc/hosts ]]; then
+  echo "exists"
+fi
+
+# Loop
+for f in *.log; do
+  echo "$f $(wc -l < "$f") lines"
+done
+
+# Functions
+greet() {
+  local who="$1"
+  echo "Hello $who"
+}
+greet "world"
+
+# Capture command output
+date=$(date +%F)
+echo "$date"
+
+# Arithmetic
+sum=$(( 3 + 5 ))</code></pre>
+          <p><b>Test operators</b>: <code>-f</code> file exists, <code>-d</code> dir, <code>-z</code> zero-length string, <code>-n</code> non-empty, <code>=</code> string equal, <code>-eq</code> int equal.</p>
+
+          <h2>Cron + scheduled jobs</h2>
+          <ul>
+            <li><b>crontab -e</b> — edit user crontab. <b>crontab -l</b> — list.</li>
+            <li><b>/etc/crontab</b> — system crontab (has user field).</li>
+            <li><b>/etc/cron.{hourly,daily,weekly,monthly}</b> — scripts auto-run.</li>
+            <li><b>Field order:</b> <code>min hour dom mon dow command</code>.</li>
+            <li><b>Example:</b> <code>*/15 * * * * /usr/local/bin/check.sh</code> = every 15 min.</li>
+            <li><b>@reboot</b> — at boot. <b>@daily</b>, <b>@hourly</b>, <b>@weekly</b>.</li>
+            <li><b>systemd timers</b> — modern alternative; <code>systemctl list-timers</code>.</li>
+            <li><b>at + atd</b> — one-off scheduled jobs.</li>
+            <li><b>anacron</b> — runs missed cron jobs on laptops that may be off.</li>
+          </ul>
+
+          <h2>SELinux / AppArmor quick</h2>
+          <ul>
+            <li><b>SELinux modes:</b> Enforcing, Permissive (warn but allow), Disabled. <code>getenforce</code> / <code>setenforce 0|1</code>.</li>
+            <li><b>Contexts:</b> user_u:role_r:type_t:level — type is what matters (httpd_t, ssh_t).</li>
+            <li><b>chcon -t httpd_sys_content_t /srv/web</b> — temporary context.</li>
+            <li><b>semanage fcontext + restorecon</b> — persistent.</li>
+            <li><b>audit2allow</b> — generate policy module from blocked actions in <code>/var/log/audit/audit.log</code>.</li>
+            <li><b>AppArmor</b> profiles in <code>/etc/apparmor.d/</code>; <code>aa-enforce</code>, <code>aa-complain</code>.</li>
+          </ul>
+
+          <h2>Container basics on Linux</h2>
+          <ul>
+            <li><b>Docker</b> via <code>dockerd</code> or rootless mode; uses cgroups + namespaces.</li>
+            <li><b>Podman</b> — daemonless, default on RHEL 9. Drop-in alias <code>alias docker=podman</code>.</li>
+            <li><b>Common commands:</b> <code>docker run -d -p 80:80 nginx</code>, <code>docker ps</code>, <code>docker logs id</code>, <code>docker exec -it id bash</code>.</li>
+            <li><b>Images:</b> Docker Hub / GHCR / quay.io / private registries.</li>
+            <li><b>Dockerfile</b> — recipe; <code>docker build -t name .</code>.</li>
+            <li><b>Compose</b> — multi-container YAML: <code>docker compose up -d</code>.</li>
+            <li><b>Kubernetes</b> on Linux: kubeadm / k3s / k0s / RKE2 for self-hosted; EKS/AKS/GKE for managed.</li>
+          </ul>
+
+          <h2>macOS + Linux 10 exam quick patterns</h2>
+          <ul>
+            <li>"Reset macOS user password without admin" → boot Recovery → Terminal → <code>resetpassword</code>.</li>
+            <li>"Add user to sudoers" → <code>visudo</code> (NEVER edit <code>/etc/sudoers</code> directly).</li>
+            <li>"Default Linux file permission for SSH private key" → <code>600</code>.</li>
+            <li>"Restart service without dropping connections" → <code>systemctl reload</code>.</li>
+            <li>"Show what depends on this systemd target" → <code>systemctl list-dependencies target</code>.</li>
+            <li>"Search Linux command history" → <code>history</code> or Ctrl+R reverse-search.</li>
+            <li>"macOS app won't open — 'unidentified developer'" → Gatekeeper; System Settings → Privacy → "Open Anyway".</li>
+            <li>"SELinux blocks a service" → check <code>/var/log/audit/audit.log</code> → set context with <code>chcon</code> or run permissive temporarily.</li>
+            <li>"Find which process holds port 443" → <code>ss -tnlp | grep :443</code> or <code>lsof -i :443</code>.</li>
+            <li>"Bash script fails silently" → start with <code>set -euo pipefail</code>.</li>
+          </ul>
         `
       },
       {
