@@ -1,12 +1,16 @@
 // IT Cert iOS — Scenario Labs
 // Mobile-friendly: no real shell. Each lab = ordered steps.
 // Step types:
-//   - choice : { type:'choice', prompt, options[], answer (idx), explain }
-//   - command: { type:'command', prompt, cmd, explain }  (display + memorize)
-//   - note   : { type:'note', text }                     (concept callout)
+//   - choice     : { type:'choice', prompt, options[], answer (idx), explain }
+//   - command    : { type:'command', prompt, cmd, explain }  (display + memorize)
+//   - note       : { type:'note', text }                     (concept callout)
+//   - multiselect: { type:'multiselect', prompt, options[], answers[idx,...], explain }  (PBQ: select all)
+//   - order      : { type:'order', prompt, items[], explain }  (PBQ: items must be picked in array order)
+//   - fillblank  : { type:'fillblank', prompt, answer (string or [strings]), placeholder?, explain }  (PBQ: type exact)
+//   - dragmatch  : { type:'dragmatch', prompt, pairs[{left,right}], explain }  (PBQ: match left -> right)
 //
-// User taps through. Choice steps must be answered correctly OR explanation
-// is shown for any pick. Progress tracked per lab.
+// User taps through. Wrong answer still shows explanation + proceeds.
+// Progress tracked per lab.
 
 const LABS = {
 
@@ -113,6 +117,104 @@ const LABS = {
           answer: 1,
           explain: 'PaaS — provider manages OS + runtime; developer just deploys code. Examples: Azure App Service, AWS Elastic Beanstalk.' }
       ]
+    },
+    {
+      id: 'a1-pbq1',
+      title: 'PBQ: Identify Connectors',
+      objective: '3.1 Cable types — match connector to use',
+      steps: [
+        { type: 'note', text: 'PBQ-style: identify the right connector / cable for each scenario. Performance-based questions on the real exam look exactly like this.' },
+        { type: 'dragmatch',
+          prompt: 'Match each scenario with the correct cable / connector.',
+          pairs: [
+            { left: '1 Gbps Ethernet drop in office', right: 'Cat 6 UTP w/ RJ45' },
+            { left: 'Cable modem broadband', right: 'RG-6 coax w/ F-type' },
+            { left: 'Single-mode fiber transceiver', right: 'LC duplex' },
+            { left: 'Cable TV / OTA tuner', right: 'Coax w/ F-type' },
+            { left: 'Legacy analog phone line', right: 'Cat 3 UTP w/ RJ11' },
+            { left: 'External NVMe SSD enclosure 40 Gbps', right: 'Thunderbolt 4 USB-C' }
+          ],
+          explain: 'Memorize: RJ45 = Ethernet (Cat 5e/6/6a/8). RJ11 = telephone. F-type = coax for cable. LC = small fiber connector dominating modern SFP+. Thunderbolt = 40+ Gbps over USB-C.' },
+        { type: 'multiselect',
+          prompt: 'Which cable types support 10 Gbps Ethernet to full 100 m?',
+          options: ['Cat 5e', 'Cat 6', 'Cat 6a', 'Cat 7', 'Cat 8 (to 30 m only)', 'Multimode OM4'],
+          answers: [2, 3],
+          explain: 'Cat 6a = 10 Gbps @ 100 m. Cat 7 also 10 Gbps @ 100 m but rare in NA. Cat 6 = 10 Gbps but only to 55 m. Cat 8 = 25/40 Gbps but only 30 m. OM4 = fiber, NOT copper.' },
+        { type: 'fillblank',
+          prompt: '10 Gbps Ethernet over copper at 100 m — minimum category required (answer in form "Cat 6a"):',
+          answer: ['cat 6a', 'cat6a', '6a'],
+          placeholder: 'e.g., Cat 6a',
+          explain: 'Cat 6a is the lowest TIA-rated category supporting 10 Gbps at the full 100 m channel.' },
+        { type: 'order',
+          prompt: 'Place these copper cable categories in INCREASING bandwidth capability:',
+          items: ['Cat 5e (1 Gbps)', 'Cat 6 (10 Gbps@55m)', 'Cat 6a (10 Gbps@100m)', 'Cat 8 (40 Gbps@30m)'],
+          explain: 'Cat 5e → Cat 6 → Cat 6a → Cat 8 by max throughput. Distance limits matter on the exam — Cat 6 caps short.' }
+      ]
+    },
+    {
+      id: 'a1-pbq2',
+      title: 'PBQ: Subnet a /24 for 4 Departments',
+      objective: '2.5 IP addressing — VLSM subnetting',
+      steps: [
+        { type: 'note', text: 'Given 192.168.10.0/24. Need 4 subnets, ~50 hosts each. Determine new prefix + subnet networks.' },
+        { type: 'multiselect',
+          prompt: 'Which prefix length produces 4 equal subnets from a /24?',
+          options: ['/25', '/26', '/27', '/28'],
+          answers: [1],
+          explain: 'Borrow 2 bits from host (/24+2 = /26). 2² = 4 subnets. /26 = 64 addresses, 62 usable per subnet (meets 50-host need).' },
+        { type: 'fillblank',
+          prompt: 'Subnet mask in dotted decimal for /26:',
+          answer: ['255.255.255.192'],
+          placeholder: '255.x.x.x',
+          explain: '/26 = 24 + 2 borrowed bits. Borrowed octet = 11000000 = 192.' },
+        { type: 'fillblank',
+          prompt: 'Block size (increment) of /26?',
+          answer: ['64'],
+          placeholder: 'Number',
+          explain: '256 − 192 = 64. Subnets land at multiples of 64 in the last octet.' },
+        { type: 'order',
+          prompt: 'Place the four /26 subnet network addresses in order from first to last:',
+          items: ['192.168.10.0/26', '192.168.10.64/26', '192.168.10.128/26', '192.168.10.192/26'],
+          explain: 'Starting at .0, advance by block size 64 each time: .0, .64, .128, .192. Each subnet uses .1–.62 as usable hosts and ends at broadcast (.63, .127, .191, .255).' },
+        { type: 'fillblank',
+          prompt: 'Broadcast address of subnet 192.168.10.64/26?',
+          answer: ['192.168.10.127'],
+          placeholder: 'IP',
+          explain: 'Next subnet starts at .128, so broadcast = .128 − 1 = .127.' }
+      ]
+    },
+    {
+      id: 'a1-pbq3',
+      title: 'PBQ: Diagnose Wired Network',
+      objective: '5.7 — troubleshoot networking',
+      steps: [
+        { type: 'note', text: 'User: "Wired Ethernet not working." You arrive at desk. Walk through diagnosis.' },
+        { type: 'order',
+          prompt: 'Apply bottom-up troubleshooting steps in the CORRECT layer order:',
+          items: [
+            '1. Check link light on NIC + switch port (L1)',
+            '2. Confirm correct VLAN + no err-disable (L2)',
+            '3. Verify ipconfig shows valid IP + gateway (L3)',
+            '4. Test TCP port to a server (L4)',
+            '5. Validate name resolution + app response (L7)'
+          ],
+          explain: 'Bottom-up = L1 → L2 → L3 → L4 → L7. Catch failures cheapest at the bottom.' },
+        { type: 'fillblank',
+          prompt: 'IP address 169.254.10.55 means what?',
+          answer: ['apipa', 'automatic private ip addressing'],
+          placeholder: 'Acronym',
+          explain: 'APIPA — Automatic Private IP Addressing. Indicates DHCP could not reach a server. Check DHCP relay / VLAN / DHCP service.' },
+        { type: 'multiselect',
+          prompt: 'Tools that locate which wall jack a closet port matches:',
+          options: ['Tone generator + probe', 'Cable tester (continuity)', 'Multimeter', 'OTDR', 'LLDP / CDP neighbor lookup'],
+          answers: [0, 4],
+          explain: 'Tone generator ("fox + hound") audibly identifies the cable end-to-end. LLDP/CDP on a managed switch reports the wall jack ID if configured.' },
+        { type: 'choice',
+          prompt: 'Workstation shows 1 Gbps link, but throughput tests at 95 Mbps. Most likely cause?',
+          options: ['Bad NIC driver', 'Duplex mismatch (one side half)', 'Cat 5 cable in path / split pair', 'Misconfigured DNS'],
+          answer: 2,
+          explain: 'Link negotiates at 1 Gbps but a Cat 3/5 patch in the chain, or a split-pair termination, drops effective throughput to ~100 Mbps. Replace + recertify with a cable certifier.' }
+      ]
     }
   ],
 
@@ -209,6 +311,103 @@ const LABS = {
           options: ['Give password (caller said it\'s IT)', 'Hang up and report through verified IT channel', 'Tell them only the username', 'Email password instead'],
           answer: 1,
           explain: 'Real IT never asks for your password. Always verify by calling the helpdesk on a number you trust.' }
+      ]
+    },
+    {
+      id: 'a2-pbq1',
+      title: 'PBQ: CompTIA 7-Step Malware Removal',
+      objective: '3.3 — malware removal',
+      steps: [
+        { type: 'note', text: 'User reports files renamed with .lock extension + ransom note on desktop. Apply 7-step process.' },
+        { type: 'order',
+          prompt: 'Place ALL seven steps in correct CompTIA order:',
+          items: [
+            '1. Investigate + verify malware symptoms',
+            '2. Quarantine — disconnect from network',
+            '3. Disable System Restore (Windows)',
+            '4. Remediate — update AV defs + scan + remove',
+            '5. Schedule scans + run updates',
+            '6. Re-enable System Restore + create clean restore point',
+            '7. Educate the end user'
+          ],
+          explain: 'CompTIA-tested order. Step 3 (disable System Restore) prevents reinfection from tainted restore points during cleanup.' },
+        { type: 'multiselect',
+          prompt: 'During step 2 quarantine, which actions to take?',
+          options: ['Unplug Ethernet', 'Disable Wi-Fi', 'Power off — preserve evidence first if forensics needed', 'Forward sample to vendor for analysis', 'Pay ransom'],
+          answers: [0, 1, 3],
+          explain: 'Isolate network ASAP. Powering off destroys volatile evidence; if forensics needed, image RAM first. NEVER pay ransom as default policy.' },
+        { type: 'fillblank',
+          prompt: 'Term for malware lacking on-disk file footprint (uses PowerShell + WMI + registry only):',
+          answer: ['fileless', 'fileless malware'],
+          placeholder: 'one word',
+          explain: 'Fileless malware lives in memory + abuses LOLBins (Living Off the Land Binaries). Detected via behavior + script-block logging.' },
+        { type: 'choice',
+          prompt: 'Best long-term defense against ransomware re-encryption?',
+          options: ['Daily backup to same NAS', 'Offline / immutable / air-gapped backup with tested restore', 'BitLocker on user devices only', 'Disable Windows Update'],
+          answer: 1,
+          explain: 'Backup that ransomware cannot reach = offline / WORM Object Lock / air-gapped. Tested restore quarterly. Backup with no restore test = no backup.' }
+      ]
+    },
+    {
+      id: 'a2-pbq2',
+      title: 'PBQ: NTFS Permissions Conflict',
+      objective: '2.5 — Windows security settings',
+      steps: [
+        { type: 'note', text: 'User alice is in groups Marketing + Sales. Folder C:\\Reports has Marketing=Modify, Sales=Read, Everyone=Read. Determine effective access.' },
+        { type: 'fillblank',
+          prompt: 'Effective NTFS permission for alice on C:\\Reports?',
+          answer: ['modify', 'm'],
+          placeholder: 'one word',
+          explain: 'NTFS Allow permissions accumulate (UNION). alice gets Modify from Marketing + Read from Sales = Modify (since Modify includes Read).' },
+        { type: 'note', text: 'Admin adds explicit "Deny Write" for alice on the folder.' },
+        { type: 'fillblank',
+          prompt: 'New effective permission for alice?',
+          answer: ['read', 'read only', 'read & execute'],
+          placeholder: 'one phrase',
+          explain: 'Deny ALWAYS overrides Allow in NTFS. Modify (which includes Write) is blocked; Read + Execute still allowed.' },
+        { type: 'note', text: 'Folder shared as \\\\server\\reports with share permission Everyone=Read.' },
+        { type: 'choice',
+          prompt: 'alice accesses the folder over the network (SMB). Effective access?',
+          options: ['Modify (NTFS wins)', 'Read (most restrictive of NTFS + share)', 'Full Control', 'No access'],
+          answer: 1,
+          explain: 'Across network: effective = MOST RESTRICTIVE intersection of NTFS + share. Share=Read overrides NTFS=Modify → effective = Read.' },
+        { type: 'multiselect',
+          prompt: 'Which actions can alice do at her workstation (local access, no share involved)?',
+          options: ['Read files', 'Modify files', 'Delete files', 'Take ownership'],
+          answers: [0],
+          explain: 'Local access bypasses share permissions. NTFS Deny Write blocks Modify + Delete. Take Ownership requires Full Control or Admin.' }
+      ]
+    },
+    {
+      id: 'a2-pbq3',
+      title: 'PBQ: Windows Boot Repair Order',
+      objective: '3.1 — Windows boot troubleshooting',
+      steps: [
+        { type: 'note', text: 'PC fails to boot. Black screen, "Bootmgr is missing" message. Apply repair commands in correct order.' },
+        { type: 'order',
+          prompt: 'Apply bootrec commands in the recommended order:',
+          items: [
+            '1. bootrec /fixmbr',
+            '2. bootrec /fixboot',
+            '3. bootrec /scanos',
+            '4. bootrec /rebuildbcd'
+          ],
+          explain: 'Standard MBR repair flow: fix MBR → fix boot sector → discover Windows installs → rebuild BCD entries. UEFI systems use bcdboot instead.' },
+        { type: 'fillblank',
+          prompt: 'For UEFI systems, command that copies boot files to EFI System Partition:',
+          answer: ['bcdboot c:\\windows /s s: /f uefi', 'bcdboot', 'bcdboot c:\\windows'],
+          placeholder: 'bcdboot ...',
+          explain: 'bcdboot rebuilds the UEFI boot manager. Full syntax: bcdboot C:\\Windows /s S: /f UEFI (where S: = mounted ESP letter in WinRE).' },
+        { type: 'multiselect',
+          prompt: 'Tools to repair corrupt system files:',
+          options: ['sfc /scannow', 'DISM /Online /Cleanup-Image /RestoreHealth', 'chkdsk /f /r', 'format c:'],
+          answers: [0, 1, 2],
+          explain: 'DISM repairs Component Store; SFC then uses it to repair system files. chkdsk fixes file-system errors. Format wipes the drive (NOT a repair).' },
+        { type: 'choice',
+          prompt: 'BitLocker recovery prompt at boot after firmware update. Cause?',
+          options: ['BIOS update changed TPM measurement', 'BitLocker forgot the password', 'Cosmic rays flipped a bit', 'Hard drive died'],
+          answer: 0,
+          explain: 'TPM PCR registers track firmware + boot config. Any change requires recovery key. Always SUSPEND BitLocker before firmware updates.' }
       ]
     }
   ],
@@ -309,6 +508,190 @@ const LABS = {
           options: ['BPDU guard', 'PortFast', 'Root guard', 'UDLD'],
           answer: 1,
           explain: 'PortFast moves ports straight to forwarding for end devices. PAIR with BPDU guard to block accidental switch plug-ins.' }
+      ]
+    },
+    {
+      id: 'n-pbq1',
+      title: 'PBQ: VLSM Plan for Branch Office',
+      objective: '1.4 — IPv4 + VLSM',
+      steps: [
+        { type: 'note', text: 'Given 192.168.0.0/24. Subnets needed: Sales (60 hosts), Eng (28 hosts), HR (12 hosts), 3 point-to-point WAN links (2 hosts each).' },
+        { type: 'fillblank',
+          prompt: 'Smallest prefix that supports 60 hosts?',
+          answer: ['/26', '26'],
+          placeholder: '/xx',
+          explain: '/26 = 62 usable. /27 = 30 usable (not enough). Always size for usable count (subtract 2 for network + broadcast).' },
+        { type: 'order',
+          prompt: 'Assign VLSM subnets in CORRECT VLSM order (largest first, lowest address first):',
+          items: [
+            'Sales 192.168.0.0/26 (.1-.62, bcast .63)',
+            'Eng 192.168.0.64/27 (.65-.94, bcast .95)',
+            'HR 192.168.0.96/28 (.97-.110, bcast .111)',
+            'WAN1 192.168.0.112/30 (.113-.114, bcast .115)',
+            'WAN2 192.168.0.116/30 (.117-.118, bcast .119)',
+            'WAN3 192.168.0.120/30 (.121-.122, bcast .123)'
+          ],
+          explain: 'VLSM rule: sort by host count DESC, assign starting at lowest address, advance by block size. /26 block=64, /27 block=32, /28 block=16, /30 block=4.' },
+        { type: 'multiselect',
+          prompt: 'Which addresses are USABLE host IPs in 192.168.0.64/27?',
+          options: ['192.168.0.64', '192.168.0.65', '192.168.0.80', '192.168.0.94', '192.168.0.95', '192.168.0.96'],
+          answers: [1, 2, 3],
+          explain: '/27 block=32. Network=.64, broadcast=.95. Usable .65-.94. .64 is network, .95 is broadcast, .96 is next subnet.' },
+        { type: 'fillblank',
+          prompt: 'How many /30 subnets fit in a /22?',
+          answer: ['256', '2^8'],
+          placeholder: 'Number',
+          explain: '2^(30-22) = 2^8 = 256. Useful for WAN-link planning.' }
+      ]
+    },
+    {
+      id: 'n-pbq2',
+      title: 'PBQ: VLAN + Trunk Config',
+      objective: '2.3 — VLAN + 802.1Q',
+      steps: [
+        { type: 'note', text: 'You configure access port + trunk port. PC plugs into access port; uplink to another switch is a trunk.' },
+        { type: 'dragmatch',
+          prompt: 'Match each frame condition with the correct switch port behavior.',
+          pairs: [
+            { left: 'Untagged frame on access port VLAN 10', right: 'Forwarded as VLAN 10' },
+            { left: 'Tagged frame VLAN 99 on trunk allowing only 10,20,30', right: 'Dropped (VLAN 99 not allowed)' },
+            { left: 'Untagged frame on a trunk', right: 'Placed into native VLAN' },
+            { left: 'Tagged frame VLAN 10 on access port VLAN 20', right: 'Dropped (access port expects untagged)' }
+          ],
+          explain: 'Access ports: 1 untagged VLAN. Trunks: tagged + 1 native (untagged) VLAN. Tag/access mismatch = drop. Allowed-VLAN-list filters trunks.' },
+        { type: 'choice',
+          prompt: 'Best practice for trunk native VLAN to defeat double-tagging hop?',
+          options: [
+            'Leave native as default VLAN 1',
+            'Change native to an unused VLAN ID and tag it (vlan dot1q tag native)',
+            'Disable VLANs entirely',
+            'Use ISL instead of 802.1Q'
+          ],
+          answer: 1,
+          explain: 'Double-tag attack works against default VLAN 1 native. Move native to an unused ID + force-tag. ISL is Cisco-only + deprecated.' },
+        { type: 'multiselect',
+          prompt: 'Pick STP enhancement features ALL access ports should have:',
+          options: ['PortFast', 'BPDU Guard', 'Root Guard', 'UDLD', 'Loop Guard', 'DTP enabled'],
+          answers: [0, 1],
+          explain: 'Access ports: PortFast (skip listening/learning) + BPDU Guard (err-disable on rogue BPDU). Root Guard goes on partner-facing trunks. UDLD + Loop Guard on uplinks/fiber. DTP should be DISABLED to defeat VLAN hopping.' },
+        { type: 'order',
+          prompt: 'STP port states from initial to forwarding:',
+          items: ['Blocking', 'Listening', 'Learning', 'Forwarding'],
+          explain: 'Classic 802.1D order: Blocking → Listening (15s) → Learning (15s) → Forwarding. RSTP merges to Discarding → Learning → Forwarding.' }
+      ]
+    },
+    {
+      id: 'n-pbq3',
+      title: 'PBQ: Routing + ACL Drop',
+      objective: '2.5 — Routing tables + ACL evaluation',
+      steps: [
+        { type: 'note', text: 'Router has these entries: 0.0.0.0/0 via ISP, 10.0.0.0/8 via R2, 10.1.0.0/16 via R3, 10.1.5.0/24 via R4. Packet destined 10.1.5.42 arrives.' },
+        { type: 'fillblank',
+          prompt: 'Which next-hop wins for destination 10.1.5.42?',
+          answer: ['r4', 'R4'],
+          placeholder: 'R2 / R3 / R4',
+          explain: 'Longest-prefix match. 10.1.5.0/24 is the most specific match for 10.1.5.42 → R4.' },
+        { type: 'choice',
+          prompt: 'Routes installed from multiple protocols (OSPF + RIP) — which gets used?',
+          options: ['OSPF (AD 110 < 120)', 'RIP (lower metric)', 'Both load balance', 'Whichever was first'],
+          answer: 0,
+          explain: 'Administrative Distance breaks ties between protocols. OSPF AD = 110, RIP AD = 120. Lower wins.' },
+        { type: 'multiselect',
+          prompt: 'Stateful firewall: which direction must explicitly permit return traffic for a new outbound TCP session?',
+          options: ['Outbound (allow SYN)', 'Inbound (allow SYN-ACK)', 'Neither — state table handles it', 'Both must be explicit'],
+          answers: [2],
+          explain: 'Stateful firewall tracks the outbound SYN, auto-allows the matching SYN-ACK return. Only outbound rule needs explicit permit.' },
+        { type: 'order',
+          prompt: 'ACL evaluation rules — apply in this order:',
+          items: [
+            '1. Evaluate top-down, FIRST match wins',
+            '2. Implicit DENY at end if no match',
+            '3. Place most specific entries above broader ones',
+            '4. Recompile / push after edit'
+          ],
+          explain: 'Top-down + first-match + implicit-deny is THE rule. Order matters — broad permits above specific denies = denies never fire.' },
+        { type: 'fillblank',
+          prompt: 'Static route preferred over OSPF as backup ONLY. What AD lets it sit dormant?',
+          answer: ['200', '255'],
+          placeholder: 'Number',
+          explain: 'Floating static = static route with AD raised above the dynamic protocol (e.g., 200) so it activates only when dynamic disappears. Default static AD = 1.' }
+      ]
+    },
+    {
+      id: 'n-pbq4',
+      title: 'PBQ: Wi-Fi Site Plan',
+      objective: '2.4 — Wireless deployment',
+      steps: [
+        { type: 'note', text: 'Office with 50 users, 2.4 + 5 GHz APs, dense neighbor APs above + below.' },
+        { type: 'multiselect',
+          prompt: 'Which non-overlapping 20 MHz channels for 2.4 GHz in the US?',
+          options: ['1', '3', '6', '8', '11', '13'],
+          answers: [0, 2, 4],
+          explain: 'Only 1, 6, 11 are non-overlapping at 20 MHz in US/Canada (FCC 11-channel allocation). 13 + 14 used in EU/Japan only.' },
+        { type: 'choice',
+          prompt: 'WPA security choice for new deployment with all modern client devices?',
+          options: ['WEP', 'WPA personal w/ TKIP', 'WPA2-Personal w/ AES-CCMP', 'WPA3-Personal w/ SAE'],
+          answer: 3,
+          explain: 'WPA3 SAE handshake defeats offline cracking. Use WPA3 personal where supported, WPA2/3 mixed for legacy IoT.' },
+        { type: 'order',
+          prompt: 'Site-survey workflow in correct sequence:',
+          items: [
+            '1. Predictive (Ekahau/Hamina) model from floor plan',
+            '2. Pre-installation passive survey',
+            '3. Install APs per design',
+            '4. Post-install active survey + heatmap validation',
+            '5. Tune channels + power + min-data-rate'
+          ],
+          explain: 'Predictive → passive → install → active → tune. Skipping post-install validation guarantees dead spots.' },
+        { type: 'fillblank',
+          prompt: 'Min RSSI target for VoWi-Fi at cell edge?',
+          answer: ['-65', '-67', '-65 dbm', '-67 dbm'],
+          placeholder: 'dBm',
+          explain: 'Best practice: ≥ -65 dBm everywhere for voice. -67 acceptable; below = poor MOS scores + dropped calls.' },
+        { type: 'multiselect',
+          prompt: 'Pick countermeasures for evil-twin AP attack:',
+          options: ['WPA3-Personal SAE', 'WPA2/3-Enterprise with server cert validation', 'MAC filtering only', 'WIPS (Wireless IPS)', 'Disable SSID broadcast'],
+          answers: [1, 3],
+          explain: 'Enterprise mode with cert validation prevents client from associating with rogue AP. WIPS detects + alerts. MAC filtering + hidden SSID are trivially bypassed.' }
+      ]
+    },
+    {
+      id: 'n-pbq5',
+      title: 'PBQ: Troubleshoot Slow Web',
+      objective: '5.5 — Network performance issues',
+      steps: [
+        { type: 'note', text: 'User: "internet feels slow only on this one site." Ping to gateway is fine. Speedtest passes.' },
+        { type: 'order',
+          prompt: 'Apply top-down troubleshooting steps:',
+          items: [
+            '1. Test access from another device on same network',
+            '2. Check DNS resolution: nslookup site.com',
+            '3. TLS handshake: openssl s_client -connect site:443',
+            '4. Traceroute to identify failing hop',
+            '5. Check for proxy / TLS inspection rule applied',
+            '6. Report to ISP or website owner with evidence'
+          ],
+          explain: 'Top-down isolates fast: reproduce → DNS → TLS → network path → middlebox → upstream.' },
+        { type: 'multiselect',
+          prompt: 'Which Wireshark filters help diagnose retransmit symptoms?',
+          options: ['tcp.analysis.retransmission', 'tcp.analysis.duplicate_ack', 'tcp.window_size == 0', 'ip.ttl == 1', 'http.request.method == GET'],
+          answers: [0, 1, 2],
+          explain: 'Retransmission, duplicate ACK, and zero-window indicate packet loss or receiver buffer pressure. TTL=1 is normal traceroute. GET filter is unrelated.' },
+        { type: 'fillblank',
+          prompt: 'Acronym for "high ping under load with otherwise fast link":',
+          answer: ['bufferbloat'],
+          placeholder: 'one word',
+          explain: 'Bufferbloat = oversized buffer queues at bottleneck creating latency under load. Fix: enable fq_codel / SQM on the router.' },
+        { type: 'choice',
+          prompt: 'iperf3 test: 940 Mbps over 1 Gbps link. Healthy?',
+          options: [
+            'No — should hit 1000 Mbps exactly',
+            'Yes — ~94% of line rate is the expected TCP goodput after headers + IFG',
+            'No — should be at least 1.1 Gbps',
+            'Cable is bad'
+          ],
+          answer: 1,
+          explain: 'TCP goodput on 1 Gbps Ethernet caps near 940 Mbps after L2/L3/L4 headers, ACKs, and IFG. Anything ≥ 900 Mbps = healthy.' }
       ]
     }
   ],
@@ -413,6 +796,177 @@ const LABS = {
           answer: 1,
           explain: 'Customer-Managed Keys give you lifecycle control. Audit usage via cloud audit logs.' }
       ]
+    },
+    {
+      id: 's-pbq1',
+      title: 'PBQ: Identify Attack Type',
+      objective: '2.4 — analyze indicators',
+      steps: [
+        { type: 'note', text: 'Various security scenarios — pick the correct attack name from each description.' },
+        { type: 'dragmatch',
+          prompt: 'Match each scenario with its attack name.',
+          pairs: [
+            { left: 'Floods CAM table on a switch with bogus MACs', right: 'MAC flooding' },
+            { left: 'Forged ARP replies redirect victim traffic to attacker', right: 'ARP poisoning / spoofing' },
+            { left: 'Phone numbers ported to attacker SIM, OTP codes stolen', right: 'SIM swap' },
+            { left: 'Crafted ICMP echo to spoofed broadcast → amplified flood', right: 'Smurf attack' },
+            { left: 'Stolen TGT replayed against domain controllers', right: 'Pass-the-Ticket' },
+            { left: 'Attacker registers lookalike-domain login + reverse-proxies real M365 login + steals session cookie', right: 'AitM phishing (EvilProxy)' }
+          ],
+          explain: 'Memorize the names + their distinguishing trick. Many Sec+ questions are "which attack matches this description".' },
+        { type: 'multiselect',
+          prompt: 'Select attacks that target the CIA confidentiality pillar specifically:',
+          options: ['Eavesdropping / sniffing', 'DDoS', 'Phishing for credentials', 'Defacement', 'Side-channel attack', 'Ransomware encryption'],
+          answers: [0, 2, 4],
+          explain: 'Confidentiality = unauthorized disclosure. DDoS targets availability; defacement targets integrity; ransomware targets availability + integrity.' },
+        { type: 'fillblank',
+          prompt: 'Type of attack where attacker poisons resolver cache with false DNS records:',
+          answer: ['dns cache poisoning', 'dns poisoning', 'cache poisoning', 'pharming'],
+          placeholder: 'phrase',
+          explain: 'DNS cache poisoning / DNS spoofing redirects victims to attacker-controlled sites. DNSSEC + source-port randomization mitigate.' },
+        { type: 'order',
+          prompt: 'Kill-chain phases in correct order (Lockheed Martin):',
+          items: [
+            '1. Reconnaissance',
+            '2. Weaponization',
+            '3. Delivery',
+            '4. Exploitation',
+            '5. Installation',
+            '6. Command & Control (C2)',
+            '7. Actions on Objectives'
+          ],
+          explain: 'Memorize the 7 phases. Defenders aim to break the chain as early as possible.' }
+      ]
+    },
+    {
+      id: 's-pbq2',
+      title: 'PBQ: Cryptography Picker',
+      objective: '1.4 / 4.3 — applied cryptography',
+      steps: [
+        { type: 'note', text: 'Choose the right cryptographic primitive for each requirement.' },
+        { type: 'dragmatch',
+          prompt: 'Match the requirement to the correct primitive.',
+          pairs: [
+            { left: 'Symmetric block cipher (encryption at rest)', right: 'AES-256-GCM' },
+            { left: 'Asymmetric key exchange (Perfect Forward Secrecy)', right: 'ECDHE (X25519)' },
+            { left: 'Digital signature (modern)', right: 'EdDSA (Ed25519)' },
+            { left: 'Password hashing (memory-hard)', right: 'Argon2id' },
+            { left: 'Generic cryptographic hash', right: 'SHA-256' },
+            { left: 'MAC for short messages', right: 'HMAC-SHA256' }
+          ],
+          explain: 'Modern picks: AES-GCM for AEAD, ECDHE for key exchange w/ PFS, Ed25519 for signatures, Argon2id for passwords, SHA-256 for general hashing. AVOID MD5, SHA-1, RC4, 3DES, DES.' },
+        { type: 'multiselect',
+          prompt: 'Algorithms considered BROKEN / deprecated:',
+          options: ['MD5', 'SHA-1', 'AES-256', 'DES', '3DES', 'RC4', 'ECDSA P-256'],
+          answers: [0, 1, 3, 4, 5],
+          explain: 'MD5 + SHA-1 broken collisions. DES + 3DES weak / deprecated. RC4 cryptanalyzed. AES-256 + ECDSA still strong.' },
+        { type: 'fillblank',
+          prompt: 'Recommended TLS minimum version in 2025:',
+          answer: ['tls 1.2', '1.2', 'tls1.2'],
+          placeholder: 'TLS x.y',
+          explain: 'TLS 1.2 baseline (PCI requirement). TLS 1.3 preferred (faster + AEAD only). Disable TLS 1.0 / 1.1 / SSL.' },
+        { type: 'choice',
+          prompt: 'Best storage for a corporate signing key?',
+          options: ['Embedded in source code', 'Plaintext file with strong permissions', 'HSM / cloud KMS with audit logging', 'Encrypted with a password also in the same repo'],
+          answer: 2,
+          explain: 'HSM (Hardware Security Module) or cloud KMS keeps the key in tamper-resistant hardware; access logged. Source code = leak risk.' }
+      ]
+    },
+    {
+      id: 's-pbq3',
+      title: 'PBQ: Incident Response Steps',
+      objective: '4.4 — IR process (NIST SP 800-61)',
+      steps: [
+        { type: 'note', text: 'Phishing campaign detected. Two finance users clicked + entered credentials. Mailbox rules forwarding to external. Begin IR.' },
+        { type: 'order',
+          prompt: 'NIST SP 800-61 phases in correct order:',
+          items: [
+            '1. Preparation',
+            '2. Detection & Analysis',
+            '3. Containment',
+            '4. Eradication',
+            '5. Recovery',
+            '6. Lessons Learned (Post-mortem)'
+          ],
+          explain: 'Memorize: Preparation → Detection → Containment → Eradication → Recovery → Lessons Learned. Preparation is ongoing, not one-time.' },
+        { type: 'multiselect',
+          prompt: 'Containment actions for the compromised users:',
+          options: ['Revoke active sessions in Entra ID / IdP', 'Reset passwords + force MFA re-enroll', 'Remove malicious inbox forwarding rules', 'Hunt for OAuth grant abuse', 'Disable accounts permanently'],
+          answers: [0, 1, 2, 3],
+          explain: 'Revoke tokens + rotate creds + remove inbox-rule persistence + audit OAuth grants. Permanent disable hurts business; temporary lock + investigate is right.' },
+        { type: 'fillblank',
+          prompt: 'GDPR breach-notification deadline to supervisory authority (max hours):',
+          answer: ['72', '72 hours'],
+          placeholder: 'hours',
+          explain: 'GDPR Article 33: notify within 72 hours of becoming aware unless unlikely to result in risk to rights/freedoms of data subjects.' },
+        { type: 'choice',
+          prompt: 'Best long-term mitigation against credential-phishing kits like EvilProxy?',
+          options: ['Annual training only', 'Phishing-resistant FIDO2 / passkeys', 'Force password change every 30 days', 'Block all external mail'],
+          answer: 1,
+          explain: 'Origin-bound FIDO2 / passkeys cannot be relayed through reverse-proxy phishing. Eliminate SMS + push notifications for high-value accounts.' },
+        { type: 'order',
+          prompt: 'Lessons-Learned post-mortem outputs (in correct documentation order):',
+          items: [
+            '1. Timeline of events (ts → action)',
+            '2. Root-cause analysis (5 Whys / Fishbone)',
+            '3. Impact assessment (users / data / cost)',
+            '4. Detection gaps + new alerts',
+            '5. Prevention actions + owners + due dates',
+            '6. Communications + regulatory notifications log'
+          ],
+          explain: 'Blameless post-mortem within 1-2 weeks of any Sev1/Sev2. Owner + date on every action prevents follow-up rot.' }
+      ]
+    },
+    {
+      id: 's-pbq4',
+      title: 'PBQ: Network Hardening Checklist',
+      objective: '3.2 / 3.4 — secure baseline',
+      steps: [
+        { type: 'note', text: 'Harden new switch + small office network. Pick + order baseline tasks.' },
+        { type: 'multiselect',
+          prompt: 'Required hardening items for a managed switch:',
+          options: [
+            'Change default admin password + enable MFA on mgmt',
+            'Update firmware to latest stable',
+            'Disable unused services (Telnet, HTTP, SNMPv1/v2c)',
+            'Configure SSH + HTTPS only for mgmt',
+            'Enable BPDU Guard + DHCP Snooping + DAI + IP Source Guard',
+            'Leave default VLAN 1 on trunks for compatibility',
+            'Configure NTP + Syslog forwarding to SIEM',
+            'Apply ACL on management VLAN'
+          ],
+          answers: [0, 1, 2, 3, 4, 6, 7],
+          explain: 'All items EXCEPT leaving native VLAN 1 — that\'s a VLAN-hopping risk. Move native off VLAN 1 + force-tag it.' },
+        { type: 'dragmatch',
+          prompt: 'Match the protocol with its secure replacement.',
+          pairs: [
+            { left: 'Telnet (23)', right: 'SSH (22)' },
+            { left: 'FTP (20/21)', right: 'SFTP (22) or FTPS (990)' },
+            { left: 'HTTP (80)', right: 'HTTPS (443)' },
+            { left: 'SNMPv1 / v2c (161)', right: 'SNMPv3 with AuthPriv' },
+            { left: 'LDAP (389)', right: 'LDAPS (636)' },
+            { left: 'POP3 (110)', right: 'POP3S (995)' }
+          ],
+          explain: 'Memorize plaintext → encrypted pair for every protocol. Sec+ + Net+ test these heavily.' },
+        { type: 'order',
+          prompt: 'Defense-in-depth layers in correct outward-to-inward order:',
+          items: [
+            '1. Perimeter (Internet edge firewall + IPS + DDoS)',
+            '2. Network (segmentation + east-west)',
+            '3. Endpoint (host firewall + EDR + patching)',
+            '4. Application (WAF + secure code + input validation)',
+            '5. Data (encryption + DLP + classification)',
+            '6. Identity (strong auth + MFA + PIM)',
+            '7. Physical (badges + cameras + locks)',
+            '8. Administrative (policy + training)'
+          ],
+          explain: 'Layered controls so a single failure doesn\'t equal a full breach. Test by removing one layer + checking redundancy.' },
+        { type: 'fillblank',
+          prompt: 'Stripped-down model where every request authenticated, authorized, encrypted; no implicit trust by network location:',
+          answer: ['zero trust', 'zero-trust', 'ztna', 'zero trust architecture'],
+          placeholder: 'phrase',
+          explain: 'Zero Trust (NIST SP 800-207). ZTNA brokers per-app access replacing flat VPN.' }
+      ]
     }
   ],
 
@@ -504,6 +1058,176 @@ const LABS = {
           explain: '--permanent persists across reload. Without it, only runtime rule.' },
         { type: 'command', prompt: 'Install fail2ban for brute-force protection:', cmd: 'sudo apt install fail2ban -y\nsudo systemctl enable --now fail2ban\nsudo fail2ban-client status sshd',
           explain: 'fail2ban watches auth logs and bans offending IPs via iptables/nftables.' }
+      ]
+    },
+    {
+      id: 'l-pbq1',
+      title: 'PBQ: Linux Permissions',
+      objective: '2.4 — file permissions + special bits',
+      steps: [
+        { type: 'note', text: 'Translate between numeric (octal) and symbolic Linux file permissions.' },
+        { type: 'fillblank',
+          prompt: 'Numeric mode for "rwxr-xr-x":',
+          answer: ['755'],
+          placeholder: 'three digits',
+          explain: 'r=4, w=2, x=1. Owner=7 (4+2+1), Group=5 (4+1), Other=5. Default for executables/dirs.' },
+        { type: 'fillblank',
+          prompt: 'Numeric mode for "-rw-------" (private file like SSH key):',
+          answer: ['600'],
+          placeholder: 'three digits',
+          explain: 'Owner rw=6, Group=0, Other=0. ssh refuses to use a private key with broader permissions.' },
+        { type: 'dragmatch',
+          prompt: 'Match special bit to behavior.',
+          pairs: [
+            { left: '4xxx (setuid)', right: 'Run as file owner' },
+            { left: '2xxx (setgid)', right: 'Run as group OR new files inherit dir group' },
+            { left: '1xxx (sticky)', right: 'Only owner can delete files in dir (/tmp pattern)' },
+            { left: 'chattr +i', right: 'Immutable — even root cannot modify until -i' }
+          ],
+          explain: 'setuid: passwd (4755). setgid on dirs: shared project folders inherit group. sticky: /tmp. immutable: critical config files.' },
+        { type: 'multiselect',
+          prompt: 'Commands that change Linux permissions:',
+          options: ['chmod', 'chown', 'chgrp', 'setfacl', 'getfacl', 'umask'],
+          answers: [0, 3, 5],
+          explain: 'chmod sets mode. setfacl applies POSIX ACLs. umask sets default mode mask for new files. chown/chgrp change OWNER/GROUP, not permissions. getfacl reads.' },
+        { type: 'order',
+          prompt: 'Steps to make a script executable + run it (correct order):',
+          items: [
+            '1. nano script.sh (write code starting with #!/usr/bin/env bash)',
+            '2. chmod +x script.sh',
+            '3. ./script.sh    (relative path execution)',
+            '4. (optional) mv script.sh /usr/local/bin/ + run by name'
+          ],
+          explain: 'Shebang first line, then add execute bit. /usr/local/bin is in $PATH so name-only works after move.' }
+      ]
+    },
+    {
+      id: 'l-pbq2',
+      title: 'PBQ: systemd Service Lifecycle',
+      objective: '2.7 — manage services',
+      steps: [
+        { type: 'note', text: 'Daemon called myapp must start at boot, auto-restart on crash, log to journal.' },
+        { type: 'order',
+          prompt: 'Steps to deploy a new systemd service in correct order:',
+          items: [
+            '1. Write /etc/systemd/system/myapp.service unit file',
+            '2. sudo systemctl daemon-reload (re-read units)',
+            '3. sudo systemctl enable myapp (start at boot)',
+            '4. sudo systemctl start myapp (start now)',
+            '5. systemctl status myapp (verify running)',
+            '6. journalctl -u myapp -f (follow logs)'
+          ],
+          explain: 'daemon-reload after editing unit file. enable+start = start now AND at boot. Combine: systemctl enable --now myapp.' },
+        { type: 'dragmatch',
+          prompt: 'Match systemctl verb to behavior.',
+          pairs: [
+            { left: 'start', right: 'Begin service now' },
+            { left: 'enable', right: 'Auto-start at boot' },
+            { left: 'restart', right: 'Stop then start (drops connections)' },
+            { left: 'reload', right: 'Re-read config without dropping connections' },
+            { left: 'mask', right: 'Strongest disable — symlinks unit to /dev/null' },
+            { left: 'daemon-reload', right: 'Reload systemd config after unit-file edit' }
+          ],
+          explain: 'enable+start vs restart vs reload most-tested. reload only works if service supports SIGHUP / has ExecReload.' },
+        { type: 'fillblank',
+          prompt: 'Single command to start now AND enable at boot:',
+          answer: ['systemctl enable --now myapp', 'sudo systemctl enable --now myapp', 'enable --now'],
+          placeholder: 'systemctl ...',
+          explain: 'systemctl enable --now SERVICE = enable + start in one command.' },
+        { type: 'multiselect',
+          prompt: 'Useful journalctl filters:',
+          options: ['-u <service>', '--since "1 hour ago"', '-p err', '-f', '-k (kernel)', '-x'],
+          answers: [0, 1, 2, 3, 4, 5],
+          explain: 'All valid. -u filter by unit, --since time, -p priority, -f follow, -k kernel only, -x explain with catalog entries.' },
+        { type: 'choice',
+          prompt: 'Service shows "active (exited)". Meaning?',
+          options: [
+            'Service crashed',
+            'Service ran to completion (oneshot type) — expected',
+            'Service is hung',
+            'Service is starting'
+          ],
+          answer: 1,
+          explain: 'Type=oneshot units exit after their job runs. status "active (exited)" = success. (Failed = "failed".)' }
+      ]
+    },
+    {
+      id: 'l-pbq3',
+      title: 'PBQ: Disk + LVM Setup',
+      objective: '1.2 / 1.7 — storage management',
+      steps: [
+        { type: 'note', text: 'Add new disk /dev/sdb, create LVM volume, mount persistently.' },
+        { type: 'order',
+          prompt: 'LVM creation steps in correct order:',
+          items: [
+            '1. pvcreate /dev/sdb     # mark physical volume',
+            '2. vgcreate vg_data /dev/sdb     # create volume group',
+            '3. lvcreate -L 50G -n lv_app vg_data     # create logical volume',
+            '4. mkfs.ext4 /dev/vg_data/lv_app     # format',
+            '5. mkdir /mnt/app && mount /dev/vg_data/lv_app /mnt/app',
+            '6. Add UUID entry to /etc/fstab for persistent mount'
+          ],
+          explain: 'PV → VG → LV → mkfs → mount → fstab. LVM allows online expand: lvextend -r -L +20G; resize2fs / xfs_growfs.' },
+        { type: 'multiselect',
+          prompt: 'Commands that list block devices + filesystems:',
+          options: ['lsblk', 'blkid', 'df -h', 'fdisk -l', 'mount', 'ls /dev/sd*'],
+          answers: [0, 1, 2, 3, 4],
+          explain: 'lsblk tree view. blkid UUID + label + type. df mounted FS usage. fdisk -l partition table. mount currently mounted. ls /dev/sd* just nodes (least useful).' },
+        { type: 'fillblank',
+          prompt: 'Best identifier for /etc/fstab entries (NOT /dev/sdX which can shift):',
+          answer: ['uuid', 'UUID'],
+          placeholder: 'word',
+          explain: 'UUID survives device reorder + cloning. Get via blkid /dev/sdX.' },
+        { type: 'choice',
+          prompt: 'Filesystem default on modern RHEL?',
+          options: ['ext4', 'XFS', 'Btrfs', 'ZFS'],
+          answer: 1,
+          explain: 'RHEL 7+ default = XFS. Ubuntu default = ext4. openSUSE root = Btrfs. ZFS via OpenZFS available cross-distro.' },
+        { type: 'dragmatch',
+          prompt: 'Match mount option to purpose.',
+          pairs: [
+            { left: 'noexec', right: 'Disallow execution from this FS' },
+            { left: 'nosuid', right: 'Ignore setuid bits' },
+            { left: 'nodev', right: 'No device nodes interpreted' },
+            { left: 'ro', right: 'Read-only mount' },
+            { left: 'noatime', right: 'Skip last-access updates (perf)' }
+          ],
+          explain: 'Hardening mounts: /tmp noexec,nosuid,nodev defeats privilege escalation paths.' }
+      ]
+    },
+    {
+      id: 'l-pbq4',
+      title: 'PBQ: Network Troubleshooting on Linux',
+      objective: '3.1 — networking troubleshooting',
+      steps: [
+        { type: 'note', text: 'App on server can\'t reach external DB. Walk through Linux diagnostics.' },
+        { type: 'order',
+          prompt: 'Bottom-up Linux diagnostic command order:',
+          items: [
+            '1. ip a (verify IP + interface up)',
+            '2. ip route (default gateway + routes)',
+            '3. ping 8.8.8.8 (Internet reachability)',
+            '4. cat /etc/resolv.conf + nslookup db.example.com (DNS)',
+            '5. nc -vz db.example.com 5432 (TCP port reachability)',
+            '6. ss -tnp state established (verify connections)',
+            '7. tcpdump -i any host db.example.com (capture if needed)'
+          ],
+          explain: 'IP → route → ICMP → DNS → port → connections → packet trace. Stop at first failure + fix that layer.' },
+        { type: 'fillblank',
+          prompt: 'Modern replacement for netstat -ano on Linux:',
+          answer: ['ss -tnlp', 'ss', 'ss -tunlp'],
+          placeholder: 'command',
+          explain: 'ss is the replacement; faster + kernel-direct. Common flags: -t TCP, -u UDP, -n no resolve, -l listen, -p process.' },
+        { type: 'multiselect',
+          prompt: 'Tools to test DNS resolution:',
+          options: ['dig', 'host', 'nslookup', 'getent hosts', 'curl', 'ping'],
+          answers: [0, 1, 2, 3],
+          explain: 'dig + host + nslookup are dedicated DNS. getent uses NSS (includes /etc/hosts). curl + ping do DNS implicitly but aren\'t inspection tools.' },
+        { type: 'choice',
+          prompt: 'Port 5432 reachable but app times out. Likely cause?',
+          options: ['DNS broken', 'TCP works → app-layer (auth / TLS / pg_hba) issue', 'Cable issue', 'Wrong gateway'],
+          answer: 1,
+          explain: 'TCP handshake completing means L1-L4 OK. Look at PostgreSQL pg_hba.conf, SSL config, app credentials.' }
       ]
     }
   ],
@@ -609,6 +1333,161 @@ const LABS = {
           answer: 1,
           explain: 'Untested DR is broken DR. Every drill must capture lessons + update runbook.' }
       ]
+    },
+    {
+      id: 'c-pbq1',
+      title: 'PBQ: Service Model Identification',
+      objective: '1.1 — IaaS / PaaS / SaaS / FaaS',
+      steps: [
+        { type: 'note', text: 'Identify the cloud service model for each example.' },
+        { type: 'dragmatch',
+          prompt: 'Match each cloud product to its service model.',
+          pairs: [
+            { left: 'EC2 / Azure VM / Compute Engine', right: 'IaaS' },
+            { left: 'App Service / Elastic Beanstalk / Cloud Run', right: 'PaaS' },
+            { left: 'Microsoft 365 / Salesforce / Workday', right: 'SaaS' },
+            { left: 'Lambda / Azure Functions / Cloud Run Functions', right: 'FaaS' },
+            { left: 'EKS / AKS / GKE / Fargate', right: 'CaaS' },
+            { left: 'AVD / Windows 365 / WorkSpaces', right: 'DaaS' }
+          ],
+          explain: 'Memorize the famous products → model. CaaS = Container as a Service. DaaS = Desktop as a Service. FaaS = serverless functions.' },
+        { type: 'order',
+          prompt: 'Cloud abstractions ordered from MOST customer control to LEAST:',
+          items: [
+            '1. On-prem (you own everything)',
+            '2. IaaS (you manage OS+ up)',
+            '3. PaaS (you manage app + data)',
+            '4. SaaS (provider manages everything)'
+          ],
+          explain: 'Trade-off: more abstraction = less control + less ops work. SaaS leaves you only data + identity to own.' },
+        { type: 'multiselect',
+          prompt: 'In IaaS, customer is responsible for:',
+          options: ['Hypervisor patches', 'Guest OS patches', 'Application code', 'Data + access', 'Physical security', 'Storage encryption keys (CMK option)'],
+          answers: [1, 2, 3, 5],
+          explain: 'IaaS: you own OS+app+data. Provider owns hypervisor + physical. Customer can opt for CMK over provider-managed keys.' },
+        { type: 'fillblank',
+          prompt: 'Service model where customer manages only data + identity:',
+          answer: ['saas', 'software as a service'],
+          placeholder: 'acronym',
+          explain: 'SaaS: provider runs hardware + OS + runtime + app. You configure + bring data + manage user accounts.' }
+      ]
+    },
+    {
+      id: 'c-pbq2',
+      title: 'PBQ: Pick Storage Class',
+      objective: '2.1 — cloud storage tiers',
+      steps: [
+        { type: 'note', text: 'Match each workload to the most cost-effective AWS S3 storage class.' },
+        { type: 'dragmatch',
+          prompt: 'Match access pattern to storage class.',
+          pairs: [
+            { left: 'Active website assets, accessed thousands times/day', right: 'S3 Standard' },
+            { left: 'Backup accessed monthly, rapid restore needed', right: 'S3 Standard-IA' },
+            { left: 'Compliance archive, restore tolerable in minutes-hours', right: 'S3 Glacier Instant / Flexible' },
+            { left: 'Tape-replacement archive, restore 1-12h, lowest cost', right: 'S3 Glacier Deep Archive' },
+            { left: 'Workload with unknown / shifting access pattern', right: 'S3 Intelligent-Tiering' }
+          ],
+          explain: 'Standard = hot. Standard-IA = warm. Glacier = cold. Deep Archive = frozen. Intelligent-Tiering auto-tiers by access pattern.' },
+        { type: 'multiselect',
+          prompt: 'Defenses against ransomware on cloud object storage:',
+          options: ['S3 Object Lock (WORM)', 'Versioning enabled', 'Cross-account backup copy', 'MFA Delete', 'Server-side encryption', 'Make bucket public'],
+          answers: [0, 1, 2, 3],
+          explain: 'Object Lock + Versioning + MFA Delete + Cross-account separation = ransomware-resilient. Encryption alone does not prevent destruction. Public = breach.' },
+        { type: 'fillblank',
+          prompt: 'NIST term for backup that cannot be modified during retention window:',
+          answer: ['immutable', 'immutable backup', 'worm'],
+          placeholder: 'one word',
+          explain: 'Immutable / WORM (Write Once Read Many) backups survive ransomware + insider deletion within retention period.' },
+        { type: 'choice',
+          prompt: 'GLBA-regulated bank wants long retention with infrequent access at lowest cost. Pick:',
+          options: ['S3 Standard', 'S3 Standard-IA', 'S3 Glacier Flexible Retrieval', 'S3 Glacier Deep Archive'],
+          answer: 3,
+          explain: 'Deep Archive ~$0.001/GB-mo. Restore 1-12h. Perfect for 7-yr SOX/GLBA archive.' }
+      ]
+    },
+    {
+      id: 'c-pbq3',
+      title: 'PBQ: Multi-AZ vs Multi-Region',
+      objective: '4.2 — HA + DR design',
+      steps: [
+        { type: 'note', text: 'Design HA + DR for a customer-facing web app.' },
+        { type: 'dragmatch',
+          prompt: 'Match goal to architecture.',
+          pairs: [
+            { left: 'Tolerate single DC failure within a region', right: 'Multi-AZ deployment (3 AZs)' },
+            { left: 'Survive full region outage', right: 'Multi-region active-passive or active-active' },
+            { left: 'Lowest cost DR — minimal core running, scale on disaster', right: 'Pilot light' },
+            { left: 'Scaled-down full stack ready, scale up on failover', right: 'Warm standby' },
+            { left: 'Backups only, rebuild from scratch', right: 'Backup & restore (highest RTO/RPO)' }
+          ],
+          explain: 'DR strategy ladder — Backup-Restore → Pilot Light → Warm Standby → Multi-Site Active-Active. Cost increases up the ladder; RTO/RPO decreases.' },
+        { type: 'order',
+          prompt: 'DR ladder from HIGHEST RTO/RPO to LOWEST:',
+          items: [
+            '1. Backup & Restore (hours-days)',
+            '2. Pilot Light (10s of minutes)',
+            '3. Warm Standby (minutes)',
+            '4. Multi-Site Active-Active (near-zero)'
+          ],
+          explain: 'Trade cost for RTO/RPO. Active-active = double infra + complex routing but instant failover.' },
+        { type: 'multiselect',
+          prompt: 'Items to include in a DR runbook:',
+          options: ['Step-by-step failover procedure', 'Contact list (paged + escalation)', 'Decision criteria for declaring disaster', 'Communication templates', 'Backout procedure', 'Sample login credentials'],
+          answers: [0, 1, 2, 3, 4],
+          explain: 'Never store credentials in runbooks. Use a secrets vault.' },
+        { type: 'fillblank',
+          prompt: 'How often DR drills should occur AT MINIMUM:',
+          answer: ['annually', 'yearly', '1 year', 'once a year'],
+          placeholder: 'period',
+          explain: 'NIST + ISO best practice: full DR test annually; tabletop quarterly; backup-restore test monthly.' }
+      ]
+    },
+    {
+      id: 'c-pbq4',
+      title: 'PBQ: Cloud Cost Optimization',
+      objective: '5.3 — cost management',
+      steps: [
+        { type: 'note', text: 'Cloud bill jumped 40%. Find + apply optimization levers.' },
+        { type: 'multiselect',
+          prompt: 'Cost optimization levers for steady-state workloads:',
+          options: [
+            'Reserved Instances (1-3 yr commit)',
+            'Savings Plans (compute spend commit)',
+            'Spot / Preemptible for interruptible jobs',
+            'Right-sizing via Compute Optimizer / Azure Advisor',
+            'Hot tier storage for cold data',
+            'Cross-region replication for low-priority data'
+          ],
+          answers: [0, 1, 2, 3],
+          explain: 'Hot storage for cold = wasteful. Cross-region replicate adds egress + storage costs; only for compliance / DR.' },
+        { type: 'dragmatch',
+          prompt: 'Match cost lever to discount range.',
+          pairs: [
+            { left: 'On-demand', right: '0% (baseline)' },
+            { left: 'Reserved Instance 1yr no upfront', right: '~30%' },
+            { left: 'Reserved Instance 3yr all-upfront', right: '~70%' },
+            { left: 'Savings Plan 3yr', right: '~65%' },
+            { left: 'Spot / Preemptible', right: 'Up to 90%' }
+          ],
+          explain: 'Spot biggest discount but can be reclaimed any time. RIs need usage pattern certainty.' },
+        { type: 'fillblank',
+          prompt: 'Cross-team accountability discipline for cloud spend:',
+          answer: ['finops'],
+          placeholder: 'one word',
+          explain: 'FinOps = engineering + finance + procurement collaboration on cloud cost.' },
+        { type: 'order',
+          prompt: 'Cost-investigation steps after unexpected bill spike:',
+          items: [
+            '1. Open Cost Explorer / Cost Management — sort by service',
+            '2. Identify top services + accounts driving the change',
+            '3. Tag-based breakdown (env, owner, project)',
+            '4. Compare to previous billing period delta',
+            '5. Talk to owners of newly-spiking workloads',
+            '6. Apply right-sizing / Reservations / cleanup',
+            '7. Set budgets + anomaly alerts to prevent recurrence'
+          ],
+          explain: 'Always investigate before acting. Egress and idle resources are common culprits.' }
+      ]
     }
   ],
 
@@ -695,6 +1574,128 @@ const LABS = {
           answer: 0,
           explain: 'Private Endpoint puts a private IP for a PaaS service inside your VNet. Disables public access.' }
       ]
+    },
+    {
+      id: 'az-pbq1',
+      title: 'PBQ: Azure Resource Hierarchy',
+      objective: 'Azure architecture',
+      steps: [
+        { type: 'note', text: 'Place each Azure construct in its correct scope level.' },
+        { type: 'order',
+          prompt: 'Order Azure scopes from BROADEST to NARROWEST:',
+          items: [
+            '1. Tenant (Microsoft Entra ID root)',
+            '2. Management Group',
+            '3. Subscription',
+            '4. Resource Group',
+            '5. Resource'
+          ],
+          explain: 'Inheritance flows top-down. Policy or RBAC at MG cascades to every subscription/RG/resource beneath.' },
+        { type: 'dragmatch',
+          prompt: 'Match each scope to its typical use.',
+          pairs: [
+            { left: 'Tenant', right: 'Identity boundary (Entra ID)' },
+            { left: 'Management Group', right: 'Apply policy + RBAC across many subscriptions' },
+            { left: 'Subscription', right: 'Billing + quota boundary' },
+            { left: 'Resource Group', right: 'Lifecycle + permissions container for one workload' },
+            { left: 'Resource', right: 'VM / storage account / database / etc.' }
+          ],
+          explain: 'Memorize: Tenant = identity. MG = grouping. Sub = bill. RG = lifecycle. Resource = thing.' },
+        { type: 'multiselect',
+          prompt: 'Resource Group facts (pick TRUE):',
+          options: [
+            'Every resource lives in exactly one RG',
+            'RG itself has a region (where its metadata sits)',
+            'Resources can be in different regions than their RG',
+            'You can nest RGs inside each other',
+            'Deleting an RG deletes every resource inside'
+          ],
+          answers: [0, 1, 2, 4],
+          explain: 'RGs CANNOT be nested. Everything else is true. Resource region ≠ RG region is common.' },
+        { type: 'fillblank',
+          prompt: 'SLA for two VMs deployed across Availability Zones in one region:',
+          answer: ['99.99', '99.99%', '4 nines'],
+          placeholder: 'percent',
+          explain: 'Multi-AZ VMs in same region get 99.99% SLA. Single instance with Premium SSD = 99.9%. Availability Set (same DC, fault/update domains) = 99.95%.' }
+      ]
+    },
+    {
+      id: 'az-pbq2',
+      title: 'PBQ: Identify Azure Service',
+      objective: 'Azure services',
+      steps: [
+        { type: 'note', text: 'Pick the right Azure service for each scenario.' },
+        { type: 'dragmatch',
+          prompt: 'Match the need to the Azure service.',
+          pairs: [
+            { left: 'Run a Windows VM with full OS control', right: 'Azure Virtual Machines (IaaS)' },
+            { left: 'Host a web API with Microsoft patching OS', right: 'App Service (PaaS)' },
+            { left: 'Run a container without orchestration', right: 'Azure Container Instances (ACI)' },
+            { left: 'Run microservices on managed Kubernetes', right: 'AKS' },
+            { left: 'Code runs only on HTTP request, scale-to-zero', right: 'Azure Functions (FaaS)' },
+            { left: 'Stream Windows desktops to iPads', right: 'Azure Virtual Desktop (DaaS)' }
+          ],
+          explain: 'Compute spectrum: VM → App Service → Container Apps/AKS → Functions. Pick by control vs ops effort.' },
+        { type: 'multiselect',
+          prompt: 'Which storage redundancy survives a full REGION outage?',
+          options: ['LRS', 'ZRS', 'GRS', 'GZRS', 'RA-GRS', 'RA-GZRS'],
+          answers: [2, 3, 4, 5],
+          explain: 'GRS/GZRS replicate to paired region. RA-GRS/RA-GZRS add read access to secondary. LRS=1 DC; ZRS=3 zones same region.' },
+        { type: 'fillblank',
+          prompt: 'Cloud security posture management service in Azure (acronym):',
+          answer: ['cspm', 'defender for cloud', 'mdc'],
+          placeholder: 'acronym',
+          explain: 'Microsoft Defender for Cloud = CSPM (posture + Secure Score) + CWPP (workload protection per plan).' },
+        { type: 'choice',
+          prompt: 'Best Azure service for global anycast L7 entry point + WAF + CDN for a multi-region web app:',
+          options: ['Azure Load Balancer', 'Application Gateway', 'Azure Front Door', 'Traffic Manager'],
+          answer: 2,
+          explain: 'Front Door = global anycast L7 + CDN + WAF. AppGW = regional L7. ALB = regional L4. Traffic Manager = DNS-based, no caching/WAF.' }
+      ]
+    },
+    {
+      id: 'az-pbq3',
+      title: 'PBQ: Cost Tool Picker',
+      objective: 'Azure cost management',
+      steps: [
+        { type: 'dragmatch',
+          prompt: 'Match each cost task to the correct Azure tool.',
+          pairs: [
+            { left: 'Estimate monthly cost BEFORE deploying', right: 'Azure Pricing Calculator' },
+            { left: 'Compare 3-year on-prem vs Azure cost', right: 'Azure TCO Calculator' },
+            { left: 'Analyze ACTUAL spend + set budgets + alerts', right: 'Microsoft Cost Management' },
+            { left: 'See cost-saving recommendations (idle VMs, RIs)', right: 'Azure Advisor (Cost tab)' }
+          ],
+          explain: 'Memorize Pricing vs TCO vs Cost Management vs Advisor — most common AZ-900 exam confusion.' },
+        { type: 'multiselect',
+          prompt: 'Pick the discount mechanisms available in Azure:',
+          options: [
+            'Reservations (1-3 yr commit)',
+            'Savings Plan for Compute (1-3 yr hourly commit)',
+            'Spot Virtual Machines (evictable)',
+            'Azure Hybrid Benefit (BYO Windows/SQL licenses)',
+            'Dev/Test pricing',
+            'Pay-As-You-Go (no discount, baseline)'
+          ],
+          answers: [0, 1, 2, 3, 4],
+          explain: 'All except PAYG provide a discount. PAYG = baseline on-demand pricing.' },
+        { type: 'fillblank',
+          prompt: 'Reservation maximum discount in Azure (up to)',
+          answer: ['72', '72%', '72 percent'],
+          placeholder: 'percent',
+          explain: '3-year all-upfront RI saves up to 72% vs PAYG. Spot up to 90% but evictable.' },
+        { type: 'order',
+          prompt: 'Cost analysis workflow in order:',
+          items: [
+            '1. View Cost Management dashboard by subscription/RG',
+            '2. Filter top services by spend',
+            '3. Group by tag (env / owner / project) for chargeback',
+            '4. Set budget alert at 80% threshold',
+            '5. Apply Advisor recommendations (right-size + RIs)',
+            '6. Review monthly trend; adjust commitments'
+          ],
+          explain: 'Dashboard → break down → tag → alert → optimize → review. Anomaly detection catches sudden spikes early.' }
+      ]
     }
   ],
 
@@ -774,6 +1775,132 @@ const LABS = {
           options: ['Eyeball it', 'Invoke-ScriptAnalyzer .\\Get-ServerHealth.psm1', 'Just run it in prod', 'No tooling exists'],
           answer: 1,
           explain: 'PSScriptAnalyzer flags style + correctness issues (approved verbs, plural nouns, secrets, etc.).' }
+      ]
+    },
+    {
+      id: 'ps-pbq1',
+      title: 'PBQ: Cmdlet + Pipeline Reasoning',
+      objective: 'Pipeline + objects',
+      steps: [
+        { type: 'note', text: 'Walk through PowerShell pipeline mechanics.' },
+        { type: 'fillblank',
+          prompt: 'Automatic variable representing the current pipeline object:',
+          answer: ['$_', '$psitem'],
+          placeholder: 'variable',
+          explain: '$_ (or modern $PSItem) is the current pipeline object inside Where-Object / ForEach-Object scriptblocks.' },
+        { type: 'dragmatch',
+          prompt: 'Match the cmdlet alias to its full name.',
+          pairs: [
+            { left: '?', right: 'Where-Object' },
+            { left: '%', right: 'ForEach-Object' },
+            { left: 'select', right: 'Select-Object' },
+            { left: 'gci', right: 'Get-ChildItem' },
+            { left: 'gm', right: 'Get-Member' },
+            { left: 'ft', right: 'Format-Table' }
+          ],
+          explain: 'Aliases save typing at the prompt. Use FULL cmdlet names in scripts for clarity + linter happiness.' },
+        { type: 'multiselect',
+          prompt: 'Operators that are LEGAL PowerShell comparisons:',
+          options: ['-eq', '-ne', '==', '-lt', '-gt', '=', '-like', '-match'],
+          answers: [0, 1, 3, 4, 6, 7],
+          explain: 'PowerShell uses -eq / -ne / -lt / -gt / -le / -ge / -like / -match. NO == operator. = is assignment ONLY.' },
+        { type: 'order',
+          prompt: 'Pipeline binding modes in cmdlet-binding attempt order:',
+          items: [
+            '1. ByValue (entire object matches parameter type)',
+            '2. ByPropertyName (matching property name on the object)'
+          ],
+          explain: 'ByValue checked first. If fails, ByPropertyName tried. Get-Help cmdlet -Parameter * reveals which params accept pipeline.' }
+      ]
+    },
+    {
+      id: 'ps-pbq2',
+      title: 'PBQ: Advanced Function Anatomy',
+      objective: 'Functions + parameter validation',
+      steps: [
+        { type: 'note', text: 'Build a production-grade advanced function. Pick the correct attributes.' },
+        { type: 'dragmatch',
+          prompt: 'Match each validation attribute to its purpose.',
+          pairs: [
+            { left: '[ValidateSet(...)]', right: 'Enforces one of a fixed list of values (gives tab completion)' },
+            { left: '[ValidateRange(min,max)]', right: 'Numeric range' },
+            { left: '[ValidatePattern("regex")]', right: 'Must match regex' },
+            { left: '[ValidateScript({...})]', right: 'Arbitrary boolean check (e.g., file exists)' },
+            { left: '[ValidateNotNullOrEmpty()]', right: 'Reject null / empty string / empty collection' },
+            { left: '[ValidateLength(min,max)]', right: 'String length bounds' }
+          ],
+          explain: 'Memorize the catalog. Validation runs BEFORE function body — fail fast.' },
+        { type: 'multiselect',
+          prompt: 'What does [CmdletBinding()] add to a function?',
+          options: [
+            'Common parameters (-Verbose / -Debug / -ErrorAction / etc.)',
+            'Support for $PSCmdlet automatic variable',
+            'Ability to support -WhatIf / -Confirm via SupportsShouldProcess',
+            'Pipeline-binding via ValueFromPipeline parameter attribute',
+            'Built-in encryption',
+            'Automatic logging to Sentinel'
+          ],
+          answers: [0, 1, 2, 3],
+          explain: '[CmdletBinding()] converts a basic function into an advanced function. No magic logging or crypto. SupportsShouldProcess opt-in for destructive cmdlets.' },
+        { type: 'fillblank',
+          prompt: 'Snippet attribute on a parameter to mark it as MANDATORY:',
+          answer: ['[parameter(mandatory)]', '[parameter(mandatory=$true)]', 'mandatory'],
+          placeholder: '[Parameter(...)]',
+          explain: '[Parameter(Mandatory)] (or Mandatory=$true) forces the caller to supply it. Pair with [ValidateNotNullOrEmpty()] for sanity.' },
+        { type: 'order',
+          prompt: 'Pipeline-aware function lifecycle blocks in correct order:',
+          items: ['1. begin { setup once before pipeline }', '2. process { runs per pipeline object }', '3. end { teardown after pipeline done }'],
+          explain: 'process block is the per-object handler — REQUIRED for pipeline support. Without it, only the LAST piped object is processed.' }
+      ]
+    },
+    {
+      id: 'ps-pbq3',
+      title: 'PBQ: Error Handling + Best Practices',
+      objective: 'Error handling',
+      steps: [
+        { type: 'note', text: 'Production scripts need explicit error handling. Choose the right approach for each scenario.' },
+        { type: 'choice',
+          prompt: 'A non-terminating error from Get-Item — how to force it into try/catch?',
+          options: [
+            'Add -ErrorAction Stop',
+            'Wrap in begin block',
+            'Use trap statement only',
+            'Cannot be caught'
+          ],
+          answer: 0,
+          explain: '-ErrorAction Stop (or $ErrorActionPreference = "Stop") promotes non-terminating to terminating so try/catch fires.' },
+        { type: 'multiselect',
+          prompt: 'Valid PowerShell preference variables:',
+          options: ['$ErrorActionPreference', '$WarningPreference', '$VerbosePreference', '$DebugPreference', '$InformationPreference', '$ConfirmPreference', '$RandomActionPreference'],
+          answers: [0, 1, 2, 3, 4, 5],
+          explain: '$RandomActionPreference does not exist. All others control output streams.' },
+        { type: 'fillblank',
+          prompt: 'Linter command to scan a PowerShell script for issues:',
+          answer: ['invoke-scriptanalyzer', 'invoke-scriptanalyzer .\\script.ps1', 'scriptanalyzer'],
+          placeholder: 'cmd',
+          explain: 'Invoke-ScriptAnalyzer (PSScriptAnalyzer module) flags style, correctness, security issues. Required pre-commit gate in production.' },
+        { type: 'order',
+          prompt: 'Best-practice order for a destructive cmdlet (e.g., Remove-User):',
+          items: [
+            '1. param block with [CmdletBinding(SupportsShouldProcess)]',
+            '2. Validate input via [ValidateScript({...})]',
+            '3. Inside body: if ($PSCmdlet.ShouldProcess($target, "Remove")) { ... }',
+            '4. Wrap risky call in try/catch with -ErrorAction Stop',
+            '5. Write-Verbose progress + Write-Error on fail',
+            '6. Document with comment-based help (.SYNOPSIS / .EXAMPLE)'
+          ],
+          explain: 'ShouldProcess gives free -WhatIf / -Confirm. Always combine with -ErrorAction Stop in try/catch.' },
+        { type: 'dragmatch',
+          prompt: 'Match cmdlet to writing-to-stream behavior.',
+          pairs: [
+            { left: 'Write-Output', right: 'To pipeline (stream 1)' },
+            { left: 'Write-Error', right: 'Error stream (2) + $Error[0]' },
+            { left: 'Write-Warning', right: 'Warning stream (3)' },
+            { left: 'Write-Verbose', right: 'Stream 4, visible only with -Verbose' },
+            { left: 'Write-Debug', right: 'Stream 5, visible only with -Debug' },
+            { left: 'Write-Information', right: 'Stream 6 (PS 5+); replaces Write-Host in scripts' }
+          ],
+          explain: 'Avoid Write-Host in libraries — it bypasses the pipeline. Use Write-Output for data + Write-Verbose / Write-Information for diagnostics.' }
       ]
     }
   ]

@@ -97,6 +97,172 @@ const COURSES = [
 
           <h3>MicroSD / SD card</h3>
           <p><b>SD</b> = Secure Digital. Removable flash storage for cameras, drones, some Android phones. Speed classes (Class 10, U3, V30, V90) indicate sustained write speed for 4K video.</p>
+
+          <h2>Laptop chassis + form factors (220-1101 vocabulary)</h2>
+          <ul>
+            <li><b>Clamshell</b> — traditional fold-open laptop.</li>
+            <li><b>2-in-1 / convertible</b> — 360° hinge becomes a tablet (Lenovo Yoga, HP Spectre x360).</li>
+            <li><b>Detachable</b> — keyboard separates entirely (Surface Pro / Book).</li>
+            <li><b>Ultrabook / Ultra-thin</b> — &lt; 1 kg, all-soldered RAM/SSD, single-board.</li>
+            <li><b>Workstation / mobile workstation</b> — high-power CPU/GPU for CAD, video, ML. Heavier cooling.</li>
+            <li><b>Rugged</b> — MIL-STD-810G shock + IP-rated (Panasonic Toughbook, Getac).</li>
+            <li><b>Chromebook</b> — ChromeOS, often ARM, low cost.</li>
+          </ul>
+          <p><b>Form-factor service implications:</b> ultra-thin = soldered RAM (no upgrade), proprietary SSD shapes (M.2 2230 on Surface vs 2280 on most), heat-spread limits TDP, single ribbon cable for everything → handle carefully.</p>
+
+          <h2>Display panel details (memorize the table)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tech</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Acronym</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Strengths</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Weaknesses</th></tr>
+            <tr><td>TN</td><td>Twisted Nematic</td><td>Fastest response (1 ms), cheap</td><td>Bad viewing angles, washed-out color</td></tr>
+            <tr><td>IPS</td><td>In-Plane Switching</td><td>Great color + 178° viewing</td><td>Slightly slower (4-7 ms), "IPS glow"</td></tr>
+            <tr><td>VA</td><td>Vertical Alignment</td><td>Deep contrast, good for movies</td><td>Slow response, ghosting</td></tr>
+            <tr><td>OLED</td><td>Organic LED</td><td>True black, per-pixel light, thin</td><td>Burn-in, peak brightness limited</td></tr>
+            <tr><td>AMOLED</td><td>Active-Matrix OLED</td><td>Faster + brighter than passive OLED</td><td>Same burn-in risk; uses PWM dimming</td></tr>
+            <tr><td>Mini-LED</td><td>—</td><td>Local-dimming LCD with thousands of zones; near-OLED contrast</td><td>Halo / blooming around bright objects</td></tr>
+            <tr><td>Micro-LED</td><td>—</td><td>Self-emissive inorganic LED; no burn-in</td><td>Very expensive, large-display today</td></tr>
+            <tr><td>E-ink</td><td>—</td><td>Power-free static image, sunlight readable</td><td>Slow refresh, monochrome (mostly)</td></tr>
+          </table>
+          <p><b>Backlight:</b> LCD (TN/IPS/VA) needs a backlight; OLED does not. CCFL (cold cathode fluorescent) backlights are legacy and require a separate inverter board (often the failure point on old laptops — "screen lights when shined with a flashlight" is the classic dead-backlight clue). LED backlight uses DC, no inverter.</p>
+          <p><b>Touch + stylus tech:</b></p>
+          <ul>
+            <li><b>Capacitive</b> — touch via finger conductivity. Default on phones/tablets.</li>
+            <li><b>Resistive</b> — pressure-based; works with gloves or stylus; older POS / industrial.</li>
+            <li><b>Active digitizer</b> — separate layer detects active stylus (Apple Pencil, Wacom EMR, MPP). Pressure + tilt; palm-rejection.</li>
+            <li><b>In-cell / on-cell</b> — touch sensors built into the LCD/OLED stack, no separate touch layer → thinner panel.</li>
+          </ul>
+
+          <h2>Battery deep-dive (Li-ion chemistry + safety)</h2>
+          <ul>
+            <li><b>Cell chemistry:</b> Li-ion (cylindrical 18650/21700) vs Li-Po (pouch) — same chemistry, different package.</li>
+            <li><b>Nominal voltage:</b> 3.6–3.7 V per cell. Laptops series-stack 2-4 cells (7.2–14.8 V).</li>
+            <li><b>Capacity</b> measured in <b>mAh</b> (battery side) or <b>Wh</b> (regulatory side). 1 Wh = 1 V × 1 Ah. Wh limit for airline carry-on = 100 Wh (most laptops &lt; 99 Wh on purpose).</li>
+            <li><b>Cycle life:</b> 300-500 cycles to 80% capacity (typical). After ~1000 cycles, expect significant degradation.</li>
+            <li><b>Charge stages:</b> CC (constant current to ~70 %) → CV (constant voltage trickle to 100 %).</li>
+            <li><b>Swelling</b> from over-charge / age / heat — battery is a SAFETY hazard. Do NOT puncture; replace immediately, store in fireproof container until disposal.</li>
+            <li><b>Hazard codes (UN):</b> UN3480 (battery alone), UN3481 (battery in equipment) — restricts air shipping.</li>
+            <li><b>BMS</b> (Battery Management System) — IC that balances cells, prevents over/undercharge, reports SoC to OS.</li>
+            <li><b>Calibration:</b> "Charge to full, discharge to 0, charge to full" — modern smart batteries recalibrate themselves; users rarely need to do it.</li>
+            <li><b>Battery report:</b> Windows <code>powercfg /batteryreport</code>; macOS <code>system_profiler SPPowerDataType</code> or Settings → Battery → Battery Health.</li>
+          </ul>
+
+          <h2>Charging standards (memorize wattages)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Standard</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Connector</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max power</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>USB 2.0 / 3.x</td><td>USB-A</td><td>2.5 / 4.5 W</td><td>5 V × 0.5 / 0.9 A</td></tr>
+            <tr><td>USB Battery Charging 1.2</td><td>USB-A</td><td>7.5 W</td><td>1.5 A "DCP" port</td></tr>
+            <tr><td>USB-PD 2.0</td><td>USB-C</td><td>100 W</td><td>5 / 9 / 15 / 20 V profiles</td></tr>
+            <tr><td>USB-PD 3.1</td><td>USB-C</td><td>240 W</td><td>Adds 28 / 36 / 48 V EPR levels</td></tr>
+            <tr><td>USB-PD PPS</td><td>USB-C</td><td>varies</td><td>Programmable Power Supply — fine voltage steps; required for fast-charge phones</td></tr>
+            <tr><td>Qi (wireless)</td><td>—</td><td>5–15 W (Qi2 up to 15 W, Qi2.2 25–50 W)</td><td>Inductive, ~5 mm range, magnets in Qi2 for alignment (MagSafe)</td></tr>
+            <tr><td>MagSafe</td><td>Magnetic Lightning-style (laptop) / Qi2-style (iPhone)</td><td>15-30 W iPhone, 140 W MacBook</td><td>Snap-off safety</td></tr>
+            <tr><td>Qualcomm Quick Charge 4+/5</td><td>USB-C</td><td>up to 100 W</td><td>Backwards compat with PD on QC5</td></tr>
+          </table>
+          <p><b>USB-C cable gotcha:</b> not all USB-C cables carry all features. A cable rated 60 W (3 A) won't charge a 100 W laptop. <b>EPR</b> cables (240 W) have an e-marker chip + 5 A rating. Check cable spec before troubleshooting "slow charge" complaints.</p>
+
+          <h2>Mobile sync + cloud accounts</h2>
+          <ul>
+            <li><b>iCloud</b> — Apple. Syncs Photos, Contacts, Calendar, Reminders, Notes, Safari history, iMessage, Find My. Free 5 GB, paid 50 GB / 200 GB / 2 TB / 6 TB / 12 TB tiers (Apple One).</li>
+            <li><b>Google account</b> — Android default. Syncs Contacts, Calendar, Drive, Photos, Chrome, Keep, Authenticator backup, Find My Device. Free 15 GB shared across Drive/Photos/Gmail.</li>
+            <li><b>Microsoft account</b> — OneDrive 5 GB free, Office 365 Personal/Family adds 1 TB.</li>
+            <li><b>Exchange ActiveSync (EAS)</b> — push email + calendar + contacts for corporate mailboxes. Allows IT to enforce policies + remote-wipe.</li>
+            <li><b>MDM / EMM</b> (Mobile Device Management / Enterprise Mobility Management) — Intune, Jamf, Workspace ONE, Kandji. Push apps, Wi-Fi, VPN, certificates; enforce passcode + encryption; selective wipe.</li>
+            <li><b>iTunes / Finder backup</b> — local on Mac/PC. <b>Encrypted backup</b> preserves passwords + Health data.</li>
+            <li><b>Google Drive backup / Samsung Cloud / Smart Switch</b> — Android equivalents.</li>
+          </ul>
+
+          <h2>Cellular fundamentals (review N+ table)</h2>
+          <ul>
+            <li><b>SIM / eSIM</b> — Subscriber Identity Module. Holds IMSI + carrier credentials. eSIM = embedded chip programmed via QR / carrier app; supports multiple profiles.</li>
+            <li><b>IMEI</b> (International Mobile Equipment Identity) — unique 15-digit phone ID. Dial <code>*#06#</code> to display.</li>
+            <li><b>ICCID</b> — SIM card ID.</li>
+            <li><b>Generations:</b> 3G (HSPA+) legacy, 4G LTE common (sub-1 ms ping in cells), 5G NR sub-6 (100–900 Mbps mid-band) + mmWave (multi-gig, very short range).</li>
+            <li><b>VoLTE</b> (Voice over LTE) — voice calls over 4G data network. <b>VoWi-Fi</b> — calls over Wi-Fi when cellular weak.</li>
+            <li><b>Network bands</b> per carrier — phone must support the band (B2/B4/B12 etc.) to use that frequency.</li>
+            <li><b>Airplane mode</b> — disables all radios; OS still lets you re-enable Wi-Fi/Bluetooth individually.</li>
+          </ul>
+
+          <h2>Mobile accessory + dock taxonomy</h2>
+          <ul>
+            <li><b>Port replicator</b> — passive USB hub with extra ports; no display extension beyond what laptop allows.</li>
+            <li><b>Docking station</b> — full breakout with USB-C / Thunderbolt 4 uplink, multiple displays, GbE, audio.</li>
+            <li><b>USB-C hub</b> — small adapter (HDMI + USB-A + card reader).</li>
+            <li><b>KVM</b> (Keyboard-Video-Mouse switch) — share one set of peripherals across multiple PCs.</li>
+            <li><b>Smart-card reader</b> — CAC / PIV for government auth.</li>
+            <li><b>Webcam shutter / privacy slide</b> — physical cover.</li>
+            <li><b>External GPU enclosure (eGPU)</b> — Thunderbolt 3/4 attached desktop GPU for laptops.</li>
+            <li><b>Stylus</b> — Apple Pencil 1/2/USB-C, Surface Pen, Wacom Bamboo Ink. Pairing via Bluetooth or MPP.</li>
+            <li><b>External battery pack / power bank</b> — USB-PD output supports laptops up to 100 W now.</li>
+            <li><b>Stand / cooling pad</b> — improves airflow, reduces throttling.</li>
+            <li><b>Anti-glare film / privacy filter</b> — narrows viewing angle for sensitive screens.</li>
+          </ul>
+
+          <h2>Mobile device security features</h2>
+          <ul>
+            <li><b>Screen lock:</b> PIN, password, pattern, fingerprint (Touch ID / Pixel Imprint), face (Face ID / Windows Hello).</li>
+            <li><b>Full-device encryption:</b> on by default (iOS, Android 6+, Windows BitLocker Device Encryption).</li>
+            <li><b>Secure enclave / TEE / Titan M / SE / TPM</b> — separate chip protecting biometric templates + crypto keys.</li>
+            <li><b>Remote wipe + Find My</b> — Apple, Google, Microsoft, MDM all support.</li>
+            <li><b>App sandboxing</b> — apps cannot read other apps' data without permission grant.</li>
+            <li><b>App store gatekeeping</b> — code-signing + review (Apple strict, Google Play Protect + sideloading allowed).</li>
+            <li><b>Two-factor</b> — Apple's 6-digit trusted-device codes; Android trusted-device + Authenticator; FIDO2 passkeys.</li>
+            <li><b>Lockdown / restricted mode</b> — iOS Lockdown Mode for high-risk users; restricts attack surface.</li>
+            <li><b>Work profile / dual persona</b> — Android Work Profile / iOS User Enrollment for BYOD; separate keychain + apps.</li>
+          </ul>
+
+          <h2>Common mobile-device issues + fixes</h2>
+          <ul>
+            <li><b>Won't charge</b> → try other cable + brick; clean lint from Lightning/USB-C port (#1 cause); inspect for liquid damage; replace battery if BMS reports degraded.</li>
+            <li><b>Random reboots</b> → swollen / failing battery; thermal shutdown; corrupt OS update — reflash firmware.</li>
+            <li><b>Slow performance / battery drain</b> → check Settings → Battery (per-app usage); disable background refresh; reduce location accuracy.</li>
+            <li><b>Overheating</b> → remove case while charging; stop heavy app + close GPS; check if outside temp range (charging above 35°C reduces battery life).</li>
+            <li><b>Screen flicker / lines</b> → bad ribbon cable or LCD panel; check after drop history; replace assembly.</li>
+            <li><b>Wi-Fi keeps dropping</b> → forget network and rejoin; check 2.4 vs 5 GHz; reset network settings; check router DHCP scope.</li>
+            <li><b>Bluetooth won't pair</b> → un-pair on both sides; restart Bluetooth radio; clear cache on Android Settings → Apps → Bluetooth.</li>
+            <li><b>Speaker muffled</b> → debris in grille (toothpick or compressed-air gentle); water damage; replace speaker module.</li>
+            <li><b>Touchscreen unresponsive</b> → screen protector mis-applied; recalibrate (Android dev options); replace digitizer if liquid contacted.</li>
+            <li><b>App crashes after update</b> → clear app cache + data (Android); offload + reinstall (iOS); check OS version compatibility.</li>
+          </ul>
+
+          <h2>Mobile vs laptop teardown rules of thumb</h2>
+          <ul>
+            <li>Phone: ribbon cables run UNDER battery — never pry battery without first releasing pull-tabs / heat to soften adhesive.</li>
+            <li>Apply ESD wrist strap before touching boards.</li>
+            <li>Track every screw position — phones use 5-8 different screw lengths; wrong screw in deep hole punctures a battery.</li>
+            <li>iFixit / Hugh Jeffreys / JerryRigEverything teardowns are gold-standard references.</li>
+            <li>Replacement parts: OEM &gt; certified refurb &gt; aftermarket. Avoid &lt;$10 "aftermarket" screens — color shift + touch lag.</li>
+            <li>After repair, run full hardware diagnostics (Apple Diagnostics, Samsung Members → Device care → Diagnostics, Lenovo Vantage).</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>SO-DIMM</b> — Small Outline DIMM.</li>
+            <li><b>FRU</b> — Field Replaceable Unit.</li>
+            <li><b>FFC / FPC</b> — Flexible Flat / Printed Cable.</li>
+            <li><b>ZIF</b> — Zero Insertion Force socket.</li>
+            <li><b>CCFL</b> — Cold Cathode Fluorescent Lamp (legacy backlight).</li>
+            <li><b>LCD / OLED / AMOLED / VA / IPS / TN</b> — display tech.</li>
+            <li><b>USB-PD / EPR / PPS</b> — power delivery profiles.</li>
+            <li><b>NVMe / M.2 / SATA</b> — storage protocols/form factors.</li>
+            <li><b>SIM / eSIM / IMEI / ICCID</b> — cellular identifiers.</li>
+            <li><b>VoLTE / VoWi-Fi</b> — voice transport.</li>
+            <li><b>MDM / EMM / EAS</b> — enterprise device management protocols.</li>
+            <li><b>TEE / TPM / SE</b> — secure key storage.</li>
+            <li><b>BMS</b> — Battery Management System.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Image visible only with flashlight" → backlight failed (CCFL inverter or LED driver).</li>
+            <li>"Replace RAM in modern laptop" → confirm DDR generation + capacity + slot type; mismatched DIMM runs at slowest rating.</li>
+            <li>"Add storage to laptop with M.2 slot" → check if SATA or NVMe keyed (B / M / B+M); look at motherboard manual.</li>
+            <li>"USB-C charging slow" → check cable rating (60 W / 100 W / 240 W) + brick supports laptop's required wattage.</li>
+            <li>"Phone won't pair Bluetooth" → un-pair on both sides, toggle airplane mode, restart Bluetooth radio.</li>
+            <li>"Phone overheating + battery puffed" → STOP charging, do NOT puncture, replace battery; fire hazard.</li>
+            <li>"User can't authenticate to corp mail on phone" → Exchange ActiveSync auth issue, MFA conditional access, or MDM enrollment lapsed.</li>
+            <li>"Lost phone needs remote wipe" → Find My iPhone / Find My Device / MDM portal.</li>
+            <li>"Single antenna on Wi-Fi card after repair" → MIMO degraded, range cut in half. Always reconnect MAIN + AUX.</li>
+            <li>"Tap-to-pay not working" → NFC disabled, screen off, secure element not ready (reboot), or merchant terminal not NFC.</li>
+          </ul>
         `
       },
       {
@@ -195,6 +361,181 @@ const COURSES = [
             <li><b>Tone generator + probe</b> ("fox &amp; hound") — find which jack in a closet matches a wall port.</li>
             <li><b>TDR</b> (Time-Domain Reflectometer) — measures distance to a copper fault.</li>
             <li><b>OTDR</b> (Optical TDR) — same for fiber.</li>
+          </ul>
+
+          <h2>Copper cable category table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Cat</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Frequency</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Speed @ 100m</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Shielding</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td>Cat 3</td><td>16 MHz</td><td>10 Mbps</td><td>UTP</td><td>Phone lines (legacy)</td></tr>
+            <tr><td>Cat 5</td><td>100 MHz</td><td>100 Mbps</td><td>UTP</td><td>Obsolete (replaced by 5e)</td></tr>
+            <tr><td>Cat 5e</td><td>100 MHz</td><td>1 Gbps</td><td>UTP</td><td>Baseline modern</td></tr>
+            <tr><td>Cat 6</td><td>250 MHz</td><td>1 Gbps / 10 Gbps @55m</td><td>UTP, optional spline</td><td>New residential / SMB</td></tr>
+            <tr><td>Cat 6a</td><td>500 MHz</td><td>10 Gbps</td><td>F/UTP or S/FTP</td><td>10G horizontal runs, Wi-Fi 6 AP uplinks</td></tr>
+            <tr><td>Cat 7</td><td>600 MHz</td><td>10 Gbps</td><td>S/FTP</td><td>European builds; uses GG45 / TERA</td></tr>
+            <tr><td>Cat 7a</td><td>1000 MHz</td><td>10 Gbps</td><td>S/FTP</td><td>Short 40G/100G; rare in NA</td></tr>
+            <tr><td>Cat 8</td><td>2000 MHz</td><td>25/40 Gbps @30m</td><td>S/FTP</td><td>Datacenter top-of-rack only</td></tr>
+          </table>
+          <p>100 m channel is the standard rule: <b>90 m horizontal + 10 m total patch cords</b>. Cat 7 / 7a never blessed by TIA in NA — use Cat 6a or Cat 8 instead.</p>
+
+          <h2>Shielding code (E/F/S/U)</h2>
+          <p>New TIA/ISO shielding notation: <b>X/YTP</b> — X = overall shield, Y = pair shield, TP = twisted pair. Common variants:</p>
+          <ul>
+            <li><b>U/UTP</b> — unshielded overall + unshielded pairs (Cat 5e/6).</li>
+            <li><b>F/UTP</b> — overall foil + unshielded pairs (some Cat 6a).</li>
+            <li><b>S/FTP</b> — braided overall + foil per pair (Cat 7+, Cat 8). Heaviest shielding, hardest to terminate.</li>
+            <li><b>U/FTP</b> — unshielded overall + foil per pair.</li>
+            <li><b>F/FTP</b> — overall foil + foil per pair.</li>
+          </ul>
+          <p>Shielded cables need a continuous bond to ground — terminate the drain wire at both ends in a grounded jack/panel or you risk antenna behavior + noise pickup.</p>
+
+          <h2>Jacket types (building-code driven)</h2>
+          <ul>
+            <li><b>CMP / OFNP</b> — Plenum-rated for forced-air-handling spaces (above drop ceilings, return-air plenums). Fluorinated polymer (FEP); low-smoke, low-toxicity.</li>
+            <li><b>CMR / OFNR</b> — Riser-rated for vertical runs between floors. Less stringent than plenum.</li>
+            <li><b>CM / OFNG</b> — General-purpose indoor.</li>
+            <li><b>CMX</b> — limited use / residential.</li>
+            <li><b>LSZH</b> — Low-Smoke Zero-Halogen. Required by EU + some hospitals; releases no halide gases when burned. Not interchangeable with plenum in NEC.</li>
+            <li><b>OSP</b> — Outside Plant. UV + moisture resistant; often gel-filled for direct burial.</li>
+          </ul>
+          <p>NEC + local AHJ (Authority Having Jurisdiction) decide which rating where. Wrong jacket = failed building inspection = expensive rip-and-replace.</p>
+
+          <h2>RJ45 pinout (T568B — most installs)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Pin</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Color (T568B)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">10/100 use</th><th align="left" style="padding:4px;border-bottom:1px solid #444">1G/10G use</th></tr>
+            <tr><td>1</td><td>White/Orange</td><td>TX+</td><td>BI_DA+</td></tr>
+            <tr><td>2</td><td>Orange</td><td>TX−</td><td>BI_DA−</td></tr>
+            <tr><td>3</td><td>White/Green</td><td>RX+</td><td>BI_DB+</td></tr>
+            <tr><td>4</td><td>Blue</td><td>—</td><td>BI_DC+</td></tr>
+            <tr><td>5</td><td>White/Blue</td><td>—</td><td>BI_DC−</td></tr>
+            <tr><td>6</td><td>Green</td><td>RX−</td><td>BI_DB−</td></tr>
+            <tr><td>7</td><td>White/Brown</td><td>—</td><td>BI_DD+</td></tr>
+            <tr><td>8</td><td>Brown</td><td>—</td><td>BI_DD−</td></tr>
+          </table>
+          <p>1 Gbps and faster Ethernet uses ALL 4 pairs bidirectionally. <b>Split pair</b> error (pair separated incorrectly) passes a continuity test but fails certifier NEXT — symptom = link works at 100 Mbps but flaps at 1 Gbps. Always test with a certifier on new runs.</p>
+
+          <h2>RJ-11 vs RJ-45 vs RJ-48</h2>
+          <ul>
+            <li><b>RJ-11</b> — 6P2C / 6P4C, single phone line. Smaller body than RJ-45. Plugs into 4-pin or 6-pin.</li>
+            <li><b>RJ-45</b> — 8P8C, Ethernet + PoE.</li>
+            <li><b>RJ-48</b> — same physical 8P8C as RJ-45 BUT wired for T1/E1 WAN. NEVER plug a T1 RJ-48 into a switch — voltages differ, you can damage gear.</li>
+          </ul>
+
+          <h2>Punch-down blocks — 66 vs 110 vs Krone</h2>
+          <ul>
+            <li><b>66 block</b> — original 50-pair voice telco block. Two columns of clips per row connected by silver bus; bridging clip optional. Use a 66-blade punchdown tool.</li>
+            <li><b>110 block</b> — modern data block on patch panels + wall jacks. Lower crosstalk; supports Cat 6/6a. Uses 110-blade tool.</li>
+            <li><b>Krone (LSA-Plus)</b> — common European equivalent of 110.</li>
+            <li><b>BIX</b> — Nortel-flavored building-information cross-connect.</li>
+          </ul>
+          <p>Punch-down tools have <b>cut</b> and <b>no-cut</b> options — set cut to trim the wire flush on the back of the contact.</p>
+
+          <h2>USB versions + speeds (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Marketing name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Spec</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Speed</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Connector</th></tr>
+            <tr><td>USB 1.1 (Low/Full)</td><td>USB 1.1</td><td>1.5 / 12 Mbps</td><td>A, B</td></tr>
+            <tr><td>USB 2.0 Hi-Speed</td><td>USB 2.0</td><td>480 Mbps</td><td>A, B, Mini, Micro</td></tr>
+            <tr><td>USB 3.2 Gen 1 (SuperSpeed)</td><td>USB 3.0</td><td>5 Gbps</td><td>A blue, C, Micro-B SS</td></tr>
+            <tr><td>USB 3.2 Gen 2 (SuperSpeed+)</td><td>USB 3.1</td><td>10 Gbps</td><td>A, C, Micro-B SS</td></tr>
+            <tr><td>USB 3.2 Gen 2×2</td><td>USB 3.2</td><td>20 Gbps</td><td>C only</td></tr>
+            <tr><td>USB4 Gen 2×2</td><td>USB4 1.0</td><td>20 Gbps</td><td>C</td></tr>
+            <tr><td>USB4 Gen 3×2</td><td>USB4 1.0</td><td>40 Gbps</td><td>C</td></tr>
+            <tr><td>USB4 v2</td><td>USB4 2.0</td><td>80 Gbps (sym) / 120 Gbps (asym)</td><td>C</td></tr>
+          </table>
+          <p><b>Connector reality check:</b> port shape ≠ speed. A USB-C port can be USB 2.0 (480 Mbps) only — check the spec sheet. Many phone-charging USB-C ports drop down to 2.0.</p>
+
+          <h2>Thunderbolt evolution</h2>
+          <ul>
+            <li><b>TB1 / TB2</b> — Mini-DisplayPort connector. 10 / 20 Gbps.</li>
+            <li><b>TB3 / TB4</b> — USB-C connector. 40 Gbps both. TB4 mandates min 32 Gbps PCIe, dual 4K or one 8K, 100 W charging, daisy-chain support.</li>
+            <li><b>TB5</b> — USB-C. 80 Gbps symmetric, 120/40 Gbps asymmetric (for high-res displays), 240 W charging.</li>
+            <li>TB tunnels PCIe → enables eGPUs + external SSDs at near-native speeds.</li>
+          </ul>
+
+          <h2>Video connectors (most-tested A+ topic)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Connector</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Signal</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>VGA (DE-15)</td><td>Analog RGB</td><td>~2048×1536 @ 60 Hz</td><td>Blue 15-pin D-sub; legacy</td></tr>
+            <tr><td>DVI-A</td><td>Analog only</td><td>—</td><td>Same as VGA over DVI</td></tr>
+            <tr><td>DVI-D Single Link</td><td>Digital</td><td>1920×1200 @ 60 Hz</td><td>—</td></tr>
+            <tr><td>DVI-D Dual Link</td><td>Digital</td><td>2560×1600 @ 60 Hz</td><td>Extra pins activate second TMDS link</td></tr>
+            <tr><td>DVI-I</td><td>Analog + Digital</td><td>—</td><td>Has both signal types; "I" = integrated</td></tr>
+            <tr><td>HDMI 1.4</td><td>Digital A/V</td><td>4K @ 30 Hz</td><td>Ethernet, ARC</td></tr>
+            <tr><td>HDMI 2.0 / 2.0b</td><td>Digital A/V</td><td>4K @ 60 Hz</td><td>HDR static</td></tr>
+            <tr><td>HDMI 2.1</td><td>Digital A/V</td><td>4K @ 120 Hz / 8K @ 60 Hz</td><td>eARC, VRR, ALLM, dynamic HDR</td></tr>
+            <tr><td>DisplayPort 1.2</td><td>Digital A/V</td><td>4K @ 60 Hz</td><td>MST daisy-chain</td></tr>
+            <tr><td>DisplayPort 1.4</td><td>Digital A/V</td><td>4K @ 120 Hz HDR</td><td>DSC, 8K @ 30 Hz w/ DSC</td></tr>
+            <tr><td>DisplayPort 2.0/2.1</td><td>Digital A/V</td><td>16K @ 60 Hz w/ DSC</td><td>UHBR 20 (80 Gbps) over USB-C</td></tr>
+            <tr><td>USB-C DP Alt Mode</td><td>Digital A/V</td><td>same as native DP</td><td>Uses 4 lanes of USB-C for DP</td></tr>
+            <tr><td>S-Video / RCA composite</td><td>Analog</td><td>SD only</td><td>Legacy</td></tr>
+            <tr><td>Component (YPbPr)</td><td>Analog HD</td><td>1080i</td><td>Three RCA plugs (Y/Pb/Pr)</td></tr>
+          </table>
+          <p><b>HDCP</b> (High-bandwidth Digital Content Protection) — DRM on HDMI/DP/DVI. Older monitor + new source can blank-screen if HDCP version mismatches.</p>
+
+          <h2>Audio connectors</h2>
+          <ul>
+            <li><b>3.5 mm TRS / TRRS</b> — Tip-Ring-Sleeve (stereo) or Tip-Ring-Ring-Sleeve (stereo + mic).</li>
+            <li><b>6.35 mm (¼")</b> — pro / instrument.</li>
+            <li><b>S/PDIF</b> — Sony/Philips Digital Interface. <b>Coax</b> (RCA) or <b>Optical TOSLINK</b>. Compressed 5.1 surround.</li>
+            <li><b>HDMI ARC / eARC</b> — return digital audio from TV to AVR.</li>
+            <li><b>XLR</b> — pro mic; balanced.</li>
+          </ul>
+
+          <h2>Legacy connectors you may still see</h2>
+          <ul>
+            <li><b>PS/2</b> — 6-pin Mini-DIN; purple keyboard / green mouse. Found on servers + KVM only.</li>
+            <li><b>Serial RS-232 / DE-9 (DB-9)</b> — console ports on network gear; also industrial gear.</li>
+            <li><b>DB-25 / Parallel LPT</b> — old printer.</li>
+            <li><b>FireWire (IEEE 1394)</b> — 4/6/9-pin, 400/800 Mbps. Old video / external storage; dead.</li>
+            <li><b>eSATA</b> — external SATA, 6 Gbps; mostly replaced by USB-C / TB.</li>
+            <li><b>SCSI (parallel)</b> — multi-pin, terminated chains; legacy storage.</li>
+            <li><b>SAS</b> — Serial Attached SCSI; current server storage interconnect.</li>
+          </ul>
+
+          <h2>Fiber bend radius + handling rules</h2>
+          <ul>
+            <li>Minimum bend radius typically <b>10× outer diameter</b> for installation, <b>15-20×</b> in storage.</li>
+            <li><b>Bend-insensitive fiber</b> (OM3+ multimode, G.657 single-mode) tolerates tighter bends with low loss.</li>
+            <li>Single dust particle on a connector end-face can ruin a link at 10G+. ALWAYS inspect with a fiber scope + clean with one-click cleaners (Cletop) before plugging.</li>
+            <li>Never look directly into an active fiber — 1310/1550 nm laser is invisible AND damaging.</li>
+            <li>Mode mismatch (multimode patch on single-mode optic, or vice versa) = no link, OR works briefly then degrades.</li>
+            <li><b>UPC</b> (Ultra Polished, ferrule slightly domed) vs <b>APC</b> (Angled Polished, 8° angle, GREEN connector) — never cross-mate; APC must mate APC.</li>
+          </ul>
+
+          <h2>Cable patch-panel + management best practices</h2>
+          <ul>
+            <li>Label both ends of every cable consistently (room-rack-port).</li>
+            <li>Preserve twist within ½ inch of the termination point.</li>
+            <li>Use velcro, not zip-ties (kinks fiber + tight-bound copper).</li>
+            <li>Keep power and data separated; cross at 90° if they must meet.</li>
+            <li>Service loops at racks + IDFs (~1 m slack) for re-termination.</li>
+            <li>Color-code by purpose (yellow = uplink, red = SAN, blue = data, green = OOB).</li>
+            <li>Document in IPAM/DCIM as soon as cabled — not "later".</li>
+          </ul>
+
+          <h2>Common cable issues + symptoms</h2>
+          <ul>
+            <li><b>Link negotiates 100 Mbps not 1 Gbps</b> — split pair, cable too long, bad cable, Cat 5 in path, kinked jacket. Recertify.</li>
+            <li><b>Intermittent link</b> — marginal cable; check with cable tester at full speed (1G/10G); replace patch.</li>
+            <li><b>CRC errors rising</b> — bad cable / EMI / duplex mismatch; swap cable first (cheapest fix).</li>
+            <li><b>PoE device won't power</b> — Cat 3 patch cord in path (missing pairs), or PoE budget exhausted on switch.</li>
+            <li><b>Fiber link dark</b> — Tx/Rx swap (use crossover patch), wrong mode (SMF vs MMF), dirty endface, broken strand, wrong wavelength on transceiver.</li>
+            <li><b>Plenum violation</b> — wrong jacket above ceiling tiles; building inspector fails install.</li>
+            <li><b>Coax loose connection</b> — cable TV pixelation; tighten F-connector to torque spec.</li>
+            <li><b>USB device unreliable</b> — exceeding cable length spec (USB 3 max ~3 m passive); use active cable / hub.</li>
+          </ul>
+
+          <h2>Exam pattern cheat</h2>
+          <ul>
+            <li>"10 Gbps to 100 m" → Cat 6a.</li>
+            <li>"Plenum required" → CMP-rated jacket.</li>
+            <li>"Cable TV / cable modem connector" → F-type coax.</li>
+            <li>"Connector dominating modern SFP+ optics" → LC.</li>
+            <li>"Building-to-building 5 km fiber" → SMF + LR optic.</li>
+            <li>"Patch panel termination tool" → 110 punch-down.</li>
+            <li>"Locate jack from closet" → tone generator + probe.</li>
+            <li>"Difference between RJ-45 and RJ-48" → physically same 8P8C, RJ-48 is T1/E1.</li>
+            <li>"USB-C port at only 480 Mbps" → port is USB 2.0 spec even though connector is C.</li>
+            <li>"Green angled fiber connector" → APC polish; never mate to UPC.</li>
           </ul>
         `
       },
@@ -316,6 +657,195 @@ const COURSES = [
             <li>If question says "secure replacement for X", think: Telnet → SSH; FTP → SFTP/FTPS; HTTP → HTTPS; SNMPv1/v2 → SNMPv3; LDAP → LDAPS.</li>
             <li>If you see ports 80 / 443, the question is usually about web traffic + cert handling.</li>
             <li>Port + protocol pairings are pure memorization — flashcards beat re-reading.</li>
+          </ul>
+
+          <h2>The "must memorize" port grid (220-1101 heavy-test)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Port</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Role</th></tr>
+            <tr><td>20 / 21</td><td>FTP data / control</td><td>TCP</td><td>Legacy file xfer</td></tr>
+            <tr><td>22</td><td>SSH / SCP / SFTP</td><td>TCP</td><td>Secure shell + file</td></tr>
+            <tr><td>23</td><td>Telnet</td><td>TCP</td><td>Legacy plaintext shell</td></tr>
+            <tr><td>25</td><td>SMTP</td><td>TCP</td><td>Server-to-server mail</td></tr>
+            <tr><td>53</td><td>DNS</td><td>UDP/TCP</td><td>Name resolution</td></tr>
+            <tr><td>67 / 68</td><td>DHCP server / client</td><td>UDP</td><td>Auto IP assignment</td></tr>
+            <tr><td>69</td><td>TFTP</td><td>UDP</td><td>Boot, firmware push</td></tr>
+            <tr><td>80</td><td>HTTP</td><td>TCP</td><td>Plain web</td></tr>
+            <tr><td>88</td><td>Kerberos</td><td>UDP/TCP</td><td>AD ticketing</td></tr>
+            <tr><td>110 / 995</td><td>POP3 / POP3S</td><td>TCP</td><td>Pull mail</td></tr>
+            <tr><td>119</td><td>NNTP</td><td>TCP</td><td>Usenet (rare)</td></tr>
+            <tr><td>123</td><td>NTP</td><td>UDP</td><td>Time sync</td></tr>
+            <tr><td>137-139</td><td>NetBIOS</td><td>UDP/TCP</td><td>Legacy Windows name + session</td></tr>
+            <tr><td>143 / 993</td><td>IMAP / IMAPS</td><td>TCP</td><td>Sync mail</td></tr>
+            <tr><td>161 / 162</td><td>SNMP / SNMP trap</td><td>UDP</td><td>Device monitoring</td></tr>
+            <tr><td>179</td><td>BGP</td><td>TCP</td><td>Inter-AS routing</td></tr>
+            <tr><td>389 / 636</td><td>LDAP / LDAPS</td><td>TCP</td><td>Directory query</td></tr>
+            <tr><td>443</td><td>HTTPS</td><td>TCP</td><td>TLS-wrapped web</td></tr>
+            <tr><td>445</td><td>SMB / CIFS</td><td>TCP</td><td>Windows file share</td></tr>
+            <tr><td>465 / 587</td><td>SMTPS / Submission</td><td>TCP</td><td>Authenticated outbound mail</td></tr>
+            <tr><td>514</td><td>Syslog</td><td>UDP</td><td>Centralized logs</td></tr>
+            <tr><td>515</td><td>LPR / LPD</td><td>TCP</td><td>Line printer</td></tr>
+            <tr><td>548</td><td>AFP</td><td>TCP</td><td>Apple file (legacy)</td></tr>
+            <tr><td>631</td><td>IPP / CUPS</td><td>TCP</td><td>Internet Printing</td></tr>
+            <tr><td>853</td><td>DoT (DNS over TLS)</td><td>TCP</td><td>Encrypted DNS</td></tr>
+            <tr><td>1433 / 1434</td><td>MS SQL / SQL Browser</td><td>TCP / UDP</td><td>Microsoft SQL Server</td></tr>
+            <tr><td>1521</td><td>Oracle</td><td>TCP</td><td>Oracle DB listener</td></tr>
+            <tr><td>1701</td><td>L2TP</td><td>UDP</td><td>Tunneling protocol</td></tr>
+            <tr><td>1723</td><td>PPTP</td><td>TCP + GRE 47</td><td>Legacy VPN</td></tr>
+            <tr><td>1812 / 1813</td><td>RADIUS auth / acct</td><td>UDP</td><td>AAA over UDP</td></tr>
+            <tr><td>3268 / 3269</td><td>Global Catalog (AD) / GC SSL</td><td>TCP</td><td>Forest-wide search</td></tr>
+            <tr><td>3306</td><td>MySQL / MariaDB</td><td>TCP</td><td>Database</td></tr>
+            <tr><td>3389</td><td>RDP</td><td>TCP/UDP</td><td>Windows remote desktop</td></tr>
+            <tr><td>5060 / 5061</td><td>SIP / SIPS</td><td>UDP/TCP</td><td>VoIP signaling</td></tr>
+            <tr><td>5432</td><td>PostgreSQL</td><td>TCP</td><td>Database</td></tr>
+            <tr><td>5900</td><td>VNC</td><td>TCP</td><td>Cross-platform remote desktop</td></tr>
+            <tr><td>6514</td><td>Syslog/TLS</td><td>TCP</td><td>Encrypted log forwarding</td></tr>
+            <tr><td>8080 / 8443</td><td>Alt HTTP / HTTPS</td><td>TCP</td><td>Proxy / dev servers</td></tr>
+            <tr><td>49</td><td>TACACS+</td><td>TCP</td><td>Cisco AAA for device admin</td></tr>
+            <tr><td>500 / 4500</td><td>IKE / NAT-T</td><td>UDP</td><td>IPsec key exchange</td></tr>
+          </table>
+          <p><b>Memorize triplets first:</b> 20/21, 22 (SSH/SCP/SFTP), 23, 25/587/465, 53, 67/68, 80/443, 110/995, 143/993, 137-139/445, 161/162, 389/636, 3389, 5060/5061. Those 20 cover ~95% of A+ port questions.</p>
+
+          <h2>Plaintext vs encrypted variant pairs</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Plaintext</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Encrypted equivalent</th></tr>
+            <tr><td>Telnet (23)</td><td>SSH (22)</td></tr>
+            <tr><td>FTP (20/21)</td><td>SFTP (22) or FTPS (21 + 990 or via STARTTLS)</td></tr>
+            <tr><td>HTTP (80)</td><td>HTTPS (443)</td></tr>
+            <tr><td>SMTP (25)</td><td>SMTPS (465) or SMTP w/ STARTTLS (587)</td></tr>
+            <tr><td>POP3 (110)</td><td>POP3S (995)</td></tr>
+            <tr><td>IMAP (143)</td><td>IMAPS (993)</td></tr>
+            <tr><td>LDAP (389)</td><td>LDAPS (636) or LDAP w/ STARTTLS (389)</td></tr>
+            <tr><td>SNMPv1/v2c (161)</td><td>SNMPv3 (161, USM auth+priv)</td></tr>
+            <tr><td>DNS (53)</td><td>DoT (853) / DoH (443)</td></tr>
+            <tr><td>NTP (123)</td><td>NTS (123, RFC 8915)</td></tr>
+            <tr><td>Syslog (514 UDP)</td><td>Syslog/TLS (6514 TCP)</td></tr>
+          </table>
+
+          <h2>FTP modes — active vs passive (a real exam gotcha)</h2>
+          <ul>
+            <li><b>Active mode (PORT)</b> — client opens command on TCP 21, then SERVER initiates the data connection back to the CLIENT (from TCP 20). Breaks through NAT/firewalls on the client side because firewall sees an unsolicited inbound.</li>
+            <li><b>Passive mode (PASV)</b> — client opens command on TCP 21, then asks server for a data port. Server picks an ephemeral port; client initiates BOTH connections outbound. Firewall-friendly. Modern default for browsers + most FTP clients.</li>
+            <li><b>FTPS</b> wraps FTP in TLS — implicit (port 990 from the start) or explicit (port 21 + STARTTLS upgrade).</li>
+            <li><b>SFTP</b> is unrelated — it's FTP-style commands tunneled inside an SSH session on port 22.</li>
+          </ul>
+
+          <h2>DHCP DORA walkthrough (drilled)</h2>
+          <ol>
+            <li><b>D</b>iscover — client broadcasts UDP 67 from <code>0.0.0.0:68</code> → <code>255.255.255.255:67</code>. Contains MAC + (optionally) requested options.</li>
+            <li><b>O</b>ffer — server unicasts (or broadcasts) UDP 68 with proposed IP + mask + gateway + DNS + lease.</li>
+            <li><b>R</b>equest — client broadcasts to formally request that offer; other servers see it and withdraw their offers.</li>
+            <li><b>A</b>cknowledge — server confirms with options + lease ID.</li>
+          </ol>
+          <p><b>Lease renewal:</b> client tries to renew unicast at <b>T1 = 50%</b> of lease time; if no reply, broadcasts <b>REBIND at T2 = 87.5%</b>; if still nothing, falls back to APIPA at lease expiry.</p>
+          <p><b>DHCP relay / IP helper:</b> routers don't forward broadcasts by default, so a router on the client's segment runs an <b>ip helper-address &lt;DHCP server&gt;</b> command to forward DHCP traffic unicast to a server in another VLAN.</p>
+          <p><b>APIPA</b> — Automatic Private IP Addressing — <code>169.254.0.0/16</code>. Windows + many OSes self-assign when DHCP fails. Sees only local broadcasts; no Internet. Sure sign DHCP is broken or unreachable.</p>
+
+          <h2>DNS record types (memorize)</h2>
+          <ul>
+            <li><b>A</b> — IPv4 address record.</li>
+            <li><b>AAAA</b> — IPv6 address.</li>
+            <li><b>CNAME</b> — canonical name (alias). Cannot coexist with other records at the same name.</li>
+            <li><b>ALIAS / ANAME</b> — flattened CNAME at apex (vendor-specific).</li>
+            <li><b>MX</b> — mail exchanger; priority + hostname.</li>
+            <li><b>TXT</b> — text; carries SPF, DKIM selectors, DMARC policy, domain verification.</li>
+            <li><b>NS</b> — nameserver delegation.</li>
+            <li><b>SOA</b> — Start of Authority; serial number + refresh / retry / expire / minimum TTL.</li>
+            <li><b>PTR</b> — reverse DNS (IP → name) in <code>in-addr.arpa</code> / <code>ip6.arpa</code>.</li>
+            <li><b>SRV</b> — service location (host + port). Used heavily by AD (<code>_kerberos._tcp</code>, etc.).</li>
+            <li><b>CAA</b> — Certificate Authority Authorization; which CAs may issue for the domain.</li>
+            <li><b>DNSKEY / DS / RRSIG / NSEC / NSEC3</b> — DNSSEC chain of trust.</li>
+            <li><b>NAPTR</b> — Naming Authority Pointer (ENUM/SIP).</li>
+            <li><b>HTTPS / SVCB</b> — modern records advertising HTTP/3, ALPN, ECH hints.</li>
+          </ul>
+
+          <h2>DNS query types</h2>
+          <ul>
+            <li><b>Recursive</b> — client asks resolver "find me the answer no matter what", resolver does all the legwork.</li>
+            <li><b>Iterative</b> — server replies "I don't know, but ask X"; client follows referrals.</li>
+            <li><b>Authoritative</b> — answer from the domain's owning nameserver.</li>
+            <li><b>Cached / non-authoritative</b> — resolver replying from its cache.</li>
+            <li><b>Reverse lookup</b> — PTR record in <code>x.x.x.in-addr.arpa</code>.</li>
+            <li><b>Zone transfer</b> — AXFR (full) / IXFR (incremental) over TCP 53 between authoritative servers.</li>
+          </ul>
+
+          <h2>TLS basics (every encrypted protocol uses this layer)</h2>
+          <ul>
+            <li><b>TLS</b> = Transport Layer Security (successor to SSL). Versions: <b>1.0/1.1 dead</b>, <b>1.2</b> baseline, <b>1.3</b> current/preferred.</li>
+            <li><b>Handshake</b> (TLS 1.3 condensed): ClientHello → ServerHello + cert + key share → finished → encrypted application data. 1-RTT for new sessions, 0-RTT with resumption.</li>
+            <li><b>Cert chain:</b> Server cert ← Intermediate CA ← Root CA. Trust comes from the root CA being in the client's trust store.</li>
+            <li><b>SNI</b> (Server Name Indication) — client sends desired hostname in the unencrypted ClientHello so a multi-tenant server returns the correct cert. <b>ECH</b> (Encrypted Client Hello) hides SNI.</li>
+            <li><b>ALPN</b> — Application-Layer Protocol Negotiation; selects HTTP/1.1, HTTP/2, HTTP/3 during handshake.</li>
+            <li><b>Cipher suites</b> (TLS 1.3) — AES-128-GCM, AES-256-GCM, ChaCha20-Poly1305. AEAD only.</li>
+            <li><b>HSTS</b> — HTTP Strict Transport Security header tells browser "only use HTTPS to this domain for N seconds".</li>
+          </ul>
+
+          <h2>HTTP basics (the parts A+ tests)</h2>
+          <ul>
+            <li><b>Methods:</b> GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS.</li>
+            <li><b>Status codes:</b> 1xx info, 2xx success (200 OK), 3xx redirect (301 perm, 302/307 temp, 304 not modified), 4xx client error (400 bad req, 401 unauth, 403 forbidden, 404 not found, 408 timeout, 418 teapot, 429 rate limited), 5xx server error (500 generic, 502 bad gateway, 503 unavailable, 504 gw timeout).</li>
+            <li><b>Headers</b> — Cookie, Authorization (Bearer token), Content-Type, Accept, Referer, User-Agent, Set-Cookie, X-Forwarded-For (proxy), Strict-Transport-Security (HSTS).</li>
+            <li><b>HTTP/1.1</b> — text protocol, sequential or keep-alive pipelining.</li>
+            <li><b>HTTP/2</b> — binary, multiplexed streams over one TCP connection, server push, HPACK header compression. Almost always TLS.</li>
+            <li><b>HTTP/3</b> — uses <b>QUIC</b> over UDP/443. Faster handshake (0-RTT), better mobile mobility, immune to TCP head-of-line blocking.</li>
+          </ul>
+
+          <h2>VoIP signaling vs media</h2>
+          <ul>
+            <li><b>SIP</b> (Session Initiation Protocol) on 5060 (or 5061 SIPS) — call setup, teardown, registration.</li>
+            <li><b>RTP</b> (Real-time Transport Protocol) — actual voice/video packets, dynamic UDP ports (typically 16384-32767 or per-vendor).</li>
+            <li><b>SRTP</b> — encrypted RTP.</li>
+            <li><b>RTCP</b> — control/statistics for RTP.</li>
+            <li><b>MGCP / Megaco / H.248 / H.323</b> — legacy / interop signaling.</li>
+            <li><b>STUN / TURN / ICE</b> — NAT-traversal helpers for WebRTC + softphones.</li>
+            <li><b>SBC</b> (Session Border Controller) — sits at the trust boundary, protects + transcodes.</li>
+          </ul>
+
+          <h2>SSH key + cert basics</h2>
+          <ul>
+            <li><code>ssh-keygen -t ed25519</code> creates a key pair (private + .pub).</li>
+            <li>Public key → <code>~/.ssh/authorized_keys</code> on server.</li>
+            <li>Private key stays on client, optionally protected by passphrase + loaded into <code>ssh-agent</code>.</li>
+            <li><b>Host keys</b> in <code>~/.ssh/known_hosts</code> — first-connection TOFU (Trust On First Use). Mismatch warning = potential MITM or server reinstall.</li>
+            <li><b>SSH certificates</b> (preferred at scale) — short-lived signed certs issued by a CA so you don't manage <code>authorized_keys</code> per host.</li>
+            <li><b>Port forwarding:</b> <code>ssh -L 8080:db:5432 user@bastion</code> tunnels local 8080 to remote DB.</li>
+          </ul>
+
+          <h2>10 protocol gotchas</h2>
+          <ul>
+            <li>SMB on port 445 — disable SMBv1 (EternalBlue / WannaCry); enforce SMB encryption + signing on 3.x.</li>
+            <li>RDP exposed to Internet → top breach vector; front with VPN, RD Gateway, MFA, NLA.</li>
+            <li>Telnet console on a switch — only if the only way; replace ASAP with SSH + key auth.</li>
+            <li>Plaintext SNMPv1/v2c community strings → use SNMPv3 with AuthPriv (auth + encryption).</li>
+            <li>Open DNS resolver → abused for amplification DDoS. Restrict recursion to internal clients.</li>
+            <li>Mail leaking via SMTP relay → require auth + SPF/DKIM/DMARC + close open relays.</li>
+            <li>TFTP on Internet → no auth, used for firmware push only on trusted mgmt VLAN.</li>
+            <li>Active FTP through NAT → break; switch to passive or use SFTP.</li>
+            <li>NTP server "monlist" command leaks → amplification source; disable + restrict mode 6/7.</li>
+            <li>Plaintext LDAP queries — bind credentials sniffable; require LDAPS or StartTLS.</li>
+          </ul>
+
+          <h2>Subnet quick refresher (A+ Core 1 will test recognition)</h2>
+          <ul>
+            <li><b>RFC 1918 private ranges:</b> 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16.</li>
+            <li><b>APIPA:</b> 169.254.0.0/16.</li>
+            <li><b>Loopback:</b> 127.0.0.0/8 (typically 127.0.0.1).</li>
+            <li><b>Multicast:</b> 224.0.0.0/4.</li>
+            <li><b>CGN / shared:</b> 100.64.0.0/10.</li>
+            <li><b>Limited broadcast:</b> 255.255.255.255 (local only, never forwarded).</li>
+          </ul>
+
+          <h2>10 exam-pattern recognition lines</h2>
+          <ul>
+            <li>"Manage AD users from a script" → LDAP / LDAPS (389/636).</li>
+            <li>"Phone won't register with PBX" → SIP (5060/5061).</li>
+            <li>"User can't browse but ping works" → DNS broken.</li>
+            <li>"Address starts with 169.254" → DHCP unreachable; check helper / VLAN / DHCP service.</li>
+            <li>"Encrypted clone of HTTP" → HTTPS over 443.</li>
+            <li>"Centralize logs from switches" → Syslog UDP 514 (or TCP 6514 over TLS).</li>
+            <li>"Push firmware to a switch from CLI" → TFTP (69) on mgmt VLAN.</li>
+            <li>"Authenticate users to Wi-Fi via AAA" → RADIUS 1812 / 1813.</li>
+            <li>"Remote into a Windows server" → RDP 3389; pair with VPN/MFA.</li>
+            <li>"Phones losing time when domain controller resets" → NTP / Kerberos skew &gt; 5 min causes auth failure.</li>
           </ul>
         `
       },
@@ -467,6 +997,137 @@ const COURSES = [
             <li>Evil twin defense = Enterprise mode + server cert validation.</li>
             <li>WPA2-PSK vs Enterprise: PSK = home, Enterprise = office with RADIUS.</li>
           </ul>
+
+          <h2>SOHO router setup walkthrough (techs must know cold)</h2>
+          <ol>
+            <li><b>Power + connect</b> — WAN port to modem, LAN port to PC for initial setup.</li>
+            <li><b>Default access</b> — usually <code>http://192.168.1.1</code> or <code>http://192.168.0.1</code>; printed on label. Default creds (admin/admin) MUST be changed.</li>
+            <li><b>Firmware update</b> — apply latest before configuring anything else. Many routers ship with critical CVEs from years ago.</li>
+            <li><b>Set strong admin password</b>; disable remote management if not needed.</li>
+            <li><b>SSID</b> — pick something not identifying (no last name / address). Disable "broadcast hidden" myth — does not add real security.</li>
+            <li><b>Security mode</b> — WPA3-Personal if all clients support it; otherwise WPA2/WPA3 mixed; never WEP.</li>
+            <li><b>Passphrase</b> — &gt; 14 chars, random; manage via password manager.</li>
+            <li><b>Band selection</b> — enable 2.4 + 5 (+ 6 GHz on Wi-Fi 6E/7); name same SSID for seamless roaming OR separate by suffix if IoT needs 2.4-only.</li>
+            <li><b>Channel</b> — auto on modern routers, OR manually pick 1/6/11 in 2.4 and a clean 5 GHz channel after scanning.</li>
+            <li><b>Channel width</b> — 20 MHz in 2.4 (always), 40/80 MHz in 5 GHz, 80/160 MHz in 6 GHz.</li>
+            <li><b>Guest network</b> — isolated VLAN for visitors; no access to LAN devices.</li>
+            <li><b>WPS</b> — disable (Reaver attack).</li>
+            <li><b>UPnP</b> — disable unless explicitly needed (auto-opens firewall ports to apps).</li>
+            <li><b>Remote admin / WAN management</b> — disable.</li>
+            <li><b>DHCP</b> — pick a sensible scope (e.g., .50–.200) leaving room for static reservations.</li>
+            <li><b>Static reservations</b> — for printer, NAS, cameras, smart-home hubs.</li>
+            <li><b>DNS</b> — use secure resolvers (1.1.1.1, 9.9.9.9, 8.8.8.8) or local DNS for filtering (NextDNS, Pi-hole).</li>
+            <li><b>QoS</b> — prioritize VoIP / video conferencing if bandwidth is limited.</li>
+            <li><b>Port forwarding</b> — only when required; use exact port + protocol; prefer VPN instead.</li>
+            <li><b>Logging / syslog</b> — enable, forward to a NAS or pi-hole for audit.</li>
+            <li><b>Backup config</b> — export periodically; you need it after factory reset.</li>
+          </ol>
+
+          <h2>Quick band picker (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Need</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Best band</th></tr>
+            <tr><td>Smart bulbs / thermostat / older IoT</td><td>2.4 GHz</td></tr>
+            <tr><td>Long range through walls / outdoor sensors</td><td>2.4 GHz</td></tr>
+            <tr><td>Streaming 4K / gaming / video calls</td><td>5 GHz</td></tr>
+            <tr><td>Dense apartment with many neighbor APs</td><td>5 / 6 GHz</td></tr>
+            <tr><td>Latency-sensitive AR/VR</td><td>6 GHz (Wi-Fi 6E/7)</td></tr>
+            <tr><td>One SSID, OS picks band</td><td>Band steering enabled</td></tr>
+          </table>
+
+          <h2>Range + attenuation cheat sheet</h2>
+          <ul>
+            <li>2.4 GHz penetrates drywall/wood with ~3-5 dB loss; brick/concrete ~10-15 dB.</li>
+            <li>5 GHz roughly +3-6 dB additional loss vs 2.4 in the same wall.</li>
+            <li>6 GHz +3-6 dB on top of 5 GHz; basically line-of-sight + one wall.</li>
+            <li>Water (aquariums, human bodies in crowds) heavily absorbs 2.4 GHz (microwave water resonance).</li>
+            <li>Metal/foil reflects RF — mirror, refrigerator, metal-backed insulation can create dead zones.</li>
+            <li>Microwave ovens spew 2.4 GHz noise while running.</li>
+            <li>Old cordless phones, baby monitors, Zigbee, Bluetooth all live in 2.4 GHz.</li>
+          </ul>
+
+          <h2>Roaming + multi-AP basics</h2>
+          <ul>
+            <li><b>Same SSID + same security on all APs</b> for clients to roam transparently.</li>
+            <li><b>Cell overlap ~15-20%</b> with -65 dBm at edge.</li>
+            <li><b>802.11k</b> — AP gives client a "neighbor list".</li>
+            <li><b>802.11v</b> — AP can tell client "go to AP X" (BSS Transition Mgmt).</li>
+            <li><b>802.11r</b> — Fast BSS Transition; pre-auths to neighbors so handoff is &lt; 50 ms (critical for VoWi-Fi).</li>
+            <li><b>Sticky client</b> — phone stays on far AP at low RSSI; tune min RSSI on the AP, lower TX power.</li>
+            <li><b>Band steering</b> — push dual-band clients to 5 GHz.</li>
+            <li><b>Mesh kit</b> (Eero, Orbi, TP-Link Deco, Asus AiMesh) — backhaul over Wi-Fi or wired; same SSID across nodes.</li>
+          </ul>
+
+          <h2>Mobile hotspot + tethering (real-world workflows)</h2>
+          <ul>
+            <li><b>Wi-Fi hotspot</b> — phone broadcasts SSID; other devices join. Uses cellular data; watch carrier cap + battery drain.</li>
+            <li><b>USB tethering</b> — phone connects via USB cable; appears as RNDIS NIC. Phone charges while in use.</li>
+            <li><b>Bluetooth tethering</b> — lowest throughput; useful for low-power IoT pairing.</li>
+            <li><b>5G FWA</b> (Fixed Wireless Access) — alternative to wired broadband; T-Mobile, Verizon home Internet.</li>
+            <li><b>Wi-Fi sharing across iOS/macOS</b> — Personal Hotspot via Continuity; one-tap pairing with Apple ID.</li>
+            <li><b>Carrier tethering caps</b> — many plans throttle hotspot at 5-15 Mbps after X GB even when phone has unlimited 5G.</li>
+          </ul>
+
+          <h2>IoT pairing patterns</h2>
+          <ul>
+            <li><b>2.4 GHz only</b> — many smart bulbs, plugs, cameras (cheaper radio). Phone must temporarily disconnect from 5 GHz, or you put it on a separate IoT SSID.</li>
+            <li><b>Bluetooth Low Energy (BLE)</b> — beacons, fitness, BLE Mesh.</li>
+            <li><b>Zigbee</b> — 2.4 GHz mesh (Philips Hue, SmartThings, Hue Bridge).</li>
+            <li><b>Z-Wave</b> — 908 MHz sub-GHz mesh (less RF crowded).</li>
+            <li><b>Thread</b> — IPv6 mesh underlying Matter standard.</li>
+            <li><b>Matter</b> — 2022 cross-vendor protocol (over Wi-Fi or Thread) for smart-home interop (Apple Home, Google Home, Alexa, SmartThings).</li>
+            <li><b>WPS push-button</b> — easier for casual users but disable in security-conscious environments.</li>
+            <li><b>QR code / app-based onboarding</b> — modern (Matter, Wyze, etc.).</li>
+          </ul>
+
+          <h2>Common home Wi-Fi troubleshooting</h2>
+          <ul>
+            <li><b>"Internet slow on only one device"</b> → device's NIC / driver / radio; test another device same spot.</li>
+            <li><b>"Slow only in back room"</b> → coverage issue; add AP / mesh / wired backhaul; remove obstacles; lower 2.4 GHz channel width.</li>
+            <li><b>"Drops every 5 minutes"</b> → check DHCP lease; verify channel auto-selection; check if neighbor on same channel hammering it; reboot router (kernel bug).</li>
+            <li><b>"Some IoT won't connect"</b> → likely needs 2.4 GHz-only SSID; disable PMF on guest SSID (older IoT can't handle).</li>
+            <li><b>"Roaming to wrong AP"</b> → enable 802.11k/v; raise min RSSI; reduce TX power overlap.</li>
+            <li><b>"Streaming buffers but speedtest is fine"</b> → bufferbloat; enable SQM / fq_codel on router.</li>
+            <li><b>"Phone shows weak signal even close to AP"</b> → faulty antenna in phone, defective AP radio, or 2.4 GHz noise saturating receiver.</li>
+            <li><b>"Wi-Fi disappears after a week"</b> → check if dual-band SSID issue, firmware bug; schedule auto-reboot or update.</li>
+          </ul>
+
+          <h2>Quick antenna picker</h2>
+          <ul>
+            <li><b>Office ceiling</b> → omnidirectional, 4-6 dBi.</li>
+            <li><b>Long hallway</b> → patch antenna pointed down the corridor.</li>
+            <li><b>Warehouse / high ceiling</b> → directional patch pointed at floor.</li>
+            <li><b>Building-to-building</b> → high-gain directional (20+ dBi), aligned with line-of-sight + Fresnel zone clear.</li>
+            <li><b>Outdoor courtyard</b> → outdoor-rated omnidirectional, weatherproof enclosure.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>WAP / AP</b> — Wireless Access Point.</li>
+            <li><b>SSID / BSSID / ESS</b> — service set ID / AP MAC / extended (multi-AP) service set.</li>
+            <li><b>ISM / UNII</b> — Industrial Scientific Medical / Unlicensed National Information Infrastructure.</li>
+            <li><b>DFS / TPC</b> — Dynamic Frequency Selection / Transmit Power Control.</li>
+            <li><b>WPA / WPA2 / WPA3 / WEP / WPS</b> — Wi-Fi security modes / setup feature.</li>
+            <li><b>PSK / SAE / OWE / PMF</b> — Pre-Shared Key / Simultaneous Auth Equals / Opportunistic Wireless Encryption / Protected Mgmt Frames.</li>
+            <li><b>RADIUS / EAP / EAP-TLS / PEAP / TTLS</b> — AAA + auth methods.</li>
+            <li><b>MIMO / MU-MIMO / OFDMA / TWT / BSS Color / MLO</b> — Wi-Fi RF tech.</li>
+            <li><b>RSSI / SNR / dBi / EIRP</b> — RF measurements.</li>
+            <li><b>FWA</b> — Fixed Wireless Access.</li>
+            <li><b>WIPS</b> — Wireless Intrusion Prevention System.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Cheap baby monitor causes Wi-Fi drops" → 2.4 GHz interference; switch primary devices to 5 GHz.</li>
+            <li>"Office wants per-user wireless auth via certs" → WPA2/3-Enterprise + EAP-TLS.</li>
+            <li>"Conference room Wi-Fi slow when full" → enable OFDMA (Wi-Fi 6), add more APs at lower power.</li>
+            <li>"Smart bulb won't connect to 6 GHz" → bulb is 2.4 GHz only; needs separate IoT SSID.</li>
+            <li>"User keeps connecting to old AP downstairs" → sticky client; enable 802.11k/v + raise minimum RSSI on the old AP.</li>
+            <li>"Hotspot battery dying fast on phone" → throttle screen + offload tethering to USB.</li>
+            <li>"WPA3 SSID invisible to older laptop" → laptop's chipset / driver doesn't support WPA3; offer mixed WPA2/3 or upgrade NIC.</li>
+            <li>"Building-to-building wireless link 1 km" → high-gain directional dish, clear line-of-sight + Fresnel zone.</li>
+            <li>"Wi-Fi calls drop at boundary between APs" → enable 802.11r Fast BSS Transition for VoWi-Fi.</li>
+            <li>"User can't see captive portal" → DNS hijack failing because client uses DoH; allow captive.apple.com (iOS), connectivitycheck.gstatic.com (Android), or prompt user to disable Private DNS.</li>
+          </ul>
         `
       },
       {
@@ -567,6 +1228,136 @@ const COURSES = [
             <li>"DOCSIS" automatically means cable broadband.</li>
             <li>"Asymmetric" wording typically points to DSL or cable.</li>
             <li>SAN vs LAN: SAN moves block storage between servers and storage arrays — NOT generic file traffic.</li>
+          </ul>
+
+          <h2>Bandwidth vs throughput vs goodput</h2>
+          <ul>
+            <li><b>Bandwidth</b> — theoretical max link capacity (1 Gbps line rate).</li>
+            <li><b>Throughput</b> — actual measured payload rate.</li>
+            <li><b>Goodput</b> — application-level useful data after retransmits, overhead, encryption strip.</li>
+            <li>1 Gbps Ethernet line ≈ ~940 Mbps TCP throughput after L2/L3/TCP headers + IFG.</li>
+          </ul>
+
+          <h2>Latency / jitter / packet loss targets (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Workload</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Latency one-way</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Jitter</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Loss</th></tr>
+            <tr><td>VoIP</td><td>&lt; 150 ms</td><td>&lt; 30 ms</td><td>&lt; 1 %</td></tr>
+            <tr><td>Video conference</td><td>&lt; 200 ms</td><td>&lt; 50 ms</td><td>&lt; 0.5 %</td></tr>
+            <tr><td>Cloud gaming</td><td>&lt; 50 ms</td><td>&lt; 10 ms</td><td>&lt; 0.1 %</td></tr>
+            <tr><td>Web / SaaS</td><td>&lt; 400 ms</td><td>n/a</td><td>&lt; 1 %</td></tr>
+            <tr><td>Bulk file transfer</td><td>any (TCP-friendly)</td><td>n/a</td><td>recoverable</td></tr>
+          </table>
+
+          <h2>Speed-test reality checks</h2>
+          <ul>
+            <li>Plug a wired laptop directly into the modem to remove Wi-Fi variables when validating ISP speed.</li>
+            <li>Use multiple test servers (Ookla, Cloudflare, fast.com); ISP routing to one test server may be artificially favored.</li>
+            <li>Run during peak hours to see typical, not best-case.</li>
+            <li>iperf3 to a separate VPS for unbiased throughput tests.</li>
+            <li>Bufferbloat — high ping under load even with good idle ping — fix with SQM (fq_codel) on the router.</li>
+          </ul>
+
+          <h2>Modem vs router vs ONT vs gateway</h2>
+          <ul>
+            <li><b>Modem (cable / DSL)</b> — modulates / demodulates carrier signal. Single Ethernet output to your router.</li>
+            <li><b>ONT</b> (Optical Network Terminal) — fiber's equivalent of a modem.</li>
+            <li><b>Router</b> — does NAT, DHCP, firewall, sometimes Wi-Fi.</li>
+            <li><b>Gateway / "all-in-one"</b> — ISP-supplied combo (modem + router + Wi-Fi). Convenient but harder to swap; check if your ISP allows bridge mode + your own router.</li>
+            <li><b>Bridge mode</b> — disables NAT/DHCP/firewall on the ISP box; gives your downstream router a public IP. Required for double-NAT avoidance with consumer firewalls (UDM, pfSense, OPNsense).</li>
+          </ul>
+
+          <h2>ISP terms that show up on the exam</h2>
+          <ul>
+            <li><b>POP</b> (Point of Presence) — local carrier handoff facility.</li>
+            <li><b>CO</b> (Central Office) — telco facility housing DSLAMs / switches.</li>
+            <li><b>CMTS</b> (Cable Modem Termination System) — head-end gear at the cable ISP that serves DOCSIS subscribers.</li>
+            <li><b>OLT</b> (Optical Line Terminal) — head-end gear for PON.</li>
+            <li><b>NID</b> (Network Interface Device) — outside wall box where ISP wires hand off to building.</li>
+            <li><b>NIU / smart jack</b> — telco demarcation device with loopback test.</li>
+            <li><b>Demarc</b> — where carrier responsibility ends.</li>
+            <li><b>SLA</b> — Service Level Agreement (uptime + latency commitments).</li>
+            <li><b>BYOD modem</b> — ISP-approved customer-owned modem; saves monthly rental fees.</li>
+            <li><b>Static vs dynamic public IP</b> — static (extra fee) needed for hosted services / VPN endpoints.</li>
+          </ul>
+
+          <h2>Symmetric vs asymmetric (matters for cloud / VPN / streaming uploads)</h2>
+          <ul>
+            <li><b>Cable + ADSL</b> have asymmetric speeds (down ≫ up). Uploads to backup / video stream are the bottleneck.</li>
+            <li><b>FTTH / Metro Ethernet / 5G FWA SA mid-band</b> often symmetric.</li>
+            <li><b>Common upload caps on cable:</b> 10–50 Mbps even with 1 Gbps down. Plan accordingly for OBS streaming, photo upload, off-site backups.</li>
+          </ul>
+
+          <h2>Wired vs wireless deployment decision</h2>
+          <ul>
+            <li><b>Wired Ethernet</b> for: gaming desktops, NAS, security cameras, smart-home hub, Wi-Fi AP backhaul, anything stationary requiring &gt; 500 Mbps.</li>
+            <li><b>Wi-Fi</b> for: phones, tablets, laptops, IoT, guest devices.</li>
+            <li><b>MoCA</b> (Multimedia over Coax) — Ethernet over existing TV coax for whole-house gigabit without new drops.</li>
+            <li><b>Powerline (HomePlug / G.hn)</b> — Ethernet over AC wiring; convenient last-resort; varies wildly with circuit layout, &lt; 200 Mbps real.</li>
+            <li><b>Wi-Fi mesh with wired backhaul</b> — best of both for big houses.</li>
+          </ul>
+
+          <h2>VPN concentrators, remote access, SD-WAN at the SOHO edge</h2>
+          <ul>
+            <li><b>Site-to-site VPN</b> — two routers form an IPsec tunnel; transparent to users.</li>
+            <li><b>Remote access VPN</b> — client (AnyConnect, GlobalProtect, OpenVPN, WireGuard, Tailscale) connects to gateway.</li>
+            <li><b>Always-on / per-app VPN</b> — pushed via MDM, dials automatically.</li>
+            <li><b>Split tunnel</b> — only corp subnets route through VPN; Internet stays direct.</li>
+            <li><b>Full tunnel</b> — everything via VPN; heavier inspection.</li>
+            <li><b>SD-WAN appliance</b> — uses MPLS + broadband + 4G/5G transports together with central policy; common in branch offices.</li>
+            <li><b>ZTNA</b> (Zero-Trust Network Access) — per-app identity-checked access; replacing flat VPN.</li>
+          </ul>
+
+          <h2>Public IP / static / dynamic / IPv6 readiness</h2>
+          <ul>
+            <li><b>Dynamic public IP</b> — default residential; changes occasionally. <b>Dynamic DNS</b> services (No-IP, DuckDNS, Cloudflare API) point a hostname at your changing IP.</li>
+            <li><b>Static public IP</b> — fee per month from ISP; required to host inbound services without DDNS.</li>
+            <li><b>CGNAT</b> — many ISPs no longer give a real public IPv4. You sit behind 100.64.0.0/10. Port forwarding impossible; use VPN/tunnels (Tailscale, Cloudflare Tunnel, ngrok).</li>
+            <li><b>IPv6</b> rolling out widely; some carriers (T-Mobile, Comcast XFINITY) IPv6 by default. Test at <code>test-ipv6.com</code>; make sure firewall is correctly stateful for IPv6.</li>
+          </ul>
+
+          <h2>Internet connection troubleshooting checklist</h2>
+          <ol>
+            <li>Can the modem/ONT reach the ISP? Check link / sync lights (Sync, Online, Internet).</li>
+            <li>From a wired PC: <code>ipconfig /all</code> — got a public-ish or private IP from router? Got DNS?</li>
+            <li><code>ping</code> default gateway → ISP gateway → 8.8.8.8 → google.com (by name). First failure shows which hop is dead.</li>
+            <li><code>tracert / traceroute</code> to identify which hop loses traffic.</li>
+            <li>Speed test before vs after putting PC directly on modem to isolate router as the issue.</li>
+            <li>Reboot modem AND router (full power-cycle, not just reset).</li>
+            <li>If only some devices fail → DHCP scope exhausted, conflicting reservation, MAC filter, or firewall rule.</li>
+            <li>If all devices fail intermittently → DOCSIS T3/T4 timeouts (cable), DSL line attenuation, fiber connector issue. Pull modem stats page.</li>
+            <li>Power outage / split signal degraded → coax connectors corroded; replace + reseat.</li>
+            <li>Persistent issue → escalate to ISP with timestamps + ping/traceroute output; they often dispatch a tech.</li>
+          </ol>
+
+          <h2>Common ISP-side modem stats pages</h2>
+          <ul>
+            <li><b>Cable modems</b> at <code>http://192.168.100.1</code> — check downstream/upstream power (target 0 ± 7 dBmV down, ~38-50 dBmV up), SNR (target 35+ dB down), uncorrectables, T3/T4 timeouts.</li>
+            <li><b>DSL modems</b> at <code>http://192.168.1.1</code> typically — line attenuation (lower better), SNR margin (6+ dB OK, 12+ dB great), CRC errors.</li>
+            <li><b>Fiber ONTs</b> — RX optical power (typically -8 to -28 dBm range; outside = bad fiber / dirty connector).</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>ISP / POP / CO / CMTS / OLT / NID / NIU / Demarc</b> — provider terminology.</li>
+            <li><b>DOCSIS / HFC / GPON / XGS-PON / FTTH</b> — broadband tech.</li>
+            <li><b>FWA / WISP / LEO / GEO / MEO</b> — wireless / satellite.</li>
+            <li><b>MoCA / G.hn / HomePlug</b> — non-Wi-Fi home networking.</li>
+            <li><b>CGNAT / DDNS / SLA / BYOD modem</b> — service nuances.</li>
+            <li><b>Goodput / bufferbloat / SQM / fq_codel</b> — perf engineering.</li>
+          </ul>
+
+          <h2>10 exam scenarios</h2>
+          <ul>
+            <li>"User can't host game server from home" → likely CGNAT; use VPN/tunnel or request static IPv4.</li>
+            <li>"Customer cable speeds great daytime, terrible 7-10 pm" → DOCSIS shared with neighbors; check upstream noise.</li>
+            <li>"Office video calls choppy across DSL" → asymmetric upload; upgrade plan or move to fiber/Metro Ethernet.</li>
+            <li>"Rural site no fiber" → LEO satellite (Starlink) usually best modern option.</li>
+            <li>"5G FWA works in living room, dies in basement" → mmWave / mid-band 5G needs window-side placement; use signal app to aim.</li>
+            <li>"Ethernet over coax through whole house" → MoCA adapters at TV outlets.</li>
+            <li>"VPN slow even on gig fiber" → split-tunnel; or VPN concentrator CPU bottleneck; check encryption offload + protocol (WireGuard faster than IPsec).</li>
+            <li>"All devices behind one public IP have intermittent issues" → bufferbloat or NAT-table exhaustion on the router.</li>
+            <li>"Voice quality degrades when teen starts downloading" → enable QoS / SQM with voice priority class.</li>
+            <li>"Spotty Wi-Fi but wired works fine" → confined to wireless layer; speed-test directly from modem to confirm.</li>
           </ul>
         `
       },
@@ -697,6 +1488,202 @@ const COURSES = [
             <li>"Public services without exposing the LAN" → DMZ / screened subnet.</li>
             <li>NAS = files, SAN = blocks. Different use cases.</li>
           </ul>
+
+          <h2>OSI layer → device cheat (every device's home)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Devices</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PDU</th></tr>
+            <tr><td>L1 Physical</td><td>Hub, repeater, modem (in part), media converter, transceiver (SFP)</td><td>Bit</td></tr>
+            <tr><td>L2 Data Link</td><td>Switch, bridge, WAP, NIC</td><td>Frame</td></tr>
+            <tr><td>L3 Network</td><td>Router, L3 switch, basic firewall</td><td>Packet</td></tr>
+            <tr><td>L4 Transport</td><td>Stateful FW, L4 load balancer</td><td>Segment / Datagram</td></tr>
+            <tr><td>L5-L7</td><td>NGFW, WAF, reverse proxy, IDS/IPS, content filter, SBC</td><td>Data / Message</td></tr>
+          </table>
+
+          <h2>PoE deep-dive</h2>
+          <ul>
+            <li><b>802.3af (PoE / Type 1)</b> — 15.4 W at the source, ~12.95 W at the device.</li>
+            <li><b>802.3at (PoE+ / Type 2)</b> — 30 W source, ~25.5 W device. Powers Wi-Fi 5 APs, 802.11ac+ PoE+ phones, PTZ cameras.</li>
+            <li><b>802.3bt Type 3 (PoE++)</b> — 60 W source.</li>
+            <li><b>802.3bt Type 4 (PoE++)</b> — 100 W source. Powers Wi-Fi 6/6E APs, displays, thin clients, IoT lighting.</li>
+            <li><b>UPoE / UPoE+</b> — Cisco proprietary 60/90 W.</li>
+            <li><b>Endspan</b> — power injected by the switch port itself.</li>
+            <li><b>Midspan injector</b> — separate device sits inline (legacy switches w/o PoE).</li>
+            <li><b>PSE</b> (Power Sourcing Equipment) — the switch/injector providing power.</li>
+            <li><b>PD</b> (Powered Device) — phone, AP, camera.</li>
+            <li><b>Negotiation</b> — LLDP-MED / CDP / resistor signature classifies the PD's class so PSE delivers the right wattage.</li>
+            <li><b>Power budget gotcha:</b> a 24-port PoE+ switch may have only 370 W total — NOT 24 × 30 W. Plan deployment per-port + summed budget.</li>
+            <li><b>Verify on Cisco:</b> <code>show power inline</code>; on Aruba: <code>show poe-power</code>; on Mikrotik: <code>/interface ethernet poe print</code>.</li>
+          </ul>
+
+          <h2>Switch features admins must know</h2>
+          <ul>
+            <li><b>Auto-MDI/MDIX</b> — automatically detects straight vs crossover; you almost never need crossover cables anymore.</li>
+            <li><b>Auto-negotiation</b> for speed + duplex. Both ends should be auto OR both hard-set; mismatch = duplex error storm.</li>
+            <li><b>Jumbo frames</b> (9000 byte MTU) — useful in storage/iSCSI/SAN; must be enabled end-to-end.</li>
+            <li><b>Port mirroring / SPAN</b> — copy traffic from one port to another for IDS / capture.</li>
+            <li><b>Stacking</b> — multiple physical switches share control plane via stack cables; managed as one.</li>
+            <li><b>VLAN trunk allowed list</b> — prune unused VLANs to reduce broadcast load + attack surface.</li>
+            <li><b>Storm control</b> — caps broadcast / multicast / unknown unicast rate per port.</li>
+            <li><b>Port security</b> — limit MACs per port; sticky MAC.</li>
+            <li><b>DHCP snooping + DAI + IP source guard</b> — defeats rogue DHCP + ARP poisoning.</li>
+            <li><b>EtherChannel / LAG / LACP</b> — bundle 2-8 links for bandwidth + redundancy.</li>
+            <li><b>Console + AUX port</b> — out-of-band management via serial cable.</li>
+            <li><b>Out-of-band (OOB) management interface</b> — dedicated mgmt port separate from data.</li>
+          </ul>
+
+          <h2>Router platform features</h2>
+          <ul>
+            <li><b>Dual WAN / failover</b> — primary + backup ISP, automatic switchover on health check failure.</li>
+            <li><b>Static + dynamic routing</b> support (RIP, OSPF, EIGRP, BGP, IS-IS).</li>
+            <li><b>NAT / PAT / port forwarding / DMZ host / hairpin NAT</b>.</li>
+            <li><b>Firewall stateful inspection</b>, port-based / app-based rules.</li>
+            <li><b>Site-to-site IPsec VPN</b>, remote-access VPN.</li>
+            <li><b>QoS</b> — classification + marking + shaping + policing.</li>
+            <li><b>SD-WAN edge</b> — combines multiple transports w/ central policy.</li>
+            <li><b>VRRP/HSRP/GLBP</b> — first-hop redundancy.</li>
+            <li><b>DHCP server + DHCP relay</b>.</li>
+            <li><b>DNS forwarder / cache</b>.</li>
+            <li><b>UPnP + IGD</b> (consumer routers) — auto port-open requests from apps; disable for security.</li>
+            <li><b>Hardware acceleration / ASIC offload</b> — keeps line-rate forwarding at high throughput.</li>
+          </ul>
+
+          <h2>Firewall classes (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Class</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Sees</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th></tr>
+            <tr><td>Packet filter (stateless)</td><td>5-tuple</td><td>Cheap ACL on a router; legacy</td></tr>
+            <tr><td>Stateful inspection</td><td>5-tuple + connection state</td><td>Industry baseline (pfSense, Cisco ASA, Fortinet)</td></tr>
+            <tr><td>Circuit-level gateway</td><td>L4 / session</td><td>SOCKS proxy</td></tr>
+            <tr><td>Application-layer</td><td>L7 protocol decoding</td><td>Per-app rules; e.g., FTP ALG</td></tr>
+            <tr><td>NGFW</td><td>App-ID + User-ID + IPS + TLS inspection + threat intel</td><td>Modern enterprise (Palo Alto, FortiGate, Cisco FTD, Check Point Quantum)</td></tr>
+            <tr><td>UTM</td><td>FW + AV + content + VPN + IDS in one</td><td>SMB all-in-one</td></tr>
+            <tr><td>WAF</td><td>HTTP/S payload</td><td>Protects web apps from OWASP attacks</td></tr>
+            <tr><td>FWaaS</td><td>Cloud-delivered NGFW</td><td>SASE component</td></tr>
+            <tr><td>Host-based</td><td>Local processes + sockets</td><td>Windows Defender FW, ufw / nftables, pf</td></tr>
+          </table>
+
+          <h2>Wireless infrastructure architectures</h2>
+          <ul>
+            <li><b>Autonomous AP (fat AP)</b> — each AP configured individually. Small deployments.</li>
+            <li><b>Controller-based (thin AP)</b> — <b>WLC</b> centralizes config, RRM (Radio Resource Management), seamless roaming. Examples: Cisco WLC 9800, Aruba Mobility Controllers.</li>
+            <li><b>Cloud-managed</b> — same idea but controller in the cloud (Meraki MR, Aruba Central, Mist).</li>
+            <li><b>Mesh</b> — APs backhaul wirelessly to each other; useful when Ethernet to every AP is impractical.</li>
+            <li><b>Wi-Fi 6/6E/7</b> APs need PoE+ or PoE++ + 2.5/5/10G uplinks; many older 1G switches now bottleneck Wi-Fi capacity.</li>
+          </ul>
+
+          <h2>Load balancer types + features</h2>
+          <ul>
+            <li><b>L4 LB</b> — TCP/UDP only; fast; passes through TLS.</li>
+            <li><b>L7 LB</b> — HTTP/HTTPS; reads URL paths, headers, cookies; TLS termination.</li>
+            <li><b>Session persistence</b> ("sticky sessions") — sends same client to same backend (cookie / source-IP).</li>
+            <li><b>Health checks</b> — TCP, HTTP (status code + body), custom script.</li>
+            <li><b>SSL/TLS offload</b> — LB handles handshake, backends serve plain HTTP.</li>
+            <li><b>GSLB</b> (Global Server LB) — DNS-based geo-routing across regions.</li>
+            <li><b>Active/active vs active/passive</b> — two LBs share VIP via VRRP/HSRP or anycast.</li>
+            <li><b>Examples:</b> F5 BIG-IP, Citrix NetScaler, Kemp, HAProxy, NGINX Plus, AWS ELB/ALB/NLB, Azure Application Gateway.</li>
+          </ul>
+
+          <h2>Edge / SD-WAN appliance features</h2>
+          <ul>
+            <li>Multi-WAN load balance + failover.</li>
+            <li>Dynamic path selection by jitter / loss / latency per app.</li>
+            <li>Centralized orchestration (push policy to many sites).</li>
+            <li>Encrypted overlay (IPsec / WireGuard) between sites.</li>
+            <li>Zero-touch provisioning at branch.</li>
+            <li>Optional integrated NGFW / DPI.</li>
+            <li>Cloud on-ramp (Direct Connect / ExpressRoute / Interconnect handoffs).</li>
+          </ul>
+
+          <h2>NAS / SAN platform comparison</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Attribute</th><th align="left" style="padding:4px;border-bottom:1px solid #444">NAS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SAN</th></tr>
+            <tr><td>Access</td><td>File-level</td><td>Block-level</td></tr>
+            <tr><td>Protocol</td><td>NFS, SMB, AFP</td><td>iSCSI, FC, FCoE, NVMe-oF</td></tr>
+            <tr><td>Network</td><td>Same Ethernet as LAN</td><td>Dedicated fabric / VLAN</td></tr>
+            <tr><td>OS sees</td><td>Mounted share / drive letter</td><td>Local disk</td></tr>
+            <tr><td>Latency</td><td>Higher</td><td>Sub-millisecond</td></tr>
+            <tr><td>Typical use</td><td>File share, backups, media</td><td>Databases, VM datastores, exchange</td></tr>
+            <tr><td>Examples</td><td>Synology, QNAP, NetApp ONTAP NAS</td><td>Pure Storage, NetApp ONTAP SAN, Dell PowerStore</td></tr>
+          </table>
+
+          <h2>Cabling infrastructure components</h2>
+          <ul>
+            <li><b>MDF</b> (Main Distribution Frame) — primary cable entry + cross-connect.</li>
+            <li><b>IDF</b> (Intermediate Distribution Frame) — telecom closets fed by MDF.</li>
+            <li><b>Patch panel</b> — terminates horizontal cabling; short patch cords to switch ports.</li>
+            <li><b>Keystone jack</b> — wall outlet termination.</li>
+            <li><b>Cable tray / J-hook / ladder rack</b> — horizontal cable support.</li>
+            <li><b>Punch-down 66/110/Krone</b> blocks.</li>
+            <li><b>Fiber distribution panel</b> with LC/MPO bulkheads.</li>
+            <li><b>Power: UPS</b> (Uninterruptible Power Supply) + <b>PDU</b> (Power Distribution Unit) — racks need both.</li>
+            <li><b>Environmental sensors</b> — temperature, humidity, water leak (NetBotz, AKCP).</li>
+          </ul>
+
+          <h2>Identify-the-device exam patterns (quick recognition)</h2>
+          <ul>
+            <li>"Provides DHCP + NAT + Wi-Fi + switch in one box for small office" → SOHO router / wireless gateway.</li>
+            <li>"Distributes incoming connections across many web servers" → load balancer.</li>
+            <li>"Hardened device sitting in front of HTTP apps to block SQLi/XSS" → WAF.</li>
+            <li>"Aggregates traffic from many APs into one mgmt plane" → wireless LAN controller.</li>
+            <li>"Allows phones + APs to be powered over Ethernet at 30 W" → PoE+ switch (802.3at).</li>
+            <li>"Sends a copy of all traffic on a port to a security analyzer" → SPAN / port mirror.</li>
+            <li>"Inspects traffic, decides app identity, decrypts TLS" → NGFW.</li>
+            <li>"Provides block-level storage to VM hosts over a dedicated network" → SAN.</li>
+            <li>"Hardened single entry point for admin SSH into private network" → bastion host / jump box.</li>
+            <li>"Inserts inline, copies traffic without affecting it" → network tap (passive).</li>
+            <li>"Modulates digital signal onto coax / copper / fiber for ISP delivery" → modem / ONT.</li>
+            <li>"Translates analog phone lines to VoIP" → VoIP / FXO/FXS gateway.</li>
+          </ul>
+
+          <h2>Common network-hardware failures + symptoms</h2>
+          <ul>
+            <li><b>Failed PSU on switch</b> → entire chassis dark; check for amber LED + listen for fans; swap modular PSU or roll the whole switch.</li>
+            <li><b>Overheating router / switch</b> → throttled CPU, packet drops, eventual reboot. Check intake/exhaust airflow + dust filters; look at <code>show env temp</code>.</li>
+            <li><b>Dying SFP/SFP+ optic</b> → link flap, CRC errors only on one port. Swap optic + clean fiber end-face.</li>
+            <li><b>Fan failure</b> → loud noise then silence; switch may keep running but will overheat. Replace ASAP.</li>
+            <li><b>Capacitor plague / aging electrolytics</b> on consumer routers → spontaneous reboots after ~5 years.</li>
+            <li><b>Wi-Fi controller licensing expired</b> → APs go into standalone or lost mode.</li>
+            <li><b>UPS battery dead</b> → utility blip kills equipment; load-test UPS quarterly.</li>
+            <li><b>Power surge</b> → blown port, blown SFP, fried PoE injector. Replace + add surge protector + grounded UPS.</li>
+            <li><b>Fiber dirty / scratched end-face</b> → high BER, intermittent down; clean with one-click cleaner; replace patch cord; re-polish or replace pigtail.</li>
+            <li><b>Bad SFP+ DAC cable</b> → no link or CRC; copper DAC cables have a finite life w/ flex cycles.</li>
+          </ul>
+
+          <h2>Rack + datacenter physics</h2>
+          <ul>
+            <li><b>Rack U</b> = 1.75" (44.45 mm) vertical unit. Standard 42U full rack.</li>
+            <li><b>Hot aisle / cold aisle</b> — racks arranged so all intakes face one aisle, exhausts the other.</li>
+            <li><b>Containment</b> — physical panels seal hot aisle from cold to prevent recirculation.</li>
+            <li><b>PDU</b> kVA + circuit balancing — don't overload one phase.</li>
+            <li><b>Out-of-band (OOB) console server</b> — terminal server with cellular failover so you can reach gear when the network is dead.</li>
+            <li><b>Smart hands</b> — colo provider staff that act on your remote instructions.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>WAP / WLC / SPS / WIPS</b> — wireless access point / LAN controller / WIPS.</li>
+            <li><b>PoE / PoE+ / PoE++ / UPoE</b> — power-over-Ethernet tiers.</li>
+            <li><b>PSE / PD</b> — Power Sourcing Equipment / Powered Device.</li>
+            <li><b>SPAN / RSPAN / ERSPAN</b> — switched port analyzer variants.</li>
+            <li><b>VRRP / HSRP / GLBP</b> — first-hop redundancy protocols.</li>
+            <li><b>SAN / NAS / iSCSI / FC / NVMe-oF</b> — storage protocols.</li>
+            <li><b>NGFW / UTM / WAF / FWaaS</b> — firewall classes.</li>
+            <li><b>L4 / L7 LB / GSLB</b> — load balancer types.</li>
+            <li><b>MDF / IDF / PDU / UPS</b> — facility infrastructure.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Power phone over Ethernet cable" → PoE/PoE+/PoE++ depending on wattage.</li>
+            <li>"Layer 3 device sharing single public IP via PAT" → router (or NGFW).</li>
+            <li>"Block-level shared storage for VM datastore" → SAN.</li>
+            <li>"Copy traffic of one port to analyzer" → SPAN / port mirror.</li>
+            <li>"Centralized control of 500 APs" → wireless LAN controller.</li>
+            <li>"Cheap one-box solution for branch security" → UTM.</li>
+            <li>"Hide web origin + terminate TLS + cache static assets" → reverse proxy / CDN.</li>
+            <li>"Two firewalls in active/passive with shared virtual IP" → VRRP / HSRP.</li>
+            <li>"Compare attenuation + NEXT on horizontal cable" → cable certifier.</li>
+            <li>"Dual ISPs + app-aware steering at branch" → SD-WAN appliance.</li>
+          </ul>
         `
       },
       {
@@ -808,6 +1795,158 @@ const COURSES = [
             <li>Mixing kits → runs at slowest module's rated speed.</li>
             <li>DDR generations are NOT cross-compatible — different keying.</li>
             <li>Dual-channel needs matched modules in correct slot pairs.</li>
+          </ul>
+
+          <h2>Channel architecture (single / dual / quad / octa)</h2>
+          <ul>
+            <li><b>Single-channel</b> — one DIMM per memory controller channel. 64-bit data path.</li>
+            <li><b>Dual-channel</b> — paired DIMMs in matching color slots (often A1+B1 OR A2+B2). 2× bandwidth.</li>
+            <li><b>Quad-channel</b> — Xeon W / Threadripper / EPYC; 4× bandwidth.</li>
+            <li><b>Octa-channel</b> — Sapphire Rapids Xeon / Genoa EPYC; 8× bandwidth, server only.</li>
+            <li><b>DDR5 dual-subchannel</b> — each DIMM has two independent 32-bit subchannels internally → better parallelism even on dual-channel boards.</li>
+          </ul>
+          <p><b>Recipe:</b> populate the BLACK (or "A2 + B2" / second-furthest) slots first when running 2 DIMMs on 4-slot board (per manual).</p>
+
+          <h2>Memory timings primer (CL, tRCD, tRP, tRAS)</h2>
+          <ul>
+            <li><b>CL / CAS Latency</b> — clock cycles between column-address strobe and data available. Lower = faster. Often the headline number on enthusiast kits.</li>
+            <li><b>tRCD</b> — RAS-to-CAS Delay.</li>
+            <li><b>tRP</b> — Row Precharge time.</li>
+            <li><b>tRAS</b> — Row Active Time.</li>
+            <li><b>Effective latency</b> in nanoseconds ≈ <code>CL × 2000 / DDR data rate (MT/s)</code>. E.g., DDR4-3200 CL16 → 16 × 2000 / 3200 = 10 ns.</li>
+            <li>Higher MT/s + higher CL can still be faster than lower MT/s + lower CL — always check effective latency.</li>
+          </ul>
+
+          <h2>XMP / EXPO / SPD</h2>
+          <ul>
+            <li><b>SPD</b> (Serial Presence Detect) — small EEPROM on every DIMM holding JEDEC-standard timings the BIOS reads at boot.</li>
+            <li><b>XMP</b> (Extreme Memory Profile) — Intel-defined "auto-overclock" profile (CL + speed) the BIOS can apply with one click. DDR4 = XMP 2.0, DDR5 = XMP 3.0.</li>
+            <li><b>EXPO</b> (Extended Profiles for Overclocking) — AMD equivalent for DDR5 (AM5).</li>
+            <li><b>DOCP</b> (DRAM OverClock Profile) — ASUS-flavored XMP on AMD boards.</li>
+            <li><b>JEDEC defaults</b> — the speeds the RAM is GUARANTEED to run at without XMP. Mismatched XMP kit + CPU lottery = boot failure; fall back to JEDEC.</li>
+          </ul>
+
+          <h2>Bank groups, ranks, density</h2>
+          <ul>
+            <li><b>Rank</b> — one set of chips driven by a single chip-select signal. <b>Single-rank (1R) / dual-rank (2R)</b> modules. Dual-rank often slightly slower at high speeds but allows more total RAM per channel.</li>
+            <li><b>Density</b> — bits per chip (8 Gb / 16 Gb / 24 Gb in DDR5). Affects max kit size per slot.</li>
+            <li><b>DIMMs per channel (DPC)</b> — 1DPC = both slots filled with one stick each per channel; 2DPC = all 4 filled. 2DPC often drops the supported speed (1 channel × 4 sticks at 3200 vs 1 channel × 2 sticks at 6400).</li>
+          </ul>
+
+          <h2>Module identifier decode</h2>
+          <p>Sticker like <code>16GB 2Rx8 PC4-25600U DDR4-3200 CL22</code> reads as:</p>
+          <ul>
+            <li><b>16 GB</b> capacity.</li>
+            <li><b>2Rx8</b> — 2 ranks × x8 chips (8-bit chips, 8 of them per rank).</li>
+            <li><b>PC4-25600</b> — DDR4 bandwidth: 25,600 MB/s (=3200 MT/s × 8 bytes).</li>
+            <li><b>U</b> at end = Unbuffered (R = Registered, LR = Load-Reduced, E = ECC).</li>
+            <li><b>DDR4-3200</b> — generation + data rate (MT/s).</li>
+            <li><b>CL22</b> — CAS Latency 22.</li>
+          </ul>
+
+          <h2>BIOS / UEFI memory settings to know</h2>
+          <ul>
+            <li><b>XMP / EXPO toggle</b> — enable to apply enthusiast profile.</li>
+            <li><b>Memory frequency</b> — manual override of speed.</li>
+            <li><b>Command Rate / 1T vs 2T</b> — 1T faster but less stable with 4 sticks.</li>
+            <li><b>Memory Training / Re-train</b> — DDR5 boards re-train timings on cold boot (longer POST), CMOS option may skip.</li>
+            <li><b>Memory Remap Feature</b> — required for &gt; 3.5 GB RAM on legacy 32-bit BIOS.</li>
+            <li><b>ECC enable</b> — must be ON in BIOS for servers; check status under "Memory" page.</li>
+            <li><b>Memory hole remapping</b> — relocate PCI MMIO above RAM.</li>
+            <li><b>Mirror / Sparing / Lockstep</b> — server reliability modes that halve usable capacity for resilience.</li>
+          </ul>
+
+          <h2>OS reporting + monitoring tools</h2>
+          <ul>
+            <li><b>Windows:</b> <code>wmic memorychip get banklabel,capacity,speed,manufacturer,partnumber</code>; Task Manager → Performance → Memory; <code>Get-CimInstance Win32_PhysicalMemory</code>.</li>
+            <li><b>Linux:</b> <code>dmidecode -t 17</code> (full SPD info); <code>free -h</code>; <code>cat /proc/meminfo</code>; <code>edac-util</code> for ECC error count.</li>
+            <li><b>macOS:</b> <code>system_profiler SPMemoryDataType</code>.</li>
+            <li><b>CPU-Z / HWiNFO64</b> — Windows GUI showing SPD + current timings + XMP profile applied.</li>
+            <li><b>Thaiphoon Burner</b> — read SPD directly to verify advertised vs actual.</li>
+          </ul>
+
+          <h2>Stability + diagnostic test tools</h2>
+          <ul>
+            <li><b>MemTest86 / MemTest86+</b> — bootable USB; runs comprehensive pattern tests. Run 4+ passes overnight for confidence; any error = bad stick or unstable XMP.</li>
+            <li><b>Windows Memory Diagnostic</b> — built-in; reboots and runs at boot. Less thorough than MemTest86.</li>
+            <li><b>HCI MemTest / Karhu RAM Test / TestMem5</b> — Windows app stress tests; faster than MemTest86 at finding XMP instability.</li>
+            <li><b>OCCT / Prime95 Blend / y-cruncher</b> — exercise CPU + memory subsystem together; reveals voltage/temperature edge cases.</li>
+            <li><b>linpack / mlc (Memory Latency Checker)</b> — Linux throughput / latency measurement.</li>
+            <li><b>EDAC counters</b> — track corrected (CE) + uncorrected (UE) ECC events; non-zero UE = replace DIMM.</li>
+          </ul>
+
+          <h2>Server reliability features</h2>
+          <ul>
+            <li><b>Chipkill / SDDC</b> — survive a single DRAM chip failure within a rank.</li>
+            <li><b>Memory mirroring</b> — two copies of the same data in different DIMMs (half usable capacity, but full DIMM failure tolerated).</li>
+            <li><b>Memory sparing</b> — keep a spare DIMM/rank reserved; auto-fail over on uncorrectable error.</li>
+            <li><b>Lockstep / Advanced ECC</b> — two channels operate as one wider channel for stronger correction.</li>
+            <li><b>Patrol scrub</b> — background process reads every cell + applies corrections to prevent silent bit rot.</li>
+            <li><b>Demand scrub</b> — corrects on the fly when a read returns a single-bit error.</li>
+          </ul>
+
+          <h2>Installation procedure (FRU-level)</h2>
+          <ol>
+            <li>ESD wrist strap, ground to chassis.</li>
+            <li>Power off + unplug + drain capacitors (press power button with PSU off).</li>
+            <li>Open slot latches at both ends.</li>
+            <li>Align notch on DIMM with key on slot (only one correct orientation).</li>
+            <li>Press straight down with even force until BOTH latches click closed.</li>
+            <li>Populate by motherboard manual (often A2 + B2 first for 2-DIMM config).</li>
+            <li>Boot to BIOS → confirm total capacity + speed → enable XMP/EXPO if applicable.</li>
+            <li>Run MemTest86 ≥ 1 pass before trusting in production.</li>
+            <li>Document module SKUs in inventory; matching kit when expanding later.</li>
+          </ol>
+
+          <h2>Common consumer + server gotchas</h2>
+          <ul>
+            <li><b>Mixing single-rank + dual-rank</b> often runs but at lower speed than QVL-tested.</li>
+            <li><b>4 sticks at DDR5 high speed</b> rarely POST at advertised XMP — accept a step down (e.g., 6000 → 5200).</li>
+            <li><b>Mixing ECC + non-ECC</b> — most platforms refuse; some run all-non-ECC.</li>
+            <li><b>UDIMMs in a server expecting RDIMMs</b> — won't POST.</li>
+            <li><b>LRDIMMs needed</b> beyond a certain capacity per channel (e.g., 16 DIMMs of 256 GB each).</li>
+            <li><b>QVL pickiness</b> — high-speed kits not on the QVL may fail to boot at XMP; either drop speed or pick a tested kit.</li>
+            <li><b>Cold-boot retraining</b> on DDR5 — first power-on of the day can take 30+ seconds; not a fault.</li>
+            <li><b>Heat</b> — top of stack runs hotter; ensure case airflow over DIMMs in high-clock builds.</li>
+            <li><b>Wrong slot for single stick</b> — many boards REQUIRE A2 (second from CPU) for first DIMM; A1 boots but underperforms.</li>
+            <li><b>Sleep / hibernate corruption</b> — RAM saved to disk on hibernate; corrupted RAM can poison the hiberfil → BSOD on resume.</li>
+          </ul>
+
+          <h2>Capacity recommendations (typical 2026 baselines)</h2>
+          <ul>
+            <li><b>Budget laptop / Chromebook</b> — 8 GB minimum, 16 GB comfortable.</li>
+            <li><b>General desktop / office</b> — 16 GB minimum, 32 GB comfortable.</li>
+            <li><b>Gaming PC</b> — 32 GB DDR5 mainstream.</li>
+            <li><b>Creator / video editing / VM lab</b> — 64-128 GB.</li>
+            <li><b>Server / virtualization host</b> — 128 GB+; size by VM consolidation ratio.</li>
+            <li><b>AI/ML local inference</b> — match model + KV cache to GPU VRAM separately; system RAM ≥ 64 GB.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>DRAM / SRAM / SDRAM / DDR / LPDDR</b> — chip types.</li>
+            <li><b>DIMM / SO-DIMM / CAMM2 / UDIMM / RDIMM / LRDIMM</b> — form factors / buffering.</li>
+            <li><b>ECC / SDDC / Chipkill</b> — error correction.</li>
+            <li><b>SPD / XMP / EXPO / DOCP</b> — DIMM metadata + auto-OC profiles.</li>
+            <li><b>CL / tRCD / tRP / tRAS</b> — primary timings.</li>
+            <li><b>1R / 2R</b> — single / dual rank.</li>
+            <li><b>MT/s</b> — Mega Transfers per second; quoted RAM speed.</li>
+            <li><b>QVL</b> — Qualified Vendor List (motherboard-tested memory kits).</li>
+            <li><b>BSOD / WHEA / EDAC</b> — fault reporting layers.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"PC won't POST after RAM upgrade" → re-seat with even force; populate correct slots per manual; try one stick.</li>
+            <li>"Random BSODs after working months" → run MemTest86; suspect dying DIMM.</li>
+            <li>"Server logs uncorrectable ECC error" → replace DIMM immediately; do not run production on it.</li>
+            <li>"32 GB kit shows only 16 GB usable" → either second stick failed to seat / one channel inactive / memory hole remapping disabled (legacy).</li>
+            <li>"Cannot install DDR5 in DDR4 board" → physical keying prevents; different platform required.</li>
+            <li>"XMP profile causes BSOD" → drop to JEDEC, run MemTest86; consider stable lower-speed kit.</li>
+            <li>"Server RAM with periodic background data integrity check" → patrol scrubbing.</li>
+            <li>"Buy RAM for HP ProLiant server" → use vendor part number + QVL; usually RDIMM/LRDIMM ECC.</li>
+            <li>"Why is laptop RAM smaller than desktop" → SO-DIMM form factor (~67 mm vs 133 mm).</li>
+            <li>"Convert PC4-25600 to MT/s" → divide by 8 → 3200 MT/s (DDR4-3200).</li>
           </ul>
         `
       },
@@ -963,6 +2102,193 @@ const COURSES = [
             <li>Degaussing wipes magnetic media (HDD) — does NOT wipe SSDs. Use crypto-erase or shred for SSD.</li>
             <li>Clicking sound on HDD = imminent failure. Back up NOW.</li>
           </ul>
+
+          <h2>M.2 keys, lengths, signal types (memorize)</h2>
+          <ul>
+            <li><b>M.2 length</b> codes: 2230 / 2242 / 2260 / 2280 / 22110 → 22 mm wide × {30, 42, 60, 80, 110} mm long. 2280 is the desktop default.</li>
+            <li><b>Key B</b> — left of center notch; SATA, PCIe x2, USB. Common for older M.2 SATA SSDs + LTE modems.</li>
+            <li><b>Key M</b> — right of center notch; PCIe x4. Modern NVMe SSDs.</li>
+            <li><b>Key B+M</b> — both notches; module fits either slot, runs at narrowest bus available.</li>
+            <li><b>Key A / Key E</b> — Wi-Fi + Bluetooth modules (2230 size).</li>
+            <li><b>Slot capability:</b> a Key-M slot may be SATA-only, PCIe-only, or both. Check motherboard manual — installing a SATA M.2 in a PCIe-only slot = no detection (and vice versa).</li>
+          </ul>
+
+          <h2>Enterprise SSD form factors</h2>
+          <ul>
+            <li><b>U.2 / U.3</b> — 2.5" drive shape, SFF-8639 connector. U.3 is universal — accepts SAS, SATA, and NVMe in same bay.</li>
+            <li><b>EDSFF (Enterprise &amp; Data Center SSD Form Factor)</b>:
+              <ul>
+                <li><b>E1.S</b> — 1U ruler; replaces M.2 in dense servers; hot-swap.</li>
+                <li><b>E1.L</b> — longer 1U ruler for max density.</li>
+                <li><b>E3.S / E3.L</b> — 3U short/long; replacing U.2 in next-gen servers.</li>
+              </ul>
+            </li>
+            <li><b>mSATA</b> — legacy mini SATA card. Replaced by M.2.</li>
+            <li><b>SATA Express</b> — never gained traction; killed by NVMe.</li>
+          </ul>
+
+          <h2>SSD endurance metrics (TBW vs DWPD)</h2>
+          <ul>
+            <li><b>TBW</b> (Total Bytes Written) — manufacturer-rated lifetime writes. Consumer drives 300-1200 TBW typical; enterprise 10× higher.</li>
+            <li><b>DWPD</b> (Drive Writes Per Day) — full-drive writes per day over warranty. Consumer 0.3-0.5 DWPD; mixed-use enterprise 1-3; write-intensive enterprise 5-10+.</li>
+            <li><b>P/E cycles</b> — flash cells survive limited program/erase cycles (SLC 100k+, MLC 10k, TLC 1-3k, QLC ~500).</li>
+            <li><b>Over-provisioning (OP)</b> — drive reserves spare capacity (7-28%) hidden from OS for garbage collection + wear leveling. Manually leave 10-20% unallocated for higher sustained write performance on consumer SSDs.</li>
+            <li><b>Write amplification</b> — actual NAND writes &gt; host writes due to garbage collection. Modern controllers minimize via SLC cache + smart GC.</li>
+          </ul>
+
+          <h2>SSD performance dynamics</h2>
+          <ul>
+            <li><b>SLC cache</b> — TLC/QLC drives reserve part of NAND in SLC mode for burst writes. Once cache fills, sustained writes drop to native TLC/QLC speeds (often &lt; 200 MB/s on cheap QLC).</li>
+            <li><b>Thermal throttling</b> — NVMe drives slow when controller hits ~70-80 °C; use heatsink + airflow for sustained workloads.</li>
+            <li><b>Mixed read/write workloads</b> — published "up to" sequential numbers misleading for databases / VM hosts; check 4K random IOPS at QD32.</li>
+            <li><b>DRAM cache vs HMB</b> — drives with onboard DRAM are faster than DRAM-less drives using Host Memory Buffer (HMB borrows ~64 MB of system RAM).</li>
+            <li><b>Idle low power</b> — laptops use ASPM L1.2 + PCIe L1 sub-states for &lt;5 mW idle.</li>
+          </ul>
+
+          <h2>SMART attributes worth watching</h2>
+          <ul>
+            <li><b>Reallocated Sectors (5)</b> — bad sectors remapped from spare pool; non-zero = drive aging fast.</li>
+            <li><b>Current Pending Sectors (197)</b> — soft errors waiting; could go to reallocated.</li>
+            <li><b>Uncorrectable Errors (198)</b> — non-zero = data loss already occurred.</li>
+            <li><b>Reported Uncorrectable Errors (187)</b> — Backblaze-famous indicator on enterprise HDDs.</li>
+            <li><b>End-to-End Errors (184)</b> — data path corruption.</li>
+            <li><b>Wear Leveling Count (177 / 173)</b> — SSD wear; near 0 = end-of-life.</li>
+            <li><b>Total LBAs Written / Host Writes (241)</b> — divide by 2 billion to get TB written, compare to TBW spec.</li>
+            <li><b>Available Spare</b> (NVMe ID 0x03) — drops below threshold = imminent failure.</li>
+            <li><b>Percentage Used</b> (NVMe ID 0x05) — expected life used as %.</li>
+            <li><b>Temperature</b> — HDD &lt; 50 °C ideal, SSD &lt; 70 °C.</li>
+            <li><b>Power-on Hours</b> — drive age.</li>
+          </ul>
+
+          <h2>SMART tools per OS</h2>
+          <ul>
+            <li><b>Windows</b> — CrystalDiskInfo (GUI), <code>smartctl -a /dev/sda</code> via smartmontools, vendor utilities (Samsung Magician, WD Dashboard, Crucial Storage Executive).</li>
+            <li><b>Linux</b> — <code>smartctl -a /dev/sda</code>, <code>nvme smart-log /dev/nvme0</code>, GNOME Disks GUI.</li>
+            <li><b>macOS</b> — DriveDx, Disk Utility "First Aid" (limited).</li>
+            <li><b>BMC / iDRAC / iLO</b> — server out-of-band reports SMART status of every drive.</li>
+          </ul>
+
+          <h2>Hardware encryption — SED + OPAL + eDrive</h2>
+          <ul>
+            <li><b>SED</b> (Self-Encrypting Drive) — controller has AES-256 hardware engine; all data on NAND always encrypted with internal DEK.</li>
+            <li><b>OPAL 2.0</b> (TCG standard) — defines secure boot password + multiple logical bands.</li>
+            <li><b>eDrive</b> (Microsoft) — IEEE-1667 + OPAL combo letting BitLocker offload encryption to drive hardware. Faster, less CPU.</li>
+            <li><b>ATA Security</b> — drive password set in BIOS; older, weaker.</li>
+            <li><b>Crypto-erase</b> on SED = throw away DEK in ~seconds; entire drive instantly unreadable.</li>
+            <li><b>Pyrite</b> — simpler subset of OPAL; locks/unlocks but doesn't manage bands.</li>
+          </ul>
+
+          <h2>BitLocker / FileVault / LUKS keys + recovery</h2>
+          <ul>
+            <li><b>BitLocker recovery key</b> — 48-digit numeric. Stored in AD / Entra ID / Microsoft account / printed copy. ALWAYS escrow before deployment.</li>
+            <li><b>BitLocker key protectors:</b> TPM only, TPM + PIN, TPM + USB, password, recovery key, network unlock.</li>
+            <li><b>FileVault</b> — recovery key stored in iCloud or institutional key.</li>
+            <li><b>LUKS</b> — multiple key slots (slot 0 password + slot 1 USB token + slot 2 escrow).</li>
+            <li><b>Veracrypt</b> — open-source successor of TrueCrypt; volume / system encryption.</li>
+          </ul>
+
+          <h2>Secure erase methods (SSD vs HDD)</h2>
+          <ul>
+            <li><b>HDD overwrite</b> — single pass of zeros (DoD 5220.22-M and similar 3-pass methods are largely obsolete; one pass is sufficient on modern HDDs).</li>
+            <li><b>SSD ATA Secure Erase</b> — issues a command that triggers internal flash reset + key destroy. Run via vendor tool or hdparm in Linux.</li>
+            <li><b>NVMe Format / Sanitize</b> — <code>nvme format -s 1 /dev/nvme0n1</code> (user-data erase) or <code>-s 2</code> (cryptographic erase) per NVMe spec.</li>
+            <li><b>Cryptographic erase</b> on SEDs — instant.</li>
+            <li><b>Degaussing</b> — strong magnetic field destroys HDD platters. <b>Does NOT work on SSDs</b>.</li>
+            <li><b>Physical destruction</b> — shredder, drill, incinerator. NIST 800-88 "Destroy" tier; required for classified data.</li>
+          </ul>
+
+          <h2>Backup strategies (3-2-1 + variants)</h2>
+          <ul>
+            <li><b>3-2-1</b> — 3 copies of data, on 2 different media, with 1 copy off-site.</li>
+            <li><b>3-2-1-1-0</b> (Veeam) — adds 1 immutable / air-gapped + 0 recovery test failures.</li>
+            <li><b>Full</b> — copies everything. Fastest restore, biggest storage.</li>
+            <li><b>Differential</b> — changes since last full. Restore = full + latest differential.</li>
+            <li><b>Incremental</b> — changes since last backup (full or incremental). Smallest backup; restore needs full + every incremental.</li>
+            <li><b>Synthetic full</b> — server reconstructs a "full" from older backups; client only sends increments.</li>
+            <li><b>Snapshots</b> (ZFS / Btrfs / VSS / VMware) — point-in-time copy on the same storage. Fast but not a real backup; need replication off-array.</li>
+            <li><b>Immutability / WORM</b> — Object Lock on S3, S3 Object Lock equivalents, Veeam Hardened Repository.</li>
+            <li><b>Air-gapped</b> — tape, removable USB, offline storage; survives ransomware.</li>
+            <li><b>RTO / RPO</b> — Recovery Time Objective / Recovery Point Objective drive backup frequency.</li>
+          </ul>
+
+          <h2>Cloud + hybrid backup landscape</h2>
+          <ul>
+            <li><b>Backup-as-a-Service</b> — Veeam Cloud Connect, Druva, Backblaze B2, AWS Backup, Azure Backup, GCP Backup &amp; DR.</li>
+            <li><b>Object storage tiers</b> — Hot / Warm / Cold / Archive (Glacier). Cheaper to store, more to restore.</li>
+            <li><b>Replication</b> — synchronous (zero RPO, distance-limited) vs asynchronous (some RPO, any distance).</li>
+            <li><b>Replication is NOT backup</b> — replicates ransomware encryption too.</li>
+            <li><b>Test restores quarterly</b>; "backup that hasn't been tested = no backup".</li>
+          </ul>
+
+          <h2>Drive cloning + migration</h2>
+          <ul>
+            <li><b>Macrium Reflect / Acronis True Image / Clonezilla / dd / SystemRescue</b> — popular tools.</li>
+            <li><b>Sector vs file clone</b> — sector preserves everything (incl. unused), file copies only allocated blocks (faster).</li>
+            <li><b>Shrink source partition</b> before cloning to smaller disk.</li>
+            <li><b>After clone</b> — boot once; let OS expand partition to new drive's full size; reset BitLocker recovery key (if applicable).</li>
+            <li><b>MBR → GPT conversion</b> — Windows <code>mbr2gpt.exe</code> non-destructive; required when moving from BIOS to UEFI.</li>
+          </ul>
+
+          <h2>Performance benchmarks worth knowing</h2>
+          <ul>
+            <li><b>IOPS</b> (Input/Output Operations Per Second) — random access metric.</li>
+            <li><b>MB/s</b> — sequential throughput.</li>
+            <li><b>Queue Depth (QD)</b> — number of outstanding I/Os; high QD reveals controller parallelism.</li>
+            <li><b>Latency (μs / ms)</b> — completion time per I/O.</li>
+            <li><b>Tools:</b> CrystalDiskMark (Windows), Iometer, ATTO, fio (Linux gold standard), diskspd (Microsoft).</li>
+            <li><b>Real workload baselines:</b> NVMe Gen4 ~1M random read IOPS, SATA SSD ~80k, 7200 RPM HDD ~150-250.</li>
+          </ul>
+
+          <h2>RAID rebuild + URE math</h2>
+          <ul>
+            <li><b>URE</b> (Uncorrectable Read Error) rate: consumer HDDs ~1 in 10^14 bits.</li>
+            <li>Reading a 12 TB drive = 9.6 × 10^13 bits → ~96% chance of hitting at least 1 URE during full rebuild.</li>
+            <li>Why <b>RAID 5</b> is risky on large drives — a second URE during rebuild = data loss. Use RAID 6 or RAID 10 instead for big arrays.</li>
+            <li><b>Hot-spare</b> reduces window of vulnerability.</li>
+            <li><b>Patrol read / scrub</b> proactively finds + repairs latent errors.</li>
+          </ul>
+
+          <h2>Common storage troubleshooting</h2>
+          <ul>
+            <li><b>"Drive not detected"</b> → check SATA cable both ends, power, BIOS detection, M.2 slot mode (SATA vs PCIe), try different slot.</li>
+            <li><b>"Slow file copy"</b> → SLC cache filled (cheap SSD), thermal throttle, fragmented HDD, USB cable speed-limiting.</li>
+            <li><b>"Pending sectors rising"</b> → drive failing; image + replace.</li>
+            <li><b>"Random freezes"</b> → SMART check; could be I/O timeout on dying disk.</li>
+            <li><b>"Cannot delete file"</b> → file in use, permissions; or filesystem corruption — run <code>chkdsk /f</code> (Windows), <code>fsck</code> (Linux).</li>
+            <li><b>"Drive shows wrong capacity"</b> → MBR vs GPT (2 TB limit on MBR), HPA/DCO host-protected area, manufacturer scam (rare).</li>
+            <li><b>"BitLocker recovery prompt at boot"</b> → TPM state changed (BIOS update, hardware swap); enter recovery key, then suspend + resume protection.</li>
+            <li><b>"RAID degraded"</b> → identify failed member, hot-swap if supported, monitor rebuild progress, plan to replace ASAP.</li>
+            <li><b>"S.M.A.R.T. status BAD"</b> at POST → drive already past threshold; image + replace.</li>
+            <li><b>"USB drive read-only"</b> → physical switch, registry policy, or filesystem corruption.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>HDD / SSD / NVMe / SATA / SAS</b> — drive types + interfaces.</li>
+            <li><b>SLC / MLC / TLC / QLC / 3D NAND</b> — flash cell density.</li>
+            <li><b>M.2 / U.2 / U.3 / EDSFF / mSATA</b> — form factors.</li>
+            <li><b>RAID 0/1/5/6/10/50/60 / JBOD</b> — array levels.</li>
+            <li><b>TBW / DWPD / P/E / OP</b> — endurance metrics.</li>
+            <li><b>SMART / SCSI ENCLOSURE / BMC / iDRAC / iLO</b> — health + management.</li>
+            <li><b>SED / OPAL / eDrive / TCG</b> — hardware encryption.</li>
+            <li><b>BitLocker / FileVault / LUKS / Veracrypt</b> — software FDE.</li>
+            <li><b>RTO / RPO / WORM / 3-2-1</b> — backup planning.</li>
+            <li><b>URE / chkdsk / fsck / dd / fio</b> — diagnostic + erasure tools.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Fastest consumer SSD interface" → NVMe over PCIe Gen 4/5.</li>
+            <li>"Allows secure instant erase of SSD" → SED cryptographic erase / NVMe sanitize -s 2.</li>
+            <li>"RAID level for read-heavy 4-drive array tolerating 1 failure" → RAID 5.</li>
+            <li>"RAID for VM datastore needing IOPS + redundancy" → RAID 10.</li>
+            <li>"M.2 NVMe SSD speed cap" → set by PCIe generation and lane count of the slot (Gen3 x4 ≈ 3.5 GB/s).</li>
+            <li>"Tracks drive health attributes" → SMART (via smartmontools / CrystalDiskInfo).</li>
+            <li>"Drive shows clicking + Reallocated Sectors climbing" → HDD failing; back up + replace.</li>
+            <li>"Backup must be safe from ransomware" → immutable / air-gapped copy.</li>
+            <li>"Wipe SSD before disposal" → NVMe format with crypto erase or vendor tool's Secure Erase — NOT degauss.</li>
+            <li>"Recover BitLocker drive after motherboard swap" → 48-digit recovery key from AD/Microsoft account.</li>
+          </ul>
         `
       },
       {
@@ -1088,6 +2414,204 @@ const COURSES = [
             <li>"BIOS settings revert every boot" → dead CMOS battery.</li>
             <li>"AIO" implies liquid cooling.</li>
           </ul>
+
+          <h2>Current consumer socket table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Vendor</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Socket</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Generations</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RAM</th></tr>
+            <tr><td>Intel</td><td>LGA 1700</td><td>LGA</td><td>12th / 13th / 14th gen</td><td>DDR4 or DDR5</td></tr>
+            <tr><td>Intel</td><td>LGA 1851</td><td>LGA</td><td>Core Ultra (Meteor / Arrow Lake)</td><td>DDR5</td></tr>
+            <tr><td>Intel HEDT</td><td>LGA 2066</td><td>LGA</td><td>X299 / Cascade Lake-X</td><td>DDR4 quad-channel</td></tr>
+            <tr><td>Intel Xeon W</td><td>LGA 4677</td><td>LGA</td><td>Sapphire Rapids W</td><td>DDR5 ECC octa-channel</td></tr>
+            <tr><td>AMD</td><td>AM4</td><td>PGA</td><td>Ryzen 1000-5000 (Zen 1-3)</td><td>DDR4</td></tr>
+            <tr><td>AMD</td><td>AM5</td><td>LGA</td><td>Ryzen 7000-9000 (Zen 4 / 5)</td><td>DDR5 only</td></tr>
+            <tr><td>AMD HEDT</td><td>sTRX4 / sWRX8 / sTR5</td><td>LGA</td><td>Threadripper / Pro</td><td>DDR4/5 ECC quad-channel</td></tr>
+            <tr><td>AMD server</td><td>SP3 / SP5 / SP6</td><td>LGA</td><td>EPYC Naples-Genoa-Bergamo-Turin</td><td>DDR4/5 ECC 8-12 channel</td></tr>
+            <tr><td>Apple</td><td>—</td><td>SoC BGA</td><td>M1-M4 family</td><td>Unified LPDDR (soldered)</td></tr>
+            <tr><td>Qualcomm</td><td>—</td><td>SoC BGA</td><td>Snapdragon X (PC), 8 Gen 4 (mobile)</td><td>LPDDR5/5X</td></tr>
+          </table>
+          <p><b>LGA vs PGA vs BGA:</b> LGA = pins on motherboard; PGA = pins on CPU; BGA = balls soldered directly. <b>Bent pins on LGA</b> → motherboard ruined or careful reshape with a needle. <b>Bent pins on PGA</b> → CPU ruined. Mobile + Apple Silicon use BGA = no upgrades.</p>
+
+          <h2>CPU feature flags worth memorizing</h2>
+          <ul>
+            <li><b>VT-x / VT-d</b> (Intel) — virtualization extensions + IOMMU for PCIe passthrough.</li>
+            <li><b>AMD-V / AMD-Vi (IOMMU)</b> — equivalent.</li>
+            <li><b>SLAT / EPT / RVI</b> — Second Level Address Translation. Required by Hyper-V, modern hypervisors.</li>
+            <li><b>NX / XD</b> (No-Execute / eXecute Disable) — DEP marker; mandatory for Windows 8+.</li>
+            <li><b>SSE / AVX / AVX2 / AVX-512</b> — SIMD extensions.</li>
+            <li><b>AES-NI</b> — hardware AES encryption acceleration. Speeds up BitLocker, TLS, ZFS.</li>
+            <li><b>SHA-NI</b> — hardware SHA-1/256.</li>
+            <li><b>RDRAND / RDSEED</b> — on-die hardware RNG.</li>
+            <li><b>TXT / SGX</b> (Intel) — trusted execution / secure enclaves.</li>
+            <li><b>TME / SME / SEV</b> — full-memory encryption (Intel TME / AMD Secure Memory Encryption / SEV for VMs).</li>
+            <li><b>Hyper-Threading / SMT</b> — two threads per core; turn off if mitigating Spectre/MDS exotic threats.</li>
+            <li><b>E-cores vs P-cores</b> (Intel hybrid) — Performance (big) + Efficient (little) cores; Thread Director schedules.</li>
+          </ul>
+
+          <h2>UEFI / BIOS detailed feature set</h2>
+          <ul>
+            <li><b>Secure Boot</b> — only OS loaders signed by a trusted authority run.</li>
+            <li><b>TPM 2.0</b> — Trusted Platform Module; stores BitLocker keys, attestation.</li>
+            <li><b>fTPM / PTT</b> — firmware-based TPM on the CPU/chipset (Intel PTT / AMD fTPM). Same logical function as discrete TPM module.</li>
+            <li><b>Boot order</b> — disk, USB, network (PXE), CD/DVD.</li>
+            <li><b>UEFI shell</b> — pre-boot command environment, useful for diagnostics.</li>
+            <li><b>CSM</b> (Compatibility Support Module) — legacy BIOS emulation for booting older OS. Win 11 wants CSM OFF.</li>
+            <li><b>SATA mode</b> — AHCI vs RAID vs IDE legacy.</li>
+            <li><b>Above 4G Decoding / Resizable BAR (ReBAR / SAM)</b> — required for newer GPUs to access full VRAM.</li>
+            <li><b>XMP / EXPO</b> — memory profile.</li>
+            <li><b>Intel SpeedStep / EIST / Cool'n'Quiet</b> — P-state scaling.</li>
+            <li><b>C-states</b> — idle power-saving levels (C0 = active, C6 deeper sleep).</li>
+            <li><b>VT-x / SVM enable</b> — must be ON for VMs.</li>
+            <li><b>Boot password / supervisor password</b> — block firmware changes.</li>
+            <li><b>Drive encryption / OPAL</b> activation toggle.</li>
+            <li><b>Wake-on-LAN / WoWLAN</b> — wake device from network.</li>
+            <li><b>Fan curves</b> — temperature → RPM mapping.</li>
+          </ul>
+
+          <h2>POST / boot codes + indicator LEDs</h2>
+          <ul>
+            <li><b>POST code display</b> — 2-digit hex code shows BIOS phase; vendor manual decodes (e.g., 55 = memory not detected).</li>
+            <li><b>Q-LED / EZ-Debug</b> (ASUS / MSI / Gigabyte) — 4 LEDs labeled CPU, DRAM, VGA, BOOT; lit LED = component failing or missing.</li>
+            <li><b>PC speaker beep codes</b> — AMI: 1 beep = refresh failure; 3 = base 64K mem; 5 = CPU; 8 = display failure. Phoenix uses patterns like "1-3-1" (sequence of pauses).</li>
+            <li><b>UEFI logo with no boot</b> — bootloader missing; check boot order + drive detected.</li>
+            <li><b>Black screen post-logo</b> — could be GPU driver; try integrated graphics or safe mode.</li>
+          </ul>
+
+          <h2>Voltage regulation modules (VRM) — the silent hero</h2>
+          <ul>
+            <li>Step down +12 V from PSU to ~1.2 V CPU core voltage.</li>
+            <li>More <b>phases</b> = better load sharing, cooler operation. High-end boards = 18-22 phases.</li>
+            <li>Component quality (DrMOS / SPS chips) + heatsink size affect overclocking headroom.</li>
+            <li>Undersized VRM = throttle under sustained load, eventual failure.</li>
+            <li>VRM temperature monitoring exposed by HWInfo64.</li>
+          </ul>
+
+          <h2>Chipset functions on modern boards</h2>
+          <ul>
+            <li>Provides additional PCIe lanes (Gen3/4) for SSDs, USB controllers, networking.</li>
+            <li>SATA controller (typically 4-8 ports).</li>
+            <li>USB host controller (USB 3.2 Gen 2×2 20 Gbps, USB4 in some Z790 boards).</li>
+            <li>Integrated networking: Intel 2.5G/10G I225/I226 NICs, Realtek 2.5G common; Wi-Fi 6E/7 onboard.</li>
+            <li>Onboard audio (Realtek ALC4080 / ESS Sabre DAC).</li>
+            <li>HD Audio + S/PDIF; some boards add USB DAC.</li>
+            <li>Chipset connected to CPU via <b>DMI</b> (Intel) or <b>Infinity Fabric</b> (AMD).</li>
+            <li><b>Lane sharing</b>: enabling certain M.2 / SATA disables others — check manual carefully.</li>
+          </ul>
+
+          <h2>Cooling deep-dive</h2>
+
+          <h3>Heatsink anatomy</h3>
+          <ul>
+            <li><b>Base plate</b> contacts CPU IHS.</li>
+            <li><b>Heatpipes</b> — copper tubes with vaporizing fluid for fast heat transfer.</li>
+            <li><b>Vapor chamber</b> — flat heatpipe replacement, used on high-end air + GPU coolers.</li>
+            <li><b>Fin stack</b> — surface area for fan-driven convection.</li>
+            <li><b>Direct touch heatpipes</b> vs <b>nickel-plated base</b> — direct touch cheap, smooth base better contact pressure.</li>
+          </ul>
+
+          <h3>AIO liquid cooler anatomy</h3>
+          <ul>
+            <li><b>CPU block</b> — pump + cold plate.</li>
+            <li><b>Tubes</b> — usually rubber w/ nylon braid; some hard tubing.</li>
+            <li><b>Radiator</b> — 120 / 240 / 280 / 360 / 420 mm. Larger = more capacity. 240 mm minimum for 12th-gen i7+ / 7900X+.</li>
+            <li><b>Fans</b> — static-pressure-optimized for radiator (vs airflow fans for case).</li>
+            <li><b>Pump speed</b> — PWM-controlled; some have screen / LCD.</li>
+            <li><b>Permeation</b> — coolant slowly evaporates over 5-7 years; refillable models exist but most are sealed disposable.</li>
+          </ul>
+
+          <h3>Thermal Interface Material (TIM) types</h3>
+          <ul>
+            <li><b>Standard paste</b> (Arctic MX-6, Noctua NT-H1, Kryonaut) — non-conductive, easy.</li>
+            <li><b>Liquid metal</b> (Conductonaut) — best thermal conductivity but conductive; ruins boards on spill.</li>
+            <li><b>Thermal pads</b> — for VRAM / VRM / NVMe; specific thicknesses (0.5 / 1.0 / 1.5 mm).</li>
+            <li><b>Phase-change pads</b> (PTM7950) — solid at room temp, melts to fill gaps under load. Long-lasting; popular for laptops.</li>
+            <li><b>Apply pattern</b> — pea (center) or X / line; pressure spreads.</li>
+            <li><b>Replace</b> when CPU temps rise &gt; 10 °C over baseline; typically every 3-5 years.</li>
+          </ul>
+
+          <h3>Case airflow + positive pressure</h3>
+          <ul>
+            <li>Front intake + rear/top exhaust = standard layout.</li>
+            <li><b>Positive pressure</b> (more intake than exhaust CFM) → dust filtered at intakes; less ingress through unfiltered openings.</li>
+            <li><b>Negative pressure</b> → slightly better cooling but dust enters everywhere.</li>
+            <li><b>PWM fan control</b> via 4-pin headers; <b>DC voltage</b> via 3-pin.</li>
+            <li><b>RPM curves</b> tuned in BIOS or vendor software (Fan Xpert, Q-Fan, Smart Fan).</li>
+            <li><b>Noctua / Arctic / Phanteks / be quiet!</b> — popular case-fan brands.</li>
+          </ul>
+
+          <h2>CMOS battery + clearing methods</h2>
+          <ul>
+            <li><b>CR2032</b> coin cell powers RTC + holds BIOS settings when unplugged.</li>
+            <li>Lifespan ~5-10 years; weak battery symptom = clock reset to 2000-01-01 after power-off.</li>
+            <li><b>Clear CMOS:</b> jumper labeled CLR_CMOS / JBAT1 (short for 10 s with power off), OR remove battery for 5-10 minutes, OR rear-panel Clear CMOS button.</li>
+            <li>Useful after failed OC, password lockout, BIOS update going wrong.</li>
+          </ul>
+
+          <h2>BIOS update workflow + recovery</h2>
+          <ol>
+            <li>Download official firmware from motherboard vendor (NEVER 3rd party).</li>
+            <li>Verify checksum / SHA.</li>
+            <li>Update on stable power (UPS) — power loss mid-flash = brick.</li>
+            <li>Use vendor flash utility (USB BIOS Flashback, EZ Flash, M-Flash, Q-Flash) — many work without CPU/RAM installed (useful for new CPU support).</li>
+            <li>After update, settings reset to defaults; re-enable XMP, Secure Boot, virtualization.</li>
+            <li>Recovery: <b>BIOS Flashback button</b> on rear I/O (requires FAT32 USB with renamed firmware).</li>
+            <li><b>Dual BIOS</b> boards (Gigabyte / older ASUS) auto-fallback if main BIOS corrupts.</li>
+            <li><b>SPI programmer</b> (CH341A) — last-resort reflash directly to BIOS chip.</li>
+          </ol>
+
+          <h2>Overclocking + tuning fundamentals</h2>
+          <ul>
+            <li><b>Base clock × multiplier</b> = core speed. Most modern OC done via multiplier only.</li>
+            <li><b>P-states</b> / per-core ratios for fine-grained.</li>
+            <li><b>Voltage (Vcore)</b> — adaptive vs override. Higher voltage = more heat, faster degradation.</li>
+            <li><b>Stability tests:</b> Prime95 Small FFTs (max thermal), Linpack / y-cruncher (AVX), Cinebench (mixed), OCCT (CPU+RAM+GPU).</li>
+            <li><b>Thermal limit</b> — Intel TJ Max ~100 °C (throttle); AMD typical 95 °C TjMax.</li>
+            <li><b>Auto-tuning tools:</b> Intel XTU, AMD Ryzen Master, ASUS AI Overclock, Aorus EasyTune.</li>
+            <li><b>Curve Optimizer</b> (AMD Ryzen 5000+) — undervolt per-core for cooler operation + same boost.</li>
+            <li><b>BCLK overclock</b> — increases PCIe + memory simultaneously, risky.</li>
+            <li><b>OC tax</b> — quality vs quantity; not every CPU OCs same.</li>
+          </ul>
+
+          <h2>Common motherboard / CPU troubleshooting walkthroughs</h2>
+          <ul>
+            <li><b>No POST, all fans spin</b> → CPU power 8-pin EPS not connected, or CPU socket damage. Reseat / check pins.</li>
+            <li><b>POST OK but no display</b> → bad GPU, monitor on wrong input, GPU power cables, integrated graphics enabled but display on dGPU port.</li>
+            <li><b>Boot loop after BIOS update</b> → clear CMOS; if dual BIOS, flip switch.</li>
+            <li><b>USB ports dead</b> → BIOS / chipset USB controller disabled; or USB header damaged; test with rear ports.</li>
+            <li><b>NIC not detected</b> → onboard NIC disabled in BIOS, OR driver missing (Intel I225/I226 known driver issues).</li>
+            <li><b>"CPU Fan Error" at POST</b> → fan not connected to CPU_FAN header (must read RPM signal), or fan failed.</li>
+            <li><b>Crashes under heavy load</b> → CPU temps; reseat cooler, repaste, check fan/AIO pump RPM, undervolt.</li>
+            <li><b>Slow boot</b> → "Memory training" on DDR5 first boot; subsequent boots faster. Or USB enumeration on flaky drive.</li>
+            <li><b>Wrong CPU detected</b> → BIOS too old for CPU; update via BIOS Flashback before swap.</li>
+            <li><b>Some RAM slots dead</b> → bent pins on LGA socket (use magnifier + needle); or specific channel disabled in BIOS.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>ATX / mATX / mITX / EATX / SSI EEB</b> — board form factors.</li>
+            <li><b>LGA / PGA / BGA</b> — socket types.</li>
+            <li><b>TDP / cTDP / PL1/PL2 / TjMax</b> — power + thermal limits.</li>
+            <li><b>VT-x / AMD-V / IOMMU / SLAT / NX / DEP</b> — virtualization + security flags.</li>
+            <li><b>TPM 2.0 / fTPM / PTT / Secure Boot / CSM / SAM/ReBAR</b> — firmware features.</li>
+            <li><b>VRM / DrMOS</b> — voltage regulation.</li>
+            <li><b>DMI / Infinity Fabric</b> — CPU↔chipset interconnects.</li>
+            <li><b>AIO / TIM / IHS / PTM7950</b> — cooling.</li>
+            <li><b>CMOS / RTC / CR2032</b> — backup battery setup.</li>
+            <li><b>POST / EZ-Debug LEDs</b> — diagnostic indicators.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"New CPU not detected after install" → BIOS too old; use BIOS Flashback to update.</li>
+            <li>"Clock resets to 1/1/2000 after each shutdown" → dead CMOS battery (CR2032).</li>
+            <li>"Win 11 install refuses" → enable TPM 2.0 (fTPM / PTT) + Secure Boot + UEFI in BIOS.</li>
+            <li>"VMs fail to start in Hyper-V" → enable VT-x / AMD-V + SLAT.</li>
+            <li>"PC randomly shuts down under gaming load" → CPU thermal limit; reseat cooler + repaste; check fan curve.</li>
+            <li>"Front USB ports nonfunctional" → header not seated; check motherboard manual orientation.</li>
+            <li>"Mini-ITX board fits in ATX case" → yes (standoffs are a subset).</li>
+            <li>"Pin-grid array CPU bent pins" → AMD AM4 PGA; gently straighten with credit card / needle.</li>
+            <li>"Need ECC + 8 RAM slots + dual NIC" → server board (SSI CEB/EEB) + Xeon / EPYC.</li>
+            <li>"PSU 12VHPWR connector partially seated" → melt risk on RTX 40 series; push fully home until click.</li>
+          </ul>
         `
       },
       {
@@ -1209,6 +2733,174 @@ const COURSES = [
             <li>"600W single connector for high-end GPU" → 12VHPWR / 12V-2x6.</li>
             <li>"Two PSUs in one server for HA" → redundant / hot-swap.</li>
             <li>"Wake-on-LAN works while powered off" → +5 VSB standby rail.</li>
+          </ul>
+
+          <h2>PSU sizing math (real-world formula)</h2>
+          <ol>
+            <li><b>Sum component TDPs:</b> CPU max boost power + GPU TGP + motherboard ~25 W + DIMMs ~5 W each + drives 5-15 W each + fans 1-3 W each + USB peripherals.</li>
+            <li><b>Add transient headroom</b> — modern GPUs (RTX 30/40, RX 7000) spike to 2× TGP for &lt; 100 µs. ATX 3.0 / 3.1 PSUs handle this; older PSUs don't.</li>
+            <li><b>Add efficiency target</b> — design for ~50% load at typical use (best efficiency band on Gold+ PSU).</li>
+            <li><b>Add 20% margin</b> for capacitor aging + future upgrades.</li>
+          </ol>
+          <p><b>Example build:</b> i7-14700K (253 W PL2) + RTX 4080 (320 W TGP, 640 W spike) + 2 NVMe + 4 fans + 32 GB DDR5 → ~600 W typical, 1000 W spike. Pick <b>850-1000 W ATX 3.1 PSU</b>.</p>
+
+          <h2>ATX 3.0 / 3.1 standard (memorize)</h2>
+          <ul>
+            <li><b>Intel ATX 3.0</b> (2022) — defines <b>12VHPWR</b> 16-pin connector for GPUs up to 600 W, transient response requirements (200% of rated wattage for 100 µs spikes), tighter regulation.</li>
+            <li><b>ATX 3.1</b> (2024) — refines 12VHPWR into <b>12V-2x6</b> (shorter sense pins prevent ungrounded melt issue), better PCIe Gen5 transient profiles.</li>
+            <li><b>Older "RTX 30-ready" labels</b> on pre-ATX-3.0 PSUs are marketing only — they don't guarantee transient handling.</li>
+            <li><b>Adapter cables</b> 3× / 4× 8-pin to 12VHPWR exist but require fully seated connections + same PSU rail group.</li>
+          </ul>
+
+          <h2>Multi-rail vs single-rail deep view</h2>
+          <ul>
+            <li><b>Single-rail</b> — one big +12 V virtual pool; OCP set high (often 80+ A). Simpler, no shutdown surprises under spiky GPU loads. Most modern high-end PSUs.</li>
+            <li><b>Multi-rail</b> — multiple +12 V "virtual" rails each with its own OCP (~25-40 A). Safer in fault scenarios (less max current per cable) but can trip falsely under modern GPU transients.</li>
+            <li>Server PSUs frequently multi-rail with hot-swap redundancy.</li>
+          </ul>
+
+          <h2>Connector pinouts + lock mechanisms</h2>
+          <ul>
+            <li><b>24-pin ATX</b> — 20 pins original (P1) + extended 4-pin block. P1 + P2 = 24-pin. Latch is on motherboard side; release tab when removing.</li>
+            <li><b>4+4 / 8-pin EPS (CPU)</b> — splits into 4+4 so older boards take one half. High-end boards have <b>two</b> 8-pin EPS — populate both for 14900KS / 7950X.</li>
+            <li><b>PCIe 6+2 / 8-pin</b> — splits into 6 + 2 for backward compat.</li>
+            <li><b>12VHPWR / 12V-2x6</b> — 12 power pins + 4 sense pins. Sense pins tell GPU how much power source can provide (150 / 300 / 450 / 600 W via two CFG pins). 12V-2x6 shortens sense pins so partial seating = "no power negotiated" instead of "fire".</li>
+            <li><b>SATA power</b> 15-pin L-shaped — 5 V, 3.3 V, 12 V, ground. The 3.3 V pin can be used as "Power Disable" on enterprise drives (cut to factory reset SED).</li>
+            <li><b>Molex 4-pin</b> — 5 V + 12 V + grounds; legacy peripheral.</li>
+          </ul>
+
+          <h2>UPS deep-dive (run-time + sizing)</h2>
+          <ul>
+            <li><b>Topology types:</b>
+              <ul>
+                <li><b>Offline / Standby</b> — battery kicks in on outage; small 4-8 ms switch-over window; cheap; OK for home PC.</li>
+                <li><b>Line-Interactive</b> — adds AVR (Automatic Voltage Regulation) for under/over-voltage without switching to battery. Standard SMB choice.</li>
+                <li><b>Online / Double-Conversion</b> — load always runs off inverter; zero switchover; cleanest power; required for sensitive lab gear / VoIP servers.</li>
+              </ul>
+            </li>
+            <li><b>Sizing:</b> total load in watts × desired minutes = needed VA × 0.6 (typical PF). Add 25% margin for battery aging.</li>
+            <li><b>Run-time</b> drops nonlinearly — a 1500 VA at 200 W load runs ~20 min, at 1000 W &lt; 5 min.</li>
+            <li><b>Replace batteries</b> every 3-5 years; check load-test annually. UPS beeps + replace LED = imminent battery failure.</li>
+            <li><b>Network management</b> via SNMP / Network Management Card for clean shutdown via NUT / APC PowerChute / Eaton IPM.</li>
+            <li><b>Don't plug</b> laser printers (huge inrush) or AC units into UPS — overloads inverter.</li>
+            <li><b>ECO mode</b> — UPS bypasses inverter to save power; sacrifices clean output. Disable for critical gear.</li>
+            <li><b>External battery packs</b> extend run-time on rack UPS (3-5 kVA models).</li>
+          </ul>
+
+          <h2>Surge protector vs UPS vs power conditioner vs PDU</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Device</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What it does</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Doesn't do</th></tr>
+            <tr><td>Surge protector</td><td>Clamps voltage spikes via MOV</td><td>No outage backup, no sag/brownout protection</td></tr>
+            <tr><td>UPS (Standby)</td><td>Outage backup + surge</td><td>No sag regulation</td></tr>
+            <tr><td>UPS (Line-Interactive)</td><td>Backup + AVR for sag/swell</td><td>Slight switchover gap</td></tr>
+            <tr><td>UPS (Online)</td><td>Cleanest sine wave, zero gap</td><td>Most expensive, less efficient</td></tr>
+            <tr><td>Power conditioner</td><td>Filters noise, isolates ground loops</td><td>No battery backup unless combined with UPS</td></tr>
+            <tr><td>PDU (basic)</td><td>Distributes power to outlets</td><td>No filtering or backup</td></tr>
+            <tr><td>Smart PDU</td><td>Adds metering, switching, env sensors</td><td>Still no battery — feeds UPS output</td></tr>
+            <tr><td>Generator</td><td>Long-duration backup power</td><td>Dirty power; needs transfer switch + conditioner</td></tr>
+          </table>
+
+          <h2>Datacenter power infrastructure</h2>
+          <ul>
+            <li><b>Utility feed</b> → automatic transfer switch → generator backup → static UPS → PDU → rack PDU → server PSU.</li>
+            <li><b>A + B feeds</b> — two independent power paths to every rack; dual-PSU servers split between them.</li>
+            <li><b>RPP</b> (Remote Power Panel) — distribution downstream of room PDU.</li>
+            <li><b>STS</b> (Static Transfer Switch) — sub-cycle switching between A/B for single-PSU loads.</li>
+            <li><b>PUE</b> (Power Usage Effectiveness) = total facility power ÷ IT power. Best modern DCs ~1.1; legacy 1.8-2.0.</li>
+            <li><b>kVA → kW</b> via power factor (modern PFC near 1).</li>
+            <li><b>Branch circuit balancing</b> across phases (L1/L2/L3) prevents neutral overload.</li>
+          </ul>
+
+          <h2>Electrical safety + grounding</h2>
+          <ul>
+            <li><b>ESD</b> (Electrostatic Discharge) — kills components silently; wear wrist strap clipped to chassis ground.</li>
+            <li><b>Anti-static bag</b> — store components inside.</li>
+            <li><b>Anti-static mat</b> + ground clip.</li>
+            <li><b>Equipotential bonding</b> — everything at same ground; avoid working in carpeted, low-humidity room without ESD precautions.</li>
+            <li><b>PSU capacitors</b> hold charge after unplug; discharge by pressing power button or wait 30 s.</li>
+            <li><b>Lockout/tagout (LOTO)</b> — electrical/mechanical safety procedure for service.</li>
+            <li><b>MSDS / SDS</b> sheet for battery / cleaning fluid disposal.</li>
+            <li><b>OSHA + NEC + NFPA 70</b> dictate safety standards in commercial installs.</li>
+          </ul>
+
+          <h2>Region-specific electrical</h2>
+          <ul>
+            <li><b>NA:</b> 120 V (15/20 A) standard outlets; 208/240 V available for high-power gear; NEMA 5-15 / 5-20 / L5-20 / L6-30 plug types.</li>
+            <li><b>EU/UK:</b> 230 V standard. UK uses BS 1363 with fused plugs. Schuko / CEE 7/7 common on continent.</li>
+            <li><b>Japan:</b> 100 V at 50/60 Hz (varies east/west).</li>
+            <li><b>India:</b> 230 V, Type D/M plugs.</li>
+            <li><b>Servers:</b> commonly run 200-240 V single-phase or 208 V 3-phase for efficiency.</li>
+            <li><b>Auto-ranging PSU</b> handles 100-240 V; legacy needed 115/230 V switch.</li>
+          </ul>
+
+          <h2>PSU testing tools + procedures</h2>
+          <ul>
+            <li><b>Paperclip test</b> — short green PS_ON to a ground pin on the 24-pin connector; PSU fan should spin if alive. Quick "is it dead?" check.</li>
+            <li><b>PSU tester</b> — handheld device shows all rail voltages + presence.</li>
+            <li><b>Multimeter</b> — measure each rail under load; tolerance ±5%.</li>
+            <li><b>Power supply analyzer / load tester</b> — sweeps load points, plots regulation + ripple. Lab-only.</li>
+            <li><b>Oscilloscope</b> — view ripple/noise (target &lt; 50 mV pk-pk on 12 V).</li>
+            <li><b>Smart plug + Kill-A-Watt</b> — measure real-time wall draw vs spec; verify PSU efficiency.</li>
+          </ul>
+
+          <h2>PSU-related component damage indicators</h2>
+          <ul>
+            <li>Burnt smell — PSU or motherboard MOSFET; do not power on again.</li>
+            <li>Bulging or leaking capacitors on motherboard ("capacitor plague") — often caused by chronic voltage spikes from cheap PSU.</li>
+            <li>Random reboots under GPU spike — PSU OPP tripping; upgrade to ATX 3.x.</li>
+            <li>SATA drives randomly disconnecting — undervolting 5 V rail.</li>
+            <li>USB devices powering off — 5 VSB or 5 V rail under-spec.</li>
+            <li>Coil whine, especially at idle 100-200 Hz on GPU — VRM/inductor harmonics; not failure, irritating.</li>
+            <li>Fans spinning briefly then stopping ("short cycle") — PSU protection trip; unplug, check for shorts, replace PSU.</li>
+          </ul>
+
+          <h2>Workstation + laptop AC adapters</h2>
+          <ul>
+            <li><b>Output voltage + current</b> printed on label; replacement must match voltage exactly + meet/exceed amperage.</li>
+            <li><b>Polarity</b> on barrel connectors marked with a diagram — wrong polarity destroys laptop.</li>
+            <li><b>USB-PD</b> universal: laptops with USB-C charge from any PD-compliant brick of sufficient wattage; some require specific PD profiles (Dell sometimes wants 20 V negotiated).</li>
+            <li><b>MagSafe</b> (Apple) returned in 2021 — magnetic snap-off saves dropped laptops.</li>
+            <li><b>Slim laptops</b> use 65-100 W bricks; gaming + workstation 180-330 W; signature Razer / Alienware uses 240+ W.</li>
+            <li><b>GaN chargers</b> — Gallium Nitride; smaller + cooler than silicon; same wattage in half the size.</li>
+            <li><b>Replacement bricks:</b> OEM or certified 3rd party (Anker, Belkin, UGREEN); avoid no-name knockoffs.</li>
+          </ul>
+
+          <h2>Server + rack power</h2>
+          <ul>
+            <li><b>Hot-swap PSU</b> — pull dead unit, slot new one, no downtime.</li>
+            <li><b>Redundancy modes:</b> 1+1 (one backup, full load on one), 2+1 (two active, one backup), 2+2.</li>
+            <li><b>BMC / iLO / iDRAC</b> exposes PSU health: input voltage/current, output watts, fan speed, temp.</li>
+            <li><b>Power capping</b> — set max watts per server to fit branch circuit budget.</li>
+            <li><b>208 V vs 120 V at rack</b> — 208 V gives ~3% better PSU efficiency.</li>
+            <li><b>C13 / C14 / C19 / C20</b> IEC connectors — C13 to server PSUs (10 A); C19 for higher-current PDU outlets.</li>
+            <li><b>L5-30P / L6-30P / L21-20P</b> twist-lock plugs supply rack PDUs.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>PSU / SMPS / PFC / AVR</b> — Power Supply Unit / Switched-Mode Power Supply / Power Factor Correction / Automatic Voltage Regulation.</li>
+            <li><b>OPP / OCP / OVP / UVP / OTP / SCP / SIP</b> — protections.</li>
+            <li><b>UPS / VA / W / PF</b> — battery backup terms.</li>
+            <li><b>PDU / RPP / STS / ATS</b> — datacenter distribution.</li>
+            <li><b>ATX / SFX / TFX / EPS</b> — form factors + CPU power.</li>
+            <li><b>12VHPWR / 12V-2x6</b> — modern GPU power connector.</li>
+            <li><b>ESD / LOTO / MSDS / NEC / NFPA 70 / OSHA</b> — safety standards.</li>
+            <li><b>BMC / iLO / iDRAC</b> — server out-of-band management.</li>
+            <li><b>C13/C14 / C19/C20 / NEMA 5-15 / L6-30</b> — connectors / plugs.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"650 W PSU randomly shuts down with new RTX 4080" → undersized + non-ATX-3 transient handling; upgrade to 1000 W ATX 3.1.</li>
+            <li>"Highest efficiency tier" → 80 PLUS Titanium (94%+ at 50% load).</li>
+            <li>"Switch protects against brief power dip without going to battery" → Line-Interactive UPS with AVR.</li>
+            <li>"Cleanest output, mission-critical lab gear" → Online / double-conversion UPS.</li>
+            <li>"Server has dual PSU but both plug into same outlet" → no real redundancy; need A + B feeds.</li>
+            <li>"PSU fan won't spin even with paperclip test" → PSU dead; replace.</li>
+            <li>"Laptop barrel-connector polarity wrong" → device damage; verify center-positive (most common) before plugging.</li>
+            <li>"USB-C 65 W brick won't full-speed-charge gaming laptop" → laptop wants ≥ 100 W PD; upgrade brick + cable to EPR-rated.</li>
+            <li>"All servers in rack tripped breaker" → imbalance across L1/L2/L3 phases or over-budget rack PDU; redistribute.</li>
+            <li>"Bulging caps on motherboard 3 yrs in" → bad PSU likely cause; replace both.</li>
           </ul>
         `
       },
@@ -1388,6 +3080,200 @@ const COURSES = [
             <li>"Independent fault domain inside a region" → Availability Zone.</li>
             <li>"Pay only for what you use" → measured / metered service.</li>
           </ul>
+
+          <h2>Cloud service model responsibility split (drill the table)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">On-prem</th><th align="left" style="padding:4px;border-bottom:1px solid #444">IaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PaaS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SaaS</th></tr>
+            <tr><td>Data + identity</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>App</td><td>You</td><td>You</td><td>Shared</td><td>Provider</td></tr>
+            <tr><td>Runtime</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>OS</td><td>You</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Virtualization</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            <tr><td>Servers / network / DC</td><td>You</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+          </table>
+          <p><b>Examples:</b> EC2 / Azure VM = IaaS. App Service / Elastic Beanstalk / Cloud Run = PaaS. Microsoft 365 / Salesforce / Workday = SaaS. <b>FaaS</b> (Lambda / Azure Functions / Cloud Run Functions) sits inside PaaS / serverless category.</p>
+
+          <h2>Hypervisor compare table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Hypervisor</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Vendor / license</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical use</th></tr>
+            <tr><td>VMware ESXi + vSphere</td><td>Type 1</td><td>Broadcom (paid, subscription)</td><td>Enterprise datacenter</td></tr>
+            <tr><td>Microsoft Hyper-V</td><td>Type 1 (built into Win Server / Win 10/11 Pro)</td><td>Microsoft</td><td>Windows shops, Azure Stack HCI</td></tr>
+            <tr><td>KVM + QEMU</td><td>Type 1 (Linux kernel)</td><td>Open source</td><td>Cloud (AWS, GCP, Linode); Proxmox; oVirt</td></tr>
+            <tr><td>Xen / XCP-ng</td><td>Type 1</td><td>Open + Citrix</td><td>Legacy AWS, Citrix XenServer</td></tr>
+            <tr><td>Proxmox VE</td><td>Type 1 (KVM + LXC)</td><td>Open</td><td>SMB virtualization / homelab</td></tr>
+            <tr><td>Nutanix AHV</td><td>Type 1 (KVM-derived)</td><td>Vendor HCI</td><td>Hyper-converged appliances</td></tr>
+            <tr><td>VMware Workstation Pro / Fusion</td><td>Type 2</td><td>Free for personal (2024+)</td><td>Engineer desktop</td></tr>
+            <tr><td>VirtualBox</td><td>Type 2</td><td>Oracle open</td><td>Free desktop / training</td></tr>
+            <tr><td>Parallels Desktop</td><td>Type 2</td><td>Corel (paid)</td><td>macOS, Apple Silicon</td></tr>
+            <tr><td>UTM</td><td>Type 2 (QEMU front-end)</td><td>Open</td><td>macOS Apple Silicon ARM/x86 emulate</td></tr>
+            <tr><td>WSL2</td><td>Lightweight Type 1 utilizing Hyper-V</td><td>Microsoft</td><td>Linux on Windows for dev</td></tr>
+          </table>
+
+          <h2>VM core components</h2>
+          <ul>
+            <li><b>vCPU</b> — virtual CPU. Hypervisor schedules onto physical cores; oversubscription possible (more vCPUs than physical cores).</li>
+            <li><b>vRAM</b> — guaranteed (reservation) vs limit; ballooning + transparent page sharing reclaim under pressure.</li>
+            <li><b>Virtual disk (VMDK / VHDX / QCOW2 / RAW)</b> — flat file or block device; thin vs thick provisioning.</li>
+            <li><b>vNIC</b> — virtual NIC bound to a port group / vSwitch / bridge.</li>
+            <li><b>vSwitch / vSphere DSwitch</b> — virtual L2 fabric inside the host.</li>
+            <li><b>Snapshot</b> — point-in-time copy of disk + memory state.</li>
+            <li><b>Template / image</b> — golden master used to clone many VMs.</li>
+            <li><b>Guest tools / agents</b> — VMware Tools, integration services, qemu-guest-agent for time sync + clean shutdown + driver optimization.</li>
+            <li><b>Resource pool</b> — group of VMs with shared CPU/RAM allocation.</li>
+            <li><b>Affinity / anti-affinity rules</b> — keep certain VMs together OR apart on hosts.</li>
+          </ul>
+
+          <h2>Containers vs VMs (modern exam topic)</h2>
+          <ul>
+            <li><b>VM:</b> full guest OS kernel + userspace. Heavier (~GB) but full isolation.</li>
+            <li><b>Container:</b> shares host kernel; isolates only userspace. Lightweight (~MB), boots in seconds.</li>
+            <li><b>Docker</b> — most popular container runtime. <code>docker run</code>, Dockerfile, container registry (Docker Hub).</li>
+            <li><b>Kubernetes (K8s)</b> — container orchestrator; manages clusters of pods.</li>
+            <li><b>OCI</b> (Open Container Initiative) — image + runtime standard (containerd, runc, CRI-O).</li>
+            <li><b>Podman</b> — daemonless alternative to Docker on RHEL/Fedora.</li>
+            <li><b>WSL2 / Hyper-V Containers</b> on Windows.</li>
+            <li><b>Use case split:</b> VMs for "any OS / strict isolation / legacy apps", containers for "12-factor apps / microservices / fast scaling".</li>
+          </ul>
+
+          <h2>Cloud deployment models (memorize)</h2>
+          <ul>
+            <li><b>Public</b> — shared infrastructure on a hyperscaler (AWS / Azure / GCP / Oracle / Alibaba).</li>
+            <li><b>Private</b> — single-tenant; on-prem (VMware Cloud Foundation, OpenStack, Nutanix) or hosted.</li>
+            <li><b>Hybrid</b> — public + private connected (Direct Connect / ExpressRoute / Interconnect + VPN).</li>
+            <li><b>Community</b> — shared by orgs with common requirements (gov / healthcare consortium).</li>
+            <li><b>Multi-cloud</b> — multiple public clouds simultaneously (AWS + Azure + GCP). Avoids vendor lock, regional diversification, best-of-breed services.</li>
+            <li><b>Edge cloud</b> — compute near users (Cloudflare Workers, AWS Wavelength, Azure Stack Edge).</li>
+            <li><b>Sovereign cloud</b> — region-locked for legal jurisdiction (AWS GovCloud, Azure Government, Microsoft Cloud for EU).</li>
+          </ul>
+
+          <h2>Cloud service models — extras beyond IaaS/PaaS/SaaS</h2>
+          <ul>
+            <li><b>FaaS</b> — Function as a Service / serverless (Lambda, Azure Functions, Cloud Run Functions).</li>
+            <li><b>CaaS</b> — Container as a Service (EKS, AKS, GKE, Fargate, Cloud Run).</li>
+            <li><b>DBaaS</b> — managed databases (RDS, Azure SQL, Cloud SQL, DynamoDB, Cosmos DB).</li>
+            <li><b>DaaS</b> — Desktop as a Service (AVD, WorkSpaces, Citrix Cloud, W365).</li>
+            <li><b>STaaS</b> — Storage as a Service (S3, Azure Blob, Cloud Storage).</li>
+            <li><b>BaaS / MBaaS</b> — Backend / Mobile Backend as a Service (Firebase, Supabase).</li>
+            <li><b>IDaaS</b> — Identity as a Service (Entra ID, Okta, Auth0).</li>
+            <li><b>XaaS</b> — Anything as a Service umbrella term.</li>
+            <li><b>iPaaS</b> — Integration Platform as a Service (Mulesoft, Boomi).</li>
+            <li><b>Anthos / Arc / Outposts</b> — bring cloud control plane on-prem.</li>
+          </ul>
+
+          <h2>Cloud regions, AZs, edge — geography drill</h2>
+          <ul>
+            <li><b>Region</b> = collection of datacenters in one geographic area (e.g., AWS us-east-1 = N. Virginia, GCP us-central1 = Iowa).</li>
+            <li><b>AZ</b> = isolated DC inside a region with independent power/cooling/network. Most regions have 3 AZs.</li>
+            <li>Deploy across 2-3 AZs for HA; replicate across regions for DR.</li>
+            <li><b>Latency budget:</b> intra-AZ &lt; 1 ms, intra-region 1-3 ms, cross-region 50-150 ms.</li>
+            <li><b>POP / PoP / edge location</b> — global CDN nodes (CloudFront has 600+, Cloudflare 300+).</li>
+            <li><b>Local zones / wavelength</b> — sub-region presence (AWS Local Zones in major cities).</li>
+            <li><b>Data sovereignty regions</b> — Frankfurt, Dublin, London (GDPR-friendly); GovCloud, China regions for compliance.</li>
+          </ul>
+
+          <h2>Cloud cost optimization levers</h2>
+          <ul>
+            <li><b>Right-sizing</b> — match instance size to actual usage (Compute Optimizer, Azure Advisor).</li>
+            <li><b>Reservations / Savings Plans</b> — 1-3 year commit for 30-72% off.</li>
+            <li><b>Spot / Preemptible</b> — up to 90% off, can be reclaimed.</li>
+            <li><b>Auto-scaling</b> + scale-to-zero for serverless.</li>
+            <li><b>Storage tiering</b> — hot → cool → cold → archive (Glacier Deep Archive 1¢/GB-mo).</li>
+            <li><b>Lifecycle policies</b> auto-tier or delete old data.</li>
+            <li><b>Egress reduction</b> — cross-region + Internet egress is biggest hidden cost; use CloudFront / Cloudflare in front of S3.</li>
+            <li><b>Tagging</b> — chargeback / showback per team or project.</li>
+            <li><b>Budget alerts</b> + spend anomaly detection.</li>
+            <li><b>FinOps</b> discipline — cross-team accountability for cloud spend.</li>
+          </ul>
+
+          <h2>Identity + access in the cloud</h2>
+          <ul>
+            <li><b>Root account / global admin</b> — never use day-to-day; MFA mandatory; lock away credentials.</li>
+            <li><b>IAM users + roles</b> — least privilege; assume roles via STS / managed identities.</li>
+            <li><b>Service-linked roles</b> — service runs with scoped permissions (Lambda execution role, Pod IRSA).</li>
+            <li><b>Federation</b> — SAML / OIDC from corporate IdP (Entra, Okta) into cloud roles.</li>
+            <li><b>MFA</b> + <b>passkeys / FIDO2</b> for admins.</li>
+            <li><b>PIM / JIT elevation</b> — time-boxed admin rights with approvals.</li>
+            <li><b>SCPs / Azure Policy / Org Policies</b> — guardrails that prevent ANY user from taking forbidden actions.</li>
+            <li><b>Service Control Policies + permission boundaries</b> — limit what a role CAN do regardless of attached policies.</li>
+          </ul>
+
+          <h2>Cloud security patterns</h2>
+          <ul>
+            <li><b>Zero trust</b> — every request authenticated, authorized, encrypted; assume hostile network.</li>
+            <li><b>Encryption at rest</b> — default in S3, EBS, Blob, GCS; customer-managed keys via KMS.</li>
+            <li><b>Encryption in transit</b> — TLS everywhere, mutual TLS between services.</li>
+            <li><b>VPC / VNet flow logs</b> — packet metadata for IR + cost analytics.</li>
+            <li><b>WAF / Shield / Cloud Armor</b> — DDoS + L7 protection in front of public endpoints.</li>
+            <li><b>SCP guardrails</b> — block disabling logging, public S3 buckets, regions outside policy.</li>
+            <li><b>CSPM</b> (Cloud Security Posture Management) — Prisma Cloud, Wiz, Defender for Cloud, Lacework. Detects misconfig drift.</li>
+            <li><b>CWPP / CNAPP</b> — workload + cloud-native app protection.</li>
+            <li><b>CASB</b> — SaaS visibility + DLP (Netskope, Microsoft Defender for Cloud Apps).</li>
+          </ul>
+
+          <h2>Backup + DR in cloud</h2>
+          <ul>
+            <li><b>Snapshot</b> stored per region; cross-region copy for DR.</li>
+            <li><b>Cross-account backup</b> recommended to defend against rogue admin / ransomware.</li>
+            <li><b>Immutable / Object Lock</b> — WORM retention on backup buckets.</li>
+            <li><b>Pilot light</b> DR — minimal infrastructure running in DR region, scale up on incident.</li>
+            <li><b>Warm standby</b> — fully built but scaled down DR.</li>
+            <li><b>Multi-site active/active</b> — full DR with traffic split via DNS / Anycast.</li>
+            <li><b>Veeam / Druva / Rubrik / Cohesity</b> integrate with cloud APIs for cross-cloud backup.</li>
+            <li><b>Test failover</b> at least annually; tabletop quarterly.</li>
+          </ul>
+
+          <h2>Cloud networking quick reference</h2>
+          <ul>
+            <li><b>VPC / VNet</b> — your private network; CIDR block (e.g., 10.0.0.0/16).</li>
+            <li><b>Subnets</b> — public (has Internet GW route) vs private (NAT GW only).</li>
+            <li><b>Internet Gateway / NAT Gateway / Egress-only IGW</b> — Internet edge.</li>
+            <li><b>Route tables</b> + association to subnets.</li>
+            <li><b>NSG / Security Group</b> — stateful per-NIC firewall.</li>
+            <li><b>NACL</b> — stateless subnet-level ACL.</li>
+            <li><b>Peering</b> — connect two VPCs (non-transitive).</li>
+            <li><b>Transit Gateway / Virtual WAN</b> — hub-and-spoke routing across many VPCs / on-prem.</li>
+            <li><b>PrivateLink / Private Endpoints</b> — reach managed services without traversing public Internet.</li>
+            <li><b>Direct Connect / ExpressRoute / Interconnect</b> — dedicated private circuits.</li>
+          </ul>
+
+          <h2>Common cloud troubleshooting</h2>
+          <ul>
+            <li><b>"403 on S3 / Blob"</b> → bucket policy + IAM + public-access block + KMS perms; trace with Reachability Analyzer + Access Analyzer.</li>
+            <li><b>"VM can't reach Internet"</b> → public subnet w/ IGW route, or NAT GW; security group + NACL allowing egress.</li>
+            <li><b>"Billing surprise"</b> → check Cost Explorer top services + tags; check egress + NAT GW (very expensive).</li>
+            <li><b>"Service quota exceeded"</b> → submit quota increase ticket; some quotas hard-capped.</li>
+            <li><b>"Region down"</b> → use status page + Service Health; fail over to DR region per runbook.</li>
+            <li><b>"Lambda cold start slow"</b> → Provisioned Concurrency or move to container w/ warm pool.</li>
+            <li><b>"VPN tunnel up but no traffic"</b> → SG / route / NAT mismatch; check encryption domain + Phase 2 selectors.</li>
+            <li><b>"Wrong region by accident"</b> → use SCPs/Azure Policy to restrict region selection.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>VM / vCPU / vRAM / vNIC / vSwitch</b> — virtualization primitives.</li>
+            <li><b>VMM / VMDK / VHDX / QCOW2 / OVA-OVF</b> — hypervisor + disk + appliance formats.</li>
+            <li><b>OCI / CRI / runc / containerd / Docker / K8s / Podman</b> — container stack.</li>
+            <li><b>IaaS / PaaS / SaaS / FaaS / CaaS / DBaaS / DaaS / STaaS / IDaaS / XaaS / iPaaS</b> — service models.</li>
+            <li><b>VPC / VNet / NSG / NACL / IGW / NAT GW / Peering / Transit GW / PrivateLink</b> — cloud networking.</li>
+            <li><b>Direct Connect / ExpressRoute / Interconnect</b> — dedicated cloud links.</li>
+            <li><b>CSPM / CWPP / CNAPP / CASB</b> — cloud security categories.</li>
+            <li><b>HCI / SDN / SD-WAN / SASE / ZTNA</b> — modern infrastructure.</li>
+            <li><b>RPO / RTO / SLA / SLO / SLI</b> — service + reliability metrics.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Bare-metal hypervisor with central management" → ESXi + vCenter (or Hyper-V + SCVMM).</li>
+            <li>"OS patches are MY responsibility" → IaaS.</li>
+            <li>"Provider runs everything including app" → SaaS.</li>
+            <li>"Pay only when code executes" → FaaS / serverless.</li>
+            <li>"Independent fault domains in same region" → Availability Zones.</li>
+            <li>"Dedicated 10 Gbps fiber from datacenter to AWS" → Direct Connect.</li>
+            <li>"Discount up to 90% on interruptible jobs" → Spot / Preemptible instances.</li>
+            <li>"Block disabling logging or making S3 bucket public org-wide" → SCP (AWS) / Azure Policy.</li>
+            <li>"Container orchestrator" → Kubernetes.</li>
+            <li>"Replicate VMs to second region for DR" → cross-region snapshot + warm standby or pilot light.</li>
+          </ul>
         `
       },
       {
@@ -1533,6 +3419,199 @@ const COURSES = [
             <li>"LAST step" → Document.</li>
             <li>"Cannot resolve at your skill level" → Escalate.</li>
             <li>Always back up before making changes.</li>
+          </ul>
+
+          <h2>Mnemonic + memory aid for 6-step</h2>
+          <p><b>"I Test Plans Very Daily"</b> (some prefer "<b>I Trust That People Verify Documents</b>"):</p>
+          <ol>
+            <li><b>I</b>dentify the problem.</li>
+            <li><b>T</b>heory of probable cause.</li>
+            <li><b>T</b>est the theory.</li>
+            <li><b>P</b>lan + implement.</li>
+            <li><b>V</b>erify functionality + preventive measures.</li>
+            <li><b>D</b>ocument findings.</li>
+          </ol>
+
+          <h2>Side-by-side: A+ 6-step vs Network+ 7-step (recognize both)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Step</th><th align="left" style="padding:4px;border-bottom:1px solid #444">A+ 6-step</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Net+ 7-step</th></tr>
+            <tr><td>1</td><td>Identify problem</td><td>Identify problem</td></tr>
+            <tr><td>2</td><td>Theory of probable cause</td><td>Establish theory of probable cause</td></tr>
+            <tr><td>3</td><td>Test theory</td><td>Test theory to determine cause</td></tr>
+            <tr><td>4</td><td>Plan + implement solution</td><td>Establish plan of action</td></tr>
+            <tr><td>5</td><td>Verify functionality + preventive measures</td><td><b>Implement</b> the solution / escalate</td></tr>
+            <tr><td>6</td><td>Document findings, actions, outcomes</td><td>Verify full system functionality + preventive measures</td></tr>
+            <tr><td>7</td><td>—</td><td>Document findings, actions, outcomes</td></tr>
+          </table>
+          <p>Net+ splits the "plan" + "implement" into two distinct steps; A+ combines them. Both end with verify → document.</p>
+
+          <h2>Question-the-obvious checklist (Step 2 first reflex)</h2>
+          <ul>
+            <li>Is it plugged in / powered on?</li>
+            <li>Is the cable seated on BOTH ends?</li>
+            <li>Did the user change anything recently? (Did they?)</li>
+            <li>Did anything change in the environment (power, AC, construction next door)?</li>
+            <li>Is the symptom reproducible? Always or only sometimes?</li>
+            <li>Has it happened to anyone else? Cluster of tickets suggests systemic issue.</li>
+            <li>What's the simplest plausible cause?</li>
+            <li>Has anyone touched this device recently?</li>
+            <li>Is the firmware / driver / OS current — or did they auto-update last night?</li>
+            <li>Are there beep codes, LED patterns, error messages you haven't decoded yet?</li>
+          </ul>
+
+          <h2>5 Whys + root-cause-analysis (RCA)</h2>
+          <ul>
+            <li>For each "symptom" ask "<i>why?</i>" five times to drill past the surface.</li>
+            <li>Example: "Printer offline" → why? Print server unreachable → why? DNS resolution failed → why? DC patched + service restarted → why? Patch cycle wasn't communicated → why? Change process gap.</li>
+            <li><b>Fishbone / Ishikawa diagram</b> — group causes under Methods / Machines / Materials / Manpower / Measurement / Environment.</li>
+            <li><b>Pareto principle</b> (80/20) — focus on the ~20% of causes producing ~80% of tickets.</li>
+            <li><b>Five Whys + Six Sigma DMAIC</b> common in formal RCA programs.</li>
+          </ul>
+
+          <h2>Information-gathering questions (Step 1 prompts)</h2>
+          <ul>
+            <li>"When did this start happening?"</li>
+            <li>"What were you doing right before it failed?"</li>
+            <li>"Has it ever worked correctly? When was the last time?"</li>
+            <li>"Did you recently install or update anything?"</li>
+            <li>"Are there any error messages or codes? Can you read them to me?"</li>
+            <li>"Does it happen on this device only or on others too?"</li>
+            <li>"Is the issue consistent or intermittent?"</li>
+            <li>"What changed recently in the room — new equipment, moved furniture, weather?"</li>
+            <li>"Can you reproduce it for me now?"</li>
+            <li>"Has the device been moved or dropped?"</li>
+          </ul>
+
+          <h2>Hardware troubleshooting checklist (quick refresh)</h2>
+          <ul>
+            <li><b>No power</b> — outlet/strip, AC cord, PSU rear switch, 24-pin seating, paperclip test PSU.</li>
+            <li><b>POST fails</b> — listen for beep codes; check EZ-Debug LEDs (CPU/DRAM/VGA/BOOT).</li>
+            <li><b>No display</b> — monitor on / right input; reseat GPU + power cables; try iGPU.</li>
+            <li><b>RAM error</b> — single stick in correct slot; MemTest86.</li>
+            <li><b>Storage</b> — reseat SATA/M.2; check SMART; chkdsk/fsck.</li>
+            <li><b>Overheating</b> — clean dust filters; check fan RPMs; repaste TIM if temps high under idle.</li>
+            <li><b>Random reboots</b> — PSU undersized/aging; thermal shutdown; memory errors; WHEA logs.</li>
+            <li><b>BSOD codes</b> — note stop code (e.g., <code>MEMORY_MANAGEMENT</code>, <code>KMODE_EXCEPTION_NOT_HANDLED</code>); look up + reproduce.</li>
+            <li><b>Slow boot</b> — DDR5 training; Fast Startup hibernation residue; antivirus boot scan; failed drive.</li>
+            <li><b>Peripheral dead</b> — different port, different cable; Device Manager error; driver reinstall.</li>
+          </ul>
+
+          <h2>Software / OS troubleshooting checklist</h2>
+          <ul>
+            <li><b>App won't launch</b> — Event Viewer error; permissions; reinstall; clean profile.</li>
+            <li><b>App slow</b> — Resource Monitor / Task Manager; AV scan in progress; disk almost full; defragged?</li>
+            <li><b>Profile corruption</b> — new profile to confirm; copy data; rebuild.</li>
+            <li><b>Driver issue</b> — Device Manager → roll back driver / DDU clean uninstall / vendor latest.</li>
+            <li><b>Updates failing</b> — Windows Update troubleshooter; check disk space; reset Update components.</li>
+            <li><b>Boot loop</b> — WinRE → Startup Repair → SFC/DISM → reinstall.</li>
+            <li><b>Slow shutdown</b> — Group Policy + scheduled tasks; pending updates.</li>
+            <li><b>Time skew</b> — NTP / Kerberos 5-min limit; check time zone.</li>
+            <li><b>Suspect malware</b> — disconnect from network, scan with second-opinion AV, rebuild if confirmed.</li>
+          </ul>
+
+          <h2>Network troubleshooting checklist (recap A+)</h2>
+          <ul>
+            <li><b>No IP</b> (169.254.x.x APIPA) → DHCP unreachable, cable/VLAN; check switch port.</li>
+            <li><b>Wrong gateway</b> → ipconfig + route print; static config?</li>
+            <li><b>DNS fails</b> → nslookup; try 8.8.8.8 vs local resolver.</li>
+            <li><b>Wi-Fi can't connect</b> → forget + rejoin; right SSID + PSK; PMF compatibility on old IoT.</li>
+            <li><b>Slow Internet</b> → wired speedtest from modem; saturation; Wi-Fi channel.</li>
+            <li><b>One website slow</b> → traceroute to identify hop; DNS cache.</li>
+            <li><b>VPN won't connect</b> → IKE/IPsec or TLS port blocked; certs current; client log.</li>
+            <li><b>Authentication intermittent</b> → time skew; account lockout policy; DC unreachable.</li>
+          </ul>
+
+          <h2>Mobile device troubleshooting checklist</h2>
+          <ul>
+            <li><b>Phone won't power on</b> → charge for 30 min on known-good brick; try different cable.</li>
+            <li><b>Slow charge</b> → port lint / liquid; cable; PD profile mismatch.</li>
+            <li><b>Battery drain</b> → Settings → Battery usage per app; disable background refresh; replace battery.</li>
+            <li><b>App crashes</b> → clear cache → reinstall → check OS compatibility.</li>
+            <li><b>Touchscreen unresponsive</b> → restart; remove screen protector; calibrate; replace digitizer if liquid contact.</li>
+            <li><b>Connectivity lost</b> → toggle airplane mode; reset network settings; SIM reinstall.</li>
+            <li><b>Random reboots</b> → swollen battery (DON'T puncture); OS update.</li>
+            <li><b>Lost in field</b> → Find My + remote wipe.</li>
+          </ul>
+
+          <h2>Printer troubleshooting checklist (220-1101 surfaces here)</h2>
+          <ul>
+            <li><b>Won't print</b> → printer online? queue stuck? "Use Printer Offline" toggled? Restart print spooler service.</li>
+            <li><b>Bad print quality</b> — laser: replace toner, clean fuser, calibrate. Inkjet: clean heads, replace cartridge, check head alignment. Thermal: clean printhead, replace ribbon. Dot-matrix: replace ribbon, check pins.</li>
+            <li><b>Paper jam</b> — clear all paper carefully (in direction of feed); inspect rollers + sensors; reset.</li>
+            <li><b>Ghost / shadow image</b> on laser → bad drum / cleaning blade.</li>
+            <li><b>Streaks vertical line</b> → scratch on drum.</li>
+            <li><b>Network printer unreachable</b> → ping its IP; check static / DHCP; firewall.</li>
+            <li><b>Wrong print driver</b> → install correct PCL/PostScript; clear queue.</li>
+            <li><b>3D printer</b> — bed leveling, nozzle clog, filament moisture.</li>
+            <li><b>MFP scan to email fails</b> → SMTP relay creds + port; firewall.</li>
+          </ul>
+
+          <h2>Common physical-layer + power-related issues (A+ exam favorite)</h2>
+          <ul>
+            <li><b>Burning smell</b> → power off + unplug immediately; do not power on; replace PSU + inspect mainboard.</li>
+            <li><b>Distended battery</b> → fire hazard; replace immediately; recycle properly.</li>
+            <li><b>Distended capacitors</b> on motherboard → board needs replacement.</li>
+            <li><b>Frequent shutdowns</b> → thermal (clean dust + repaste) or PSU (test under load, swap to known-good).</li>
+            <li><b>Sporadic crashes</b> → MemTest86 + driver verifier; could be RAM or PSU rail sag.</li>
+            <li><b>Dead pixels / discoloration</b> → LCD panel issue; replace.</li>
+            <li><b>Dim image</b> → backlight / inverter fail (older CCFL) or driver/firmware.</li>
+            <li><b>Image only with flashlight</b> → backlight inverter dead.</li>
+            <li><b>Sticking keys</b> → debris cleaned with compressed air; if stuck after, replace keyboard.</li>
+            <li><b>Yellow / amber light on switch port</b> → speed/duplex mismatch or PoE class issue (vendor-specific).</li>
+          </ul>
+
+          <h2>Soft-skills scenarios (memorize correct responses)</h2>
+          <ul>
+            <li><b>User panicking</b> → listen calmly; reassure ETA; gather facts; don't interrupt.</li>
+            <li><b>User offering opinion</b> "I think it's a virus" → take note; thank them; verify with evidence; don't argue.</li>
+            <li><b>Personal info visible on user's screen</b> → ignore + ask user to close before continuing.</li>
+            <li><b>User asks unrelated favor</b> → politely defer; stick to assigned scope.</li>
+            <li><b>Phone rings while on user's PC</b> → don't answer personal call; mute or silence.</li>
+            <li><b>Difficult escalation</b> → "Let me get someone with deeper access" — not "I don't know."</li>
+            <li><b>Bad news ("data is unrecoverable")</b> → deliver clearly + empathetically; explain restore-from-backup steps; document lessons learned.</li>
+            <li><b>Cultural / language difference</b> → speak clearly, avoid idioms / jargon; confirm understanding both ways.</li>
+            <li><b>Manage expectations</b> → set realistic ETAs; under-promise + over-deliver.</li>
+            <li><b>Hardest call</b> → "we can fix it but it takes a week" beats "5 minutes" that turns into 3 days.</li>
+          </ul>
+
+          <h2>Documentation artifacts you may produce</h2>
+          <ul>
+            <li><b>Ticket / case</b> — symptom, environment, steps tried, resolution, owner.</li>
+            <li><b>RCA / Post-mortem</b> — for Sev1/Sev2 incidents, blameless format.</li>
+            <li><b>Knowledge Base article</b> — searchable how-to for next time.</li>
+            <li><b>Runbook / SOP update</b> — formalize the fix into procedure.</li>
+            <li><b>Asset inventory update</b> — replaced part serials, new firmware version.</li>
+            <li><b>CMDB / IPAM update</b> — config snapshot.</li>
+            <li><b>User-facing notice</b> — status page / email about service back to normal.</li>
+            <li><b>Change ticket closure</b> with verification evidence.</li>
+            <li><b>Trend report</b> — repeat tickets surface problem-management work.</li>
+          </ul>
+
+          <h2>10 "which step is this?" exam patterns</h2>
+          <ul>
+            <li>"Tech asks user when problem began" → Step 1 Identify.</li>
+            <li>"Tech believes it's a corrupt driver" → Step 2 Theory.</li>
+            <li>"Tech rolls back the driver to test" → Step 3 Test theory.</li>
+            <li>"Tech plans 8 PM maintenance window + rollback plan" → Step 4 Plan + Implement.</li>
+            <li>"Tech reboots and runs user's app to confirm working" → Step 5 Verify.</li>
+            <li>"Tech updates KB + closes ticket with notes" → Step 6 Document.</li>
+            <li>"Theory disproven, what next?" → form new theory OR escalate (back to Step 2).</li>
+            <li>"User claims fix didn't hold" → restart at Identify (new problem? regression?).</li>
+            <li>"Tech doesn't know how to proceed" → escalate; don't guess in production.</li>
+            <li>"Before making changes" → BACK UP user data; check policy.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>RCA</b> — Root Cause Analysis.</li>
+            <li><b>RFC / CAB</b> — Request for Change / Change Advisory Board.</li>
+            <li><b>SOP / KB</b> — Standard Operating Procedure / Knowledge Base.</li>
+            <li><b>CMDB / IPAM / DCIM</b> — Configuration / IP / Datacenter management.</li>
+            <li><b>ITIL</b> — IT Infrastructure Library.</li>
+            <li><b>POST / BSOD / WHEA / SMART</b> — diagnostic indicators.</li>
+            <li><b>ESD / LOTO / MSDS / SDS</b> — safety standards.</li>
+            <li><b>MTBF / MTTR / MTTF / MTTD</b> — reliability metrics.</li>
+            <li><b>Sev 1-4 / P1-P4</b> — incident severity classifications.</li>
           </ul>
         `
       }
@@ -1774,6 +3853,188 @@ const COURSES = [
             <li>"On-prem corporate update server" → WSUS.</li>
             <li>"Apply existing on-prem Windows licenses to Azure VMs" → Azure Hybrid Benefit.</li>
           </ul>
+
+          <h2>Windows 11 minimum hardware requirements (memorize)</h2>
+          <ul>
+            <li><b>CPU</b> — 64-bit 1 GHz+ dual-core on the <a>Microsoft approved list</a> (Intel 8th gen+, AMD Zen 2+, Snapdragon 850+).</li>
+            <li><b>RAM</b> — 4 GB minimum (8 GB practical).</li>
+            <li><b>Storage</b> — 64 GB internal.</li>
+            <li><b>Firmware</b> — UEFI + Secure Boot capable.</li>
+            <li><b>TPM 2.0</b> — discrete OR firmware (Intel PTT / AMD fTPM).</li>
+            <li><b>Display</b> — 9"+ at 720p+, 8-bit color.</li>
+            <li><b>Graphics</b> — DirectX 12 / WDDM 2.x.</li>
+            <li><b>Microsoft account</b> required at OOBE on Home + Pro (24H2+).</li>
+          </ul>
+          <p>Use <b>PC Health Check</b> tool to validate; bypass via registry key <code>HKLM\\SYSTEM\\Setup\\MoSetup\\AllowUpgradesWithUnsupportedTPMOrCPU = 1</code> (unsupported config; no security updates guaranteed).</p>
+
+          <h2>Windows file structure (memorize key paths)</h2>
+          <ul>
+            <li><code>C:\\Windows\\</code> — OS root (<code>%SystemRoot%</code> / <code>%windir%</code>).</li>
+            <li><code>C:\\Windows\\System32\\</code> — 64-bit system DLLs + binaries (yes, "System32" is 64-bit; "SysWOW64" is 32-bit on x64).</li>
+            <li><code>C:\\Windows\\SysWOW64\\</code> — 32-bit binaries on 64-bit OS (WoW64 layer).</li>
+            <li><code>C:\\Windows\\WinSxS\\</code> — Component Store; SxS = Side-by-Side; servicing assemblies.</li>
+            <li><code>C:\\Windows\\Temp\\</code> — system temp.</li>
+            <li><code>C:\\ProgramData\\</code> — all-user app data (hidden by default).</li>
+            <li><code>C:\\Program Files\\</code> — 64-bit installed apps.</li>
+            <li><code>C:\\Program Files (x86)\\</code> — 32-bit apps on x64 OS.</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\</code> — user profile root (<code>%USERPROFILE%</code>).</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\AppData\\Roaming</code> — roams with profile in AD env (<code>%AppData%</code>).</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\AppData\\Local</code> — machine-local app data (<code>%LocalAppData%</code>).</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\AppData\\LocalLow</code> — low-integrity processes (IE protected mode legacy).</li>
+            <li><code>C:\\Users\\Default\\</code> — template used for new profiles.</li>
+            <li><code>C:\\Users\\Public\\</code> — shared between local users.</li>
+            <li><code>C:\\Windows\\System32\\drivers\\</code> — kernel drivers.</li>
+            <li><code>C:\\Windows\\System32\\drivers\\etc\\hosts</code> — hosts file (no extension).</li>
+            <li><code>C:\\Windows\\System32\\config\\</code> — registry hive files (SAM, SYSTEM, SOFTWARE, SECURITY, DEFAULT).</li>
+            <li><code>C:\\$Recycle.Bin\\</code> — per-drive deleted items.</li>
+            <li><code>C:\\pagefile.sys</code>, <code>C:\\hiberfil.sys</code>, <code>C:\\swapfile.sys</code> — virtual memory + hibernation.</li>
+          </ul>
+
+          <h2>Registry hives (top-level keys)</h2>
+          <ul>
+            <li><b>HKEY_CLASSES_ROOT (HKCR)</b> — file associations + COM. Merged view of HKLM\\SOFTWARE\\Classes + HKCU\\SOFTWARE\\Classes.</li>
+            <li><b>HKEY_CURRENT_USER (HKCU)</b> — current logged-in user's settings.</li>
+            <li><b>HKEY_LOCAL_MACHINE (HKLM)</b> — machine-wide settings. Hives: SAM, SECURITY, SOFTWARE, SYSTEM, HARDWARE.</li>
+            <li><b>HKEY_USERS (HKU)</b> — all loaded user hives (HKCU is one of these).</li>
+            <li><b>HKEY_CURRENT_CONFIG (HKCC)</b> — current hardware profile (read-only view of HKLM\\SYSTEM\\CurrentControlSet\\Hardware Profiles\\Current).</li>
+          </ul>
+          <p><b>Value types:</b> REG_SZ (string), REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD (32-bit), REG_QWORD (64-bit), REG_BINARY. Edit with <code>regedit</code> (UI) or <code>reg add / reg query / reg delete</code> (CLI). Back up with <code>reg export</code> before changes.</p>
+
+          <h2>Windows startup boot flow</h2>
+          <ol>
+            <li><b>POST</b> + <b>UEFI</b> firmware initializes hardware.</li>
+            <li>UEFI reads <b>EFI System Partition</b> (FAT32, ~100 MB), launches <code>\\EFI\\Microsoft\\Boot\\bootmgfw.efi</code>.</li>
+            <li><b>Windows Boot Manager</b> reads BCD store, picks an OS, hands off to <code>winload.efi</code>.</li>
+            <li><b>winload.efi</b> loads kernel (<code>ntoskrnl.exe</code>) + HAL + boot drivers + SYSTEM hive.</li>
+            <li>Kernel initializes Session Manager (<code>smss.exe</code>) → starts <b>csrss.exe</b> + <b>wininit.exe</b>.</li>
+            <li><b>wininit</b> starts services (<code>services.exe</code>), LSASS, etc.</li>
+            <li><b>winlogon</b> displays sign-in; user authenticates via Credential Provider.</li>
+            <li><b>userinit</b> runs scripts + launches <b>explorer.exe</b>.</li>
+          </ol>
+          <p><b>BCD</b> (Boot Configuration Data) — modern replacement for boot.ini. Edit via <code>bcdedit</code> CLI. <b>BCDBoot</b> recreates BCD store after recovery.</p>
+
+          <h2>Boot recovery toolkit (WinRE / WinPE)</h2>
+          <ul>
+            <li><b>WinRE</b> (Recovery Environment) — auto-launches after 2 failed boots; press F11/F8 to invoke. Contains:
+              <ul>
+                <li><b>Startup Repair</b> — auto-fix boot files.</li>
+                <li><b>Command Prompt</b> — manual repair (<code>bootrec /fixmbr</code>, <code>/fixboot</code>, <code>/scanos</code>, <code>/rebuildbcd</code>; <code>bcdedit</code>; <code>chkdsk</code>; <code>sfc</code>; <code>DISM</code>).</li>
+                <li><b>System Restore</b> — roll back to restore point.</li>
+                <li><b>System Image Recovery</b>.</li>
+                <li><b>Reset this PC</b> — keep files or fresh install.</li>
+                <li><b>Go back to previous version</b> — undo upgrade within 10 days.</li>
+                <li><b>UEFI Firmware Settings</b> reboot.</li>
+              </ul>
+            </li>
+            <li><b>WinPE</b> (Preinstallation Environment) — minimal kernel + disk + network; used by deployment images (MDT, SCCM, Autopilot, Intune Provisioning).</li>
+            <li><b>Safe Mode</b> — minimal drivers; toggle from msconfig → Boot or hold Shift + Restart → Troubleshoot → Startup Settings → F4 / F5 / F6 (Safe / w/ Networking / w/ cmd).</li>
+          </ul>
+
+          <h2>Services + tasks deep-dive</h2>
+          <ul>
+            <li><b>Service startup types</b>: Automatic, Automatic (Delayed Start), Manual, Disabled, Trigger-Start.</li>
+            <li><b>Logon accounts</b>: LocalSystem, NT AUTHORITY\\NetworkService, LocalService, Managed Service Account (gMSA), or domain user.</li>
+            <li><b>Recovery actions</b> per service: restart, run program, restart computer; first/second/subsequent fail actions configurable.</li>
+            <li><b>Dependencies</b>: shown on Dependencies tab; a service won't start until its prerequisites are running.</li>
+            <li><b>sc.exe</b> — CLI: <code>sc config &lt;svc&gt; start=auto</code>, <code>sc query</code>, <code>sc delete</code>.</li>
+            <li><b>Task Scheduler</b> — Triggers (time / event / startup / logon) + Actions (program, email, message) + Conditions (idle, power, network) + Settings.</li>
+            <li><b>at.exe</b> + <b>schtasks.exe</b> — CLI for legacy + scheduled tasks (PS: <code>Get-ScheduledTask</code>).</li>
+            <li><b>Service hosts (svchost.exe)</b> — hosts multiple services in one process; Windows 10 1703+ splits each service into its own svchost on machines with ≥ 3.5 GB RAM.</li>
+          </ul>
+
+          <h2>Windows networking quick reference (overlap with A+ C1)</h2>
+          <ul>
+            <li><b>ipconfig /all</b> — view IP / MAC / DHCP / DNS / gateway.</li>
+            <li><b>ipconfig /release</b>, <b>/renew</b>, <b>/flushdns</b>, <b>/displaydns</b>, <b>/registerdns</b>.</li>
+            <li><b>route print</b> + <b>route add</b> — view + edit routing table.</li>
+            <li><b>netsh interface ip set address</b> — static IP.</li>
+            <li><b>netsh winsock reset</b>, <b>netsh int ip reset</b> — fix corrupted TCP/IP stack.</li>
+            <li><b>netstat -ano</b> — connections + PID; pair with <code>tasklist</code> to identify owning process.</li>
+            <li><b>Test-NetConnection</b> (PowerShell) — TCP port check.</li>
+            <li><b>Network &amp; Sharing Center</b> + <code>ncpa.cpl</code> for adapter properties.</li>
+          </ul>
+
+          <h2>Permissions: NTFS vs Share</h2>
+          <ul>
+            <li><b>NTFS permissions</b> — apply to file system regardless of access path. Full Control, Modify, Read &amp; Execute, List, Read, Write. Inheritance + explicit + Deny semantics.</li>
+            <li><b>Share permissions</b> — apply only when accessing over the network (SMB). Read, Change, Full Control.</li>
+            <li><b>Effective access</b> = most restrictive of NTFS AND share.</li>
+            <li><b>Inheritance</b> — child inherits from parent by default; break inheritance to set explicit ACEs.</li>
+            <li><b>Take Ownership</b> — Owner can always change permissions; admins can take ownership.</li>
+            <li><b>icacls</b> — CLI for NTFS ACLs (<code>icacls C:\\path /grant user:M</code>).</li>
+          </ul>
+
+          <h2>UAC + admin elevation</h2>
+          <ul>
+            <li><b>UAC</b> (User Account Control) — non-admin token by default; prompts when admin rights needed.</li>
+            <li><b>4 levels</b> in Control Panel: Always Notify / Default / Notify only apps / Never Notify.</li>
+            <li><b>Secure Desktop</b> — dims background during elevation prompt to defeat overlay attacks.</li>
+            <li><b>Admin Approval Mode</b> — admin runs everything non-elevated until elevated; standard pattern.</li>
+            <li><b>runas</b> / <b>Shift+RightClick → Run as different user</b> — launch as another account.</li>
+            <li><b>RunAsInvoker / RunAsHighest / RunAsAdmin</b> — manifest hints in app's manifest XML.</li>
+          </ul>
+
+          <h2>Profile + AppData reality</h2>
+          <ul>
+            <li><b>Local profile</b> — stored on the device only.</li>
+            <li><b>Roaming profile</b> — server-stored, syncs at logon/logoff (legacy AD).</li>
+            <li><b>Mandatory profile</b> — read-only template, discards changes (kiosk).</li>
+            <li><b>Folder redirection</b> + <b>OneDrive Known Folder Move</b> — modern replacement; Documents/Desktop/Pictures sync to OneDrive.</li>
+            <li><b>NTUSER.DAT</b> — user's HKCU hive file inside profile.</li>
+            <li><b>Profile corruption</b> — log on as different admin → rename old profile dir → log user back in to create fresh; copy data manually.</li>
+          </ul>
+
+          <h2>BitLocker deep-dive</h2>
+          <ul>
+            <li><b>Full Volume Encryption</b> via AES-128 or AES-256 (XTS-AES).</li>
+            <li>Requires <b>TPM 2.0</b> + UEFI + GPT system volume.</li>
+            <li>Key protectors: TPM only, TPM + PIN, TPM + USB, password, recovery key.</li>
+            <li><b>48-digit recovery key</b> — escrow to AD / Entra ID / Microsoft account / printed copy.</li>
+            <li><b>Manage-bde</b> CLI: <code>manage-bde -status</code>, <code>-on</code>, <code>-off</code>, <code>-pause</code>.</li>
+            <li><b>BitLocker To Go</b> — removable media; unlock via password or smart card.</li>
+            <li><b>Network Unlock</b> — auto-unlock at boot if on corporate LAN (PXE-based).</li>
+            <li><b>Suspend</b> protection before BIOS update / TPM clear / motherboard swap to avoid recovery prompt.</li>
+          </ul>
+
+          <h2>Group Policy basics</h2>
+          <ul>
+            <li><b>GPO</b> (Group Policy Object) — settings container.</li>
+            <li><b>Local GPO</b> via <code>gpedit.msc</code>; domain GPOs via Group Policy Management Console (GPMC) on a DC.</li>
+            <li><b>Computer Configuration</b> applies at boot; <b>User Configuration</b> applies at logon.</li>
+            <li><b>gpupdate /force</b> — apply policies now. <b>gpresult /h report.html</b> — RSoP (Resultant Set of Policy).</li>
+            <li><b>Order of application</b>: Local → Site → Domain → OU (LSDO). Closest wins.</li>
+            <li><b>Loopback processing</b> — apply user GPO based on the computer's OU (kiosks).</li>
+            <li><b>Block inheritance + Enforced</b> override default ordering.</li>
+            <li><b>Administrative Templates (ADMX)</b> — XML files defining policy settings.</li>
+          </ul>
+
+          <h2>Windows Defender / Security baseline</h2>
+          <ul>
+            <li><b>Microsoft Defender Antivirus</b> — built-in EDR.</li>
+            <li><b>SmartScreen</b> — reputation-based filter for files + URLs.</li>
+            <li><b>Application Guard / Defender Application Control</b> — Edge isolation, AppLocker successor.</li>
+            <li><b>Credential Guard</b> — VBS-isolated LSASS; mitigates pass-the-hash.</li>
+            <li><b>Memory Integrity / HVCI</b> — kernel code integrity in VBS.</li>
+            <li><b>Tamper Protection</b> — prevents disabling Defender from local admin.</li>
+            <li><b>Controlled Folder Access</b> — anti-ransomware folder allowlist.</li>
+            <li><b>Attack Surface Reduction</b> rules — block Office macros, child processes, etc.</li>
+            <li><b>Exploit Protection</b> — DEP, ASLR, CFG, EAF per-process tuning.</li>
+            <li><b>Windows Hello + Hello for Business</b> — biometric / PIN / FIDO2 auth.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"User edition can't host RDP" → Home; upgrade to Pro+.</li>
+            <li>"BitLocker recovery key location" → AD / Entra ID / MSA / file.</li>
+            <li>"Boot files broken — recover from WinRE" → <code>bootrec /rebuildbcd</code>, <code>/fixboot</code>, <code>/fixmbr</code>.</li>
+            <li>"Edit registry without GUI" → <code>reg add</code> / <code>reg query</code> from elevated shell.</li>
+            <li>"Effective NTFS+share permissions" → most restrictive of both.</li>
+            <li>"Bypass Win11 hardware checks (lab)" → registry MoSetup flag (unsupported).</li>
+            <li>"Stop service from CLI" → <code>net stop &lt;name&gt;</code> or <code>sc stop &lt;name&gt;</code>.</li>
+            <li>"User profile corrupt" → create new profile, copy data, retire old.</li>
+            <li>"Mass deploy Windows" → MDT / SCCM / Autopilot + Intune + Provisioning Packages.</li>
+            <li>"32-bit app on 64-bit Windows" → runs through WoW64; lives in Program Files (x86).</li>
+          </ul>
         `
       },
       {
@@ -1979,6 +4240,216 @@ bcdboot C:\\Windows /s S: /f UEFI         # repair UEFI bootloader</code></pre>
             <li>"Reapply Group Policy now" → <code>gpupdate /force</code>.</li>
             <li>"Mirror folder contents incl. deletions" → <code>robocopy src dst /MIR</code>.</li>
             <li>"Rebuild BCD after boot failure" → <code>bootrec /rebuildbcd</code>.</li>
+          </ul>
+
+          <h2>SFC + DISM repair order (memorize for exam)</h2>
+          <p><b>Standard order when system files corrupt:</b></p>
+          <ol>
+            <li><code>DISM /Online /Cleanup-Image /CheckHealth</code> — fast status check, returns if corruption detected.</li>
+            <li><code>DISM /Online /Cleanup-Image /ScanHealth</code> — slower deep scan.</li>
+            <li><code>DISM /Online /Cleanup-Image /RestoreHealth</code> — repairs Component Store from Windows Update.</li>
+            <li><code>DISM /Online /Cleanup-Image /RestoreHealth /Source:WIM:D:\\sources\\install.wim:1 /LimitAccess</code> — repair from offline media if WU unreachable.</li>
+            <li><code>sfc /scannow</code> — uses repaired Component Store to fix system files.</li>
+          </ol>
+          <p>Reverse fails — SFC needs healthy Component Store first. DISM repairs the store; SFC then fixes system files using it.</p>
+
+          <h2>Powerful CLI tools you may see</h2>
+          <ul>
+            <li><b>reagentc /info</b> — Windows Recovery Environment status.</li>
+            <li><b>reagentc /enable</b> + <b>/disable</b> — control WinRE partition.</li>
+            <li><b>slmgr /xpr</b> — show activation expiry. <b>slmgr /dlv</b> — detailed license info. <b>slmgr /rearm</b> — extend trial.</li>
+            <li><b>cipher /w:C:\\</b> — overwrite free space (security wipe).</li>
+            <li><b>cipher /e /a file</b> — encrypt with EFS.</li>
+            <li><b>compact /c /s file</b> — NTFS compression on file/dir.</li>
+            <li><b>fsutil fsinfo drives</b> — list drives. <b>fsutil dirty query C:</b> — was the drive dirty at boot?</li>
+            <li><b>fsutil reparsepoint query C:\\path</b> — inspect symbolic links / junction points.</li>
+            <li><b>mklink /D linkname target</b> — symbolic-link directory. <b>/J</b> = junction. <b>/H</b> = hard link.</li>
+            <li><b>vssadmin list shadows</b> — Volume Shadow Copy snapshots.</li>
+            <li><b>wevtutil qe System /c:50 /rd:true /f:text</b> — query event log from CLI.</li>
+            <li><b>auditpol /get /category:*</b> — local audit policy.</li>
+            <li><b>wevtutil cl <log></b> — clear event log.</li>
+            <li><b>tzutil /s "Eastern Standard Time"</b> — set time zone from CLI.</li>
+            <li><b>w32tm /resync</b> — force NTP resync.</li>
+            <li><b>w32tm /query /status</b> — current time service status.</li>
+            <li><b>klist</b> — Kerberos ticket cache. <b>klist purge</b> — clear tickets.</li>
+            <li><b>nslookup -type=any domain</b> — DNS info.</li>
+            <li><b>pathping host</b> — ping + traceroute combined with loss%.</li>
+            <li><b>arp -a</b> — local ARP cache. <b>arp -d *</b> — clear.</li>
+            <li><b>getmac /v</b> — MAC addresses per adapter.</li>
+            <li><b>net config workstation</b> — local computer info.</li>
+            <li><b>net session</b> — current SMB sessions to local server.</li>
+            <li><b>net file</b> — open files via shares.</li>
+            <li><b>net use Z: \\\\server\\share /persistent:yes</b> — map drive.</li>
+            <li><b>net statistics workstation</b> — uptime + byte counts.</li>
+          </ul>
+
+          <h2>Networking CLI deep-cut</h2>
+          <pre><code># IPv4 + IPv6 status
+ipconfig /all
+ipconfig /allcompartments     # multi-NAT scenarios
+
+# DNS
+ipconfig /flushdns           # clear resolver cache
+ipconfig /displaydns         # show cache entries
+ipconfig /registerdns        # re-register dynamic A record
+
+# DHCP renew on specific NIC
+ipconfig /release "Ethernet"
+ipconfig /renew "Ethernet"
+
+# Static IP (admin)
+netsh interface ip set address "Ethernet" static 10.0.0.50 255.255.255.0 10.0.0.1
+netsh interface ip set dns "Ethernet" static 1.1.1.1 primary
+netsh interface ip set dnsservers "Ethernet" source=dhcp
+netsh interface ip set address "Ethernet" source=dhcp
+
+# Wi-Fi profiles
+netsh wlan show profiles
+netsh wlan show profile name="MyAP" key=clear   # reveal stored PSK
+netsh wlan delete profile name="MyAP"
+netsh wlan connect name="MyAP"
+
+# Firewall
+netsh advfirewall show allprofiles
+netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=TCP localport=80
+netsh advfirewall reset
+
+# Reset broken stack
+netsh winsock reset
+netsh int ip reset
+netsh int tcp reset</code></pre>
+
+          <h2>Process introspection</h2>
+          <pre><code>tasklist /v                  # verbose: user, mem, status, window title
+tasklist /m kernel32.dll     # find processes using a DLL
+tasklist /svc                # show services per PID
+tasklist /fi "PID eq 1234"   # filter
+tasklist /fi "imagename eq chrome.exe"
+
+taskkill /F /PID 1234
+taskkill /F /IM chrome.exe /T  # kill chrome + child processes
+
+wmic process get name,processid,parentprocessid     # legacy, deprecated
+Get-CimInstance Win32_Process | Select Name,ProcessId,ParentProcessId  # modern</code></pre>
+
+          <h2>Network + listening sockets</h2>
+          <pre><code>netstat -a                   # all conns + listeners
+netstat -an                  # no name resolution (faster)
+netstat -ano                 # adds PID column
+netstat -anob                # adds owning executable (admin)
+netstat -r                   # routing table (= route print)
+netstat -e -s                # ethernet + per-protocol stats
+netstat -nat 5               # refresh every 5 sec</code></pre>
+
+          <h2>Disk tools</h2>
+          <pre><code># Health
+chkdsk C: /F                 # fix file system errors
+chkdsk C: /R                 # locate bad sectors + recover (HDD)
+chkdsk C: /B                 # re-evaluate bad clusters (HDD)
+chkdsk C: /scan              # online scan, no offline phase
+
+# Optimize / TRIM
+defrag C: /A                 # analyze only
+defrag C: /O                 # optimal (defrag HDD, TRIM SSD)
+defrag C: /U /V              # verbose with progress
+Optimize-Volume -DriveLetter C -ReTrim     # PowerShell
+
+# Format
+format D: /fs:NTFS /Q /V:Data
+format X: /fs:exFAT /Q       # cross-platform USB
+
+# diskpart batch via script file
+diskpart /s create-vol.txt
+
+# Disk usage
+fsutil volume diskfree C:
+Get-Volume                   # PowerShell, cleaner output
+
+# Page file inspection
+wmic pagefile list /format:list</code></pre>
+
+          <h2>Symbolic links + junctions</h2>
+          <ul>
+            <li><b>Hard link</b> (<code>mklink /H</code>) — multiple file entries pointing to same data; same volume only.</li>
+            <li><b>Symbolic link</b> (<code>mklink</code> default, or <code>/D</code> for directory) — pointer; can span volumes + UNC.</li>
+            <li><b>Junction</b> (<code>mklink /J</code>) — directory link; legacy; local volume only.</li>
+            <li>Use case: redirect <code>C:\\Users\\Public\\Downloads</code> to a faster SSD; relocate <code>node_modules</code>.</li>
+          </ul>
+
+          <h2>Environment variables (memorize)</h2>
+          <ul>
+            <li><b>%USERPROFILE%</b> — <code>C:\\Users\\&lt;you&gt;</code>.</li>
+            <li><b>%APPDATA%</b> — Roaming AppData.</li>
+            <li><b>%LOCALAPPDATA%</b> — Local AppData.</li>
+            <li><b>%PROGRAMFILES%</b> + <b>%PROGRAMFILES(X86)%</b>.</li>
+            <li><b>%TEMP%</b> + <b>%TMP%</b>.</li>
+            <li><b>%SYSTEMROOT%</b> / <b>%WINDIR%</b> — <code>C:\\Windows</code>.</li>
+            <li><b>%PATH%</b> — search path for executables.</li>
+            <li><b>%USERNAME%</b>, <b>%COMPUTERNAME%</b>, <b>%USERDOMAIN%</b>.</li>
+            <li><b>%PROCESSOR_ARCHITECTURE%</b> — AMD64 / x86 / ARM64.</li>
+            <li><b>set</b> shows current; <b>setx</b> persists to registry (User scope without /M, Machine with /M).</li>
+            <li>PowerShell: <code>$env:NAME</code> read/write process scope; <code>[Environment]::SetEnvironmentVariable</code> persistent.</li>
+          </ul>
+
+          <h2>Script + batch primer</h2>
+          <pre><code>@echo off                    # don't echo each line
+rem comment                  # comment
+:: also a comment
+
+set name=alice               # variable
+set /p name=Enter name:     # prompt
+set /a sum=10+5             # arithmetic
+
+if "%name%"=="alice" (
+  echo Hello %name%
+) else (
+  echo Hi stranger
+)
+
+for %%f in (*.log) do echo %%f       # in a .bat file (double %% required)
+for /f "tokens=2" %%a in ('ipconfig ^| findstr "IPv4"') do set ip=%%a
+
+call other.bat               # invoke another batch
+goto :end
+:end
+exit /b %errorlevel%</code></pre>
+          <p><b>Batch quirks</b>: <code>%</code> doubled inside .bat (<code>%%f</code>); errorlevel comparison <code>if %errorlevel%==0</code>; capture with <code>for /f</code>; escape pipes with <code>^|</code> inside <code>for</code>.</p>
+
+          <h2>Cmd vs PowerShell — pick the right shell</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Task</th><th align="left" style="padding:4px;border-bottom:1px solid #444">cmd.exe</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PowerShell</th></tr>
+            <tr><td>Quick reboot</td><td><code>shutdown /r /t 0</code></td><td><code>Restart-Computer</code></td></tr>
+            <tr><td>Process info</td><td><code>tasklist</code></td><td><code>Get-Process</code></td></tr>
+            <tr><td>Service start</td><td><code>net start svc</code></td><td><code>Start-Service svc</code></td></tr>
+            <tr><td>Find process by name</td><td><code>tasklist /fi "imagename eq x"</code></td><td><code>Get-Process x</code></td></tr>
+            <tr><td>Delete files older than 30 days</td><td>complex <code>forfiles</code></td><td><code>Get-ChildItem | Where LastWriteTime -lt (Get-Date).AddDays(-30) | Remove-Item</code></td></tr>
+            <tr><td>JSON parsing</td><td>painful</td><td><code>ConvertFrom-Json</code></td></tr>
+            <tr><td>Registry edit</td><td><code>reg add</code></td><td><code>New-ItemProperty</code></td></tr>
+            <tr><td>WMI / CIM</td><td><code>wmic</code> (deprecated)</td><td><code>Get-CimInstance</code></td></tr>
+          </table>
+          <p>New scripts: PowerShell. Legacy + boot-time: cmd.exe still relevant (recovery environments + AutoUnattend.xml).</p>
+
+          <h2>PSReadLine + Windows Terminal niceties</h2>
+          <ul>
+            <li>Ctrl+R history search; up-arrow shows last command.</li>
+            <li>Tab completion + parameter hints in PowerShell.</li>
+            <li>Windows Terminal panes: <b>Alt+Shift+D</b> (split duplicate), <b>Ctrl+Shift+W</b> (close), <b>Ctrl+Tab</b> (switch tabs).</li>
+            <li>Settings.json — custom profiles, color schemes, key bindings.</li>
+            <li><b>Sudo</b> (Windows 11 24H2+) — built-in elevation: <code>sudo netstat -ano</code>.</li>
+          </ul>
+
+          <h2>10 exam command lookups (memorize)</h2>
+          <ul>
+            <li>"Show IP + MAC + DHCP server" → <code>ipconfig /all</code>.</li>
+            <li>"Connection test on TCP 443" → <code>Test-NetConnection host -Port 443</code> (or <code>nc -vz</code> on POSIX).</li>
+            <li>"DNS info" → <code>nslookup host [dns_server]</code>.</li>
+            <li>"Show services" → <code>services.msc</code> / <code>Get-Service</code>.</li>
+            <li>"Restore registry hive" → boot recovery → <code>reg load</code> / restore from <code>C:\\Windows\\System32\\config\\RegBack</code> (older Windows) or System Restore.</li>
+            <li>"Check Windows build" → <code>winver</code> / <code>systeminfo</code> / <code>ver</code>.</li>
+            <li>"List installed updates" → <code>wmic qfe</code> / <code>Get-HotFix</code>.</li>
+            <li>"View startup apps" → Task Manager → Startup or <code>msconfig</code>.</li>
+            <li>"Show local users + groups" → <code>net user</code> / <code>net localgroup</code> / <code>compmgmt.msc</code>.</li>
+            <li>"Check Windows activation" → <code>slmgr /xpr</code> or <code>slmgr /dlv</code>.</li>
           </ul>
         `
       },
@@ -2238,6 +4709,267 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
             <li>"Add Linux user to sudo group keeping existing groups" → usermod -aG sudo user (the -a is critical).</li>
             <li>"Generate strong SSH key" → ssh-keygen -t ed25519.</li>
           </ul>
+
+          <h2>macOS architecture deep-dive</h2>
+          <ul>
+            <li><b>Darwin</b> = open-source Unix-y core (XNU kernel = Mach + BSD).</li>
+            <li><b>System Integrity Protection (SIP)</b> — protects <code>/System</code>, <code>/usr</code>, <code>/bin</code>, <code>/sbin</code>; admins can't write even as root. Toggle in Recovery via <code>csrutil disable</code>.</li>
+            <li><b>Gatekeeper</b> — checks signed + notarized status before running downloaded apps. Override: System Settings → Privacy &amp; Security → "Open Anyway".</li>
+            <li><b>XProtect</b> — built-in signature-based AV. Updates silently.</li>
+            <li><b>Sealed System Volume (SSV)</b> — read-only OS volume cryptographically verified at boot (Big Sur+). User data on separate volume.</li>
+            <li><b>APFS containers + volumes</b> — multiple volumes share a container's free space; snapshots; cloning.</li>
+            <li><b>Spotlight</b> — system-wide search; <code>mdfind "query"</code> CLI; reindex with <code>sudo mdutil -E /</code>.</li>
+            <li><b>Mission Control</b> — desktop spaces + window overview (F3).</li>
+            <li><b>Stage Manager</b> — windowing model; macOS Ventura+.</li>
+            <li><b>iCloud Drive + Optimized Storage</b> — offloads rarely-used files to cloud.</li>
+            <li><b>Continuity</b> — Handoff, Universal Clipboard, AirDrop, Sidecar, Universal Control across Apple devices.</li>
+          </ul>
+
+          <h2>macOS service management</h2>
+          <ul>
+            <li><b>launchd</b> — init system (PID 1). Replaces cron/init.d.</li>
+            <li><b>LaunchDaemons</b> (<code>/Library/LaunchDaemons</code>) — system-wide services run as root.</li>
+            <li><b>LaunchAgents</b> (<code>~/Library/LaunchAgents</code> per-user; <code>/Library/LaunchAgents</code> all users) — run when user logs in.</li>
+            <li><b>plist</b> — XML / binary property list defining the job.</li>
+            <li><b>launchctl list</b>, <b>launchctl load -w plist</b>, <b>launchctl unload -w plist</b>, <b>launchctl bootstrap user/&lt;UID&gt; plist</b> (Big Sur+).</li>
+          </ul>
+
+          <h2>macOS keychain + secrets</h2>
+          <ul>
+            <li><b>Keychain Access</b> app — stores passwords, certs, secure notes.</li>
+            <li><b>login keychain</b> — unlocked at sign-in.</li>
+            <li><b>System keychain</b> — machine-level (Wi-Fi PSKs, certs).</li>
+            <li><b>iCloud Keychain</b> — syncs across Apple devices.</li>
+            <li><b>security</b> CLI: <code>security find-internet-password -s server -w</code> reveals stored PSK.</li>
+            <li><b>Reset corrupted keychain</b>: Keychain Access → File → Delete Keychain → Reset Default Keychain. User must re-enter credentials.</li>
+          </ul>
+
+          <h2>macOS recovery + reset methods</h2>
+          <ul>
+            <li><b>Intel Macs:</b> hold <b>Cmd+R</b> at boot → Recovery. <b>Cmd+Option+R</b> → Internet Recovery (latest compatible macOS). <b>Cmd+Option+Shift+R</b> → original macOS shipped.</li>
+            <li><b>Apple Silicon:</b> press + hold power until "Loading startup options" → Options.</li>
+            <li><b>Disk Utility</b> in Recovery — repair / erase APFS volumes.</li>
+            <li><b>Reinstall macOS</b> — keeps data; preserves user folder unless erased.</li>
+            <li><b>Reset NVRAM / PRAM</b> (Intel): Cmd+Option+P+R at boot ~20 sec. Apple Silicon: no NVRAM reset, just reboot.</li>
+            <li><b>SMC reset</b> (Intel notebooks with T2): shut down + hold left Ctrl+Opt+right Shift 7 sec + Power 7 sec. Apple Silicon: power-cycle.</li>
+            <li><b>Apple Configurator 2 (DFU)</b> — restore firmware on Apple Silicon / T2 via second Mac.</li>
+            <li><b>Lost Mac password</b>: boot Recovery → Terminal → <code>resetpassword</code>.</li>
+          </ul>
+
+          <h2>Linux distros + when to pick which</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Distro</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Family</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Package mgr</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use case</th></tr>
+            <tr><td>Ubuntu LTS</td><td>Debian</td><td>apt</td><td>Servers, desktops, cloud</td></tr>
+            <tr><td>Debian</td><td>Debian</td><td>apt</td><td>Stable servers</td></tr>
+            <tr><td>Linux Mint</td><td>Ubuntu</td><td>apt</td><td>Desktop replacement for Windows users</td></tr>
+            <tr><td>Pop!_OS</td><td>Ubuntu</td><td>apt</td><td>Developer laptops, NVIDIA-friendly</td></tr>
+            <tr><td>RHEL</td><td>Red Hat</td><td>dnf / rpm</td><td>Enterprise servers w/ support</td></tr>
+            <tr><td>AlmaLinux / Rocky</td><td>RHEL clone</td><td>dnf</td><td>Free RHEL-compatible after CentOS pivot</td></tr>
+            <tr><td>Fedora</td><td>Red Hat</td><td>dnf</td><td>Leading-edge Linux, RHEL preview</td></tr>
+            <tr><td>SUSE Linux Enterprise</td><td>SUSE</td><td>zypper / rpm</td><td>SAP-friendly enterprise</td></tr>
+            <tr><td>openSUSE Tumbleweed</td><td>SUSE</td><td>zypper</td><td>Rolling release</td></tr>
+            <tr><td>Arch / Manjaro</td><td>Arch</td><td>pacman</td><td>Power-user / custom</td></tr>
+            <tr><td>Alpine</td><td>independent</td><td>apk</td><td>Containers (~5 MB base)</td></tr>
+            <tr><td>NixOS</td><td>independent</td><td>nix</td><td>Reproducible immutable systems</td></tr>
+            <tr><td>Kali / Parrot</td><td>Debian</td><td>apt</td><td>Pen-testing / forensics</td></tr>
+            <tr><td>Raspberry Pi OS</td><td>Debian-based</td><td>apt</td><td>Pi single-board computers</td></tr>
+          </table>
+
+          <h2>Filesystem hierarchy (FHS) — memorize</h2>
+          <ul>
+            <li><b>/</b> — root.</li>
+            <li><b>/bin</b> — essential user binaries (symlinked to /usr/bin on modern distros).</li>
+            <li><b>/sbin</b> — system admin binaries.</li>
+            <li><b>/etc</b> — system-wide config files.</li>
+            <li><b>/var</b> — variable data (logs, mail, spool).</li>
+            <li><b>/var/log</b> — log files.</li>
+            <li><b>/tmp</b> — ephemeral (cleared on boot).</li>
+            <li><b>/home</b> — user home directories.</li>
+            <li><b>/root</b> — root user's home.</li>
+            <li><b>/usr</b> — read-only user programs + libs. <b>/usr/local</b> — locally installed.</li>
+            <li><b>/opt</b> — optional 3rd-party packages.</li>
+            <li><b>/boot</b> — kernel, initramfs, GRUB config.</li>
+            <li><b>/dev</b> — device nodes (block, char).</li>
+            <li><b>/proc</b> — pseudo-FS exposing kernel + process state.</li>
+            <li><b>/sys</b> — sysfs; modern interface to kernel objects.</li>
+            <li><b>/run</b> — runtime data (PID files, sockets).</li>
+            <li><b>/mnt</b>, <b>/media</b> — mount points.</li>
+            <li><b>/lib</b>, <b>/lib64</b>, <b>/usr/lib</b> — shared libraries.</li>
+            <li><b>/srv</b> — service data (web roots).</li>
+          </ul>
+
+          <h2>Permissions deep-dive</h2>
+          <p><b>Each file:</b> 3 sets of 3 bits → <code>owner | group | other</code> × <code>r|w|x</code>. Numeric:</p>
+          <ul>
+            <li>4 = r, 2 = w, 1 = x. Sum per set.</li>
+            <li><code>755</code> = rwx r-x r-x (script/dir default).</li>
+            <li><code>644</code> = rw- r-- r-- (file default).</li>
+            <li><code>700</code> = rwx --- --- (private dir; SSH keys).</li>
+            <li><code>600</code> = rw- --- --- (sensitive file; ~/.ssh/id_ed25519).</li>
+            <li><code>777</code> = rwx rwx rwx (avoid — every user can edit; security risk).</li>
+          </ul>
+          <p><b>Special bits:</b></p>
+          <ul>
+            <li><b>setuid (4xxx)</b> — execute as the file's owner. <code>passwd</code> uses 4755 to update <code>/etc/shadow</code> as root.</li>
+            <li><b>setgid (2xxx)</b> — execute as the file's group; on a directory, new files inherit that group.</li>
+            <li><b>sticky bit (1xxx)</b> — on a directory, only the file owner can delete their own files (used on <code>/tmp</code>; shown as <code>t</code>).</li>
+            <li><b>chattr +i file</b> — immutable; even root can't modify until <code>-i</code>.</li>
+            <li><b>POSIX ACLs</b> via <code>setfacl -m u:bob:rwx file</code>; <code>getfacl file</code>.</li>
+            <li><b>SELinux contexts</b> (RHEL) — <code>ls -Z</code>, <code>chcon</code>, <code>restorecon</code>, <code>semanage</code>.</li>
+            <li><b>AppArmor profiles</b> (Ubuntu) — alternative MAC; <code>aa-status</code>.</li>
+          </ul>
+
+          <h2>systemd unit files</h2>
+          <ul>
+            <li><b>Unit types:</b> <code>.service</code>, <code>.socket</code>, <code>.timer</code>, <code>.mount</code>, <code>.target</code>, <code>.path</code>, <code>.slice</code>.</li>
+            <li><b>System units:</b> <code>/etc/systemd/system/</code> (admin), <code>/lib/systemd/system/</code> (vendor).</li>
+            <li><b>User units:</b> <code>~/.config/systemd/user/</code> + <code>systemctl --user</code>.</li>
+            <li><b>Targets</b> replace runlevels: <code>multi-user.target</code> = old runlevel 3; <code>graphical.target</code> = 5.</li>
+            <li><b>journalctl filters:</b> <code>-u sshd</code>, <code>--since "2 days ago"</code>, <code>-p err</code>, <code>-f</code> follow, <code>-k</code> kernel only.</li>
+            <li><b>systemd-analyze blame</b> — slowest services at boot.</li>
+            <li><b>systemd-analyze critical-chain</b> — dependency-aware boot tree.</li>
+            <li><b>systemctl mask service</b> — strongest disable (creates /dev/null symlink).</li>
+            <li><b>systemctl daemon-reload</b> after editing unit files.</li>
+            <li><b>Drop-in overrides:</b> <code>/etc/systemd/system/sshd.service.d/override.conf</code> — additive customization.</li>
+          </ul>
+
+          <h2>Package management cheat (memorize all 3 family flavors)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Task</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Debian/Ubuntu</th><th align="left" style="padding:4px;border-bottom:1px solid #444">RHEL/Fedora</th><th align="left" style="padding:4px;border-bottom:1px solid #444">SUSE</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Arch</th></tr>
+            <tr><td>Refresh index</td><td>apt update</td><td>dnf check-update</td><td>zypper refresh</td><td>pacman -Sy</td></tr>
+            <tr><td>Upgrade all</td><td>apt upgrade</td><td>dnf upgrade</td><td>zypper update</td><td>pacman -Syu</td></tr>
+            <tr><td>Install pkg</td><td>apt install pkg</td><td>dnf install pkg</td><td>zypper in pkg</td><td>pacman -S pkg</td></tr>
+            <tr><td>Remove pkg</td><td>apt remove pkg</td><td>dnf remove pkg</td><td>zypper rm pkg</td><td>pacman -R pkg</td></tr>
+            <tr><td>Search</td><td>apt search foo</td><td>dnf search foo</td><td>zypper search foo</td><td>pacman -Ss foo</td></tr>
+            <tr><td>List installed</td><td>dpkg -l</td><td>rpm -qa</td><td>rpm -qa</td><td>pacman -Q</td></tr>
+            <tr><td>Package info</td><td>apt show pkg</td><td>dnf info pkg</td><td>zypper info pkg</td><td>pacman -Si pkg</td></tr>
+            <tr><td>Who owns this file</td><td>dpkg -S /path</td><td>rpm -qf /path</td><td>rpm -qf /path</td><td>pacman -Qo /path</td></tr>
+            <tr><td>List files in pkg</td><td>dpkg -L pkg</td><td>rpm -ql pkg</td><td>rpm -ql pkg</td><td>pacman -Ql pkg</td></tr>
+          </table>
+          <p><b>Universal formats:</b> <b>Flatpak</b> (Flathub), <b>Snap</b> (Canonical), <b>AppImage</b> (portable), <b>Homebrew</b> (macOS+Linux).</p>
+
+          <h2>Linux network config</h2>
+          <ul>
+            <li><b>NetworkManager</b> — default GUI/CLI on most desktops. <code>nmcli</code> + <code>nmtui</code>.</li>
+            <li><b>systemd-networkd</b> — minimal alternative; common on cloud images.</li>
+            <li><b>netplan</b> (Ubuntu) — YAML in <code>/etc/netplan/*.yaml</code> generates NetworkManager / networkd config.</li>
+            <li><b>ifupdown</b> (Debian legacy) — <code>/etc/network/interfaces</code>.</li>
+            <li><b>/etc/resolv.conf</b> — DNS resolver config (often a symlink to systemd-resolved).</li>
+            <li><b>/etc/hosts</b> — static name mappings.</li>
+            <li><b>/etc/nsswitch.conf</b> — resolution order (files vs DNS vs LDAP).</li>
+            <li><b>ip neigh</b> — ARP/ND cache.</li>
+            <li><b>tcpdump -i eth0 host 10.0.0.5 and port 443 -w cap.pcap</b> — packet capture.</li>
+            <li><b>nftables</b> / <b>iptables</b> — kernel firewall. <b>ufw</b> on Debian/Ubuntu is a friendly front-end. <b>firewalld</b> on RHEL.</li>
+            <li><b>ufw allow 22/tcp</b>, <b>ufw enable</b>.</li>
+            <li><b>firewall-cmd --add-service=http --permanent</b>, <b>firewall-cmd --reload</b>.</li>
+          </ul>
+
+          <h2>Linux user + group internals</h2>
+          <ul>
+            <li><b>/etc/passwd</b> — username, UID, GID, GECOS, home, shell.</li>
+            <li><b>/etc/shadow</b> — hashed passwords + aging (root only).</li>
+            <li><b>/etc/group</b> — group memberships.</li>
+            <li><b>/etc/gshadow</b> — group passwords.</li>
+            <li><b>/etc/sudoers</b> + <b>/etc/sudoers.d/*</b> — visudo to edit safely.</li>
+            <li><b>PAM</b> (Pluggable Authentication Modules) — <code>/etc/pam.d/</code> stacks auth/account/password/session policies.</li>
+            <li><b>UID 0</b> = root; service accounts &lt; 1000; humans ≥ 1000.</li>
+            <li><b>su -</b> = switch user (full login). <b>sudo cmd</b> = run as elevated.</li>
+            <li><b>SSSD</b> — System Security Services Daemon; joins Linux to AD or LDAP.</li>
+            <li><b>realm join domain</b> — AD-join Linux box.</li>
+          </ul>
+
+          <h2>Disk + LVM basics</h2>
+          <ul>
+            <li><b>lsblk -f</b> — block devices + filesystems + UUIDs.</li>
+            <li><b>blkid</b> — UUID + label + type per device.</li>
+            <li><b>fdisk -l</b> + <b>parted -l</b> — partition listing.</li>
+            <li><b>mount + /etc/fstab</b> — persistent mounts (use UUID, not /dev/sdX which can shift).</li>
+            <li><b>systemctl daemon-reload + mount -a</b> after editing fstab.</li>
+            <li><b>LVM</b>: physical volumes (<code>pvcreate</code>), volume groups (<code>vgcreate</code>), logical volumes (<code>lvcreate</code>). Extend with <code>lvextend -r -L +20G</code> (resize FS too).</li>
+            <li><b>swapon -s</b> + <b>/etc/fstab swap entries</b>; <b>fallocate -l 4G /swapfile; mkswap; swapon</b>.</li>
+            <li><b>ext4</b> default. <b>XFS</b> on RHEL. <b>Btrfs</b> on openSUSE / Fedora root. <b>ZFS</b> via OpenZFS on Linux.</li>
+            <li><b>fsck -y /dev/sdb1</b> — repair filesystem (unmount first).</li>
+          </ul>
+
+          <h2>Shell scripting primer (bash)</h2>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail        # exit on error, unset var, pipe failure
+
+name="alice"
+echo "Hello $name"
+
+# Conditional
+if [[ -f /etc/hosts ]]; then
+  echo "exists"
+fi
+
+# Loop
+for f in *.log; do
+  echo "$f $(wc -l < "$f") lines"
+done
+
+# Functions
+greet() {
+  local who="$1"
+  echo "Hello $who"
+}
+greet "world"
+
+# Capture command output
+date=$(date +%F)
+echo "$date"
+
+# Arithmetic
+sum=$(( 3 + 5 ))</code></pre>
+          <p><b>Test operators</b>: <code>-f</code> file exists, <code>-d</code> dir, <code>-z</code> zero-length string, <code>-n</code> non-empty, <code>=</code> string equal, <code>-eq</code> int equal.</p>
+
+          <h2>Cron + scheduled jobs</h2>
+          <ul>
+            <li><b>crontab -e</b> — edit user crontab. <b>crontab -l</b> — list.</li>
+            <li><b>/etc/crontab</b> — system crontab (has user field).</li>
+            <li><b>/etc/cron.{hourly,daily,weekly,monthly}</b> — scripts auto-run.</li>
+            <li><b>Field order:</b> <code>min hour dom mon dow command</code>.</li>
+            <li><b>Example:</b> <code>*/15 * * * * /usr/local/bin/check.sh</code> = every 15 min.</li>
+            <li><b>@reboot</b> — at boot. <b>@daily</b>, <b>@hourly</b>, <b>@weekly</b>.</li>
+            <li><b>systemd timers</b> — modern alternative; <code>systemctl list-timers</code>.</li>
+            <li><b>at + atd</b> — one-off scheduled jobs.</li>
+            <li><b>anacron</b> — runs missed cron jobs on laptops that may be off.</li>
+          </ul>
+
+          <h2>SELinux / AppArmor quick</h2>
+          <ul>
+            <li><b>SELinux modes:</b> Enforcing, Permissive (warn but allow), Disabled. <code>getenforce</code> / <code>setenforce 0|1</code>.</li>
+            <li><b>Contexts:</b> user_u:role_r:type_t:level — type is what matters (httpd_t, ssh_t).</li>
+            <li><b>chcon -t httpd_sys_content_t /srv/web</b> — temporary context.</li>
+            <li><b>semanage fcontext + restorecon</b> — persistent.</li>
+            <li><b>audit2allow</b> — generate policy module from blocked actions in <code>/var/log/audit/audit.log</code>.</li>
+            <li><b>AppArmor</b> profiles in <code>/etc/apparmor.d/</code>; <code>aa-enforce</code>, <code>aa-complain</code>.</li>
+          </ul>
+
+          <h2>Container basics on Linux</h2>
+          <ul>
+            <li><b>Docker</b> via <code>dockerd</code> or rootless mode; uses cgroups + namespaces.</li>
+            <li><b>Podman</b> — daemonless, default on RHEL 9. Drop-in alias <code>alias docker=podman</code>.</li>
+            <li><b>Common commands:</b> <code>docker run -d -p 80:80 nginx</code>, <code>docker ps</code>, <code>docker logs id</code>, <code>docker exec -it id bash</code>.</li>
+            <li><b>Images:</b> Docker Hub / GHCR / quay.io / private registries.</li>
+            <li><b>Dockerfile</b> — recipe; <code>docker build -t name .</code>.</li>
+            <li><b>Compose</b> — multi-container YAML: <code>docker compose up -d</code>.</li>
+            <li><b>Kubernetes</b> on Linux: kubeadm / k3s / k0s / RKE2 for self-hosted; EKS/AKS/GKE for managed.</li>
+          </ul>
+
+          <h2>macOS + Linux 10 exam quick patterns</h2>
+          <ul>
+            <li>"Reset macOS user password without admin" → boot Recovery → Terminal → <code>resetpassword</code>.</li>
+            <li>"Add user to sudoers" → <code>visudo</code> (NEVER edit <code>/etc/sudoers</code> directly).</li>
+            <li>"Default Linux file permission for SSH private key" → <code>600</code>.</li>
+            <li>"Restart service without dropping connections" → <code>systemctl reload</code>.</li>
+            <li>"Show what depends on this systemd target" → <code>systemctl list-dependencies target</code>.</li>
+            <li>"Search Linux command history" → <code>history</code> or Ctrl+R reverse-search.</li>
+            <li>"macOS app won't open — 'unidentified developer'" → Gatekeeper; System Settings → Privacy → "Open Anyway".</li>
+            <li>"SELinux blocks a service" → check <code>/var/log/audit/audit.log</code> → set context with <code>chcon</code> or run permissive temporarily.</li>
+            <li>"Find which process holds port 443" → <code>ss -tnlp | grep :443</code> or <code>lsof -i :443</code>.</li>
+            <li>"Bash script fails silently" → start with <code>set -euo pipefail</code>.</li>
+          </ul>
         `
       },
       {
@@ -2389,6 +5121,170 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
             <li>"Lives in RAM / uses PowerShell + WMI" → fileless malware.</li>
             <li>CompTIA 7-step removal — order is exam-critical.</li>
           </ul>
+
+          <h2>Notable malware families (recognize names)</h2>
+          <ul>
+            <li><b>Emotet</b> — modular trojan / loader; spread via macro-laden Office docs; takedown 2021 + resurgence.</li>
+            <li><b>TrickBot</b> — banking + loader partner of Ryuk/Conti.</li>
+            <li><b>Qakbot / Qbot</b> — banker + loader; takedown Aug 2023, resurgent.</li>
+            <li><b>IcedID / BokBot</b> — banking + initial access broker.</li>
+            <li><b>Ryuk / Conti / LockBit / BlackCat (ALPHV) / BlackBasta / Akira / Cl0p / Royal / Play</b> — ransomware-as-a-service operators.</li>
+            <li><b>WannaCry</b> — 2017 worm + ransomware using EternalBlue SMB exploit.</li>
+            <li><b>NotPetya</b> — 2017 destructive wiper disguised as ransomware.</li>
+            <li><b>Stuxnet</b> — first known nation-state cyber-weapon; targeted Iran's nuclear centrifuges via PLC manipulation.</li>
+            <li><b>Cobalt Strike</b> — legit pen-test tool widely abused for post-exploitation C2.</li>
+            <li><b>Mimikatz</b> — credential dumper; reads LSASS process memory.</li>
+            <li><b>Pegasus / Predator</b> — commercial spyware (NSO Group / Intellexa) on mobile.</li>
+            <li><b>Mirai</b> — IoT botnet behind 2016 Dyn DDoS.</li>
+            <li><b>Raccoon / Vidar / RedLine / Lumma / StealC</b> — info-stealers harvesting browser secrets + crypto wallets.</li>
+            <li><b>SolarWinds SUNBURST</b> — supply-chain backdoor; 2020.</li>
+            <li><b>3CX</b> — supply-chain compromise of legit VoIP client; 2023.</li>
+            <li><b>XZ-utils backdoor (CVE-2024-3094)</b> — supply-chain ssh backdoor caught pre-stable; 2024.</li>
+          </ul>
+
+          <h2>MITRE ATT&amp;CK quick-reference (14 tactics)</h2>
+          <ol>
+            <li>Initial Access</li>
+            <li>Execution</li>
+            <li>Persistence</li>
+            <li>Privilege Escalation</li>
+            <li>Defense Evasion</li>
+            <li>Credential Access</li>
+            <li>Discovery</li>
+            <li>Lateral Movement</li>
+            <li>Collection</li>
+            <li>Command and Control</li>
+            <li>Exfiltration</li>
+            <li>Impact</li>
+            <li>Reconnaissance</li>
+            <li>Resource Development</li>
+          </ol>
+          <p>Each tactic has many <b>techniques</b> + <b>sub-techniques</b> (e.g., T1059.001 PowerShell). SOC teams map detection coverage to ATT&amp;CK matrix.</p>
+
+          <h2>Modern AV-evasion techniques (defenders must know)</h2>
+          <ul>
+            <li><b>Packers + crypters</b> (UPX, ConfuserEx, Themida, custom) — compress / encrypt the payload; decrypted in memory.</li>
+            <li><b>Code signing abuse</b> — stolen / fraudulent certs; revoked but cached.</li>
+            <li><b>Living off the land (LOLBins)</b> — abuse <code>rundll32</code>, <code>regsvr32</code>, <code>mshta</code>, <code>certutil -urlcache</code>, <code>bitsadmin /transfer</code>, <code>wmic</code>, <code>powershell -enc</code>, <code>msbuild</code>, <code>installutil</code>.</li>
+            <li><b>Process injection</b> — DLL injection, reflective DLL, process hollowing, APC injection, atom bombing.</li>
+            <li><b>Token impersonation</b> + <b>UAC bypass</b> (fodhelper, eventvwr, sdclt).</li>
+            <li><b>AMSI bypass</b> — patch <code>AmsiScanBuffer</code> in memory; obfuscate scripts.</li>
+            <li><b>ETW patching</b> — disable Event Tracing for Windows to blind EDR.</li>
+            <li><b>BYOVD</b> (Bring Your Own Vulnerable Driver) — load signed legit driver with known kernel CVE; disable AV/EDR from kernel.</li>
+            <li><b>Anti-VM checks</b> — abort if MAC OUI / disk size / process names indicate sandbox (VirtualBox / VMware).</li>
+            <li><b>Sleep / time-bombs</b> — wait for analysis window to end before activating.</li>
+            <li><b>HTTPS C2</b> via legit CDN (Cloudflare Workers, GitHub Pages, Discord, Slack webhooks).</li>
+            <li><b>Domain fronting</b> (less common since major CDNs blocked it).</li>
+          </ul>
+
+          <h2>EDR vs AV vs XDR vs MDR (memorize the line)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tool</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What it does</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Examples</th></tr>
+            <tr><td>AV (legacy)</td><td>Signature + heuristic file scan</td><td>McAfee classic, Symantec EP, ClamAV</td></tr>
+            <tr><td>NGAV</td><td>ML + behavior, no static signatures only</td><td>Cylance, SentinelOne Static</td></tr>
+            <tr><td>EDR</td><td>Continuous endpoint telemetry + investigation + remote response</td><td>CrowdStrike Falcon, SentinelOne, Defender for Endpoint, Sophos Intercept X, Carbon Black</td></tr>
+            <tr><td>XDR</td><td>EDR + correlated email + identity + network + cloud</td><td>Microsoft Defender XDR, Palo Alto Cortex XDR, Trend Micro Vision One</td></tr>
+            <tr><td>MDR</td><td>Outsourced 24/7 SOC running EDR/XDR</td><td>Arctic Wolf, Red Canary, eSentire, Expel</td></tr>
+            <tr><td>NDR</td><td>Network detection on packet/flow data</td><td>Darktrace, Vectra, Cisco Secure Network Analytics</td></tr>
+            <tr><td>SIEM</td><td>Log aggregation + correlation</td><td>Splunk, Microsoft Sentinel, QRadar, Elastic</td></tr>
+            <tr><td>SOAR</td><td>Playbook automation responding to alerts</td><td>Splunk SOAR, Palo Alto XSOAR, Tines, Torq</td></tr>
+          </table>
+
+          <h2>IOC + IOA types (Indicator of Compromise / Attack)</h2>
+          <ul>
+            <li><b>File hashes</b> — MD5 / SHA-1 / SHA-256.</li>
+            <li><b>Domains + URLs</b> — known C2.</li>
+            <li><b>IPs</b> — known infrastructure (rotates fast).</li>
+            <li><b>Registry keys / file paths</b> — persistence artifacts.</li>
+            <li><b>YARA rules</b> — pattern-match binaries by strings + structure.</li>
+            <li><b>Sigma rules</b> — log-based detection signatures, vendor-agnostic.</li>
+            <li><b>JA3 / JA4</b> — TLS client / server fingerprint.</li>
+            <li><b>SSL fingerprints</b> — cert chain + extensions.</li>
+            <li><b>Process tree anomalies</b> — Word spawning PowerShell (rare in benign).</li>
+            <li><b>Behavioral IOA</b> — credential dumping pattern, lateral movement via SMB admin shares.</li>
+          </ul>
+
+          <h2>Memory forensics + investigation</h2>
+          <ul>
+            <li><b>Volatility 3</b> — open-source memory analysis framework.</li>
+            <li><b>WinDbg + LiveKD</b> — Microsoft kernel debugger.</li>
+            <li><b>FTK Imager</b> — capture RAM + disk image.</li>
+            <li><b>Magnet RAM Capture</b> — quick RAM dump.</li>
+            <li><b>Process Hacker / Process Explorer</b> — inspect handles, DLLs, strings.</li>
+            <li><b>Autoruns</b> — every Windows persistence location.</li>
+            <li><b>TCPView</b> — sockets per process in real time.</li>
+            <li><b>Sysmon</b> — extended Windows event logging (process tree, network, file create, registry).</li>
+            <li><b>chainsaw / hayabusa</b> — fast Windows event-log triage tools.</li>
+            <li><b>KAPE</b> + <b>Velociraptor</b> — IR triage collection at scale.</li>
+          </ul>
+
+          <h2>Phishing kit + delivery chain (typical 2025 flow)</h2>
+          <ol>
+            <li>Attacker buys lookalike domain + sets up Cloudflare-fronted reverse proxy (EvilProxy / Modlishka).</li>
+            <li>Spear-phish email with MFA-bypassing landing page.</li>
+            <li>Victim enters creds + MFA OTP → attacker session cookie captured.</li>
+            <li>Replay cookie via residential proxy to evade conditional access.</li>
+            <li>Inbox rules forward sensitive mail; OAuth app added for persistence.</li>
+            <li>Lateral movement via OneDrive / SharePoint / Teams.</li>
+            <li>Mailbox-rule + OAuth abuse to silently exfil.</li>
+          </ol>
+          <p><b>Mitigations:</b> phishing-resistant MFA (FIDO2 / passkeys), block legacy auth, alert on new OAuth grants, look for impossible-travel sign-ins, anti-spoofing (SPF/DKIM/DMARC reject), URL rewriting in mail gateway, security awareness training.</p>
+
+          <h2>Ransomware playbook (incident-response checklist)</h2>
+          <ol>
+            <li><b>Isolate</b> infected hosts (disconnect LAN + Wi-Fi; preserve power for memory capture).</li>
+            <li><b>Preserve evidence</b> — image disk + RAM before shutdown if possible.</li>
+            <li><b>Identify strain</b> — note extension, ransom note text; check ID Ransomware site.</li>
+            <li><b>Check for decryption keys</b> — NoMoreRansom.org sometimes has them for older families.</li>
+            <li><b>Engage IR firm + legal + cyber insurance</b> — many require notification within hours.</li>
+            <li><b>Notify regulators</b> per jurisdiction (GDPR 72h, HIPAA, state AGs, SEC 4-day rule).</li>
+            <li><b>Restore from offline / immutable backup</b> — verify integrity + scan before restoring.</li>
+            <li><b>Rebuild domain controllers + reset Kerberos krbtgt twice</b> (24 h apart) if AD compromised.</li>
+            <li><b>Rotate all credentials</b>, OAuth tokens, API keys, certs.</li>
+            <li><b>Run blameless post-mortem</b> + update controls + tabletop exercises quarterly.</li>
+          </ol>
+
+          <h2>Mobile + macOS malware (less common but tested)</h2>
+          <ul>
+            <li><b>iOS:</b> Sandboxed app model + code signing; mainstream malware rare outside jailbroken devices. Targeted spyware (Pegasus, Predator) uses zero-click exploits.</li>
+            <li><b>Android:</b> Sideload risk + permissive permissions; banking trojans (Anubis, Cerberus, BRATA) common via fake Play apps + smishing.</li>
+            <li><b>macOS:</b> Increasingly targeted — Atomic Stealer (AMOS), Cuckoo, RustBucket, KandyKorn (DPRK). Distributed via cracked apps + fake updates.</li>
+            <li><b>Defenses:</b> Official app store only, latest OS, MDM with app allow-list, EDR for macOS (Defender for Endpoint Mac, Jamf Protect, CrowdStrike Falcon for Mac), iOS Lockdown Mode for high-risk users.</li>
+          </ul>
+
+          <h2>Anti-malware best-practice baseline</h2>
+          <ul>
+            <li>Patch OS + browser + Office monthly minimum; critical out-of-band same week.</li>
+            <li>Endpoint EDR everywhere — not just AV.</li>
+            <li>Application allowlisting (WDAC, AppLocker, Carbon Black) on high-value endpoints.</li>
+            <li>Office macro block from Internet (default since 2022).</li>
+            <li>PowerShell ScriptBlock + Module + Transcript logging + Constrained Language Mode.</li>
+            <li>LAPS for local admin password randomization.</li>
+            <li>MFA + phishing-resistant for all admins.</li>
+            <li>Least-privilege admin tier model.</li>
+            <li>DNS-layer filtering (Cisco Umbrella, NextDNS, Cloudflare Gateway).</li>
+            <li>Web proxy / SWG with TLS inspection.</li>
+            <li>Email gateway with sandboxing, URL rewriting, attachment detonation.</li>
+            <li>Backup 3-2-1-1-0 with immutability + tested restore.</li>
+            <li>Network segmentation; lateral-movement detection.</li>
+            <li>Security awareness training + phishing simulations quarterly.</li>
+            <li>Tabletop incident exercises annually.</li>
+            <li>Threat-intel feeds integrated into SIEM / firewall (MISP, OTX).</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"User clicked malicious link; AV alerted" → confirm + quarantine + investigate phish source.</li>
+            <li>"Files renamed with .lockbit extension" → ransomware; follow 7-step + IR playbook + restore from backup.</li>
+            <li>"100% CPU on idle PC + crypto wallet pings" → cryptominer; remove + check persistence.</li>
+            <li>"Outlook rule auto-forwards finance email to external" → mailbox-rule abuse post-credential-theft; reset password + revoke sessions.</li>
+            <li>"Antivirus mysteriously disabled" → tamper indicator; enable Tamper Protection + EDR investigation.</li>
+            <li>"Workstation talks to many internal hosts on SMB" → potential worm spread; isolate + audit.</li>
+            <li>"DPRK / APT label" → use ATT&amp;CK technique mapping for hunting.</li>
+            <li>"Living off the land (LOLBins)" → script-block logging + AMSI required to detect.</li>
+            <li>"Stolen NTLM hash usable" → pass-the-hash; Credential Guard mitigates.</li>
+            <li>"After cleaning, malware comes back on reboot" → persistence (scheduled task / registry Run / service / driver / WMI subscription) — use Autoruns + EDR.</li>
+          </ul>
         `
       },
       {
@@ -2528,6 +5424,145 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
             <li>Looking through trash for sensitive docs → dumpster diving.</li>
             <li>Rogue AP with same SSID as corporate → evil twin.</li>
             <li>Strongest defense against credential phishing → phishing-resistant MFA (FIDO2 / hardware key).</li>
+          </ul>
+
+          <h2>Cialdini's 6 principles of influence (attacker exploits these)</h2>
+          <ol>
+            <li><b>Reciprocity</b> — "I gave you X, return the favor". Free USB drive in lobby.</li>
+            <li><b>Commitment + Consistency</b> — small foot-in-door ask → larger ask aligns.</li>
+            <li><b>Social Proof</b> — "Everyone in your team already verified".</li>
+            <li><b>Authority</b> — claim to be CEO, IT director, federal agent.</li>
+            <li><b>Liking</b> — flattery, shared interests, friendly small-talk.</li>
+            <li><b>Scarcity / Urgency</b> — "act now or account closes". Bypasses careful evaluation.</li>
+          </ol>
+          <p>Cialdini added <b>Unity</b> (shared identity) in 2016. Robert Cialdini's <i>Influence</i> + <i>Pre-Suasion</i> = required SE reading.</p>
+
+          <h2>Phishing typology (recognize each)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Variant</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Channel</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Target</th></tr>
+            <tr><td>Phishing</td><td>Email, broad</td><td>Mass</td></tr>
+            <tr><td>Spear-phishing</td><td>Email, tailored</td><td>Specific person/team</td></tr>
+            <tr><td>Whaling</td><td>Email</td><td>C-suite / VIP</td></tr>
+            <tr><td>BEC (Business Email Compromise)</td><td>Email impersonation</td><td>Finance/AP, often $$$$ wire fraud</td></tr>
+            <tr><td>Vishing</td><td>Voice call / VoIP</td><td>Often help-desk, executive assistants</td></tr>
+            <tr><td>Smishing</td><td>SMS</td><td>Consumer (USPS, FedEx, banking)</td></tr>
+            <tr><td>Quishing</td><td>QR code</td><td>Hides URL in image; bypasses URL filters</td></tr>
+            <tr><td>Callback phishing</td><td>Email + phone</td><td>Fake invoice → victim calls attacker</td></tr>
+            <tr><td>Angler phishing</td><td>Social media DM</td><td>Fake support accounts on X/Twitter, IG</td></tr>
+            <tr><td>Search engine phishing</td><td>SEO + malvertising</td><td>Spoofed brand sites at top of Google ads</td></tr>
+            <tr><td>Pharming</td><td>DNS poisoning / hosts file</td><td>Redirect to fake site without user awareness</td></tr>
+            <tr><td>Watering hole</td><td>Compromised legit site</td><td>Targets visitors from specific orgs</td></tr>
+          </table>
+
+          <h2>BEC attack patterns (FBI biggest-dollar category)</h2>
+          <ul>
+            <li><b>CEO fraud</b> — spoofed exec emails AP for urgent wire.</li>
+            <li><b>Vendor email compromise</b> — attacker hijacks legit vendor inbox, sends fake updated bank-account email.</li>
+            <li><b>Lawyer / M&amp;A fraud</b> — pretends to be law firm during deal sensitive window.</li>
+            <li><b>Payroll diversion</b> — "Update my direct-deposit account please" email to HR.</li>
+            <li><b>W-2 / data theft</b> — finance asked for employee tax forms.</li>
+            <li><b>Conversation hijacking</b> — attacker injects into existing email thread after mailbox takeover.</li>
+            <li><b>Mitigation:</b> out-of-band callback to known number, dual approval on wires &gt; threshold, mailbox-rule auditing, DMARC reject, mail flow rules flagging external lookalike domains.</li>
+          </ul>
+
+          <h2>Adversary-in-the-middle (AitM) phishing — MFA bypass</h2>
+          <ol>
+            <li>Attacker domain mimics M365 / Okta login.</li>
+            <li>Victim clicks → lands on reverse-proxy server (EvilProxy, Modlishka, Evilginx).</li>
+            <li>Reverse proxy fetches the real M365 page, victim enters creds + completes MFA prompt.</li>
+            <li>Real Microsoft returns session cookie → reverse proxy captures + replays it.</li>
+            <li>Attacker imports cookie into their browser → logged in as victim without re-prompting MFA.</li>
+            <li><b>Defenses:</b> phishing-resistant FIDO2 passkeys, certificate-bound auth tokens, Conditional Access requiring compliant device + token-binding, device-bound session cookies (Edge enterprise).</li>
+          </ol>
+
+          <h2>MFA fatigue / push bombing</h2>
+          <ul>
+            <li>Attacker has password; spams MFA push prompts.</li>
+            <li>Victim accidentally taps Approve (or to make alerts stop).</li>
+            <li><b>Defenses:</b> <b>number matching</b> in Microsoft Authenticator (user types code shown in app); push throttling; geo-location context; replace push w/ FIDO2 keys.</li>
+          </ul>
+
+          <h2>SIM swap / port-out fraud</h2>
+          <ul>
+            <li>Attacker impersonates target to carrier; ports number to new SIM.</li>
+            <li>Receives SMS-based MFA codes → drains crypto exchange, bank.</li>
+            <li><b>Defenses:</b> carrier PIN / port-freeze, eliminate SMS MFA for high-value accounts, use authenticator app or FIDO2 keys, alert on SIM change.</li>
+          </ul>
+
+          <h2>Insider threat taxonomy</h2>
+          <ul>
+            <li><b>Malicious insider</b> — disgruntled employee, espionage; deliberate exfiltration / sabotage.</li>
+            <li><b>Negligent insider</b> — careless practices (clicks phish, misconfigures S3, reuses passwords).</li>
+            <li><b>Compromised insider</b> — legit account taken over by external attacker.</li>
+            <li><b>Third-party insider</b> — vendors, MSPs, contractors with privileged access.</li>
+            <li><b>UEBA</b> (User &amp; Entity Behavior Analytics) detects abnormal patterns; <b>DLP</b> catches data movement; least-privilege + JIT minimizes exposure.</li>
+          </ul>
+
+          <h2>Physical social engineering scenarios</h2>
+          <ul>
+            <li><b>Tailgating / piggybacking</b> — slip through badge door behind authorized user.</li>
+            <li><b>Mantrap / access vestibule</b> — two-door airlock that only opens one at a time → defeats tailgating.</li>
+            <li><b>Pretexting on-site</b> — clipboard + hi-viz vest + confidence; janitor or HVAC tech impersonation.</li>
+            <li><b>Lockpicking / shimming</b> — physical pen-testing.</li>
+            <li><b>Cleaning crew / after-hours access</b> abuse.</li>
+            <li><b>USB drop / cable bait</b> — O.MG cable, Hak5 Rubber Ducky, Bash Bunny.</li>
+            <li><b>Hardware implants</b> — keystroke loggers between keyboard + PC, network taps in IDF.</li>
+            <li><b>Bypass anti-passback</b> — coordinate with insider to give credentials.</li>
+            <li><b>Mitigations:</b> mantrap, badge + PIN, biometric, escort policy, USB port lockdown, port security + 802.1X on wired ports, daily visual inspection of high-value rooms.</li>
+          </ul>
+
+          <h2>Open-source intelligence (OSINT) reconnaissance</h2>
+          <ul>
+            <li><b>What:</b> Attacker gathers info from public sources to craft a believable lure.</li>
+            <li><b>Sources:</b> LinkedIn (org chart, tech stack), GitHub (leaked credentials in commits), Twitter/X, Instagram, public records, court filings, SEC EDGAR (10-K mentions vendors), DNS / WHOIS, certificate transparency logs, Shodan / Censys for exposed services.</li>
+            <li><b>Tools:</b> theHarvester, Maltego, SpiderFoot, Recon-ng, Amass, sherlock (username enumeration), Have I Been Pwned, Hunter.io (email format).</li>
+            <li><b>Defenses:</b> employee social-media hygiene, regularly audit your own exposed assets, redact PII from public bios, DLP on outbound code repos, kill default admin accounts visible on Shodan.</li>
+          </ul>
+
+          <h2>Voice + deepfake threats (modern 2024-2025)</h2>
+          <ul>
+            <li><b>Voice cloning</b> — short ~10-second sample enough for usable clone (ElevenLabs, Microsoft VALL-E).</li>
+            <li><b>Deepfake video</b> — Zoom / Teams call with synthetic face + voice. $25M Arup case Hong Kong (Feb 2024).</li>
+            <li><b>Real-time face filters</b> — DeepFaceLive, others used to bypass video KYC.</li>
+            <li><b>Defenses:</b> verification phrases / shared secret known only to caller; out-of-band callback; multi-channel confirmation (Slack + email + voice); challenge-response questions about non-public info; never approve high-value transactions on first call.</li>
+          </ul>
+
+          <h2>Awareness program design (what works)</h2>
+          <ul>
+            <li><b>Short + frequent</b> (5-10 min monthly) &gt; annual long sessions.</li>
+            <li><b>Scenario-based</b> — recent real attacks against your industry.</li>
+            <li><b>Role-tailored</b> — finance differs from engineering differs from execs.</li>
+            <li><b>Phishing simulations</b> with non-punitive coaching for failures.</li>
+            <li><b>Easy reporting</b> — "Report Phish" button in Outlook / Gmail, no penalty for false alarms.</li>
+            <li><b>Metric:</b> click rate ↓, report rate ↑. Don't just measure clicks; measure who reported.</li>
+            <li><b>Top performers</b> recognized; recidivists get extra training, not termination.</li>
+            <li><b>Just-in-time learning</b> — when user does something risky (forwards external mail with attachment), interstitial warning + micro-lesson.</li>
+            <li><b>Phishing-resistant MFA</b> + reduced reliance on user awareness over time.</li>
+          </ul>
+
+          <h2>Verification protocols for sensitive transactions</h2>
+          <ul>
+            <li>Out-of-band callback to a known number from directory — NEVER the number in the request.</li>
+            <li>Dual authorization on wires &gt; threshold; segregation of duties.</li>
+            <li>Time delay (24h "cool down") on bank-account changes.</li>
+            <li>Verify with shared secret unknown to attacker (e.g., last project worked together).</li>
+            <li>Confirm via separate channel (Slack DM if request came by email).</li>
+            <li>Document + log every verification step; auditable.</li>
+            <li>Escalate suspicious requests to security team; reward employees for slowing down.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"CFO email asks AP for urgent wire to new vendor" → likely BEC / whaling; out-of-band verify.</li>
+            <li>"User got 30 MFA push notifications" → MFA fatigue; deny, change password, alert SOC.</li>
+            <li>"USB labeled 'Payroll Q4' on lobby floor" → baiting; do not plug in; report to IT.</li>
+            <li>"Stranger follows badged employee through door" → tailgating; mantrap + culture of challenge.</li>
+            <li>"Caller claims to be from IT, needs password" → vishing; verify through official channels.</li>
+            <li>"QR code in email leading to login page" → quishing; bypasses URL filters; treat all QR codes as untrusted.</li>
+            <li>"After phishing test, click rate didn't drop" → tweak training delivery + add phishing-resistant MFA.</li>
+            <li>"Carrier ported phone number unexpectedly" → SIM swap; freeze account, disable SMS MFA for high-value.</li>
+            <li>"Email chain looks legitimate but bank account changed mid-thread" → mailbox compromise / thread hijack; verify out-of-band.</li>
+            <li>"Strongest single defense against credential phishing" → phishing-resistant FIDO2 hardware key / passkeys.</li>
           </ul>
         `
       },
@@ -2699,6 +5734,154 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
             <li>"Rotates local admin passwords" → LAPS.</li>
             <li>"GPO precedence" → LSDOU (Local → Site → Domain → OU; OU is closest, applied last → wins).</li>
             <li>"Failed logon event ID" → 4625.</li>
+          </ul>
+
+          <h2>NTFS standard vs special permission matrix</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Standard right</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Includes special permissions</th></tr>
+            <tr><td>Full Control</td><td>All — incl. Take Ownership, Change Permissions</td></tr>
+            <tr><td>Modify</td><td>Read + Write + Delete + R&amp;X</td></tr>
+            <tr><td>Read &amp; Execute</td><td>Read + Traverse Folder / Execute File</td></tr>
+            <tr><td>List Folder Contents</td><td>Same as R&amp;X but folder-only inheritance</td></tr>
+            <tr><td>Read</td><td>Read Data, Read Attributes, Read Extended Attributes, Read Permissions</td></tr>
+            <tr><td>Write</td><td>Create Files / Write Data, Create Folders / Append, Write Attributes</td></tr>
+          </table>
+          <p><b>Inheritance</b> default ON; <b>Disable inheritance</b> via Advanced Security → "Convert inherited to explicit" preserves current ACE set as explicit.</p>
+
+          <h2>Account Lockout Policy values to memorize</h2>
+          <ul>
+            <li><b>Account lockout threshold</b> — bad attempts before lockout (typical 5-10).</li>
+            <li><b>Account lockout duration</b> — minutes locked (15 typical; 0 = until admin unlocks).</li>
+            <li><b>Reset account lockout counter after</b> — minutes idle before bad-attempt counter zeros (15 typical).</li>
+            <li><b>Allow Administrator account lockout</b> — Win11 22H2+ default ON (lockout out-of-the-box).</li>
+            <li>Modern: <b>Account Lockout for Admins</b> mitigates brute force on local admin.</li>
+            <li><b>CIS L1</b> recommends 5 / 15 / 15.</li>
+          </ul>
+
+          <h2>Password Policy + NIST 800-63B 2024 guidance</h2>
+          <ul>
+            <li><b>Length</b> — 8 char minimum, 14+ recommended; passwords up to 64 char allowed; spaces/Unicode OK.</li>
+            <li><b>Complexity</b> — NIST no longer requires special-char rules; instead enforce <b>breached-password check</b> against HaveIBeenPwned / vendor breach lists.</li>
+            <li><b>Don't force periodic rotation</b> unless evidence of compromise — leads to weaker mutations.</li>
+            <li><b>Don't allow common passwords</b> (Password1!) — block top-100k list.</li>
+            <li><b>Forbidden context-related</b> — username, name, date-of-birth.</li>
+            <li><b>Length over complexity</b>: 16-char passphrase &gt; 8-char gibberish.</li>
+            <li><b>Storage</b> — bcrypt / scrypt / Argon2id with per-user salt; never MD5/SHA-1/no-salt.</li>
+            <li><b>Microsoft</b>: Entra Password Protection blocks weak + custom-banned-list passwords forest-wide.</li>
+          </ul>
+
+          <h2>Smart card + certificate-based auth</h2>
+          <ul>
+            <li><b>Smart cards</b> hold X.509 cert + private key; insert into reader, enter PIN.</li>
+            <li><b>CAC / PIV</b> — DoD / federal civilian smart cards.</li>
+            <li><b>Virtual smart card (VSC)</b> — TPM-backed software equivalent.</li>
+            <li><b>YubiKey 5 / Titan / Feitian</b> — FIDO2 + smart card + OTP combos.</li>
+            <li><b>Use case:</b> 2nd factor; cert auth to RDP, VPN, web apps.</li>
+            <li><b>Windows config:</b> Group Policy → Enable smart-card logon required; map to user via altSecurityIdentities.</li>
+          </ul>
+
+          <h2>BitLocker management tasks (CLI cheat)</h2>
+          <pre><code>manage-bde -status                       # show all volume states
+manage-bde -on C: -recoverypassword      # encrypt + generate recovery key
+manage-bde -protectors -get C:           # list key protectors
+manage-bde -unlock D: -recoverypassword 123456-...
+manage-bde -pause C: / -resume C:
+manage-bde -off C:                       # decrypt
+
+# PowerShell
+Get-BitLockerVolume
+Enable-BitLocker -MountPoint C: -EncryptionMethod XtsAes256 -UsedSpaceOnly -TpmProtector
+Add-BitLockerKeyProtector -MountPoint C: -RecoveryPasswordProtector
+Suspend-BitLocker -MountPoint C: -RebootCount 1     # suspend for BIOS update
+BackupToAAD-BitLockerKeyProtector -MountPoint C: -KeyProtectorId &lt;ID&gt;</code></pre>
+
+          <h2>Windows Defender Firewall — advanced</h2>
+          <ul>
+            <li><b>Three profiles:</b> Domain, Private, Public — automatically selected by network location awareness.</li>
+            <li><b>Default actions:</b> block inbound, allow outbound (Win11).</li>
+            <li><b>Rule types:</b> Inbound, Outbound, Connection Security (IPsec).</li>
+            <li><b>Rule criteria:</b> program path, service, protocol+port, scope IP, profile, user/group.</li>
+            <li><b>Connection Security Rules</b> — IPsec policies; isolate domain hosts; tunnel between gateways.</li>
+            <li><b>CLI:</b> <code>netsh advfirewall</code> family; modern PS <code>New-NetFirewallRule -DisplayName 'X' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080</code>.</li>
+            <li><b>Diagnostic:</b> <code>Get-NetFirewallRule -DisplayName 'X' | Get-NetFirewallPortFilter</code>.</li>
+            <li><b>Audit firewall events:</b> Filtering Platform Connection (5156) + Failure (5152) events.</li>
+          </ul>
+
+          <h2>Attack Surface Reduction (ASR) rules — Defender for Endpoint</h2>
+          <ul>
+            <li>Block Office apps from creating child processes.</li>
+            <li>Block executable content from email + webmail.</li>
+            <li>Block JavaScript / VBScript from launching downloaded content.</li>
+            <li>Block Office macros from making Win32 API calls.</li>
+            <li>Block Adobe Reader from creating child processes.</li>
+            <li>Block credential stealing from LSASS subsystem.</li>
+            <li>Block process creations from PSExec + WMI commands.</li>
+            <li>Block untrusted + unsigned processes from USB.</li>
+            <li><b>Audit mode</b> first; promote to Block once verified no business impact.</li>
+            <li>Configure via Intune, Defender portal, GPO, PowerShell.</li>
+          </ul>
+
+          <h2>Windows Hello + passkeys (modern auth)</h2>
+          <ul>
+            <li><b>Windows Hello</b> — biometric / PIN backed by TPM. PIN is device-bound, never leaves; biometric template stored in secure enclave.</li>
+            <li><b>Windows Hello for Business (WHfB)</b> — replaces password completely for corp identities; uses Entra ID + cert / key trust.</li>
+            <li><b>Passkeys</b> — FIDO2 credentials synced via cloud (iCloud, Google, Microsoft account) or hardware-bound (YubiKey).</li>
+            <li><b>FIDO2 + WebAuthn</b> — phishing-resistant by design (origin-bound).</li>
+            <li><b>Pluton</b> — Microsoft's CPU-integrated TPM successor, found in new AMD/Intel/Qualcomm chips.</li>
+            <li><b>Resident keys / discoverable credentials</b> stored in authenticator memory.</li>
+          </ul>
+
+          <h2>Conditional Access scenarios (Entra ID)</h2>
+          <ul>
+            <li><b>Require MFA</b> when sign-in risk = medium/high (Identity Protection).</li>
+            <li><b>Block legacy auth</b> (POP/IMAP/SMTP basic).</li>
+            <li><b>Require compliant device</b> (Intune-managed).</li>
+            <li><b>Require hybrid Entra-joined device</b> for admins.</li>
+            <li><b>Sign-in frequency</b> — re-authenticate every 4h for privileged roles.</li>
+            <li><b>Geo-block</b> non-business countries.</li>
+            <li><b>Block downloads to unmanaged devices</b> (M365 App Protection).</li>
+            <li><b>Require terms of use</b> for guests.</li>
+          </ul>
+
+          <h2>Privileged access workstation (PAW)</h2>
+          <ul>
+            <li>Dedicated workstation used ONLY for admin tasks (no browsing, email, productivity apps).</li>
+            <li>Locked down via Microsoft Security Baseline + ASR + Credential Guard + AppLocker.</li>
+            <li>Network-isolated from corp data flows.</li>
+            <li>Logs forwarded directly to SIEM.</li>
+            <li>Used in tiered admin model: <b>Tier 0</b> (DCs, AD, key infra), <b>Tier 1</b> (servers, apps), <b>Tier 2</b> (workstations, end-user). Each tier has its own PAW.</li>
+          </ul>
+
+          <h2>Local Security Authority (LSA) protection</h2>
+          <ul>
+            <li><b>LSA</b> (lsass.exe) — handles credential validation, holds NT hashes + Kerberos tickets in memory.</li>
+            <li><b>LSA Protection (RunAsPPL)</b> — runs LSASS as PPL (Protected Process Light); denies code injection / memory read.</li>
+            <li><b>Credential Guard</b> moves LSA secrets into isolated VBS process (LsaIso.exe).</li>
+            <li>Enable via registry <code>HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\RunAsPPL = 1</code> or Group Policy.</li>
+            <li>Mitigates Mimikatz <code>sekurlsa::logonpasswords</code>.</li>
+          </ul>
+
+          <h2>Common Windows hardening checklists you'll see referenced</h2>
+          <ul>
+            <li><b>CIS Benchmarks</b> — most-cited; Level 1 (basic) and Level 2 (high-security).</li>
+            <li><b>STIG</b> (Security Technical Implementation Guide) — DoD config baseline; very strict.</li>
+            <li><b>Microsoft Security Baselines</b> — Security Compliance Toolkit (SCT); ADMX + Policy Analyzer.</li>
+            <li><b>ASD Essential Eight</b> (Australian); <b>NCSC 14 Cloud Principles</b> (UK).</li>
+            <li><b>NIST 800-171 + 800-53</b> — federal control frameworks.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"BitLocker recovery key location" → Entra ID / AD / Microsoft account / printed file.</li>
+            <li>"Effective NTFS+share permissions" → most restrictive of both.</li>
+            <li>"Failed logon event ID" → 4625.</li>
+            <li>"Run binaries only if approved" → AppLocker (Enterprise) / WDAC.</li>
+            <li>"Block Mimikatz credential dumping" → Credential Guard / LSA Protection.</li>
+            <li>"Open untrusted Office docs in container" → Application Guard.</li>
+            <li>"Anti-ransomware folder protection" → Controlled Folder Access.</li>
+            <li>"Stop user disabling AV" → Tamper Protection.</li>
+            <li>"Rotate local admin password automatically" → LAPS.</li>
+            <li>"Phishing-resistant Windows sign-in" → Windows Hello / FIDO2 / Passkey.</li>
           </ul>
         `
       },
@@ -2885,6 +6068,163 @@ rsync -av src/ user@host:/dst/    # smart sync</code></pre>
             <li>"BYOD privacy concern" → use MAM / work profile / containerization, not full MDM wipe.</li>
             <li>"Strongest mobile auth factor" → FIDO2 / passkey or hardware-backed biometric (Face ID, Touch ID) + passcode.</li>
             <li>"Threat where attacker steals SMS OTPs by porting your number" → SIM swap.</li>
+          </ul>
+
+          <h2>iOS security architecture (memorize layers)</h2>
+          <ul>
+            <li><b>Secure Boot Chain</b> — Boot ROM (immutable) → LLB (Low-Level Bootloader) → iBoot → kernel; each verifies next signature with Apple Root CA.</li>
+            <li><b>Secure Enclave Processor (SEP)</b> — separate ARM chip; stores Touch ID/Face ID templates, Apple Pay keys, BitLocker-equivalent disk keys; never visible to main CPU.</li>
+            <li><b>System Coprocessor</b> — Apple T2 (Intel Macs) / Apple Silicon SoC integrates SEP.</li>
+            <li><b>App Sandbox</b> — each app gets isolated container at <code>/var/mobile/Containers/Data/Application/&lt;UUID&gt;</code>; cannot read others without entitlement.</li>
+            <li><b>Code signing + Notarization</b> — every executable must be signed by Apple-trusted cert; sideloaded apps re-sign every 7 days (unless paid dev account).</li>
+            <li><b>Pointer Authentication Codes (PAC)</b> on Apple Silicon — defeats ROP/JOP exploits.</li>
+            <li><b>Memory Tagging Extension (MTE)</b> — A17 Pro+ adds tag bits to detect use-after-free.</li>
+            <li><b>Pluton-style isolation</b> via SEP keys never exported.</li>
+            <li><b>Data Protection Classes</b>: NSFileProtectionComplete (unlocks at unlock), NSFileProtectionCompleteUnlessOpen, NSFileProtectionCompleteUntilFirstUserAuthentication, None.</li>
+          </ul>
+
+          <h2>iOS Lockdown Mode (high-risk users)</h2>
+          <ul>
+            <li>Strips functionality to reduce attack surface — disables most attachment types in Messages, blocks FaceTime from unknown callers, removes shared photo albums, restricts JIT JS in WebKit, blocks unknown configuration profiles + MDM enrollment, USB accessory connections require unlock.</li>
+            <li>Toggle: Settings → Privacy &amp; Security → Lockdown Mode.</li>
+            <li>Recommended for journalists, activists, executives, government officials.</li>
+            <li>Compatible with Apple's Mercenary Spyware notification program.</li>
+          </ul>
+
+          <h2>Android security architecture</h2>
+          <ul>
+            <li><b>Verified Boot 2.0</b> — bootloader checks every partition; "Yellow / Orange / Red" states indicate verification status.</li>
+            <li><b>SELinux Enforcing mode</b> on every Android since 5.0 (Lollipop).</li>
+            <li><b>Trusty TEE / TrustZone</b> — ARM TrustZone secure world for keystore, biometric matching.</li>
+            <li><b>StrongBox Keymaster</b> — tamper-resistant chip (Pixel 3+, Samsung S20+).</li>
+            <li><b>Verified Apps</b> — Google Play Protect scans installed apps daily.</li>
+            <li><b>Hardware-backed Keystore</b> — keys never leave SE / TEE.</li>
+            <li><b>Scoped Storage</b> (Android 10+) — apps can't see other apps' files outside their sandbox.</li>
+            <li><b>App permissions</b>: install-time (manifest) + runtime (user prompt) + one-time permissions (Android 11+).</li>
+            <li><b>Background location</b> requires explicit grant + visible reminder.</li>
+            <li><b>Private Compute Core</b> (Pixel) — on-device AI never sends data off-device.</li>
+          </ul>
+
+          <h2>Android Work Profile + Enterprise modes</h2>
+          <ul>
+            <li><b>Work Profile</b> (BYOD) — fully isolated container; corp data wipe removes only work side.</li>
+            <li><b>Fully Managed</b> (corp-owned) — entire device under MDM.</li>
+            <li><b>Fully Managed with Work Profile</b> — corp + isolated personal area.</li>
+            <li><b>Dedicated Device (COBO / kiosk)</b> — single-purpose lockdown.</li>
+            <li>Samsung Knox augments these with hardware-isolated container.</li>
+          </ul>
+
+          <h2>iOS Supervision + Configuration Profiles</h2>
+          <ul>
+            <li><b>Supervised mode</b> — set via Apple Configurator at first activation or ABM auto-enroll; unlocks restrictions (silent app install, lock to single app, restrict App Store, force Wi-Fi profile).</li>
+            <li><b>Configuration profile</b> — XML / mobileconfig delivering Wi-Fi, VPN, mail, cert, restrictions.</li>
+            <li><b>MDM commands</b> — Lock, Erase, Clear Passcode, Install Profile, Install App, Lost Mode.</li>
+            <li><b>User Enrollment</b> (BYOD) — limited MDM commands; managed Apple ID separates from personal.</li>
+            <li><b>Account-Driven User Enrollment</b> (iOS 15+) — no profile needed; tied to managed Apple ID.</li>
+            <li><b>Web Push Notifications</b> require entitlement.</li>
+          </ul>
+
+          <h2>Mobile threat detection (MTD) stack</h2>
+          <ul>
+            <li><b>Lookout, Zimperium, Wandera, Microsoft Defender for Endpoint Mobile, Check Point Harmony Mobile</b> — leading MTD vendors.</li>
+            <li>Detect: malicious apps, OS exploits, jailbreak/root, network MITM, phishing URLs, configuration drift.</li>
+            <li>Integrate with MDM/EMM for automatic conditional access / quarantine.</li>
+            <li>Use OS-level APIs (NetworkExtension for VPN on-demand on iOS; VpnService on Android) for real-time URL filtering.</li>
+          </ul>
+
+          <h2>App vetting + supply chain</h2>
+          <ul>
+            <li><b>App Store review</b> — Apple manual + automated review; not perfect (Pegasus zero-click reached devices via iMessage, not store).</li>
+            <li><b>Google Play Protect</b> — automated scans; reactive to threats.</li>
+            <li><b>Sideloading</b> — Android allows after warning; iOS only via TestFlight / Enterprise Cert / EU sideload (EU DMA 2024).</li>
+            <li><b>Enterprise Distribution</b> — Apple Developer Enterprise Program (ADEP) for in-house apps; Google managed Play.</li>
+            <li><b>SBOM</b> (Software Bill of Materials) — increasingly required for mobile apps; identify vulnerable libraries.</li>
+            <li><b>AppScan / MobSF / Veracode</b> — static + dynamic mobile app testing.</li>
+          </ul>
+
+          <h2>Cryptography on mobile</h2>
+          <ul>
+            <li><b>iOS Data Protection</b> — every file encrypted with class key derived from device UID + passcode; unlock decrypts class keys.</li>
+            <li><b>File Vault (macOS) on Apple Silicon</b> — uses SEP-backed keys; volume encryption always-on; FileVault adds passphrase requirement.</li>
+            <li><b>Android File-Based Encryption (FBE)</b> — per-user keys; Device Encrypted (DE) for boot + Credential Encrypted (CE) for user data.</li>
+            <li><b>TLS pinning</b> — apps embed expected cert public-key; defeats MITM via fake CA.</li>
+            <li><b>Certificate Transparency</b> requirement on iOS since 2018 for new certs.</li>
+            <li><b>End-to-end</b> messaging — iMessage Contact Key Verification; Signal Protocol in WhatsApp / Signal; RCS Universal Profile + Signal Protocol (Google Messages).</li>
+          </ul>
+
+          <h2>OS update + EOL timelines</h2>
+          <ul>
+            <li><b>iOS</b> — typically 5-7 years OS updates for iPhone (iPhone 8 = iOS 16 last; iPhone XR/XS = iOS 17/18).</li>
+            <li><b>Android</b> — Pixel 8/9 promise 7 years OS + security; Samsung Galaxy S24+ same; older devices 2-3 years typical.</li>
+            <li><b>Security Patch Level (SPL)</b> on Android — Settings → About; should be &lt; 3 months old.</li>
+            <li><b>EOL devices</b> = retire from corp use; cannot apply mitigations.</li>
+            <li>MDM compliance policy: block enrollment if OS &lt; minimum supported version.</li>
+          </ul>
+
+          <h2>Mobile-specific attacks (recognize each)</h2>
+          <ul>
+            <li><b>Jailbreak / root</b> — removes OS sandbox; allows unsigned code, low-level access.</li>
+            <li><b>Tethered vs untethered jailbreak</b> — tethered requires PC reconnect each reboot.</li>
+            <li><b>Mobile RATs / spyware</b> — Cerberus, Anubis, BRATA, Joker; Pegasus / Predator / Reign (commercial).</li>
+            <li><b>Smishing</b> — SMS phishing; FluBot, MoqHao.</li>
+            <li><b>WhatsApp + Telegram phishing</b> — fake support, OTP theft, contact-list scraping.</li>
+            <li><b>iMessage zero-click</b> — Operation Triangulation 2023.</li>
+            <li><b>OTP interceptor apps</b> — banking trojans request SMS read permission.</li>
+            <li><b>Fake banking apps</b> — Play Store impostors with logo copy.</li>
+            <li><b>QR code phishing (quishing)</b> — parking meters, restaurant tables.</li>
+            <li><b>Juice jacking</b> — malicious USB charging stations install spyware. <b>Defense:</b> use USB power-only "data block" adapter or your own charger.</li>
+            <li><b>Evil maid + cold-boot</b> — physical access to extract keys before lock; modern SE chips make harder but high-end forensics tools (Cellebrite, Grayshift) still extract from older devices.</li>
+            <li><b>Frequency hijacking</b> on car keys / NFC payments — RFID skimming.</li>
+          </ul>
+
+          <h2>Forensic acquisition + chain of custody</h2>
+          <ul>
+            <li><b>Logical extraction</b> — backup-based; needs unlocked device.</li>
+            <li><b>File system extraction</b> — exploits + jailbreak to get more.</li>
+            <li><b>Physical extraction</b> — bit-for-bit image; requires advanced tools (Cellebrite UFED, Grayshift GrayKey, MSAB XRY).</li>
+            <li><b>Modern iOS / Pixel</b> — Secure Enclave + Data Protection make extraction without passcode very hard.</li>
+            <li><b>Faraday bag</b> + airplane mode + battery preserved during transport to prevent remote wipe.</li>
+            <li><b>Chain of custody documentation</b> — date/time, custodian transfers, hash of acquired image, tool versions.</li>
+            <li><b>Mobile-specific OS forensic artifacts</b>: KnowledgeC.db (iOS), Notifications, Call History, iMessage, photo metadata; Android databases at <code>/data/data/&lt;app&gt;</code>.</li>
+            <li><b>Cloud iCloud / Google Takeout</b> — alternative when device locked.</li>
+          </ul>
+
+          <h2>Privacy + regulatory compliance angles</h2>
+          <ul>
+            <li><b>GDPR Art. 32</b> — appropriate technical measures including encryption + access control.</li>
+            <li><b>HIPAA Security Rule</b> — encrypt mobile PHI at rest + in transit.</li>
+            <li><b>PCI-DSS</b> — mobile POS must follow tokenization + EMV requirements.</li>
+            <li><b>CCPA / CPRA</b> — California privacy; users can opt out of data sale.</li>
+            <li><b>FTC + Apple privacy nutrition labels</b> — app must disclose data collected.</li>
+            <li><b>App Tracking Transparency (ATT)</b> on iOS — user explicit opt-in to IDFA tracking.</li>
+            <li><b>Privacy Sandbox</b> on Android (Google) — replacing Advertising ID with per-app topics.</li>
+            <li><b>Cross-border data residency</b> — many countries require user data stay in-country.</li>
+          </ul>
+
+          <h2>Mobile incident-response playbook</h2>
+          <ol>
+            <li>Identify suspicious behavior (battery drain, data egress, new apps).</li>
+            <li>Isolate device — airplane mode + Faraday bag if forensics needed.</li>
+            <li>Collect evidence — MDM logs, MTD alerts, mobile backup if available.</li>
+            <li>Contain — remote lock, wipe corp profile, revoke OAuth tokens, rotate passwords.</li>
+            <li>Eradicate — factory reset; restore from clean backup pre-compromise.</li>
+            <li>Recover — re-enroll in MDM with new credentials, verify compliance.</li>
+            <li>Educate user + update detection rules.</li>
+            <li>Report to legal / compliance per regulatory timeline.</li>
+          </ol>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Highest-risk users on iOS need maximum protection" → Lockdown Mode + latest iOS.</li>
+            <li>"BYOD wipe should remove only corp data" → Work Profile (Android) or User Enrollment (iOS) + selective wipe.</li>
+            <li>"Stop sideloaded apps on Android" → MDM device policy disabling Unknown Sources / Install Unknown Apps.</li>
+            <li>"App reads SMS for OTP" → review app permissions; revoke or uninstall; report.</li>
+            <li>"Public charging station compromises phone" → juice jacking; use USB data-blocker / power bank.</li>
+            <li>"SIM swap risk" → carrier PIN + remove SMS-based MFA, prefer app/FIDO.</li>
+            <li>"Forensic image of locked iPhone" → Cellebrite / Grayshift; modern devices resistant w/o passcode.</li>
+            <li>"Encrypted iMessage account-wide" → enable Advanced Data Protection (iOS 16.2+).</li>
+            <li>"Patch immediately when security update drops" → MDM compliance forces install within X days.</li>
+            <li>"Lost phone, prevent reactivation" → Activation Lock / FRP keep tied to original account.</li>
           </ul>
         `
       },
@@ -3078,6 +6418,217 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>"Roll back system files + registry" → System Restore.</li>
             <li>"Repair Windows component store" → DISM /RestoreHealth + sfc /scannow.</li>
             <li>Get to WinRE → Settings → Recovery → Advanced startup, OR Shift+Restart, OR three failed boots.</li>
+          </ul>
+
+          <h2>UEFI boot partitions (memorize layout)</h2>
+          <ul>
+            <li><b>ESP</b> (EFI System Partition) — FAT32, ~100–500 MB, mounted as drive S: in WinRE. Path <code>\\EFI\\Microsoft\\Boot\\bootmgfw.efi</code>.</li>
+            <li><b>MSR</b> (Microsoft Reserved Partition) — 16-128 MB, no FS; reserved for future Windows use.</li>
+            <li><b>WinRE partition</b> — ~500 MB, NTFS, holds <code>Winre.wim</code>. Hidden attribute set.</li>
+            <li><b>OS partition (C:)</b> — Windows install.</li>
+            <li><b>Recovery image partition</b> (OEM) — optional factory-reset image.</li>
+            <li>View with <code>diskpart → list partition</code> or PowerShell <code>Get-Partition</code>.</li>
+          </ul>
+
+          <h2>UEFI Secure Boot + chain of trust</h2>
+          <ul>
+            <li><b>Platform Key (PK)</b> — top of trust; OEM-installed.</li>
+            <li><b>KEK</b> (Key Exchange Keys) — authorize updates to db/dbx.</li>
+            <li><b>db</b> — allowed signatures + certs.</li>
+            <li><b>dbx</b> — revoked / forbidden binaries (revoked Linux loaders, vulnerable shim builds).</li>
+            <li><b>Microsoft UEFI CA</b> — signs Windows bootloader + most Linux <code>shim.efi</code>.</li>
+            <li>Disable Secure Boot in UEFI for legacy / unsigned dev work; required for Win11.</li>
+            <li><b>Measured boot</b> + TPM PCR registers — TPM measures each stage; remote attestation can verify integrity.</li>
+          </ul>
+
+          <h2>BCD edit common commands</h2>
+          <pre><code>bcdedit /enum                         # list all entries
+bcdedit /enum all                     # incl. Windows Boot Loader entries
+
+# Friendly description
+bcdedit /set {current} description "Windows 11 Recovery"
+
+# Default OS
+bcdedit /default {GUID}
+
+# Timeout
+bcdedit /timeout 5
+
+# Safe Mode next boot
+bcdedit /set {current} safeboot minimal
+bcdedit /set {current} safeboot network
+bcdedit /deletevalue {current} safeboot      # exit safe mode after fix
+
+# Force boot debug
+bcdedit /debug {current} on
+bcdedit /dbgsettings serial debugport:1 baudrate:115200
+
+# Disable driver signature enforcement (one boot)
+bcdedit /set nointegritychecks on
+bcdedit /set testsigning on
+
+# Restore default BCD
+bootrec /rebuildbcd</code></pre>
+
+          <h2>Common boot errors + fix</h2>
+          <ul>
+            <li><b>"Bootmgr is missing"</b> → <code>bootrec /fixmbr /fixboot /rebuildbcd</code> (legacy BIOS); <code>bcdboot C:\\Windows /s S: /f UEFI</code> (UEFI).</li>
+            <li><b>"Inaccessible boot device"</b> (0x7B) → wrong AHCI/RAID mode in BIOS, missing storage driver, or disk corruption. Boot to WinRE, set correct SATA mode, run <code>chkdsk /f C:</code>.</li>
+            <li><b>"Critical process died"</b> (0xEF) → corrupted system file or registry; SFC + DISM, then System Restore.</li>
+            <li><b>"NTLDR is missing"</b> → very old (XP); rare today.</li>
+            <li><b>BSOD 0x0000007B</b> → boot device unreadable.</li>
+            <li><b>BSOD 0x000000F4</b> → boot process terminated unexpectedly.</li>
+            <li><b>Boot loop with brief BSOD</b> → disable auto-restart in WinRE → Startup Settings to read STOP code.</li>
+            <li><b>"Operating System not found"</b> → boot order wrong, drive failed, BCD corrupted.</li>
+            <li><b>UEFI "Secure Boot Violation"</b> → boot loader was modified or unsigned; disable Secure Boot temporarily or restore signed loader.</li>
+            <li><b>BitLocker recovery prompt</b> at boot → TPM measurements changed (BIOS update, hardware swap, secure boot toggle). Enter 48-digit recovery key; then suspend BitLocker before making the change.</li>
+            <li><b>"Your PC ran into a problem and needs to restart"</b> generic → look at minidump in <code>C:\\Windows\\Minidump\\</code> with WinDbg / BlueScreenView.</li>
+          </ul>
+
+          <h2>Windows Recovery Environment (WinRE) deep-dive</h2>
+          <ul>
+            <li>Lives on its own partition (Recovery, ~500 MB).</li>
+            <li><b>Auto-launches</b> after 2 consecutive failed boots; press F11/F8 at OEM splash; Shift+Restart from logon.</li>
+            <li><b>Troubleshoot → Advanced options:</b>
+              <ul>
+                <li><b>Startup Repair</b> — automated; analyzes boot logs, fixes BCD/MBR.</li>
+                <li><b>Startup Settings</b> — F1-F9 menu; Safe Mode F4/F5/F6.</li>
+                <li><b>Command Prompt</b> — manual repair shell.</li>
+                <li><b>Uninstall Updates</b> — back out recent quality / feature update.</li>
+                <li><b>UEFI Firmware Settings</b> — boot into UEFI from here.</li>
+                <li><b>System Restore</b> — registry + system files rollback.</li>
+                <li><b>System Image Recovery</b> — restore from Backup &amp; Restore image.</li>
+                <li><b>Go back to previous version</b> — within 10 days of upgrade.</li>
+                <li><b>Reset this PC</b> — Keep files / Remove everything.</li>
+              </ul>
+            </li>
+            <li><b>reagentc /info</b> — check WinRE status. <code>/enable</code> + <code>/disable</code>.</li>
+            <li><b>BitLocker</b> users prompted for recovery key before WinRE unlocks.</li>
+          </ul>
+
+          <h2>Safe Mode variants (memorize keys)</h2>
+          <ul>
+            <li><b>F4 / Option 4</b> — Safe Mode (minimal drivers).</li>
+            <li><b>F5 / Option 5</b> — Safe Mode with Networking.</li>
+            <li><b>F6 / Option 6</b> — Safe Mode with Command Prompt.</li>
+            <li><b>F7</b> — Disable driver signature enforcement (next boot only).</li>
+            <li><b>F8</b> — Disable early-launch anti-malware.</li>
+            <li><b>F9</b> — Disable automatic restart on system failure (so you can read BSOD code).</li>
+            <li>Toggle via <code>msconfig → Boot → Safe Boot</code> if running Windows; uncheck before regular reboot.</li>
+          </ul>
+
+          <h2>System Restore vs File History vs Backup &amp; Restore</h2>
+          <ul>
+            <li><b>System Restore</b> — VSS snapshot of system files, registry, drivers. Does NOT include personal files. Disabled by default on Win 11; enable per drive.</li>
+            <li><b>File History</b> — periodic versioned copies of Libraries + Desktop + Contacts; to external drive / network share.</li>
+            <li><b>Backup &amp; Restore (Win7 legacy)</b> — image-based + file-level; still in Win 11 Control Panel.</li>
+            <li><b>Storage Sense</b> — auto-cleanup of temp / Recycle Bin / Downloads.</li>
+            <li><b>OneDrive Folder Backup</b> — modern: Desktop/Docs/Pictures sync to OneDrive automatically.</li>
+            <li><b>Restore Point types:</b> System (manual), App install, Update install, Auto-checkpoint, Manual.</li>
+            <li><b>VSS</b> — Volume Shadow Copy Service; underpins System Restore + Backup; <code>vssadmin list shadows</code>.</li>
+          </ul>
+
+          <h2>Volume Shadow Copy (VSS) admin</h2>
+          <pre><code>vssadmin list shadows                 # list snapshots
+vssadmin list writers                 # check writer health
+vssadmin list providers
+vssadmin resize shadowstorage /for=C: /on=C: /maxsize=10GB
+vssadmin delete shadows /for=C: /oldest     # free space
+
+# Previous Versions — right-click file → Restore previous versions (uses VSS)</code></pre>
+
+          <h2>Driver troubleshooting</h2>
+          <ul>
+            <li><b>Device Manager</b> (<code>devmgmt.msc</code>) — yellow ⚠ = problem code; right-click → Properties → Driver tab.</li>
+            <li><b>Roll back driver</b> if recent driver broke device.</li>
+            <li><b>Update driver</b> — Search automatically / Browse my computer (point at folder w/ .inf).</li>
+            <li><b>Uninstall device</b> + checkbox "Delete the driver software" — full removal; reboot, Windows redetects.</li>
+            <li><b>Driver Verifier</b> (<code>verifier.exe</code>) — stresses drivers to surface bugs; creates BSOD with offending driver name. <b>Run only briefly</b>; can make PC unbootable.</li>
+            <li><b>Plug and Play</b> events in Event Viewer → Microsoft → Windows → Kernel-PnP.</li>
+            <li><b>DRT</b> (Driver Reverse Toolkit) / <b>Display Driver Uninstaller (DDU)</b> — clean GPU driver in Safe Mode.</li>
+            <li><b>WDM / WDF</b> — Windows Driver Model / Framework (kernel + user-mode driver frameworks).</li>
+            <li><b>Signed drivers only</b> on 64-bit Windows (test-signing requires special boot mode).</li>
+          </ul>
+
+          <h2>Power-related troubleshooting</h2>
+          <ul>
+            <li><b>Sleep / Hibernate / Hybrid</b> issues — <code>powercfg /requests</code> shows wake locks; <code>powercfg /lastwake</code>; <code>powercfg /devicequery wake_armed</code>; disable mouse / NIC wake if waking unexpectedly.</li>
+            <li><b>Fast Startup</b> — uses hibernation file; can hide updates needing reboot; disable with <code>powercfg /h off</code> for clean shutdowns.</li>
+            <li><b>"Modern Standby" (S0ix)</b> on laptops — replaces S3; allows background tasks; battery drain if drivers misbehave.</li>
+            <li><b>Battery report</b>: <code>powercfg /batteryreport</code> generates HTML in current dir.</li>
+            <li><b>Sleep study</b>: <code>powercfg /sleepstudy</code>.</li>
+            <li><b>EnergyEstimation</b>: <code>powercfg /energy</code> — 1-minute scan + report.</li>
+          </ul>
+
+          <h2>Memory diagnostics</h2>
+          <ul>
+            <li><b>Windows Memory Diagnostic</b> (<code>mdsched.exe</code>) — boots into mini-environment to test RAM. Basic.</li>
+            <li><b>MemTest86</b> — bootable USB; deeper test. Run 4+ passes overnight.</li>
+            <li><b>HCI MemTest / Karhu / TestMem5</b> — Windows-app stability testing for XMP-tuned RAM.</li>
+            <li><b>WHEA-Logger</b> events in Event Viewer → System log — corrected/uncorrected memory errors.</li>
+            <li><b>WHEA_UNCORRECTABLE_ERROR</b> BSOD → physical hardware fault; usually RAM / CPU / PSU.</li>
+          </ul>
+
+          <h2>Common BSOD STOP codes (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Code</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Meaning</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Common cause</th></tr>
+            <tr><td>0x0000007B</td><td>INACCESSIBLE_BOOT_DEVICE</td><td>SATA mode change, missing driver, disk fail</td></tr>
+            <tr><td>0x000000F4</td><td>CRITICAL_OBJECT_TERMINATION</td><td>Critical user-mode process died</td></tr>
+            <tr><td>0x00000050</td><td>PAGE_FAULT_IN_NONPAGED_AREA</td><td>Bad RAM or buggy driver</td></tr>
+            <tr><td>0x0000003B</td><td>SYSTEM_SERVICE_EXCEPTION</td><td>Driver / service crash</td></tr>
+            <tr><td>0x00000124</td><td>WHEA_UNCORRECTABLE_ERROR</td><td>Hardware fault</td></tr>
+            <tr><td>0x000000D1</td><td>DRIVER_IRQL_NOT_LESS_OR_EQUAL</td><td>Driver bug</td></tr>
+            <tr><td>0x000000EF</td><td>CRITICAL_PROCESS_DIED</td><td>System process terminated</td></tr>
+            <tr><td>0x0000009F</td><td>DRIVER_POWER_STATE_FAILURE</td><td>Driver mishandling power transition</td></tr>
+            <tr><td>0x00000139</td><td>KERNEL_SECURITY_CHECK_FAILURE</td><td>Kernel-mode stack corruption</td></tr>
+            <tr><td>0xC000021A</td><td>FATAL_SYSTEM_ERROR</td><td>winlogon/csrss crash</td></tr>
+          </table>
+
+          <h2>Memory dump types + sizing</h2>
+          <ul>
+            <li><b>Small (Mini) Dump</b> — 256 KB; STOP code + stack; <code>C:\\Windows\\Minidump\\</code>.</li>
+            <li><b>Kernel Dump</b> — kernel + drivers; <code>C:\\Windows\\MEMORY.DMP</code>; ~ size of physical RAM in use.</li>
+            <li><b>Complete Dump</b> — full physical RAM; needs pagefile ≥ RAM + 1 MB.</li>
+            <li><b>Active Memory Dump</b> (Win 10+) — kernel + active user pages; smaller than full.</li>
+            <li>Configure via System Properties → Advanced → Startup &amp; Recovery → Settings.</li>
+            <li><b>Analyze:</b> WinDbg (Microsoft Store), BlueScreenView (NirSoft), Live Kernel Memory Dumps on Windows 11.</li>
+          </ul>
+
+          <h2>Cumulative update + rollback procedure</h2>
+          <ol>
+            <li>WU pushes Patch Tuesday update; restart.</li>
+            <li>If broken, boot to Safe Mode (Shift + Restart) → Troubleshoot → Advanced → <b>Uninstall Updates</b> → Latest quality / feature update.</li>
+            <li>CLI alternative: <code>wusa /uninstall /kb:XXXXXXX</code>.</li>
+            <li>Pause updates 7-35 days while investigating.</li>
+            <li>Pin good driver: Device Manager → Driver tab → Roll Back; or use <b>Show or hide updates</b> tool to block a specific KB.</li>
+            <li>Report bad updates via Feedback Hub; check Windows Health Dashboard for known issues.</li>
+          </ol>
+
+          <h2>Deployment + reinstall paths</h2>
+          <ul>
+            <li><b>Reset this PC → Keep my files</b> — quick reinstall preserving user profiles.</li>
+            <li><b>Reset → Cloud Download</b> — fresh image (no bloat carryover).</li>
+            <li><b>Recovery drive USB</b> — created via <code>RecoveryDrive.exe</code>; bootable; ~16 GB.</li>
+            <li><b>Media Creation Tool</b> — fresh Windows ISO + bootable USB.</li>
+            <li><b>Windows Autopilot</b> — Intune-driven OOBE that joins device to Entra ID + applies policy automatically.</li>
+            <li><b>MDT / SCCM / WSUS</b> — on-prem deployment.</li>
+            <li><b>WIM</b> + <b>DISM /Apply-Image</b> — manual image deployment.</li>
+            <li><b>USMT</b> (User State Migration Tool) — extract/load user profiles + settings during refresh.</li>
+            <li><b>OneDrive Known Folder Move + Enterprise State Roaming</b> + <b>FSLogix</b> — roaming user profiles in cloud/VDI.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Bootmgr missing" → bootrec /fixmbr /fixboot /rebuildbcd (BIOS) or bcdboot (UEFI).</li>
+            <li>"Boot in minimal env with networking for malware cleanup" → Safe Mode with Networking (F5).</li>
+            <li>"After firmware update prompts for BitLocker key" → TPM measurement changed; suspend BitLocker before BIOS updates.</li>
+            <li>"Locked out by UEFI password" → CLR_CMOS jumper / CMOS battery removal (or OEM service if soldered/flash-stored).</li>
+            <li>"Driver caused BSOD" → Safe Mode → Device Manager → Roll Back Driver; or WinRE → Startup Settings → Disable driver signature.</li>
+            <li>"Sysprep an OEM image" → DISM /Capture-Image + sysprep /generalize /oobe /shutdown.</li>
+            <li>"Restore single file from yesterday" → File History or Previous Versions (VSS).</li>
+            <li>"Roll back Tuesday's update" → wusa /uninstall /kb:XXXX or Settings → Update history → Uninstall updates.</li>
+            <li>"Bare-metal recover from system image" → WinRE → System Image Recovery.</li>
+            <li>"Profile follows user across devices" → roaming profile / Enterprise State Roaming / FSLogix.</li>
           </ul>
         `
       },
@@ -3276,6 +6827,174 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>"Backup stored where ransomware cannot touch" → immutable / air-gapped / offline copy.</li>
             <li>"Proof a drive was destroyed" → Certificate of Destruction.</li>
             <li>"E-waste compliance directive" → WEEE (EU) / RCRA (US).</li>
+          </ul>
+
+          <h2>Backup type comparison table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What it copies</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Restore steps</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Backup size</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Backup time</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Archive bit</th></tr>
+            <tr><td>Full</td><td>Everything every time</td><td>1 (full)</td><td>Largest</td><td>Longest</td><td>Cleared</td></tr>
+            <tr><td>Incremental</td><td>Changes since LAST backup</td><td>Full + every incremental in order</td><td>Smallest</td><td>Fastest</td><td>Cleared</td></tr>
+            <tr><td>Differential</td><td>Changes since last FULL</td><td>Full + latest differential only</td><td>Grows over week</td><td>Medium</td><td>NOT cleared</td></tr>
+            <tr><td>Synthetic full</td><td>Server merges full + increments into new full</td><td>1 (synthetic full)</td><td>Same as full</td><td>Done off-client</td><td>n/a</td></tr>
+            <tr><td>Forever Incremental</td><td>Initial full, then only changes; database holds map</td><td>1 (virtual full from any point)</td><td>Smallest</td><td>Fastest</td><td>n/a</td></tr>
+            <tr><td>Snapshot (filesystem/SAN)</td><td>Block pointers at point-in-time</td><td>Mount or revert</td><td>Near-zero initial</td><td>Instant</td><td>n/a</td></tr>
+            <tr><td>Continuous Data Protection (CDP)</td><td>Every write journaled</td><td>Roll back to any second</td><td>Largest journal</td><td>n/a (continuous)</td><td>n/a</td></tr>
+          </table>
+
+          <h2>3-2-1-1-0 modern variant (Veeam, NIST)</h2>
+          <ul>
+            <li><b>3</b> copies of data.</li>
+            <li><b>2</b> different storage types.</li>
+            <li><b>1</b> off-site / off-cloud copy.</li>
+            <li><b>1</b> offline / air-gapped / immutable copy (ransomware-resistant).</li>
+            <li><b>0</b> errors after verification + restore test.</li>
+          </ul>
+          <p>Older 3-2-1 alone is insufficient against ransomware that can encrypt SMB / iSCSI / cloud sync targets.</p>
+
+          <h2>RPO + RTO + MTD relationships</h2>
+          <ul>
+            <li><b>RPO</b> (Recovery Point Objective) — how much data loss is acceptable. Tighter RPO → backups more frequent (e.g., 15-min snapshots, CDP).</li>
+            <li><b>RTO</b> (Recovery Time Objective) — how long to recover. Tighter RTO → hot/warm standby, faster restore tech.</li>
+            <li><b>MTD</b> (Maximum Tolerable Downtime) — absolute ceiling before business impact unacceptable. RTO must be &lt; MTD.</li>
+            <li><b>WRT</b> (Work Recovery Time) — testing + validation time after restore until production-ready. RTO + WRT ≤ MTD.</li>
+            <li><b>MTBF</b> (Mean Time Between Failures), <b>MTTR</b> (Mean Time To Repair / Recovery) — reliability metrics; lower MTTR = better RTO.</li>
+          </ul>
+
+          <h2>Backup storage targets</h2>
+          <ul>
+            <li><b>External USB / eSATA drive</b> — cheap, easy, removable. Good for home / small office.</li>
+            <li><b>NAS</b> — shared file storage on the LAN; vulnerable to ransomware if not isolated.</li>
+            <li><b>Tape (LTO-9 = 18 TB native, 45 TB compressed)</b> — long-term cold archive, air-gapped naturally, slow restore.</li>
+            <li><b>Removable RDX cartridges</b> — rotating offsite SMB backup.</li>
+            <li><b>Cloud object storage (S3, Azure Blob, B2)</b> — durable, off-site by default. Apply Object Lock for immutability.</li>
+            <li><b>Hardened backup appliance</b> (Veeam Hardened Repo, Cohesity DataLock, Rubrik Atlas) — Linux + S3 Object Lock + admin separation.</li>
+            <li><b>Disk-to-Disk-to-Tape (D2D2T)</b> — fast disk staging + cheap tape archive.</li>
+            <li><b>Hot / warm / cold cloud tiers</b> — Hot (instant), Cool (30d retention), Cold (90d), Archive (Glacier 1-12h restore, cheapest).</li>
+          </ul>
+
+          <h2>Cloud backup specifics</h2>
+          <ul>
+            <li><b>Native cloud snapshot</b> — EBS snapshot, Azure Managed Disk snapshot, GCP persistent disk snapshot. Stored cross-AZ; copy to another region for DR.</li>
+            <li><b>Backup-as-a-Service</b>: AWS Backup, Azure Backup, GCP Backup &amp; DR, Veeam Backup for AWS/Azure/GCP.</li>
+            <li><b>SaaS data backup</b> — M365, Google Workspace, Salesforce, Box. Vendors: Veeam Backup for M365, Druva, AvePoint Cloud Backup, OwnBackup.</li>
+            <li><b>Shared-responsibility myth</b> — Microsoft / Google replicate your data for high availability but DO NOT restore deleted items past their short retention window. You own backup.</li>
+            <li><b>Cross-account / cross-tenant copy</b> — defense against rogue admin / ransomware in primary account.</li>
+            <li><b>Immutability</b> — S3 Object Lock (Compliance / Governance mode), Azure Immutable Blob, GCP Bucket Lock.</li>
+            <li><b>Egress cost</b> — biggest hidden line item when restoring from cloud.</li>
+          </ul>
+
+          <h2>Backup integrity verification</h2>
+          <ul>
+            <li><b>Verify after backup</b> — read-back checksums; many products built-in.</li>
+            <li><b>Test restore</b> — actually restore to alt location quarterly. Backups untested = no backup.</li>
+            <li><b>SureBackup (Veeam) / Instant Recovery</b> — boot VM from backup repo to validate.</li>
+            <li><b>Audit logs</b> on backup job success/failure → SIEM.</li>
+            <li><b>Tabletop exercises</b> — walk through DR plan with stakeholders annually.</li>
+            <li><b>Full DR drill</b> — actually fail over to DR site once a year.</li>
+            <li><b>Hash chains</b> — SHA-256 of every backup artifact stored separately; detects tampering.</li>
+          </ul>
+
+          <h2>Encryption + key management for backup</h2>
+          <ul>
+            <li><b>Encrypt in transit</b> — TLS 1.2+ between client + backup target.</li>
+            <li><b>Encrypt at rest</b> — AES-256 backups + AES-256 storage.</li>
+            <li><b>Customer-managed keys (CMK)</b> in KMS (AWS KMS, Azure Key Vault, GCP KMS) so vendor cannot read plaintext.</li>
+            <li><b>BYOK / HYOK</b> — Bring / Hold Your Own Key — strict key custody.</li>
+            <li><b>Key rotation policy</b> — periodic with versioning.</li>
+            <li><b>Recovery key escrow</b> — split-knowledge / M-of-N for disaster recovery.</li>
+            <li><b>Compliance:</b> FIPS 140-2 / 140-3 modules required for government / regulated.</li>
+          </ul>
+
+          <h2>Retention + lifecycle policy</h2>
+          <ul>
+            <li><b>GFS</b> (Grandfather-Father-Son) — Daily → Weekly → Monthly → Yearly retention scheme.</li>
+            <li><b>Examples:</b> 7 daily + 4 weekly + 12 monthly + 7 yearly typical.</li>
+            <li><b>Legal hold</b> — overrides retention during litigation; backups must not auto-delete subject items.</li>
+            <li><b>Retention by regulation:</b> HIPAA 6 yrs, PCI-DSS 1 yr active, SOX 7 yrs, GDPR no maximum but principle of data minimization.</li>
+            <li><b>Lifecycle automation</b> — cloud storage tiering policies move data Hot → Archive automatically; or auto-delete past retention.</li>
+          </ul>
+
+          <h2>NIST SP 800-88 Rev. 1 sanitization deep-dive</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Method</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Clear</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purge</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Destroy</th></tr>
+            <tr><td>Overwrite</td><td>1 pass</td><td>Multiple passes / vendor cmd</td><td>n/a</td></tr>
+            <tr><td>Block erase (SSD)</td><td>n/a</td><td>NVMe Sanitize Block Erase / ATA Security Erase Unit</td><td>n/a</td></tr>
+            <tr><td>Cryptographic erase</td><td>n/a</td><td>Destroy DEK on SED</td><td>n/a</td></tr>
+            <tr><td>Degauss</td><td>n/a</td><td>HDD/tape, not SSD</td><td>n/a</td></tr>
+            <tr><td>Disintegrate / shred / pulverize / incinerate / melt</td><td>n/a</td><td>n/a</td><td>Final stage</td></tr>
+          </table>
+          <p><b>NIST decision flow:</b> Choose method based on confidentiality level + reusability after sanitization + media type.</p>
+
+          <h2>Drive-erasure tool catalog</h2>
+          <ul>
+            <li><b>DBAN</b> (Darik's Boot and Nuke) — legacy, HDD overwrite only. <b>NOT recommended for SSDs.</b></li>
+            <li><b>ShredOS / nwipe</b> — modern DBAN replacement, GPT-aware.</li>
+            <li><b>Blancco Drive Eraser / WhiteCanyon WipeDrive</b> — commercial, NIST 800-88 compliant; certificate generation.</li>
+            <li><b>PartedMagic Erase Disk</b> — supports ATA Secure Erase + NVMe Sanitize.</li>
+            <li><b>Vendor tools:</b> Samsung Magician, Crucial Storage Executive, Intel Memory &amp; Storage Tool, WD Dashboard, Kingston SSD Manager — all expose Secure Erase.</li>
+            <li><b>hdparm --user-master u --security-erase pass /dev/sdX</b> (Linux) — ATA Secure Erase CLI.</li>
+            <li><b>nvme format --ses=1 /dev/nvme0n1</b> (Linux) — user-data erase. <code>--ses=2</code> for cryptographic erase.</li>
+            <li><b>diskpart → clean all</b> (Windows) — single-pass zero overwrite (HDD-only effective).</li>
+            <li><b>cipher /w:C:\\</b> (Windows) — overwrites free space (HDD).</li>
+            <li><b>Veracrypt full-disk + destroy key</b> — encrypts disk + destroy header = inaccessible.</li>
+          </ul>
+
+          <h2>Physical destruction equipment</h2>
+          <ul>
+            <li><b>Industrial HDD shredder</b> — &lt; 2 mm fragments; for high-security drives. Often mobile (truck on-site).</li>
+            <li><b>SSD shredder</b> — finer particle size (≤ 2 mm) required; chip-level destruction.</li>
+            <li><b>Disintegrator</b> — for paper + optical media.</li>
+            <li><b>Drill press / hammer</b> — DIY for small batches; verify all platters / NAND chips damaged.</li>
+            <li><b>Degausser</b> — NSA-approved Level (Level 1 ≥ 5000 oersted for newer drives) for HDDs.</li>
+            <li><b>Incinerator</b> — final tier for top-secret material.</li>
+            <li><b>Crypto erase</b> followed by shred — defense in depth.</li>
+          </ul>
+
+          <h2>Mobile device disposal</h2>
+          <ul>
+            <li><b>Factory reset</b> on modern iOS / Android destroys the device-bound encryption key → existing data unreadable.</li>
+            <li><b>Sign out iCloud + remove Activation Lock</b> on iOS before resetting; otherwise next owner can't activate.</li>
+            <li><b>Sign out Google account + Disable FRP</b> on Android.</li>
+            <li><b>SIM card</b> — destroy or return to carrier; PIN-protected.</li>
+            <li><b>Trade-in / refurb</b> — wipe + sign-out + Activation Lock OFF.</li>
+            <li><b>High-classification</b> — physical destruction; commercial mobile shredders exist.</li>
+          </ul>
+
+          <h2>Backup retention strategy by data class</h2>
+          <ul>
+            <li><b>Operational</b> (active project files) — short retention (30-90 days), daily backups, fast restore.</li>
+            <li><b>Compliance</b> (audit logs, financial) — long retention (1-7 yrs), immutable, legal-hold ready.</li>
+            <li><b>Archive</b> (historical records) — multi-year tape / Glacier; rarely accessed.</li>
+            <li><b>Personal data (GDPR)</b> — purpose-limited retention; delete when no longer needed.</li>
+            <li><b>Backup of backup</b> — secondary copy on different vendor / media.</li>
+          </ul>
+
+          <h2>Ransomware-resilient backup architecture</h2>
+          <ol>
+            <li><b>Network-isolated backup server</b> (no domain join, separate management VLAN).</li>
+            <li><b>Hardened OS</b> (Linux Hardened Repo, dedicated appliance).</li>
+            <li><b>Immutable repository</b> — S3 Object Lock Compliance mode / Veeam Insider Protection / hardware WORM.</li>
+            <li><b>Separate credentials</b> from production AD; MFA required for backup admin console.</li>
+            <li><b>Air-gapped tape rotation</b> off-site weekly.</li>
+            <li><b>Read-only roles</b> for everyone except scheduled backup process.</li>
+            <li><b>Behavior detection</b> — alerts on unusual deletes / encrypts.</li>
+            <li><b>Restore verification</b> — automated weekly test restore.</li>
+            <li><b>Backup of identity</b> — AD bare-metal recovery + Entra ID backup (Quest On Demand, Cayosoft).</li>
+            <li><b>Disaster recovery runbook</b> — printed + offline copy of rebuild procedures.</li>
+          </ol>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Smallest daily backup window" → incremental.</li>
+            <li>"Fastest restore from one tape" → full (only one backup needed).</li>
+            <li>"Restore = full + latest only" → differential.</li>
+            <li>"Tape backup written + locked unable to overwrite" → WORM / immutable / Object Lock.</li>
+            <li>"Wipe SSD before disposal" → vendor Secure Erase / NVMe sanitize / crypto-erase (not DBAN).</li>
+            <li>"Destroy magnetic tape" → degauss + incinerate.</li>
+            <li>"Stolen laptop recovery (data)" → restore from cloud backup; remote wipe device.</li>
+            <li>"Ransomware encrypted backups too" → need offline / air-gapped / immutable copy.</li>
+            <li>"15-min RPO required" → snapshot-based + CDP or near-CDP backup.</li>
+            <li>"Certificate of Destruction" → required record of secure disposal (vendor-issued).</li>
           </ul>
         `
       },
@@ -3511,6 +7230,252 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>"License lets N users at once" → concurrent.</li>
             <li>"Code-sharing requirement for derivatives" → copyleft (GPL).</li>
             <li>"Discover prohibited content on a user's PC" → preserve evidence, document, escalate; do NOT investigate yourself.</li>
+          </ul>
+
+          <h2>ESD discharge mechanics + thresholds</h2>
+          <ul>
+            <li><b>ESD</b> = Electrostatic Discharge — built-up static suddenly transferred.</li>
+            <li><b>Human-perceived</b> shock ≥ ~3000 V (you can feel it).</li>
+            <li><b>Audible spark</b> ≥ ~5000 V.</li>
+            <li><b>Visible spark</b> ≥ ~10,000 V.</li>
+            <li><b>Damage to electronics</b> can occur at <b>30-100 V</b> — far below what you can feel.</li>
+            <li><b>Carpet shuffle</b> can generate up to 35,000 V on dry days.</li>
+            <li><b>RH (relative humidity) below 30%</b> dramatically increases ESD risk; above 50% reduces it.</li>
+            <li><b>Common protections:</b> wrist strap (1 MΩ resistor inline), heel strap, ESD mat at workbench (grounded), ESD-safe shoes, ionizer fans, ESD-safe tools (insulated handles dissipate slowly), ESD bags (pink anti-static or silver shielded).</li>
+          </ul>
+
+          <h2>Why NOT to wear ESD wrist strap on these</h2>
+          <ul>
+            <li><b>CRT monitors</b> — anode holds 15–30 kV after unplug; wrist strap creates path to YOU.</li>
+            <li><b>PSU internals</b> — capacitors hold lethal voltage for minutes.</li>
+            <li><b>Laser printer fuser</b> — also carries high voltage + 200 °C hot.</li>
+            <li><b>Old transformers / inverters</b>.</li>
+            <li><b>Anything with a yellow "high voltage" warning sticker</b>.</li>
+            <li>For these: leave to qualified techs OR discharge with insulated screwdriver to chassis + wait.</li>
+          </ul>
+
+          <h2>OSHA + workplace safety quick reference</h2>
+          <ul>
+            <li><b>OSHA</b> = Occupational Safety and Health Administration (US federal).</li>
+            <li><b>OSHA 29 CFR 1910</b> — General Industry Standards. Lockout/Tagout 1910.147; Personal Protective Equipment Subpart I.</li>
+            <li><b>Right-to-know</b> — workers entitled to MSDS/SDS for every chemical they handle.</li>
+            <li><b>Ergonomics</b> — proper desk height, chair, monitor distance (~arm's length), keyboard / mouse position; 20-20-20 rule (every 20 min look 20 ft away for 20 s).</li>
+            <li><b>Repetitive strain</b> — wrist rests, ergonomic keyboards, split keyboards, vertical mice.</li>
+            <li><b>RSI</b> + carpal tunnel mitigation.</li>
+            <li><b>Job hazard analysis (JHA)</b> — document risk per task.</li>
+            <li><b>Incident reporting</b> within 8h to OSHA for serious injuries.</li>
+          </ul>
+
+          <h2>Building safety + fire suppression detail</h2>
+          <ul>
+            <li><b>Fire extinguisher classes:</b>
+              <ul>
+                <li><b>A</b> — ordinary combustibles (wood, paper).</li>
+                <li><b>B</b> — flammable liquids (gasoline, oil).</li>
+                <li><b>C</b> — electrical fires (use this near IT gear).</li>
+                <li><b>D</b> — combustible metals (magnesium, lithium battery fires).</li>
+                <li><b>K</b> — kitchen / cooking oils.</li>
+                <li><b>ABC dry-chemical</b> — most common multi-class.</li>
+              </ul>
+            </li>
+            <li><b>PASS</b> — Pull (pin), Aim (at base), Squeeze (handle), Sweep (side-to-side).</li>
+            <li><b>Datacenter clean agents:</b>
+              <ul>
+                <li><b>FM-200</b> (HFC-227ea) — common replacement for Halon.</li>
+                <li><b>Novec 1230</b> (FK-5-1-12) — newer, eco-friendly.</li>
+                <li><b>Inergen / Argonite</b> — inert-gas mix that reduces O2 to 12-14% (still breathable briefly).</li>
+                <li><b>Halon</b> — phased out by Montreal Protocol (ozone-depleting).</li>
+                <li><b>Water mist / pre-action sprinkler</b> — water held back until smoke detector + heat trigger, reducing accidental discharge.</li>
+              </ul>
+            </li>
+            <li><b>Smoke detectors:</b> ionization (faster on flaming fires), photoelectric (faster on smoldering); dual-sensor preferred.</li>
+            <li><b>VESDA</b> (Very Early Smoke Detection Apparatus) — aspirating air-sampling system; finds smoke before visible.</li>
+            <li><b>Emergency power-off (EPO)</b> button — cuts power to entire datacenter; cover with shield to prevent accidental press.</li>
+          </ul>
+
+          <h2>Equipment safety + grounding</h2>
+          <ul>
+            <li><b>Bonding + grounding</b> — every metal chassis tied to common ground; required by NEC.</li>
+            <li><b>UPS + surge protector</b> for sensitive gear.</li>
+            <li><b>SPDs</b> (Surge Protective Devices) — Type 1 (service entrance), Type 2 (panel), Type 3 (outlet).</li>
+            <li><b>Joules rating</b> on power strips — more joules = more protection; 1000+ J recommended for PCs, 2000+ for AV.</li>
+            <li><b>Lightning protection</b> — disconnect during storms; whole-house SPD at service entrance.</li>
+            <li><b>GFCI / RCD outlets</b> in wet locations (kitchen, bath, outdoor).</li>
+            <li><b>Power conditioner</b> + isolation transformer for ground-loop / noise issues.</li>
+            <li><b>Cable management</b> — never daisy-chain power strips (UL violation).</li>
+          </ul>
+
+          <h2>Environmental controls (datacenter)</h2>
+          <ul>
+            <li><b>Temperature:</b> ASHRAE recommended 18-27 °C (64-81 °F); allowable 15-32 °C.</li>
+            <li><b>Humidity:</b> 40-60% RH ideal; below = ESD risk, above = condensation + corrosion.</li>
+            <li><b>HVAC / CRAC</b> (Computer Room AC) — precision cooling. <b>CRAH</b> = Computer Room Air Handler (chilled water).</li>
+            <li><b>Hot aisle / cold aisle</b> + containment to maximize cooling efficiency.</li>
+            <li><b>PUE</b> (Power Usage Effectiveness) — total power / IT load. 1.5 average, &lt; 1.2 hyperscaler.</li>
+            <li><b>Liquid cooling</b> for high-density (AI / HPC) racks.</li>
+            <li><b>Leak detection</b> sensors below raised floor.</li>
+            <li><b>Environmental sensors</b> (NetBotz, AKCP, RTX) feed SNMP traps.</li>
+          </ul>
+
+          <h2>Hazardous materials + disposal</h2>
+          <ul>
+            <li><b>SDS / MSDS</b> (Safety Data Sheet) — 16 sections; chemical hazards, first-aid, handling, disposal. Keep accessible per OSHA.</li>
+            <li><b>Lithium batteries</b> — fire risk; never puncture; store in fireproof container if swollen. Don't ship damaged batteries by air.</li>
+            <li><b>Toner cartridges</b> — particulates harmful; clean with HEPA vacuum; don't use compressed air (aerosolizes).</li>
+            <li><b>CRT</b> — contains lead, mercury; recycle via certified e-waste.</li>
+            <li><b>Solvents (isopropyl alcohol 99%)</b> — flammable; ventilation + no smoking.</li>
+            <li><b>Cleaning compressed-air cans</b> — duster gas (HFC-152a / R-134a) is asphyxiant in confined space.</li>
+            <li><b>EPA / RCRA / WEEE</b> — e-waste regulations.</li>
+            <li><b>Battery + bulb disposal</b> — separate from regular trash; municipal recycling programs.</li>
+          </ul>
+
+          <h2>Documentation artifacts (memorize types)</h2>
+          <ul>
+            <li><b>Asset inventory / CMDB</b> — every device, serial, location, owner, warranty, EOL, license.</li>
+            <li><b>Network diagrams</b> — physical + logical topology, IP scheme.</li>
+            <li><b>Wiring diagram</b> — patch panel to wall jack to switch port.</li>
+            <li><b>Rack elevations</b> — equipment U positions.</li>
+            <li><b>Floor plan</b> + Wi-Fi heatmap.</li>
+            <li><b>Runbooks / SOPs</b> — step-by-step procedures.</li>
+            <li><b>Knowledge base</b> — how-to articles, common fixes.</li>
+            <li><b>Change log</b> — every config push + reason.</li>
+            <li><b>Service catalog</b> — what IT offers; SLAs.</li>
+            <li><b>AUP</b> (Acceptable Use Policy) — what users may + may not do.</li>
+            <li><b>BYOD / Remote work policy</b>.</li>
+            <li><b>Incident response plan</b> — playbook + contact tree.</li>
+            <li><b>DR plan / BCP</b> (Business Continuity Plan).</li>
+            <li><b>BIA</b> (Business Impact Analysis) — feed into RTO/RPO.</li>
+            <li><b>NDA</b> — non-disclosure agreement.</li>
+            <li><b>SLA / OLA / UC</b> — Service Level / Operational Level / Underpinning Contract.</li>
+            <li><b>License inventory</b>.</li>
+            <li><b>Data classification policy</b>.</li>
+            <li><b>Onboarding / offboarding checklist</b>.</li>
+            <li><b>Vendor contact list</b>.</li>
+          </ul>
+
+          <h2>Change management process (memorize order)</h2>
+          <ol>
+            <li><b>RFC</b> (Request for Change) — scope, justification, risk, rollback plan, downtime window, affected users.</li>
+            <li><b>Risk analysis</b> — impact + probability matrix.</li>
+            <li><b>CAB</b> (Change Advisory Board) review + approval. Stakeholders sign off.</li>
+            <li><b>Notify affected users</b> — email, calendar, status page.</li>
+            <li><b>Test in lab</b> when feasible.</li>
+            <li><b>Schedule maintenance window</b> — low business impact (typically nights / weekends).</li>
+            <li><b>Implement</b> following plan.</li>
+            <li><b>Verify</b> success via pre-defined acceptance criteria.</li>
+            <li><b>Execute backout</b> if needed.</li>
+            <li><b>Post-implementation review</b> — lessons learned.</li>
+            <li><b>Update CMDB + KB + runbook</b>.</li>
+            <li><b>Close ticket</b>.</li>
+          </ol>
+          <p><b>Change types:</b> Standard (pre-approved, low-risk, repeatable), Normal (full CAB), Emergency (expedited; retrospective review).</p>
+
+          <h2>Privacy + compliance acronym deep cuts</h2>
+          <ul>
+            <li><b>PII</b> (Personally Identifiable Information) — name, SSN, DoB, address, etc.</li>
+            <li><b>PHI</b> (Protected Health Information) — health data under HIPAA.</li>
+            <li><b>PCI cardholder data</b> — PAN, expiration, CVV, track data (CVV cannot be stored post-auth).</li>
+            <li><b>HIPAA</b> — covered entities (providers, plans, clearinghouses) + business associates; Privacy Rule + Security Rule + Breach Notification Rule.</li>
+            <li><b>HITECH</b> — strengthens HIPAA penalties + breach reporting.</li>
+            <li><b>PCI-DSS</b> v4.0 (2024) — 12 requirements; SAQ levels A-D by merchant size.</li>
+            <li><b>SOX</b> (Sarbanes-Oxley) — financial reporting controls; Section 404 IT controls audit.</li>
+            <li><b>GLBA</b> — Gramm-Leach-Bliley financial privacy.</li>
+            <li><b>FERPA</b> — US student education.</li>
+            <li><b>COPPA</b> — US children under 13 online.</li>
+            <li><b>GDPR</b> — EU; data subject rights (access, rectification, erasure, portability, restriction, objection); 72h breach notice; DPO required for some processors.</li>
+            <li><b>CCPA / CPRA</b> — California consumer.</li>
+            <li><b>PIPEDA</b> — Canada federal.</li>
+            <li><b>LGPD</b> — Brazil's GDPR-equivalent.</li>
+            <li><b>POPIA</b> — South Africa.</li>
+            <li><b>PDPA</b> — Singapore.</li>
+            <li><b>ISO 27001 / 27002 / 27017 / 27018 / 27701</b> — information security + cloud + privacy management.</li>
+            <li><b>SOC 1 / SOC 2 / SOC 3</b> — service organization control reports; Type I (point-in-time) vs Type II (period of time).</li>
+            <li><b>NIST CSF 2.0</b> — Cybersecurity Framework: Govern, Identify, Protect, Detect, Respond, Recover.</li>
+            <li><b>NIST 800-53</b> — federal control catalog. <b>800-171</b> — CUI in non-fed systems (CMMC backbone).</li>
+            <li><b>FedRAMP</b> — federal cloud authorization (Low / Moderate / High).</li>
+            <li><b>CMMC</b> 2.0 (DoD) — Levels 1-3 cybersecurity maturity for defense contractors.</li>
+            <li><b>FIPS 140-2 / 140-3</b> — cryptographic module validation.</li>
+            <li><b>HITRUST CSF</b> — healthcare-oriented certification.</li>
+          </ul>
+
+          <h2>Licensing deep-dive</h2>
+          <ul>
+            <li><b>EULA</b> + click-through agreement establishes contract.</li>
+            <li><b>Per-seat</b> vs <b>per-device</b> vs <b>concurrent</b> vs <b>per-core</b> (server CPU-bound).</li>
+            <li><b>Volume licensing</b>: Microsoft VLSC / M365 admin center; Adobe ETLA; Autodesk Account.</li>
+            <li><b>KMS</b> (Key Management Service) — on-prem activation server for VLSC; clients re-activate every 180 days.</li>
+            <li><b>MAK</b> (Multiple Activation Key) — single key with quota.</li>
+            <li><b>OEM</b> — tied to motherboard / firmware; non-transferable.</li>
+            <li><b>FPP</b> (Full Packaged Product / retail) — transferable.</li>
+            <li><b>Floating / network license</b> — license server hands out N concurrent.</li>
+            <li><b>Site license</b> — covers entire site / school.</li>
+            <li><b>Subscription / SaaS</b> — revocable; ceases on non-payment.</li>
+            <li><b>Open source licenses:</b>
+              <ul>
+                <li><b>Permissive:</b> MIT, Apache 2.0, BSD 2-clause/3-clause — minimal restrictions.</li>
+                <li><b>Weak copyleft:</b> LGPL, MPL — library use OK, modifications must share.</li>
+                <li><b>Strong copyleft:</b> GPL v2/v3, AGPL — derivative works must release under same license.</li>
+                <li><b>Public domain / CC0</b> — no rights reserved.</li>
+              </ul>
+            </li>
+            <li><b>SAM</b> (Software Asset Management) — tooling to track license deployment vs entitlement; surface overuse / underuse.</li>
+            <li><b>Audit clauses</b> — most enterprise licenses allow vendor audit; non-compliance = back-licensing fees + penalties.</li>
+          </ul>
+
+          <h2>Incident response process (NIST 800-61 r2)</h2>
+          <ol>
+            <li><b>Preparation</b> — runbooks, contacts, jump kits, training.</li>
+            <li><b>Detection &amp; Analysis</b> — triage, scope.</li>
+            <li><b>Containment</b> — short-term (isolate) + long-term (block IOCs, patch).</li>
+            <li><b>Eradication</b> — remove threat, rebuild systems.</li>
+            <li><b>Recovery</b> — restore service + monitor.</li>
+            <li><b>Lessons learned / post-mortem</b> within 1-2 weeks; update controls + runbook.</li>
+          </ol>
+          <p><b>Blameless RCA</b> — focus on systemic causes, not individuals. Surface contributing factors honestly.</p>
+
+          <h2>Communication + customer service (heavy A+ test area)</h2>
+          <ul>
+            <li><b>Maintain a positive attitude</b> + professional appearance.</li>
+            <li><b>Active listening</b> — let user finish before responding.</li>
+            <li><b>Use proper language</b> — no jargon with non-tech users; analogies help.</li>
+            <li><b>Avoid distractions</b> — no personal calls, social media at user's desk.</li>
+            <li><b>Don't argue</b> + be defensive.</li>
+            <li><b>Maintain confidentiality</b> — discoveries on user's PC stay there unless required to report.</li>
+            <li><b>Be on time / contact ahead</b> — respect user's schedule.</li>
+            <li><b>Set realistic expectations</b> — under-promise, over-deliver.</li>
+            <li><b>Follow up</b> on satisfaction.</li>
+            <li><b>Cultural + accessibility sensitivity</b> — adapt to user's needs.</li>
+            <li><b>Empathy</b> — frustrated users want to be heard first, fixed second.</li>
+            <li><b>Documentation as you go</b> — accurate ticket notes save the next tech.</li>
+            <li><b>Escalate</b> when scope exceeds your authority or skill.</li>
+            <li><b>Verify resolution with user</b> before closing.</li>
+          </ul>
+
+          <h2>Forensic evidence handling</h2>
+          <ul>
+            <li><b>Chain of custody</b> — log every person who touched the evidence + when.</li>
+            <li><b>Order of volatility</b> — capture most volatile data first: CPU registers / cache → RAM → network state → disk → archives.</li>
+            <li><b>Write blocker</b> — hardware device prevents writes to source drive during imaging.</li>
+            <li><b>Hash verification</b> — SHA-256 of evidence; document at acquisition + every transfer.</li>
+            <li><b>Bit-for-bit image</b> via <code>dd</code>, <code>FTK Imager</code>, <code>EnCase</code>, <code>Magnet AXIOM</code>.</li>
+            <li><b>Original evidence stored</b> in tamper-evident bag/safe; work with COPY only.</li>
+            <li><b>Faraday bag</b> for mobile devices to prevent remote wipe.</li>
+            <li><b>Affidavit / chain document</b> — required for court admissibility.</li>
+            <li><b>NIST 800-86</b> + <b>SWGDE</b> + <b>ISO 27037</b> are reference frameworks.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Tool clipped to chassis for ESD" → anti-static wrist strap (1 MΩ inline resistor).</li>
+            <li>"Class C extinguisher" → electrical fire near IT gear.</li>
+            <li>"Smoke detection in datacenter for early warning" → VESDA.</li>
+            <li>"Required document for chemical you handle" → SDS / MSDS.</li>
+            <li>"Federal medical privacy law" → HIPAA.</li>
+            <li>"EU breach notice within 72h" → GDPR.</li>
+            <li>"Approved by Change Advisory Board" → Normal change.</li>
+            <li>"Repeatable, pre-approved" → Standard change.</li>
+            <li>"Volume license activation server" → KMS.</li>
+            <li>"Discover prohibited content" → preserve evidence, document, escalate, do not investigate yourself.</li>
           </ul>
         `
       }
@@ -3748,6 +7713,125 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>Mnemonic top-down: "All People Seem To Need Data Processing."</li>
             <li>"Customer's email client can't reach server" → walk it from L1 (cable) up through DNS (L7) and TCP/443 connectivity (L4).</li>
           </ul>
+
+          <h2>Ethernet II frame anatomy (memorize the byte budget)</h2>
+          <p>The most-tested L2 frame format. Total non-payload overhead = 26 bytes (with FCS) or 38 bytes (with preamble + IFG):</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bytes</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>Preamble</td><td>7</td><td>Clock-sync bit pattern <code>10101010 ×7</code>; ignored by upper layers</td></tr>
+            <tr><td>SFD (Start Frame Delimiter)</td><td>1</td><td><code>10101011</code> — marks end of preamble</td></tr>
+            <tr><td>Destination MAC</td><td>6</td><td>Target NIC, broadcast (<code>FF:FF:FF:FF:FF:FF</code>), or multicast</td></tr>
+            <tr><td>Source MAC</td><td>6</td><td>Sender's NIC</td></tr>
+            <tr><td>EtherType / Length</td><td>2</td><td>≥0x0600 = type; &lt;0x0600 = length (802.3)</td></tr>
+            <tr><td>Payload</td><td>46–1500</td><td>L3 packet (padded to 46 min)</td></tr>
+            <tr><td>FCS (CRC-32)</td><td>4</td><td>Frame Check Sequence — error detection</td></tr>
+            <tr><td>IFG (Inter-Frame Gap)</td><td>12</td><td>96-bit silence between frames; not in frame, but consumes wire time</td></tr>
+          </table>
+          <p>Standard Ethernet MTU 1500 + L2 overhead = max frame 1518 bytes (1522 with 802.1Q VLAN tag). Jumbo frames = 9000 byte MTU (often used in storage/iSCSI nets).</p>
+
+          <h2>Common EtherType values (the "what's inside this frame" tag)</h2>
+          <ul>
+            <li><b>0x0800</b> — IPv4.</li>
+            <li><b>0x0806</b> — ARP.</li>
+            <li><b>0x86DD</b> — IPv6.</li>
+            <li><b>0x8100</b> — 802.1Q VLAN-tagged frame.</li>
+            <li><b>0x88A8</b> — 802.1ad (Q-in-Q, double-tagged).</li>
+            <li><b>0x8847 / 0x8848</b> — MPLS unicast / multicast.</li>
+            <li><b>0x8863 / 0x8864</b> — PPPoE Discovery / PPPoE Session.</li>
+            <li><b>0x888E</b> — 802.1X EAPoL (port-based auth).</li>
+            <li><b>0x88CC</b> — LLDP (Link Layer Discovery Protocol).</li>
+          </ul>
+
+          <h2>MAC address structure (48-bit / 6-byte)</h2>
+          <p>Written as 6 hex pairs separated by colons or hyphens: <code>00:1A:2B:3C:4D:5E</code>.</p>
+          <ul>
+            <li><b>First 24 bits = OUI</b> (Organizationally Unique Identifier) — assigned by IEEE to a vendor.</li>
+            <li><b>Last 24 bits = NIC-specific</b> — vendor-assigned per device.</li>
+            <li><b>I/G bit</b> (LSB of first byte) — 0 = unicast, 1 = multicast/broadcast.</li>
+            <li><b>U/L bit</b> (2nd bit of first byte) — 0 = universally administered (real OUI), 1 = locally administered (LAA, hypervisor, random).</li>
+          </ul>
+          <p><b>Recognizable OUIs (helpful when reading captures):</b></p>
+          <ul>
+            <li><code>00:50:56</code> — VMware.</li>
+            <li><code>00:0C:29</code> — VMware.</li>
+            <li><code>00:1C:42</code> — Parallels.</li>
+            <li><code>08:00:27</code> — VirtualBox.</li>
+            <li><code>00:15:5D</code> — Microsoft Hyper-V.</li>
+            <li><code>00:1B:21</code> — Intel.</li>
+            <li><code>F0:18:98</code> — Apple.</li>
+            <li><code>FF:FF:FF:FF:FF:FF</code> — broadcast (all hosts in subnet).</li>
+            <li><code>01:00:5E:xx:xx:xx</code> — IPv4 multicast (last 23 bits = IP multicast group).</li>
+            <li><code>33:33:xx:xx:xx:xx</code> — IPv6 multicast.</li>
+          </ul>
+
+          <h2>ARP — Address Resolution Protocol (the L2↔L3 glue)</h2>
+          <p><b>What:</b> When a host has the destination IP but not the MAC, it broadcasts "Who has 192.168.1.1? Tell 192.168.1.42". The owner replies with its MAC. Cached for 2–4 minutes in the ARP table.</p>
+          <ul>
+            <li><b>ARP request</b> — broadcast (FF:FF:FF:FF:FF:FF) at L2; carries target IP at L3.</li>
+            <li><b>ARP reply</b> — unicast.</li>
+            <li><b>Gratuitous ARP</b> — host announces its own IP→MAC unprompted (used after IP change, HSRP failover, duplicate-IP detection).</li>
+            <li><b>Proxy ARP</b> — router answers for a host on another subnet (rarely used today).</li>
+            <li><b>RARP</b> (legacy) — given MAC, find IP. Replaced by DHCP.</li>
+          </ul>
+          <p><b>Inspect ARP table:</b> Windows <code>arp -a</code>; Linux <code>ip neigh</code> or <code>arp -n</code>.</p>
+          <p><b>ARP attacks:</b> ARP spoofing/poisoning (advertise wrong MAC to redirect traffic); detected by Dynamic ARP Inspection (DAI) on switches.</p>
+
+          <h2>ICMP message catalog (Layer 3 diagnostics)</h2>
+          <p>ICMP carries control/error messages inside IP packets. Each message has a <b>Type</b> + <b>Code</b>. Memorize the common ones:</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Used by</th></tr>
+            <tr><td>0</td><td>Echo Reply</td><td>ping response</td></tr>
+            <tr><td>3</td><td>Destination Unreachable</td><td>codes: 0=net, 1=host, 3=port, 4=frag-needed (Path MTU)</td></tr>
+            <tr><td>5</td><td>Redirect</td><td>"better next hop"</td></tr>
+            <tr><td>8</td><td>Echo Request</td><td>ping</td></tr>
+            <tr><td>11</td><td>Time Exceeded</td><td>traceroute (TTL=0 in transit)</td></tr>
+            <tr><td>13/14</td><td>Timestamp / Reply</td><td>clock probe (rare)</td></tr>
+            <tr><td>30</td><td>Traceroute</td><td>(historical)</td></tr>
+          </table>
+          <p><b>ICMPv6</b> adds Neighbor Discovery (NS/NA — IPv6's ARP equivalent, types 135/136) and Router Solicitation/Advertisement (types 133/134).</p>
+
+          <h2>Where attacks live by layer (huge exam theme)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Layer</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Attack</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Defense</th></tr>
+            <tr><td>L1</td><td>Cable tap, wireless jamming, RF interference</td><td>Physical security, locked closets, spectrum analyzer</td></tr>
+            <tr><td>L2</td><td>MAC flooding (CAM table overflow), ARP spoofing, VLAN hopping (double-tagging, switch-spoofing), STP root-bridge takeover, DHCP starvation/rogue server</td><td>Port-security, DAI, DHCP snooping, BPDU guard, root guard, disable DTP</td></tr>
+            <tr><td>L3</td><td>IP spoofing, ICMP smurf/flood, Ping-of-Death, routing-table poisoning (BGP hijack)</td><td>Ingress filtering (BCP38), uRPF, ACLs, RPKI for BGP</td></tr>
+            <tr><td>L4</td><td>SYN flood, port scanning, RST injection, TCP session hijack</td><td>SYN cookies, stateful firewall, rate limit, encrypted transport</td></tr>
+            <tr><td>L5–L7</td><td>DNS cache poison, SSL strip, SQL injection, XSS, app-layer DDoS, credential stuffing</td><td>DNSSEC, HSTS, WAF, input validation, rate limit, MFA</td></tr>
+          </table>
+
+          <h2>SDN + overlay/underlay (modern context)</h2>
+          <ul>
+            <li><b>SDN</b> (Software-Defined Networking) — splits the <b>control plane</b> (decisions, routing) from the <b>data plane</b> (packet forwarding). Controller pushes flow rules to switches via OpenFlow / NETCONF / gNMI / vendor APIs.</li>
+            <li><b>Underlay</b> — physical L1/L2/L3 fabric (the actual switches/routers).</li>
+            <li><b>Overlay</b> — virtual network running on top (VXLAN, GENEVE, NVGRE). Uses L2-over-L3 tunneling so VMs in different physical locations look like one broadcast domain.</li>
+            <li><b>VXLAN</b> — UDP/4789, 24-bit VNI (~16M segments vs 4094 VLANs). Heavy in datacenters + cloud.</li>
+            <li><b>SD-WAN</b> — SDN applied to WAN; orchestrates multiple transports (MPLS + broadband + LTE) with policy-based steering.</li>
+            <li><b>Intent-based networking</b> — declarative ("Marketing must reach payroll only over MFA-authenticated TLS") translated to flow rules by the controller.</li>
+          </ul>
+
+          <h2>Scenario practice (work through each)</h2>
+          <ol>
+            <li><b>"User reports 'no Internet' on a wired desktop. Link light is OFF on the switch."</b> → L1 problem. Check cable, port, NIC.</li>
+            <li><b>"Two hosts in same VLAN can ping each other but not the gateway."</b> → L3 issue at gateway (router-on-stick down, ACL drop, wrong subinterface) OR L2 trunk-tag mismatch.</li>
+            <li><b>"Wireshark shows TCP SYN sent, no SYN-ACK back."</b> → Firewall dropping at L4, server not listening, or routing asymmetric.</li>
+            <li><b>"User says 'web site loads slowly, but works'."</b> → DNS slow (L7), TLS handshake slow (L6), or congestion (L4).</li>
+            <li><b>"Switch port shows 100,000 CRC errors."</b> → L1 — bad cable, EMI, duplex mismatch (which manifests as CRC under load).</li>
+            <li><b>"App opens, login succeeds, then disconnects after 60s idle."</b> → L5 session timeout (or L4 firewall idle timeout).</li>
+            <li><b>"All Windows hosts have 169.254.x.x addresses."</b> → APIPA fallback → DHCP server unreachable (L7 service down or L2 VLAN segregation).</li>
+            <li><b>"After plugging a switch into a switch, the whole building goes dark."</b> → STP loop / broadcast storm → BPDU guard, loop protection.</li>
+            <li><b>"Browser shows 'NET::ERR_CERT_AUTHORITY_INVALID'."</b> → L6 — TLS chain broken, expired root, or MITM intercept.</li>
+            <li><b>"Routing table has correct default route, but traceroute dies at hop 3."</b> → L3 path issue; could be MTU/black-hole, ACL, asymmetric return path.</li>
+          </ol>
+
+          <h2>Real-world layer recognition cheat (one-line scan)</h2>
+          <ul>
+            <li>Talking about <b>MAC, switches, VLANs, ARP, STP, frames, CRC errors</b> → L2.</li>
+            <li>Talking about <b>IP, routes, ping, traceroute, ACLs, BGP/OSPF</b> → L3.</li>
+            <li>Talking about <b>ports, TCP/UDP, SYN/ACK, firewall rules</b> → L4.</li>
+            <li>Talking about <b>HTTP codes, DNS records, SMTP, certificates</b> → L7 (HTTP/DNS) or L6 (TLS).</li>
+            <li>Talking about <b>cable, fiber, transceivers, light levels</b> → L1.</li>
+          </ul>
         `
       },
       {
@@ -3926,6 +8010,132 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>VLSM = right-sized subnets within one parent net.</li>
             <li>PAT = many internal hosts behind one public IP, distinguished by source port.</li>
           </ul>
+
+          <h2>Binary math foundation (the rosetta stone)</h2>
+          <p>Subnetting is binary. Memorize these two rows cold — every shortcut comes from them.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Bit position (within octet)</th><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr>
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Mask octet if N bits set</th><td>10000000 = 128</td><td>11000000 = 192</td><td>11100000 = 224</td><td>11110000 = 240</td><td>11111000 = 248</td><td>11111100 = 252</td><td>11111110 = 254</td><td>11111111 = 255</td></tr>
+          </table>
+          <p><b>Three mental tables to internalize:</b></p>
+          <ul>
+            <li><b>Powers of 2 (1–10):</b> 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024.</li>
+            <li><b>Subnet mask values:</b> 128, 192, 224, 240, 248, 252, 254, 255.</li>
+            <li><b>Block sizes:</b> 128, 64, 32, 16, 8, 4, 2, 1. (Same numbers, reverse order — block = 256 − mask.)</li>
+          </ul>
+
+          <h2>The 7-step subnetting algorithm (memorize the flow)</h2>
+          <ol>
+            <li><b>Identify the interesting octet</b> — the octet where the mask transitions from 255 to less-than-255. /17–/24 → 3rd octet; /25–/30 → 4th octet.</li>
+            <li><b>Compute block size</b> = 256 − (interesting-octet mask value). /27 (mask 224) → 256 − 224 = 32.</li>
+            <li><b>List subnet starts</b> — multiples of block size in the interesting octet: 0, 32, 64, 96, 128, 160, 192, 224.</li>
+            <li><b>Identify the target subnet</b> — the largest multiple ≤ the host's address in that octet. Host 10.0.0.100 with /27 → 100 falls between 96 and 128 → subnet = 10.0.0.96/27.</li>
+            <li><b>Network address</b> = the multiple itself (host bits all 0). → <code>10.0.0.96</code>.</li>
+            <li><b>Broadcast</b> = next multiple − 1. → next is 128, so broadcast = <code>10.0.0.127</code>.</li>
+            <li><b>Usable range</b> = network + 1 through broadcast − 1. → <code>10.0.0.97</code> through <code>10.0.0.126</code> (30 hosts).</li>
+          </ol>
+
+          <h2>Worked example A — "Which subnet is 172.16.45.180/22 in?"</h2>
+          <ol>
+            <li>/22 = 16 (full) + 6 borrowed in the 3rd octet. Mask = 255.255.252.0.</li>
+            <li>Interesting octet = 3rd. Mask value 252 → block size = 256 − 252 = 4.</li>
+            <li>3rd-octet subnet starts: 0, 4, 8, ..., 44, 48, ..., 252.</li>
+            <li>Host's 3rd octet = 45. Largest multiple of 4 ≤ 45 = 44.</li>
+            <li>Network = 172.16.44.0; broadcast = 172.16.47.255 (next is 48, minus 1).</li>
+            <li>Usable: 172.16.44.1 → 172.16.47.254 (1022 hosts).</li>
+          </ol>
+
+          <h2>Worked example B — "Given /24 network 192.168.50.0, how many /28 subnets and list the first 4."</h2>
+          <ol>
+            <li>Borrowing 4 bits (/24 → /28) → 2⁴ = 16 subnets.</li>
+            <li>Block size for /28 = 256 − 240 = 16.</li>
+            <li>First four subnet networks: <code>.0</code>, <code>.16</code>, <code>.32</code>, <code>.48</code>.</li>
+            <li>First subnet: net <code>192.168.50.0</code>, usable <code>.1–.14</code>, bcast <code>.15</code>.</li>
+            <li>Second: net <code>.16</code>, usable <code>.17–.30</code>, bcast <code>.31</code>. (Pattern continues.)</li>
+          </ol>
+
+          <h2>Worked example C — Full VLSM build</h2>
+          <p><b>Given:</b> 192.168.0.0/24. Need subnets for: Sales (60 hosts), Eng (28 hosts), HR (12 hosts), three point-to-point WAN links (2 hosts each).</p>
+          <ol>
+            <li><b>Sort largest-first:</b> Sales 60 → Eng 28 → HR 12 → 3× WAN.</li>
+            <li><b>Sales (60 hosts):</b> need 62+ → /26 (62 usable). Start at .0 → <code>192.168.0.0/26</code>, usable .1–.62, bcast .63.</li>
+            <li><b>Eng (28 hosts):</b> need 30+ → /27 (30 usable). Next free = .64 → <code>192.168.0.64/27</code>, usable .65–.94, bcast .95.</li>
+            <li><b>HR (12 hosts):</b> need 14+ → /28 (14 usable). Next free = .96 → <code>192.168.0.96/28</code>, usable .97–.110, bcast .111.</li>
+            <li><b>WAN #1 (2 hosts):</b> /30 (2 usable). Next free = .112 → <code>192.168.0.112/30</code>, usable .113–.114, bcast .115.</li>
+            <li><b>WAN #2:</b> <code>192.168.0.116/30</code>, usable .117–.118.</li>
+            <li><b>WAN #3:</b> <code>192.168.0.120/30</code>, usable .121–.122.</li>
+            <li><b>Remaining free</b> = .124–.255 (132 addresses for future growth).</li>
+          </ol>
+
+          <h2>The "minimum prefix for N hosts" cheat</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Hosts needed</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Min prefix</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Total / usable</th></tr>
+            <tr><td>1</td><td>/30 or /32 host route</td><td>4 / 2 (or 1)</td></tr>
+            <tr><td>2 (p2p)</td><td>/30 (or /31 RFC 3021)</td><td>4 / 2 (or 2)</td></tr>
+            <tr><td>3–6</td><td>/29</td><td>8 / 6</td></tr>
+            <tr><td>7–14</td><td>/28</td><td>16 / 14</td></tr>
+            <tr><td>15–30</td><td>/27</td><td>32 / 30</td></tr>
+            <tr><td>31–62</td><td>/26</td><td>64 / 62</td></tr>
+            <tr><td>63–126</td><td>/25</td><td>128 / 126</td></tr>
+            <tr><td>127–254</td><td>/24</td><td>256 / 254</td></tr>
+            <tr><td>255–510</td><td>/23</td><td>512 / 510</td></tr>
+            <tr><td>511–1022</td><td>/22</td><td>1024 / 1022</td></tr>
+            <tr><td>1023–2046</td><td>/21</td><td>2048 / 2046</td></tr>
+            <tr><td>2047–4094</td><td>/20</td><td>4096 / 4094</td></tr>
+          </table>
+          <p><b>Memory hook:</b> doubling hosts = subtract 1 from prefix. Each step you "rent" one more bit from the network.</p>
+
+          <h2>Supernetting walkthrough</h2>
+          <p><b>Given:</b> Combine 192.168.4.0/24, 192.168.5.0/24, 192.168.6.0/24, 192.168.7.0/24 into one announcement.</p>
+          <ol>
+            <li>Convert 3rd octets to binary: 4=00000100, 5=00000101, 6=00000110, 7=00000111.</li>
+            <li>Common prefix = <code>000001</code> (first 6 bits match).</li>
+            <li>16 (1st+2nd full) + 6 = 22-bit prefix.</li>
+            <li>Aggregate: <code>192.168.4.0/22</code>. Covers .4 through .7 (block size 4 in 3rd octet).</li>
+          </ol>
+          <p><b>Common ISP shortcut:</b> the parent must be a multiple of the block size. Aggregate of 192.168.5.0/24 + 192.168.6.0/24 + 192.168.7.0/24 + 192.168.8.0/24 will NOT collapse to one /22 — boundaries are 0/4/8/12, so they straddle. Either accept multiple advertisements or pick correct boundaries.</p>
+
+          <h2>NAT/PAT detailed walkthrough</h2>
+          <p><b>What happens when 192.168.1.100 visits api.example.com (203.0.113.50:443) through a PAT router with public IP 198.51.100.10:</b></p>
+          <ol>
+            <li>Client SYN: src <code>192.168.1.100:51234</code> → dst <code>203.0.113.50:443</code>.</li>
+            <li>Router rewrites src: <code>198.51.100.10:51234</code> (or maps to a different port if 51234 in use). Adds row to translation table.</li>
+            <li>Server replies to <code>198.51.100.10:51234</code>.</li>
+            <li>Router looks up table, rewrites dst back to <code>192.168.1.100:51234</code>, forwards inside.</li>
+          </ol>
+          <p>Translation table grows linearly with active flows; ~65K source ports per public IP → CGNAT often pools multiple public IPs for thousands of subscribers.</p>
+
+          <h2>IPv4 header byte budget (memorize, exam test)</h2>
+          <p>Minimum 20 bytes (no options); maximum 60 bytes:</p>
+          <ul>
+            <li><b>Bytes 0–3:</b> Version (4 bits, =4) | IHL (4) | DSCP/ECN (8) | Total Length (16).</li>
+            <li><b>Bytes 4–7:</b> Identification (16) | Flags (3) | Fragment Offset (13).</li>
+            <li><b>Bytes 8–11:</b> TTL (8) | Protocol (8) | Header Checksum (16).</li>
+            <li><b>Bytes 12–15:</b> Source IP.</li>
+            <li><b>Bytes 16–19:</b> Destination IP.</li>
+            <li><b>Bytes 20–59:</b> Options (rare; pad to 4-byte boundary).</li>
+          </ul>
+
+          <h2>Common subnetting gotchas</h2>
+          <ul>
+            <li>Off-by-one in usable count — always subtract 2 (network + broadcast) EXCEPT /31 (RFC 3021) and /32.</li>
+            <li>Block size ≠ usable hosts. /26 block = 64, usable = 62.</li>
+            <li>Subnet boundaries land on multiples of block size — 192.168.1.50/26 is INVALID as a network address; the network is 192.168.1.0/26 and .50 is a host.</li>
+            <li>Asking "broadcast of <i>x</i>" — find the network first, then broadcast = network + block size − 1.</li>
+            <li>NAT does NOT count as subnetting; it's an unrelated translation function.</li>
+            <li>0.0.0.0 is "any/default route" or "unspecified", not a host.</li>
+            <li>Loopback (127.0.0.0/8) is for the local stack only — never sent on the wire.</li>
+          </ul>
+
+          <h2>30-second subnetting answer template</h2>
+          <p>Given any "what subnet/broadcast/usable for IP X with mask Y":</p>
+          <ol>
+            <li>Find interesting octet (where mask &lt; 255).</li>
+            <li>Block = 256 − interesting-octet mask value.</li>
+            <li>Subnet network = largest multiple of block ≤ host's value in that octet.</li>
+            <li>Broadcast = network + block − 1 in that octet.</li>
+            <li>Usable = (network + 1) → (broadcast − 1).</li>
+          </ol>
         `
       },
       {
@@ -4134,6 +8344,134 @@ nslookup -type=AAAA example.com  # IPv6 DNS record</code></pre>
             <li>Standard host subnet size = /64.</li>
             <li>Common transition: dual stack.</li>
             <li>NAT64 lets IPv6-only client reach IPv4-only server.</li>
+          </ul>
+
+          <h2>Compression worked examples (drills)</h2>
+          <p><b>A.</b> Compress <code>2001:0db8:0000:0000:0000:ff00:0042:8329</code>:</p>
+          <ol>
+            <li>Drop leading zeros: <code>2001:db8:0:0:0:ff00:42:8329</code>.</li>
+            <li>Collapse longest run of zeros: <code>2001:db8::ff00:42:8329</code>.</li>
+          </ol>
+          <p><b>B.</b> Compress <code>fe80:0000:0000:0000:0202:b3ff:fe1e:8329</code> → <code>fe80::202:b3ff:fe1e:8329</code>.</p>
+          <p><b>C.</b> Expand <code>2001:db8::1</code> → <code>2001:0db8:0000:0000:0000:0000:0000:0001</code> (fill the <code>::</code> gap with enough zero groups to reach 8 total).</p>
+          <p><b>D. Invalid:</b> <code>2001::db8::1</code> — two <code>::</code> is ambiguous, rejected.</p>
+          <p><b>E.</b> Identify type:
+            <code>fe80::1</code> = link-local;
+            <code>fd12:3456::1</code> = ULA;
+            <code>2001:db8::1</code> = doc-only global;
+            <code>ff02::1</code> = link-local multicast (all nodes);
+            <code>::1</code> = loopback;
+            <code>::</code> = unspecified.
+          </p>
+
+          <h2>EUI-64 step-by-step (memorize)</h2>
+          <p><b>Given MAC</b> <code>00:1a:2b:3c:4d:5e</code>:</p>
+          <ol>
+            <li>Split: <code>001a:2b</code> | <code>3c:4d:5e</code>.</li>
+            <li>Insert <code>ff:fe</code>: <code>001a:2bff:fe3c:4d5e</code>.</li>
+            <li>Flip the 7th bit (U/L) of the first byte. <code>00</code> = <code>0000 0000</code> → flip bit 7 → <code>0000 0010</code> = <code>02</code>.</li>
+            <li>Result: <code>021a:2bff:fe3c:4d5e</code> — the 64-bit interface ID.</li>
+            <li>Prepend a /64 prefix (link-local <code>fe80::</code>): <code>fe80::21a:2bff:fe3c:4d5e</code>.</li>
+          </ol>
+          <p><b>Pattern recognition:</b> any IPv6 address containing <code>ff:fe</code> in the middle of the lower 64 bits = EUI-64 derived. Hosts using <b>privacy extensions</b> show random interface IDs instead and rotate every ~24 hours.</p>
+
+          <h2>SLAAC vs DHCPv6 decision flow</h2>
+          <ol>
+            <li>Host boots; sends <b>Router Solicitation</b> to <code>ff02::2</code>.</li>
+            <li>Router replies with <b>RA</b> containing prefix info + M-flag + O-flag + lifetime.</li>
+            <li>If <b>M-flag = 1</b> → use <b>DHCPv6 stateful</b> for the address. (And usually all options.)</li>
+            <li>If <b>M = 0, O = 1</b> → SLAAC for the address, <b>DHCPv6 stateless</b> for DNS/NTP.</li>
+            <li>If <b>M = 0, O = 0</b> → pure SLAAC; DNS comes from RDNSS option in the RA (RFC 8106).</li>
+            <li>Host runs <b>DAD</b> (Duplicate Address Detection) by sending NS for its tentative address; if no NA returns, the address is owned.</li>
+          </ol>
+
+          <h2>Solicited-node multicast (how ND scales without broadcast)</h2>
+          <p>ARP in IPv4 broadcasts to every host. IPv6 avoids that: each host listens on a <b>solicited-node multicast group</b> derived from the last 24 bits of each of its addresses:</p>
+          <p><code>ff02::1:ff</code> + last-24-bits-of-target. Example for <code>fe80::21a:2bff:fe3c:4d5e</code> → solicited-node group = <code>ff02::1:ff3c:4d5e</code>.</p>
+          <p>When a host needs the MAC of that target, it sends NS to that multicast — only hosts sharing the last 24 bits even see the frame.</p>
+
+          <h2>IPv6 header walkthrough (40 bytes fixed)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Bytes</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>0</td><td>Version (4 bits)</td><td>Always 6</td></tr>
+            <tr><td>0–1</td><td>Traffic Class (8)</td><td>DSCP + ECN (QoS)</td></tr>
+            <tr><td>1–3</td><td>Flow Label (20)</td><td>Identifies a flow for fast-path / load balancing</td></tr>
+            <tr><td>4–5</td><td>Payload Length (16)</td><td>Bytes after this header</td></tr>
+            <tr><td>6</td><td>Next Header (8)</td><td>Like IPv4 Protocol — 6 TCP, 17 UDP, 58 ICMPv6, 0/43/44/50/51 = ext headers</td></tr>
+            <tr><td>7</td><td>Hop Limit (8)</td><td>Replaces TTL</td></tr>
+            <tr><td>8–23</td><td>Source Address (128)</td><td>—</td></tr>
+            <tr><td>24–39</td><td>Destination Address (128)</td><td>—</td></tr>
+          </table>
+          <p><b>Removed vs IPv4:</b> no header checksum (faster routers), no IHL (always 40), no fragmentation fields (Path MTU Discovery only). Options moved to <b>Extension Headers</b> chained via Next Header.</p>
+
+          <h2>Common ICMPv6 message types (mapped)</h2>
+          <ul>
+            <li><b>1</b> Destination Unreachable.</li>
+            <li><b>2</b> Packet Too Big (drives Path MTU Discovery).</li>
+            <li><b>3</b> Time Exceeded (traceroute).</li>
+            <li><b>128 / 129</b> Echo Request / Reply (ping).</li>
+            <li><b>133 / 134</b> Router Solicitation / Advertisement.</li>
+            <li><b>135 / 136</b> Neighbor Solicitation / Advertisement.</li>
+            <li><b>137</b> Redirect.</li>
+          </ul>
+          <p><b>Firewall note:</b> blocking <i>all</i> ICMPv6 breaks IPv6. Must allow at minimum types 1, 2, 3, 128, 129, 133–137.</p>
+
+          <h2>Transition mechanisms — pick the right one</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Scenario</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Best tool</th></tr>
+            <tr><td>Enterprise rolling out IPv6 internally</td><td><b>Dual stack</b></td></tr>
+            <tr><td>IPv6-only mobile network reaching legacy IPv4 sites</td><td><b>NAT64 + DNS64</b> (and 464XLAT on the handset)</td></tr>
+            <tr><td>Two IPv6 sites connected over IPv4-only ISP</td><td><b>6in4</b> manual tunnel or <b>GRE</b></td></tr>
+            <tr><td>Single home gateway with public IPv4 reaching IPv6 sites (legacy)</td><td><b>6to4</b> (deprecated)</td></tr>
+            <tr><td>Microsoft DirectAccess clients behind NAT</td><td><b>Teredo</b> (legacy)</td></tr>
+            <tr><td>ISP delivering IPv4 service over IPv6 infra</td><td><b>MAP-T / MAP-E</b> or <b>DS-Lite</b></td></tr>
+          </table>
+
+          <h2>IPv6 DNS basics</h2>
+          <ul>
+            <li><b>AAAA record</b> (quad-A) — maps name → IPv6 address.</li>
+            <li><b>PTR</b> reverse lookup uses <code>ip6.arpa</code> with each hex digit reversed and dot-separated.</li>
+            <li><b>Dual-stack hosts</b> typically try AAAA first; if it fails, fall back to A (Happy Eyeballs RFC 8305).</li>
+          </ul>
+
+          <h2>Subnetting IPv6 (much simpler than IPv4)</h2>
+          <ul>
+            <li>Standard host subnet = <b>/64</b>. Don't break this unless forced (SLAAC requires it).</li>
+            <li>For point-to-point links, /127 is acceptable (RFC 6164).</li>
+            <li>A /48 site allocation gives <b>65,536 /64 subnets</b>.</li>
+            <li>A /56 home gives <b>256 /64 subnets</b>.</li>
+            <li>No host arithmetic gymnastics — every /64 has 2⁶⁴ addresses, more than the entire IPv4 internet, so "usable hosts" calculations are a non-issue.</li>
+          </ul>
+
+          <h2>Common IPv6 troubleshooting issues</h2>
+          <ul>
+            <li><b>Rogue RA</b> on a guest VLAN — every host suddenly gets an extra default route. Fix with <b>RA Guard</b>.</li>
+            <li><b>SLAAC + DHCPv6 confusion</b> — if both M-flag and DHCPv6 server present, OSes may pick either. Choose one model.</li>
+            <li><b>No AAAA fallback</b> — slow site = AAAA returned but no IPv6 connectivity. Happy Eyeballs should solve it; if not, audit IPv6 routing.</li>
+            <li><b>Tunnel-broker MTU</b> — 6in4 reduces effective MTU; needs Path MTU Discovery to work (which means ICMPv6 type 2 must be allowed).</li>
+            <li><b>Privacy address rotation</b> breaking access logs / firewall rules — disable if pinning is required.</li>
+            <li><b>Wrong default gateway</b> — gateway must be link-local of the router (<code>fe80::1</code> typically), not a global address.</li>
+          </ul>
+
+          <h2>IPv6 attacker mindset (NDP/RA threats)</h2>
+          <ul>
+            <li><b>RA spoofing</b> — attacker advertises themselves as router → MITM. Mitigation: RA Guard, SEND.</li>
+            <li><b>NS spoofing</b> — equivalent of ARP poisoning. Mitigation: ND Inspection.</li>
+            <li><b>DAD DoS</b> — attacker replies to every DAD probe → victim cannot configure an address. Mitigation: SeND, port security.</li>
+            <li><b>Multicast amplification</b> — spoofed source in NS to <code>ff02::1</code> = huge reply storm. Mitigation: source filtering.</li>
+            <li><b>Extension header abuse</b> — chaining headers to evade IDS or for fragmentation games. Mitigation: drop unknown ext headers at perimeter.</li>
+          </ul>
+
+          <h2>Real-world recognition cheat (one-line scan)</h2>
+          <ul>
+            <li>Starts with <b>fe80:</b> → link-local.</li>
+            <li>Starts with <b>fd</b> → ULA (private).</li>
+            <li>Starts with <b>2</b> or <b>3</b> → global unicast.</li>
+            <li>Starts with <b>ff</b> → multicast.</li>
+            <li>Contains <b>ff:fe</b> in middle of lower 64 bits → EUI-64.</li>
+            <li>Is <b>::1</b> → loopback.</li>
+            <li>Is <b>::</b> → unspecified.</li>
+            <li>Starts with <b>2001:db8</b> → documentation only; never deploy.</li>
           </ul>
         `
       },
@@ -4350,6 +8688,128 @@ interface Gi0/24
             <li>"Up to 30 W per port" → 802.3at PoE+.</li>
             <li>"Up to 100 W per port" → 802.3bt Type 4 (PoE++).</li>
             <li>"Defenses against VLAN hopping" → disable DTP, tag native VLAN, change native VLAN from 1.</li>
+          </ul>
+
+          <h2>802.1Q tag — the 4 bytes that make trunks work</h2>
+          <p>Inserted into the Ethernet frame between the Source MAC and the EtherType. Total <b>4 bytes</b>, bumping max frame size to 1522.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bits</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>TPID (Tag Protocol Identifier)</td><td>16</td><td><code>0x8100</code> — marks an 802.1Q tag. (<code>0x88A8</code> for Q-in-Q outer)</td></tr>
+            <tr><td>PCP (Priority Code Point)</td><td>3</td><td>802.1p CoS, 0–7 (higher = more important)</td></tr>
+            <tr><td>DEI (Drop Eligible)</td><td>1</td><td>Mark frame as drop-eligible under congestion</td></tr>
+            <tr><td>VID (VLAN ID)</td><td>12</td><td>1–4094 (0 + 4095 reserved). VLAN 1 = default; VLAN 1002–1005 historically Token Ring</td></tr>
+          </table>
+          <p><b>Native VLAN gotcha:</b> default is VLAN 1 — untagged on a trunk. Both sides must match. Mismatch logs <code>%CDP-4-NATIVE_VLAN_MISMATCH</code>. Best practice: pick an unused VLAN ID (e.g., 999) and configure <code>vlan dot1q tag native</code> so even the native is tagged — defeats double-tag hopping.</p>
+
+          <h2>VLAN hopping attacks — drilled</h2>
+          <h3>Switch-spoofing</h3>
+          <ol>
+            <li>Attacker connects laptop to an access port that's still in default DTP mode (<code>dynamic auto</code> or <code>dynamic desirable</code>).</li>
+            <li>Laptop sends DTP advertising itself as a switch wanting a trunk.</li>
+            <li>Port flips to trunk → attacker now sees frames from <i>every</i> VLAN on the switch.</li>
+            <li><b>Fix:</b> <code>switchport mode access</code> + <code>switchport nonegotiate</code> on every access port. Never leave DTP at default.</li>
+          </ol>
+          <h3>Double-tagging (RFC informal "dot1q tunnel abuse")</h3>
+          <ol>
+            <li>Attacker on access port in <b>native VLAN 1</b> crafts a frame with TWO 802.1Q headers: outer = VLAN 1 (matching the native), inner = victim VLAN 10.</li>
+            <li>First switch sees an untagged-looking frame (the outer matches its native), strips the outer tag.</li>
+            <li>Frame is forwarded into the trunk still carrying the inner VLAN 10 tag.</li>
+            <li>Receiving switch reads the inner tag and delivers the frame to VLAN 10.</li>
+            <li><b>One-way attack</b> — replies don't come back unless reflective. Used for spoofed broadcasts / discovery scans.</li>
+            <li><b>Fix:</b> change native VLAN off VLAN 1, force-tag the native, or use a dedicated unused VLAN for "native" that no host belongs to.</li>
+          </ol>
+
+          <h2>STP state machine — exact timers</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">State</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Duration (STP)</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What happens</th></tr>
+            <tr><td>Disabled</td><td>—</td><td>Port admin-down</td></tr>
+            <tr><td>Blocking</td><td>up to 20 s Max Age</td><td>Listens for BPDUs, no forwarding</td></tr>
+            <tr><td>Listening</td><td>15 s</td><td>Sends + receives BPDUs, no MAC learning</td></tr>
+            <tr><td>Learning</td><td>15 s</td><td>Builds MAC table, still no forwarding</td></tr>
+            <tr><td>Forwarding</td><td>—</td><td>Normal operation</td></tr>
+          </table>
+          <p>Classic 802.1D STP convergence ≈ <b>30–50 seconds</b> total (Listening + Learning + Max Age). RSTP (802.1w) reduces to ~3–6 s by replacing timer-based transitions with proposal/agreement handshake on point-to-point links.</p>
+          <p><b>Hello</b> = 2 s; <b>Forward Delay</b> = 15 s; <b>Max Age</b> = 20 s. Memorize 2-15-20.</p>
+
+          <h2>BPDU + Bridge ID details</h2>
+          <ul>
+            <li><b>Bridge ID</b> = <b>Priority (2 B) + MAC (6 B)</b>. Lower wins root election. Priority default 32768; tunable in increments of 4096. With "extended system ID" the lower 12 bits encode VLAN, so per-VLAN STP uses one root per VLAN.</li>
+            <li><b>BPDU types:</b> <b>Configuration BPDU</b> (root advertisement, every 2 s) and <b>TCN BPDU</b> (Topology Change Notification, sent on link change).</li>
+            <li><b>Path cost</b> defaults: 1 Gbps = 4, 10 Gbps = 2, 100 Mbps = 19, 10 Mbps = 100 (IEEE long-cost mode differs).</li>
+            <li><b>Root port</b> = port with lowest cumulative cost to root. <b>Designated port</b> = best port on a segment. <b>Alternate / backup ports</b> in RSTP fill the role of "blocking".</li>
+          </ul>
+
+          <h2>STP enhancement features — what each one stops</h2>
+          <ul>
+            <li><b>PortFast</b> — skip listening + learning on access ports so end hosts don't wait 30 s. Mandatory on user-facing ports.</li>
+            <li><b>BPDU Guard</b> — if a port receives a BPDU (it shouldn't, it's an access port), err-disable it. Prevents rogue switches.</li>
+            <li><b>BPDU Filter</b> — drop incoming/outgoing BPDUs. Use with care.</li>
+            <li><b>Root Guard</b> — block superior BPDUs from being accepted, preserving root location. Apply on ports facing partner / customer switches.</li>
+            <li><b>Loop Guard</b> — if a non-designated port stops receiving BPDUs (one-way link), put it in loop-inconsistent state instead of letting it transition.</li>
+            <li><b>UDLD</b> (Unidirectional Link Detection) — detects unidirectional fiber failure and shuts the port.</li>
+            <li><b>BackboneFast</b> + <b>UplinkFast</b> — legacy STP convergence helpers (predate RSTP).</li>
+          </ul>
+          <p><b>Rule of thumb:</b> access ports = PortFast + BPDU Guard. Trunks/uplinks = Root Guard + UDLD.</p>
+
+          <h2>LACP frame + state details</h2>
+          <ul>
+            <li>LACPDU sent every 1 s (Fast) or 30 s (Slow). Both ends must agree on rate.</li>
+            <li>Each side advertises Actor + Partner state flags: <b>Activity</b> (Active/Passive), <b>Timeout</b> (Short/Long), <b>Aggregatable</b>, <b>Synchronization</b>, <b>Collecting</b>, <b>Distributing</b>.</li>
+            <li>Bundle forms only if both sides agree on speed, duplex, VLAN list, MTU, native VLAN.</li>
+            <li><b>System priority + MAC</b> elects the "decision side" if there's a tie; the lower wins.</li>
+            <li><b>Hash modes:</b> src-MAC, dst-MAC, src-dst-MAC, src-IP, dst-IP, src-dst-IP, L4 ports. Choose to spread traffic across members. Single TCP flow always goes over ONE member — bundle ≠ faster single flow.</li>
+          </ul>
+
+          <h2>802.1X — port-based network access control</h2>
+          <ol>
+            <li>Switch port is "controlled" — only EAPoL (EtherType <code>0x888E</code>) can flow until auth completes.</li>
+            <li>Supplicant (endpoint) sends EAPoL-Start (or switch sends EAP-Request Identity on link-up).</li>
+            <li>Switch (Authenticator) wraps EAP messages in RADIUS Access-Request to AAA server.</li>
+            <li>EAP method runs (PEAP, EAP-TLS, EAP-FAST, MSCHAPv2 inside).</li>
+            <li>AAA server returns Access-Accept (+ optional VLAN/ACL via RADIUS attributes) or Access-Reject.</li>
+            <li>Switch opens or keeps the port closed; can place in <b>guest VLAN</b>, <b>auth-fail VLAN</b>, or <b>critical VLAN</b> if RADIUS down.</li>
+          </ol>
+          <p><b>MAB</b> (MAC Authentication Bypass) — fallback for printers/cameras that don't speak 802.1X. Switch sends the MAC as username/password to RADIUS.</p>
+
+          <h2>Storm control + port security details</h2>
+          <ul>
+            <li><b>Storm control</b> — caps broadcast / multicast / unknown-unicast bandwidth per port (e.g., 1%). Action = drop or shutdown.</li>
+            <li><b>Port Security</b> — limit number of MAC addresses learned on a port. Modes: <b>protect</b> (silently drop), <b>restrict</b> (drop + log), <b>shutdown</b> (err-disable).</li>
+            <li><b>Sticky MAC</b> — switch auto-learns the first allowed MACs and writes them to running-config so they persist across reboots.</li>
+            <li><b>DHCP Snooping</b> — switch tracks DHCP DISCOVER/OFFER per port; only "trusted" ports can answer. Blocks rogue DHCP servers.</li>
+            <li><b>DAI</b> (Dynamic ARP Inspection) — verifies ARP replies against DHCP Snooping binding table; drops ARP poisoning.</li>
+            <li><b>IP Source Guard</b> — drops packets whose source IP/MAC don't match the snooping binding.</li>
+          </ul>
+
+          <h2>Voice VLAN + LLDP-MED</h2>
+          <ul>
+            <li><b>Voice VLAN</b> — a switch port can carry one access VLAN for the PC + a separate "voice" tagged VLAN for an IP phone daisy-chained behind it.</li>
+            <li><b>LLDP-MED</b> (Media Endpoint Discovery) — phone learns voice VLAN, QoS markings (CoS 5, DSCP EF/46), and PoE class from the switch automatically.</li>
+            <li><b>CDP</b> (Cisco) does the same on Cisco gear.</li>
+          </ul>
+
+          <h2>Switch show commands you must know</h2>
+          <pre><code>show interfaces status                  # quick port table
+show interface gi1/0/24                 # counters, duplex, errors
+show mac address-table
+show vlan brief
+show spanning-tree
+show spanning-tree summary
+show etherchannel summary
+show port-security
+show power inline
+show cdp neighbors / show lldp neighbors
+show errdisable detect / recovery</code></pre>
+
+          <h2>Real-world switching gotchas</h2>
+          <ul>
+            <li>Two interfaces with hardcoded different duplex → "duplex mismatch" — symptoms are late collisions, CRC errors, slow throughput under load. Fix: leave both auto or hardcode both.</li>
+            <li>MTU mismatch on a trunk drops frames silently — both sides must agree (jumbo frames require ALL hops to support).</li>
+            <li>Port becomes err-disabled — <code>show errdisable recovery</code> + <code>shutdown</code>/<code>no shutdown</code> only after root cause fixed (port security, BPDU Guard, etc.).</li>
+            <li>Spanning Tree blocks the wrong link → manually set root bridge priority on the core switch (e.g., 4096) so it always wins.</li>
+            <li>EtherChannel won't form → most often duplex/speed mismatch or one member configured access while the other is trunk.</li>
+            <li>Voice VLAN works, but PCs lose connectivity when phone unplugged → check that <code>switchport voice vlan</code> doesn't break the underlying access VLAN config.</li>
+            <li>VLAN traffic crosses a router but not back → trunk allowed list missing the return VLAN, or sub-interface IP/VLAN mismatch (router-on-a-stick).</li>
           </ul>
         `
       },
@@ -4598,6 +9058,172 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Validate BGP route origins cryptographically" → RPKI.</li>
             <li>"Detect link down sub-second" → BFD.</li>
           </ul>
+
+          <h2>OSPF LSA type catalog (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Name</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Origin</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Scope</th></tr>
+            <tr><td>1</td><td>Router</td><td>Every router</td><td>Area</td></tr>
+            <tr><td>2</td><td>Network</td><td>DR on multi-access</td><td>Area</td></tr>
+            <tr><td>3</td><td>Summary (Network)</td><td>ABR</td><td>Other areas</td></tr>
+            <tr><td>4</td><td>Summary (ASBR)</td><td>ABR</td><td>Other areas</td></tr>
+            <tr><td>5</td><td>External</td><td>ASBR (redistribution)</td><td>Whole AS (except stubs)</td></tr>
+            <tr><td>7</td><td>NSSA External</td><td>ASBR in NSSA</td><td>NSSA only; ABR translates to Type 5</td></tr>
+            <tr><td>9–11</td><td>Opaque</td><td>Various</td><td>Extensions (MPLS TE)</td></tr>
+          </table>
+
+          <h2>OSPF DR / BDR election</h2>
+          <ol>
+            <li>On multi-access networks (Ethernet, broadcast), every router would form n×(n−1) full adjacencies. Wasteful.</li>
+            <li>Routers elect a <b>DR</b> (Designated Router) and <b>BDR</b> (Backup DR). Everyone forms adjacency only with DR + BDR; DR floods LSAs to the rest via 224.0.0.5.</li>
+            <li><b>Election rule:</b> highest OSPF priority wins (0–255, default 1). Priority 0 = "never DR". Tiebreaker: highest <b>Router ID</b>.</li>
+            <li>Router ID source order: <code>router-id</code> command → highest loopback IP → highest active interface IP.</li>
+            <li>Election is <b>NOT preemptive</b> — if a higher-priority router joins later, the existing DR keeps the role. Reload to force re-election.</li>
+            <li>On point-to-point or P2MP links, no DR/BDR — direct adjacency.</li>
+          </ol>
+
+          <h2>OSPF neighbor state machine</h2>
+          <p><b>Down → Init → 2-Way → ExStart → Exchange → Loading → Full.</b></p>
+          <ul>
+            <li><b>2-Way</b> — bidirectional hello seen; on multi-access, DROther↔DROther stays here (no full DB exchange).</li>
+            <li><b>ExStart</b> — master/slave election for DBD exchange. Stuck here often = <b>MTU mismatch</b>.</li>
+            <li><b>Exchange / Loading</b> — DBD / LSR / LSU exchange.</li>
+            <li><b>Full</b> — adjacency complete; routing happens here.</li>
+          </ul>
+
+          <h2>EIGRP DUAL terminology drill</h2>
+          <ul>
+            <li><b>Feasible Distance (FD)</b> — best metric from this router to the destination.</li>
+            <li><b>Reported Distance (RD)</b> / Advertised Distance — metric the neighbor reports.</li>
+            <li><b>Successor</b> — neighbor with the lowest FD; the route installed in the routing table.</li>
+            <li><b>Feasible Successor (FS)</b> — backup neighbor whose RD &lt; current FD. Already loop-free, so failover is instant (no recomputation).</li>
+            <li><b>Active route</b> — EIGRP doing a "query" to neighbors to find a new path; usually transient. Stuck-in-Active (SIA) = upstream not responding.</li>
+            <li><b>K values</b> — bandwidth (K1), load (K2), delay (K3), reliability (K4), MTU (K5). Default uses K1+K3 only. Must match between neighbors or no adjacency.</li>
+          </ul>
+
+          <h2>BGP state machine (FSM)</h2>
+          <ol>
+            <li><b>Idle</b> — no resources allocated.</li>
+            <li><b>Connect</b> — waiting for TCP 3-way handshake.</li>
+            <li><b>Active</b> — actively trying TCP again (paradoxically NOT "everything working" — name is confusing).</li>
+            <li><b>OpenSent</b> — sent BGP OPEN, waiting for OPEN reply.</li>
+            <li><b>OpenConfirm</b> — got OPEN, waiting for KEEPALIVE.</li>
+            <li><b>Established</b> — adjacency up, exchanging UPDATEs.</li>
+          </ol>
+          <p><b>Stuck in Active</b> = TCP/179 isn't completing. Check ACL/firewall, source IP (must match neighbor statement), TTL (eBGP defaults TTL=1 — use ebgp-multihop if not directly connected).</p>
+
+          <h2>BGP path-selection algorithm — the 13-step long form</h2>
+          <ol>
+            <li><b>Highest Weight</b> (Cisco-only, local to one router).</li>
+            <li><b>Highest LOCAL_PREF</b> — set by inbound policy; influences outbound traffic for an AS.</li>
+            <li><b>Locally originated</b> (via <code>network</code> / aggregate / redistribute) preferred over learned.</li>
+            <li><b>Shortest AS_PATH</b>.</li>
+            <li><b>Lowest Origin code</b> — IGP (i) &lt; EGP (e) &lt; Incomplete (?).</li>
+            <li><b>Lowest MED</b> (Multi-Exit Discriminator) — only compared between paths from the same neighboring AS.</li>
+            <li><b>eBGP preferred over iBGP</b>.</li>
+            <li><b>Lowest IGP metric</b> to next-hop.</li>
+            <li>For eBGP, <b>oldest route</b> preferred (path stability).</li>
+            <li><b>Lowest Router ID</b>.</li>
+            <li><b>Shortest Cluster List length</b> (route-reflector environments).</li>
+            <li><b>Lowest neighbor IP</b>.</li>
+          </ol>
+          <p><b>Mnemonic:</b> "<b>W</b>e <b>L</b>ove <b>O</b>ranges <b>A</b>S <b>O</b>ranges <b>M</b>ean <b>P</b>ure <b>R</b>efreshment" — Weight, Local-Pref, Originate, AS-path, Origin, MED, Path (eBGP/iBGP), Router-ID.</p>
+
+          <h2>BGP attribute classes</h2>
+          <ul>
+            <li><b>Well-known mandatory</b> — every UPDATE must include: AS_PATH, NEXT_HOP, ORIGIN.</li>
+            <li><b>Well-known discretionary</b> — LOCAL_PREF, ATOMIC_AGGREGATE.</li>
+            <li><b>Optional transitive</b> — passed along even if unsupported: COMMUNITY, AGGREGATOR.</li>
+            <li><b>Optional non-transitive</b> — dropped if unsupported: MED, ORIGINATOR_ID, CLUSTER_LIST.</li>
+          </ul>
+
+          <h2>First-hop redundancy detailed</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Feature</th><th align="left" style="padding:4px;border-bottom:1px solid #444">HSRP</th><th align="left" style="padding:4px;border-bottom:1px solid #444">VRRP</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GLBP</th></tr>
+            <tr><td>Vendor</td><td>Cisco</td><td>IETF (RFC 5798)</td><td>Cisco</td></tr>
+            <tr><td>Active routers</td><td>1 active + 1 standby</td><td>1 master + N backup</td><td>Multiple active (load balance)</td></tr>
+            <tr><td>Virtual MAC</td><td>0000.0C07.AC<i>xx</i></td><td>0000.5E00.01<i>xx</i></td><td>0007.B400.<i>xxyy</i></td></tr>
+            <tr><td>Multicast</td><td>224.0.0.2 (v1) / 224.0.0.102 (v2)</td><td>224.0.0.18</td><td>224.0.0.102</td></tr>
+            <tr><td>UDP/IP protocol</td><td>UDP 1985</td><td>IP proto 112</td><td>UDP 3222</td></tr>
+            <tr><td>Hello / Hold</td><td>3 s / 10 s</td><td>1 s / 3 s</td><td>3 s / 10 s</td></tr>
+          </table>
+          <p><b>States (HSRP):</b> Initial → Listen → Speak → Standby → Active. <b>Preempt</b> must be enabled for higher-priority router to take over after recovery.</p>
+
+          <h2>Routing-loop prevention (distance-vector toolkit)</h2>
+          <ul>
+            <li><b>Split horizon</b> — don't advertise a route back out the interface you learned it on.</li>
+            <li><b>Poison reverse</b> — advertise the route back, marked unreachable (metric 16 in RIP), to explicitly cancel it.</li>
+            <li><b>Hold-down timer</b> — ignore updates about a failed route for N seconds.</li>
+            <li><b>Triggered updates</b> — send immediate change rather than waiting for periodic timer.</li>
+            <li><b>Max hop count</b> — RIP's 15-hop cap.</li>
+          </ul>
+
+          <h2>VRF — Virtual Routing and Forwarding</h2>
+          <p><b>What:</b> Multiple independent routing tables on one router. Each VRF acts like a separate router. <b>Why:</b> Multi-tenant networks, MPLS L3 VPN, management vs production separation, customer isolation. <b>How:</b> Interfaces assigned to a VRF, all routes for that VRF live in its own RIB/FIB. Optional <b>route-target</b> + <b>route-distinguisher</b> for MPLS VPN.</p>
+
+          <h2>Policy-Based Routing (PBR)</h2>
+          <p><b>What:</b> Forward packets based on source/policy instead of destination only — e.g., voice traffic over Link A, bulk over Link B. <b>How:</b> route-map matched on source IP / DSCP / ACL → set next-hop or interface. Overrides the RIB for matching traffic.</p>
+
+          <h2>Asymmetric routing pitfalls</h2>
+          <ul>
+            <li>Forward path uses Router A, return path uses Router B.</li>
+            <li>Stateful firewalls / NAT see only half the flow → drop session.</li>
+            <li>Fixes: route-affinity policy, source-NAT on a single edge, ensure both paths see both directions.</li>
+          </ul>
+
+          <h2>Route summarization (best practice)</h2>
+          <ul>
+            <li>Aggregate at area / AS boundaries to shrink upstream tables.</li>
+            <li>OSPF: <code>area X range</code> on ABR; <code>summary-address</code> on ASBR.</li>
+            <li>EIGRP: <code>ip summary-address eigrp</code> on outbound interface.</li>
+            <li>BGP: <code>aggregate-address</code>.</li>
+            <li>Trade-off: tighter summary = less detail upstream but less responsive to internal flaps.</li>
+          </ul>
+
+          <h2>Modern fast-convergence stack</h2>
+          <ul>
+            <li><b>BFD</b> (Bidirectional Forwarding Detection) — sub-second link-fault detection (300–500 ms typical).</li>
+            <li><b>OSPF / EIGRP / BGP timers tuning</b> — hellos at sub-second.</li>
+            <li><b>Graceful Restart / NSF</b> — keeps forwarding table during a control-plane reboot.</li>
+            <li><b>LFA</b> (Loop-Free Alternates) — precomputed backup paths for instant failover.</li>
+            <li><b>IP Fast Reroute (IP-FRR)</b> — &lt;50 ms reroute.</li>
+            <li><b>SR-MPLS / Segment Routing</b> — modern source-routed traffic engineering replacing classic MPLS TE.</li>
+          </ul>
+
+          <h2>NAT traversal + ALG</h2>
+          <ul>
+            <li><b>ALG</b> (Application Layer Gateway) — NAT helper that rewrites embedded IPs inside protocols (FTP, SIP, H.323). Sometimes breaks SIP — disable ALG and use SBC instead.</li>
+            <li><b>STUN / TURN / ICE</b> — client-side NAT discovery used by WebRTC.</li>
+            <li><b>Hairpin NAT</b> — internal client reaches an internal server via its public IP; router NATs the source so reply comes back through it.</li>
+            <li><b>NAT loopback</b> = same as hairpin.</li>
+          </ul>
+
+          <h2>Multicast routing concepts</h2>
+          <ul>
+            <li><b>IGMP</b> (v2/v3) — host signals it wants a multicast group at L2/L3 edge.</li>
+            <li><b>PIM</b> (Protocol Independent Multicast): Sparse Mode (RP-based), Dense Mode (flood-and-prune), Bidirectional, Source-Specific.</li>
+            <li><b>RP</b> (Rendezvous Point) — meeting point in PIM-SM.</li>
+            <li><b>IGMP Snooping</b> — switches track group memberships to avoid flooding multicast to all ports.</li>
+          </ul>
+
+          <h2>QoS at L3</h2>
+          <ul>
+            <li><b>DSCP</b> markings in the IP header (6 bits in DS field): EF (46) for voice, AF41 (34) for video, AF21 (18) for transactional, CS6 (48) for routing.</li>
+            <li><b>Queues + scheduling:</b> LLQ (Low Latency Queue) for voice, WFQ / CBWFQ for the rest.</li>
+            <li><b>Shaping vs Policing:</b> shape = buffer + slow; police = drop + remark when over budget.</li>
+            <li><b>Trust boundary</b> — first hop that re-marks; usually the access switch closest to the IP phone.</li>
+          </ul>
+
+          <h2>Common routing/exam scenarios</h2>
+          <ol>
+            <li><b>"OSPF neighbors stuck in ExStart"</b> → MTU mismatch on the link.</li>
+            <li><b>"BGP stays in Active"</b> → TCP/179 blocked; check ACL, NAT, neighbor IP, ebgp-multihop.</li>
+            <li><b>"Routes installed but pings fail"</b> → ACL or stateful firewall dropping return; check reverse path.</li>
+            <li><b>"Static route active even though dynamic learned same prefix"</b> → static AD (1) beats dynamic (90+); use floating static (AD 200) for backup.</li>
+            <li><b>"Internet traffic going out wrong ISP"</b> → tune BGP outbound via LOCAL_PREF or AS_PATH prepend.</li>
+            <li><b>"Inbound traffic asymmetric"</b> → use MED + community tagging with upstream ISPs.</li>
+            <li><b>"DR is wrong router after reload"</b> → election non-preemptive; manually clear OSPF process to re-elect.</li>
+            <li><b>"Network gets summarized to /16 but I need /24 visibility"</b> → undo summary or use specific filter.</li>
+          </ol>
         `
       },
       {
@@ -4814,6 +9440,149 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Replace VPN with per-app identity-based access" → ZTNA.</li>
             <li>"Where carrier responsibility ends" → demarc.</li>
           </ul>
+
+          <h2>MPLS label stack + control plane</h2>
+          <p>The 32-bit MPLS header sits between L2 and L3 (sometimes called "Layer 2.5"):</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Field</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Bits</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>Label</td><td>20</td><td>Forwarding key in the LFIB</td></tr>
+            <tr><td>EXP / TC</td><td>3</td><td>Traffic Class (QoS marking)</td></tr>
+            <tr><td>S (bottom of stack)</td><td>1</td><td>1 = innermost label</td></tr>
+            <tr><td>TTL</td><td>8</td><td>Decrement per hop</td></tr>
+          </table>
+          <p>Multiple labels stack — L3VPN uses 2 labels (transport + VPN), MPLS TE adds tunnel labels on top.</p>
+          <ul>
+            <li><b>LFIB</b> (Label Forwarding Information Base) — the forwarding table P routers use, indexed by label.</li>
+            <li><b>LDP</b> (Label Distribution Protocol) — neighbors exchange label bindings.</li>
+            <li><b>RSVP-TE</b> — explicit traffic-engineered paths with bandwidth reservation.</li>
+            <li><b>Segment Routing / SR-MPLS</b> — modern source-routed replacement; encodes path as a stack of labels (SIDs) without LDP.</li>
+            <li><b>PHP</b> (Penultimate Hop Popping) — second-to-last router strips outer label so egress PE does only one lookup.</li>
+            <li><b>VRF</b> + <b>route-distinguisher</b> + <b>route-target</b> — separate customers in an L3VPN.</li>
+            <li><b>VPLS</b> (Virtual Private LAN Service) — provider delivers an Ethernet broadcast domain across the MPLS core (L2VPN).</li>
+          </ul>
+
+          <h2>Carrier Ethernet vocabulary (MEF)</h2>
+          <ul>
+            <li><b>EVC</b> (Ethernet Virtual Connection) — the logical connection.</li>
+            <li><b>UNI</b> (User-Network Interface) — customer hand-off port.</li>
+            <li><b>NNI</b> (Network-Network Interface) — carrier-to-carrier handoff.</li>
+            <li><b>CIR</b> (Committed Information Rate) — guaranteed throughput.</li>
+            <li><b>EIR</b> (Excess Information Rate) — burst above CIR, drop-eligible.</li>
+            <li><b>OAM</b> (Operations, Administration, Maintenance) — protocols like 802.1ag CFM, Y.1731 for fault + performance.</li>
+            <li><b>Jumbo frames</b> commonly supported (9216 bytes); negotiate during UNI provisioning.</li>
+          </ul>
+
+          <h2>Fiber types + transceivers (Net+ heavy testing area)</h2>
+          <ul>
+            <li><b>SMF</b> (Single-Mode Fiber, ~9 μm core) — long reach (km–100 km+), 1310/1550 nm. Yellow jacket usually.</li>
+            <li><b>MMF</b> (Multi-Mode Fiber, ~50/62.5 μm core) — shorter reach (&lt;550 m), 850 nm dominant. Aqua/orange jackets:
+              <ul>
+                <li><b>OM1</b> 62.5/125, orange — 1 Gbps to 275 m.</li>
+                <li><b>OM2</b> 50/125, orange — 1 Gbps to 550 m, 10G to 82 m.</li>
+                <li><b>OM3</b> 50/125 laser-optimized, aqua — 10G to 300 m, 40G/100G to 100 m.</li>
+                <li><b>OM4</b> aqua / violet — 10G to 400 m, 100G to 150 m.</li>
+                <li><b>OM5</b> lime green — SWDM short wavelength division multiplex (multiple λ on multimode).</li>
+              </ul>
+            </li>
+            <li><b>Connectors:</b> LC (most common, small), SC (square), ST (bayonet, legacy), MPO/MTP (12/24-fiber ribbon for 40G/100G/400G), FC (screw, telco).</li>
+            <li><b>Polish:</b> UPC (Ultra) vs APC (Angled, green connectors, lower back-reflection for high-speed/long-haul).</li>
+            <li><b>Pluggable transceivers:</b> SFP (1G), SFP+ (10G), SFP28 (25G), QSFP+ (40G, 4×10G breakout), QSFP28 (100G, 4×25G), QSFP-DD (400G, 8 lanes), OSFP (400G/800G).</li>
+            <li><b>BiDi</b> transceivers use a single fiber strand with different λ each direction (e.g., 1310/1550). Useful when fiber count is tight.</li>
+            <li><b>DAC</b> (Direct Attach Copper, twinax) — short range (≤7 m), cheap for top-of-rack.</li>
+            <li><b>AOC</b> (Active Optical Cable) — built-in transceivers, 10-30 m.</li>
+          </ul>
+
+          <h2>Fiber operations + diagnostic tools</h2>
+          <ul>
+            <li><b>Light meter / power meter</b> — measure dBm received; compare to vendor min/max budget.</li>
+            <li><b>OTDR</b> (Optical Time-Domain Reflectometer) — pulse-and-listen trace showing splice loss, breaks, bends with distance.</li>
+            <li><b>VFL</b> (Visible Fault Locator) — red laser to spot a break/bend visually.</li>
+            <li><b>Fusion splicer</b> — fuses two fibers; loss &lt;0.1 dB.</li>
+            <li><b>Cleaver + cleaner</b> — prep fiber end-face; dirty connectors are the #1 fiber issue.</li>
+            <li><b>Loss budget</b> = transmitter power − receiver sensitivity − margin. Account for connector loss (~0.5 dB), splice loss (~0.1 dB), fiber loss (~0.35 dB/km @1310nm SMF).</li>
+          </ul>
+
+          <h2>Copper standards refresher (you'll see these on the WAN/LAN edge)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Category</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Max speed @100m</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Notes</th></tr>
+            <tr><td>Cat 5e</td><td>1 Gbps</td><td>Minimum acceptable today</td></tr>
+            <tr><td>Cat 6</td><td>1 Gbps @100m, 10 Gbps @55m</td><td>Better NEXT</td></tr>
+            <tr><td>Cat 6a</td><td>10 Gbps @100m</td><td>Shielded common for 10G long runs</td></tr>
+            <tr><td>Cat 7 / 7a</td><td>10 Gbps / 100 Gbps short</td><td>Shielded; uses GG45/TERA, rarely deployed</td></tr>
+            <tr><td>Cat 8</td><td>25/40 Gbps @30 m</td><td>DC top-of-rack; uses RJ45</td></tr>
+          </table>
+          <p>Always-true: 100 m channel = 90 m horizontal cable + 10 m patch cords. <b>EIA/TIA 568A vs 568B</b> — pin order on RJ45; both ends same = straight-through, different = crossover (mostly obsolete with Auto-MDIX). <b>PoE+/++</b> use all 4 pairs (Type 3/4).</p>
+
+          <h2>SD-WAN architecture in detail</h2>
+          <ul>
+            <li><b>vEdge / SD-WAN router</b> at each site terminates one or more transports (MPLS, broadband, LTE).</li>
+            <li><b>Orchestrator</b> — pushes policy + ZTP onboarding.</li>
+            <li><b>Controller</b> — maintains overlay tunnel control plane (vSmart in Cisco Viptela / Catalyst SD-WAN; vCO in Velocloud).</li>
+            <li><b>Data plane</b> — IPsec tunnels between sites in a full mesh / hub-spoke / dynamic topology.</li>
+            <li><b>App-aware path selection</b> — measures latency, loss, jitter per transport in real time; steers each app to the best one. Voice/Office365 → MPLS; YouTube → broadband.</li>
+            <li><b>FEC + packet duplication</b> — send the same packet over two paths for critical real-time traffic.</li>
+            <li><b>Direct Internet Access (DIA)</b> — branch breakouts to cloud SaaS without hairpinning through data center.</li>
+            <li><b>Security integration</b> — local NGFW + cloud-delivered SWG/CASB (SASE).</li>
+            <li><b>BFD / IPSLA</b> probes drive sub-second failover.</li>
+          </ul>
+
+          <h2>SASE component stack (memorize the alphabet soup)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Acronym</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Long form</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Job</th></tr>
+            <tr><td>FWaaS</td><td>Firewall as a Service</td><td>Cloud-delivered NGFW</td></tr>
+            <tr><td>SWG</td><td>Secure Web Gateway</td><td>URL filter, AV, sandbox</td></tr>
+            <tr><td>CASB</td><td>Cloud Access Security Broker</td><td>SaaS visibility + DLP + posture</td></tr>
+            <tr><td>ZTNA</td><td>Zero Trust Network Access</td><td>Per-app identity-checked access (VPN replacement)</td></tr>
+            <tr><td>DLP</td><td>Data Loss Prevention</td><td>Stop sensitive data exfil</td></tr>
+            <tr><td>RBI</td><td>Remote Browser Isolation</td><td>Render risky web sessions in cloud sandbox</td></tr>
+            <tr><td>SD-WAN</td><td>Software-Defined WAN</td><td>Transport / steering layer</td></tr>
+          </table>
+
+          <h2>VPN protocol comparison</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Use</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Status</th></tr>
+            <tr><td><b>IPsec (IKEv2)</b></td><td>UDP 500/4500, ESP/AH</td><td>Site-to-site + remote access</td><td>Standard</td></tr>
+            <tr><td><b>SSL/TLS VPN (OpenVPN, AnyConnect, GlobalProtect)</b></td><td>TCP 443 / UDP 443</td><td>Remote access through firewalls</td><td>Common</td></tr>
+            <tr><td><b>WireGuard</b></td><td>UDP 51820 default</td><td>Fast, simple, modern</td><td>Growing</td></tr>
+            <tr><td><b>L2TP/IPsec</b></td><td>UDP 1701 + IPsec</td><td>Legacy remote access</td><td>Aging</td></tr>
+            <tr><td><b>PPTP</b></td><td>TCP 1723 + GRE</td><td>Old Windows VPN</td><td>Broken / forbidden</td></tr>
+            <tr><td><b>SSTP</b></td><td>TCP 443</td><td>Microsoft, traverses NAT/proxies</td><td>Windows shops only</td></tr>
+            <tr><td><b>GRE</b></td><td>IP proto 47</td><td>Generic tunnel (no encryption alone)</td><td>Pairs with IPsec</td></tr>
+            <tr><td><b>DMVPN</b></td><td>NHRP + IPsec + mGRE</td><td>Hub-and-spoke dynamic mesh (Cisco)</td><td>Niche</td></tr>
+          </table>
+
+          <h2>IPsec phases (memorize)</h2>
+          <ol>
+            <li><b>IKE Phase 1</b> — peers authenticate (PSK or cert) + build a secure management channel (ISAKMP SA). Modes: <b>Main</b> (6 messages, identity protection) or <b>Aggressive</b> (3 messages, less secure). IKEv2 collapses this.</li>
+            <li><b>IKE Phase 2</b> — negotiate IPsec SAs that protect actual user traffic. Modes: <b>Quick mode</b> (IKEv1) or <b>Child SA</b> (IKEv2). Defines proxy IDs, encryption (AES-GCM/CBC), integrity (SHA-256/384), DH group (14/19/20), lifetime.</li>
+            <li>Two protocol options inside Phase 2:
+              <ul>
+                <li><b>AH</b> (Authentication Header, IP proto 51) — integrity + auth, NO encryption. Breaks through NAT.</li>
+                <li><b>ESP</b> (Encapsulating Security Payload, IP proto 50) — encryption + integrity. The one actually used.</li>
+              </ul>
+            </li>
+            <li><b>Modes:</b>
+              <ul>
+                <li><b>Transport</b> — encrypts only payload; original IP header kept. Host-to-host.</li>
+                <li><b>Tunnel</b> — encrypts entire packet, adds new outer IP header. Gateway-to-gateway. Standard for site-to-site.</li>
+              </ul>
+            </li>
+            <li><b>NAT-T</b> (NAT Traversal, RFC 3947) — encapsulates ESP in UDP 4500 so NAT devices don't mangle it.</li>
+          </ol>
+
+          <h2>WAN troubleshooting scenarios (mapped)</h2>
+          <ol>
+            <li><b>"MPLS L3VPN reachable but one site can't reach prefix X"</b> → check route-target / route-distinguisher on the PE; the prefix is probably in the wrong VRF or filtered.</li>
+            <li><b>"Site has 1 Gbps Internet but downloads cap at 100 Mbps"</b> → duplex/speed on ISP handoff, half-duplex hub-and-spoke, or QoS shaper on ISP side; ISP CIR less than line rate.</li>
+            <li><b>"5G FWA flaky during heavy rain"</b> → mmWave rain fade, signal attenuation; mid-band more stable.</li>
+            <li><b>"Starlink latency spikes 1× per second"</b> → satellite handover; expected for LEO; tune real-time apps.</li>
+            <li><b>"IPsec tunnel up but no traffic"</b> → Phase 2 mismatch (proxy ID / encryption domain). Check both ends agree on encryption + lifetime + crypto-map ACL.</li>
+            <li><b>"WireGuard peer not connecting through firewall"</b> → UDP 51820 blocked or NAT timeout; lower keepalive interval to ~25 s.</li>
+            <li><b>"Direct Connect / ExpressRoute up at L2 but BGP not establishing"</b> → BGP password mismatch, wrong AS, missing private peering IP.</li>
+            <li><b>"SD-WAN over broadband + LTE — voice quality bad despite policy"</b> → measure jitter/loss; verify FEC/duplication on real-time class; check ISP QoS dropping marked traffic.</li>
+            <li><b>"Cable modem reports T3/T4 timeouts in logs"</b> → upstream RF issues; modem can't reach CMTS; call ISP to check signal levels.</li>
+            <li><b>"DSL sync drops every night at 2am"</b> → likely ISP DSLAM reset; or environmental (temperature). Capture SNR margin over time.</li>
+          </ol>
         `
       },
       {
@@ -5055,6 +9824,150 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Single hardened entry point for admin SSH" → jump box / bastion host.</li>
             <li>"Tunnel mode IPsec vs Transport" → tunnel = encrypt entire packet + new outer IP header; transport = encrypt payload only.</li>
           </ul>
+
+          <h2>The 5-tuple + 7-tuple firewall rule</h2>
+          <p>Stateful firewalls match the canonical <b>5-tuple</b>: <code>(src IP, dst IP, src port, dst port, protocol)</code>. NGFWs extend to a <b>7-tuple</b> by adding <b>user identity</b> + <b>application ID</b>. The user identity is resolved from AD logon events / 802.1X / agent (Palo Alto User-ID, Fortinet FSSO). App-ID inspects payload signatures to classify "this TCP/443 flow is actually Zoom, not HTTPS web."</p>
+
+          <h2>Stateful firewall state table fields (real-world)</h2>
+          <ul>
+            <li><b>Conn ID</b>, <b>protocol</b>, <b>src/dst IP + port</b>.</li>
+            <li><b>Direction</b> + initiating zone.</li>
+            <li><b>TCP state</b> — Listen / Syn-Sent / Syn-Recv / Established / Fin-Wait / Time-Wait / Closed.</li>
+            <li><b>Idle timer</b> — UDP defaults ~30 s, TCP ~3600 s, ICMP ~30 s. Configurable per policy.</li>
+            <li><b>Bytes / packets</b> counters.</li>
+            <li>Match flags: NAT translation, QoS class, IPS verdict.</li>
+          </ul>
+
+          <h2>NAT in security context</h2>
+          <ul>
+            <li><b>Source NAT (SNAT)</b> outbound — masquerade interior IPs.</li>
+            <li><b>Destination NAT (DNAT)</b> inbound — port-forward / static one-to-one to internal server in DMZ.</li>
+            <li><b>Hairpin / NAT loopback</b> — clients inside reaching their own public IP.</li>
+            <li><b>Identity NAT (no-NAT exemption)</b> — leave VPN traffic untranslated.</li>
+            <li>Stateful firewalls automatically allow return traffic for established NAT mappings; PAT timeout decides session aging.</li>
+          </ul>
+
+          <h2>TLS inspection (decrypt + re-encrypt)</h2>
+          <p>NGFW / SWG terminate the client's TLS, inspect plaintext, then re-encrypt to the server. Required to actually see content inside HTTPS.</p>
+          <ul>
+            <li>Client must trust the firewall's CA (push the cert via GPO / MDM).</li>
+            <li><b>Bypass list</b> required for banking, healthcare, certificate pinning apps (Microsoft 365 endpoints, banking apps, mobile banking).</li>
+            <li><b>Privacy + legal</b> implications — encrypted traffic is opened; document policy + user notice.</li>
+            <li><b>ECH</b> (Encrypted Client Hello, formerly ESNI) increasingly hides the SNI, defeating SNI-based filtering. ECH inspection requires full decrypt.</li>
+            <li><b>QUIC / HTTP/3</b> over UDP/443 needs separate decrypt support — many older firewalls just block it.</li>
+          </ul>
+
+          <h2>AAA protocols deep-dive</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Protocol</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Transport</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Encrypts</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Separates AuthN/AuthZ</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Typical use</th></tr>
+            <tr><td><b>RADIUS</b></td><td>UDP 1812 auth / 1813 acct (legacy 1645/1646)</td><td>Password only</td><td>No (combined)</td><td>Network access (802.1X, VPN, Wi-Fi)</td></tr>
+            <tr><td><b>TACACS+</b></td><td>TCP 49</td><td>Entire body</td><td>Yes (per-command authz)</td><td>Network device admin</td></tr>
+            <tr><td><b>Diameter</b></td><td>TCP/SCTP 3868</td><td>TLS/IPsec</td><td>Yes</td><td>Mobile carrier AAA</td></tr>
+            <tr><td><b>LDAP/LDAPS</b></td><td>389 / 636</td><td>StartTLS or LDAPS</td><td>—</td><td>Directory lookup</td></tr>
+            <tr><td><b>Kerberos</b></td><td>UDP/TCP 88</td><td>Tickets</td><td>—</td><td>AD authentication</td></tr>
+            <tr><td><b>SAML</b></td><td>HTTP-POST/Redirect</td><td>Signed XML</td><td>—</td><td>SSO to SaaS</td></tr>
+            <tr><td><b>OAuth 2.0</b></td><td>HTTPS</td><td>JWT/JWS</td><td>—</td><td>Delegated API access</td></tr>
+            <tr><td><b>OpenID Connect</b></td><td>HTTPS (on OAuth)</td><td>JWT</td><td>—</td><td>Identity layer on OAuth</td></tr>
+          </table>
+
+          <h2>Kerberos exchange (the AD SSO core)</h2>
+          <ol>
+            <li><b>AS-REQ</b> — client sends username + timestamp encrypted with password-derived key.</li>
+            <li><b>AS-REP</b> — KDC returns a <b>TGT</b> (Ticket-Granting Ticket) encrypted with KDC's krbtgt key.</li>
+            <li><b>TGS-REQ</b> — client presents TGT + asks for service ticket for SPN (e.g., <code>HTTP/web01.contoso.com</code>).</li>
+            <li><b>TGS-REP</b> — KDC returns service ticket encrypted with service account's key.</li>
+            <li><b>AP-REQ</b> — client sends service ticket to service; service decrypts with its own key, validates.</li>
+            <li>Optional <b>AP-REP</b> for mutual auth.</li>
+          </ol>
+          <p><b>Known abuses:</b> <b>Pass-the-Ticket</b> (stolen TGT/TGS reuse), <b>Kerberoasting</b> (request SPN service ticket → offline crack), <b>Golden Ticket</b> (forge TGT after krbtgt hash theft), <b>Silver Ticket</b> (forge service ticket).</p>
+
+          <h2>MFA factor types (real-world)</h2>
+          <ul>
+            <li><b>Knowledge</b> — password, PIN, security question. Weakest alone.</li>
+            <li><b>Possession</b> — phone (push notification, SMS code), hardware token (YubiKey, FIDO2 key), smart card.</li>
+            <li><b>Inherence</b> — biometric (fingerprint, face).</li>
+            <li><b>Location</b> — geo-fence / IP / GPS.</li>
+            <li><b>Behavior</b> — typing cadence, mouse pattern.</li>
+          </ul>
+          <p><b>Strength ranking (current):</b> FIDO2 / passkeys &gt; hardware OTP &gt; authenticator app push &gt; TOTP code &gt; SMS / voice (SS7 + SIM swap). NIST SP 800-63 deprecates SMS for high-assurance auth.</p>
+
+          <h2>Cyber kill chain (Lockheed) + MITRE ATT&amp;CK</h2>
+          <p><b>Cyber kill chain steps:</b> Reconnaissance → Weaponization → Delivery → Exploitation → Installation → Command &amp; Control → Actions on Objectives.</p>
+          <p><b>MITRE ATT&amp;CK</b> is the modern, granular tactics+techniques matrix used by SOCs. 14 enterprise tactics:</p>
+          <ul>
+            <li>Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Lateral Movement, Collection, Command &amp; Control, Exfiltration, Impact, Reconnaissance, Resource Development.</li>
+          </ul>
+          <p>Used to map detection coverage + plan purple-team exercises.</p>
+
+          <h2>Honeypot / honeynet / honeytoken</h2>
+          <ul>
+            <li><b>Honeypot</b> — single decoy system designed to be probed/attacked; logs everything.</li>
+            <li><b>Honeynet</b> — entire decoy network.</li>
+            <li><b>Honeytoken</b> — fake credential / API key / database row whose use triggers an alert.</li>
+            <li><b>Low- vs high-interaction</b> — low = emulates a service (Cowrie, Conpot); high = full real OS (T-Pot).</li>
+            <li>Place in DMZ or internal segment to catch lateral-movement attempts.</li>
+          </ul>
+
+          <h2>DDoS deep cuts</h2>
+          <ul>
+            <li><b>Reflection</b> — attacker spoofs victim's IP and queries an amplifier (DNS, NTP, Memcached, CLDAP, SNMP). Amplification factors: DNS ~28×, NTP ~556×, Memcached ~51000×.</li>
+            <li><b>Carpet bombing</b> — distribute traffic over a /24 instead of one IP; bypasses single-target rate limits.</li>
+            <li><b>L7 slowloris</b> — keep TCP connections open with partial HTTP headers; exhausts worker threads. Defense: connection limits, async web servers, request-time deadlines.</li>
+            <li><b>HTTP/2 Rapid Reset (CVE-2023-44487)</b> — flood RST frames after sending requests, overwhelming reset handling. Patched in modern stacks.</li>
+            <li><b>BGP flowspec</b> — push filter rules upstream to absorb attack traffic at the ISP.</li>
+            <li><b>Blackholing / RTBH</b> — drop all traffic to victim IP at ISP edge as last resort.</li>
+            <li><b>Anycast scrubbing</b> — Cloudflare/Akamai/AWS Shield Advanced terminate at edge, send clean traffic on.</li>
+          </ul>
+
+          <h2>NetFlow / sFlow / IPFIX details</h2>
+          <ul>
+            <li><b>NetFlow v5 / v9</b> (Cisco) — flow records exported from routers: src/dst IP + port, protocol, bytes, packets, AS, ToS, timestamps.</li>
+            <li><b>IPFIX</b> — IETF standard derived from NetFlow v9.</li>
+            <li><b>sFlow</b> — packet sampling (1 in N) instead of flow caching. Lower CPU, but probabilistic.</li>
+            <li>Sent over UDP to a <b>collector</b> (SolarWinds NTA, ntopng, ElastiFlow). Visualize traffic, top talkers, anomalies, DDoS spikes.</li>
+            <li>Pair with <b>NDR</b> tools (Darktrace, Vectra, Cisco Secure Network Analytics) for behavior-based threat detection.</li>
+          </ul>
+
+          <h2>SIEM correlation patterns (high-signal)</h2>
+          <ul>
+            <li>Multiple failed logins followed by success → password spray success.</li>
+            <li>Login from impossible geography in &lt;1 hour → travel anomaly.</li>
+            <li>Service account interactive login → standing rule "service accounts must never log in interactively".</li>
+            <li>Outbound traffic to known C2 IP / domain (threat-intel feed) → compromised host.</li>
+            <li>Large data egress to single external IP outside business hours → exfiltration.</li>
+            <li>4624 type 10 (RDP) from internet → exposed RDP.</li>
+            <li>Process spawning unusual child (Word → PowerShell) → macro malware.</li>
+          </ul>
+
+          <h2>Email security stack (DMARC trio)</h2>
+          <ul>
+            <li><b>SPF</b> (Sender Policy Framework) — DNS TXT record lists IPs allowed to send for your domain.</li>
+            <li><b>DKIM</b> (DomainKeys Identified Mail) — DNS-published public key; sender signs outbound mail header. Verify integrity + source.</li>
+            <li><b>DMARC</b> — DNS policy that says "if SPF+DKIM fail, do X (none/quarantine/reject)" + RUA/RUF aggregate reports.</li>
+            <li><b>MTA-STS + TLS-RPT</b> — enforce + report TLS between mail servers.</li>
+            <li><b>BIMI</b> (Brand Indicators) — display logo in inbox once DMARC reject reached.</li>
+          </ul>
+
+          <h2>Out-of-band management hardening</h2>
+          <ul>
+            <li>Dedicated management VLAN + separate physical port on devices.</li>
+            <li>Mgmt traffic over IPsec or dedicated serial console servers.</li>
+            <li>Restrict source IPs in ACL (jump host only).</li>
+            <li>Use TACACS+ for command-level authz + accounting.</li>
+            <li>Disable Telnet / HTTP; enable SSH (key auth preferred) + HTTPS.</li>
+            <li>Console logging + rotate to central syslog.</li>
+            <li>Backup configs to immutable Git or vendor cloud (Cisco Catalyst Center, Aruba Central).</li>
+          </ul>
+
+          <h2>Incident response phases (NIST SP 800-61)</h2>
+          <ol>
+            <li><b>Preparation</b> — runbooks, contact list, jump kits, baselines, training.</li>
+            <li><b>Detection &amp; Analysis</b> — alert triage, scoping, evidence collection.</li>
+            <li><b>Containment</b> — short-term (isolate host) + long-term (block IOCs, patch).</li>
+            <li><b>Eradication</b> — remove malware, rotate credentials, rebuild systems.</li>
+            <li><b>Recovery</b> — restore services, monitor for re-infection.</li>
+            <li><b>Lessons Learned</b> — post-mortem within 1-2 weeks, update controls.</li>
+          </ol>
         `
       },
       {
@@ -5246,6 +10159,137 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"-70 RSSI roaming threshold" → acceptable signal; below = poor.</li>
             <li>"SSID hiding is security" → NO. Trivially defeated by any client probe sniffer.</li>
           </ul>
+
+          <h2>RF math — dBm, dBi, link budget</h2>
+          <p>RF power is logarithmic. Memorize these "ratio anchors":</p>
+          <ul>
+            <li><b>+3 dB</b> = 2× the power.</li>
+            <li><b>+10 dB</b> = 10× the power.</li>
+            <li><b>-3 dB</b> = ½ the power.</li>
+            <li><b>0 dBm</b> = 1 mW. <b>+20 dBm</b> = 100 mW. <b>+30 dBm</b> = 1 W. <b>-30 dBm</b> = 1 μW.</li>
+            <li><b>+6 dB rule</b> — every 6 dB of free-space-path-loss is a doubling of distance (roughly).</li>
+          </ul>
+          <p><b>Link budget formula:</b> <code>RX power = TX power + TX antenna gain − cable + path loss + RX antenna gain − cable</code>. Need RX power ≥ receiver sensitivity for the chosen MCS rate. Example: AP at +20 dBm + 5 dBi antenna − 2 dB cable − 70 dB FSPL = client RX -47 dBm — excellent.</p>
+          <p><b>FSPL (Free Space Path Loss) approximation</b> at 5 GHz: <code>FSPL(dB) ≈ 32.4 + 20 log10(f in MHz) + 20 log10(d in km)</code>. Useful for outdoor PtP design.</p>
+          <p><b>Fresnel zone</b> — for long PtP links, keep 60%+ of the first Fresnel zone clear of obstructions or signal degrades.</p>
+
+          <h2>EIRP regulatory ceilings (US FCC, indoor)</h2>
+          <ul>
+            <li><b>2.4 GHz</b> — up to +36 dBm (4 W) EIRP with high-gain antennas (specific rules); typical client +20 dBm.</li>
+            <li><b>UNII-1 (5.15–5.25 GHz)</b> — +30 dBm EIRP indoor (most APs).</li>
+            <li><b>UNII-2 / 2e (5.25–5.725 GHz)</b> — +30 dBm; DFS required.</li>
+            <li><b>UNII-3 (5.725–5.85 GHz)</b> — +36 dBm; widely used.</li>
+            <li><b>6 GHz LPI</b> — +30 dBm EIRP indoor only (no AFC required).</li>
+            <li><b>6 GHz VLP</b> — +14 dBm EIRP portable.</li>
+            <li><b>6 GHz Standard Power</b> — outdoor allowed via AFC coordination.</li>
+          </ul>
+
+          <h2>802.11 frame types you must recognize</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Examples</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purpose</th></tr>
+            <tr><td>Management</td><td>Beacon, Probe Req/Resp, Auth, Assoc Req/Resp, Deauth, Disassoc</td><td>Establish + maintain BSS membership</td></tr>
+            <tr><td>Control</td><td>RTS, CTS, ACK, Block ACK, PS-Poll</td><td>Coordinate access to the medium</td></tr>
+            <tr><td>Data</td><td>QoS Data, Null Data</td><td>Carry payload (IP packet inside)</td></tr>
+          </table>
+          <p>Beacons advertise BSS capabilities every ~100 ms (TIM, supported rates, country code, RSN element).</p>
+
+          <h2>Probe + association exchange</h2>
+          <ol>
+            <li><b>Probe Request</b> (client) → optional, asks "any APs for SSID X?".</li>
+            <li><b>Probe Response</b> (AP) → capabilities, supported rates.</li>
+            <li><b>Open Authentication</b> request/response (legacy, all WPA personal/enterprise still do this 2-frame handshake).</li>
+            <li><b>Association Request</b> (client) — RSN element with chosen cipher.</li>
+            <li><b>Association Response</b> (AP).</li>
+            <li><b>4-Way Handshake</b> (WPA2/3) — derives PTK + GTK from PMK.</li>
+            <li>Or <b>SAE handshake</b> (WPA3-Personal) — Dragonfly key exchange replaces PSK 4-way; defeats offline cracking.</li>
+          </ol>
+
+          <h2>OFDMA vs MU-MIMO (Wi-Fi 6+)</h2>
+          <ul>
+            <li><b>OFDMA</b> — divides each channel into smaller <b>Resource Units (RUs)</b>; AP can serve multiple clients simultaneously in one transmit window. Improves latency + efficiency for many small packets (IoT, voice).</li>
+            <li><b>MU-MIMO</b> — uses spatial streams to serve multiple clients on different antennas at the same time. Improves throughput for many large flows.</li>
+            <li><b>BSS Coloring</b> — 6-bit ID lets co-channel APs ignore each other's frames as "noise" if SNR allows, reducing CCI.</li>
+            <li><b>TWT</b> (Target Wake Time) — schedules client wakeup windows → battery savings for IoT.</li>
+          </ul>
+
+          <h2>Channel planning recipes</h2>
+          <ul>
+            <li><b>Office, dense client count, 2.4 GHz mandatory</b> — disable 2.4 on every other AP, use only 1/6/11 at 20 MHz, low TX power.</li>
+            <li><b>Office, 5 GHz primary</b> — 40 MHz wide, channels: 36, 44, 52 (DFS), 60 (DFS), 100 (DFS), 108 (DFS), 116 (DFS), 132 (DFS), 149, 157. Avoid using 160 MHz indoors (too few slots).</li>
+            <li><b>Stadium / conference</b> — many low-power APs with narrow channels (20 MHz), aggressive cell sizing, dual-radio dedicated 6 GHz on Wi-Fi 6E clients.</li>
+            <li><b>Warehouse</b> — pole-mount directional APs at the roof; ensure dense overlap for forklift roaming; minimum data rate set to 12 Mbps to kill weak clients.</li>
+            <li><b>Outdoor PtP backhaul</b> — high-gain dish, 5 / 6 GHz, line-of-sight, Fresnel clearance, point-to-multipoint with sectors.</li>
+          </ul>
+
+          <h2>Minimum data rate (the "force them to roam" knob)</h2>
+          <p>Disable 802.11b low data rates (1, 2, 5.5, 11 Mbps) and slow OFDM (6, 9 Mbps). Set minimum to 12 or 24 Mbps:</p>
+          <ul>
+            <li>Faster beacon airtime (beacons use min rate).</li>
+            <li>Distant clients can't connect at weak SNR → forced to roam to a closer AP.</li>
+            <li>Improves overall airtime efficiency.</li>
+          </ul>
+
+          <h2>Wi-Fi 6/6E/7 client requirements</h2>
+          <ul>
+            <li>Wi-Fi 6 (ax) features (OFDMA, MU-MIMO uplink) need both AP + client support.</li>
+            <li>Wi-Fi 6E + 7 need new radios capable of 6 GHz; older client chips ignore the 6 GHz SSID.</li>
+            <li>WPA3 mandatory on 6 GHz — clients without WPA3 cannot use the band at all.</li>
+            <li>OSes that support 6 GHz: Windows 11, recent macOS, iOS 16+, Android 12+. Older OSes won't see the SSID.</li>
+          </ul>
+
+          <h2>Voice over Wi-Fi requirements</h2>
+          <ul>
+            <li><b>Coverage</b> — minimum -67 dBm everywhere voice clients roam.</li>
+            <li><b>SNR</b> ≥ 25 dB at the cell edge.</li>
+            <li><b>Channel utilization</b> &lt; 30 %.</li>
+            <li><b>Cell overlap</b> ~20% for seamless roaming.</li>
+            <li><b>QoS:</b> WMM enabled, voice mapped to AC_VO (UP 6/7), 802.1p / DSCP EF (46).</li>
+            <li><b>Fast roaming:</b> 802.11r FT mandatory; 802.11k neighbor list + 802.11v BTM ideally.</li>
+            <li><b>Power save:</b> U-APSD enabled; legacy PS off.</li>
+          </ul>
+
+          <h2>Wi-Fi 7 deep cuts</h2>
+          <ul>
+            <li><b>MLO</b> (Multi-Link Operation) — single client connects to AP on multiple bands simultaneously (e.g., 5 + 6 GHz). Reduces latency, increases throughput, instant failover if one band gets noisy.</li>
+            <li><b>320 MHz</b> channels in 6 GHz (where 6 GHz fully unlocked).</li>
+            <li><b>4096-QAM</b> — denser modulation = +20 % throughput in clean RF.</li>
+            <li><b>Multi-RU + Preamble Puncturing</b> — work around interference within a wide channel by skipping subcarriers under noise.</li>
+            <li><b>R-TWT</b> (Restricted TWT) — reserves airtime for low-latency apps (AR/VR).</li>
+          </ul>
+
+          <h2>Cellular vs Wi-Fi quick decision</h2>
+          <ul>
+            <li><b>Public mobility, vehicles</b> → cellular (4G/5G).</li>
+            <li><b>Indoor office / home</b> → Wi-Fi (cheaper, faster).</li>
+            <li><b>Dense IoT, low power, wide area</b> → LTE-M / NB-IoT (cellular) or LoRaWAN / Zigbee.</li>
+            <li><b>Industrial campus with no public coverage</b> → <b>Private 5G / CBRS</b>.</li>
+            <li><b>Backup uplink for a critical site</b> → cellular failover.</li>
+          </ul>
+
+          <h2>Bluetooth + adjacent wireless (you may see these on Net+)</h2>
+          <ul>
+            <li><b>Bluetooth Classic</b> — 2.4 GHz, up to ~3 Mbps, point-to-point.</li>
+            <li><b>BLE</b> (Bluetooth Low Energy) — small payloads, used by beacons (iBeacon, Eddystone).</li>
+            <li><b>Zigbee</b> — 2.4 GHz mesh, low power, smart home.</li>
+            <li><b>Z-Wave</b> — 908 MHz (US) sub-GHz mesh.</li>
+            <li><b>Thread</b> — IPv6 mesh for smart home (Matter standard sits on top).</li>
+            <li><b>NFC</b> — 13.56 MHz, &lt;10 cm, contactless payments / pairing.</li>
+            <li><b>UWB</b> (Ultra-Wideband) — precise distance / location (AirTag / Tile).</li>
+          </ul>
+
+          <h2>10 wireless troubleshooting scenarios</h2>
+          <ol>
+            <li><b>"Phone keeps connecting to far AP at -80 dBm instead of nearer -55 dBm"</b> → sticky client. Enable 802.11k/v, raise min RSSI on far AP, lower TX power, or use band steering.</li>
+            <li><b>"Wi-Fi 6E SSID not visible on new laptop"</b> → 6E needs WPA3 + driver / OS support; verify WPA3 enabled + check client supports 6 GHz radio.</li>
+            <li><b>"Voice calls drop when walking between conference rooms"</b> → 802.11r FT not enabled / VoWi-Fi roaming gap. Enable 802.11r on the SSID.</li>
+            <li><b>"Conference room slow when 80 people present"</b> → airtime saturation; deploy more low-power APs and / or enable OFDMA to serve small packets in parallel.</li>
+            <li><b>"Heatmap shows -55 dBm but throughput is awful"</b> → high channel utilization or non-Wi-Fi interferer; run spectrum analyzer to spot microwave / radar / Bluetooth.</li>
+            <li><b>"Random clients deauth then reconnect every few minutes"</b> → suspect deauth attack OR client buggy driver; enable PMF (802.11w) to authenticate management frames.</li>
+            <li><b>"EAP-TLS users fail after RADIUS server cert renewal"</b> → clients pinned old root or supplicant not trusting new chain; push new chain via MDM / GPO.</li>
+            <li><b>"Captive portal redirect doesn't fire on iPhone"</b> → DoH on by default; iOS hits captive.apple.com; allow that domain or force user to disable Private Relay.</li>
+            <li><b>"AP keeps changing channel by itself"</b> → DFS detected radar and vacated; switch to non-DFS channel or accept brief outages.</li>
+            <li><b>"Rogue AP detected in WIPS dashboard"</b> → physically locate using neighbor signal triangulation (heatmap) or by walking with a directional antenna; unplug or block at switch port.</li>
+          </ol>
         `
       },
       {
@@ -5471,6 +10515,162 @@ vtysh                                 # FRR CLI like Cisco IOS</code></pre>
             <li>"Statistical average recovery time" → MTTR.</li>
             <li>"Stratum 0 in NTP" → reference clock (atomic / GPS).</li>
           </ul>
+
+          <h2>SNMP OID anatomy (memorize the prefix)</h2>
+          <p>Every SNMP object lives at an <b>OID</b> (Object Identifier) — a dotted-decimal path through a tree:</p>
+          <ul>
+            <li><b>1.3.6.1</b> — <code>iso.org.dod.internet</code>. Almost everything you query starts here.</li>
+            <li><b>1.3.6.1.2.1</b> — <b>MIB-II</b> (RFC 1213), the standard set every device must support.</li>
+            <li><b>1.3.6.1.4.1.<i>X</i></b> — Private/enterprise tree under IANA-assigned vendor ID. Cisco = 9, HP = 11, VMware = 6876, MikroTik = 14988.</li>
+          </ul>
+          <p><b>Top OIDs you will actually see:</b></p>
+          <ul>
+            <li><code>sysDescr (1.3.6.1.2.1.1.1)</code> — device hostname/OS string.</li>
+            <li><code>sysUpTime (1.3.6.1.2.1.1.3)</code> — uptime in 1/100ths of a second.</li>
+            <li><code>ifIndex (1.3.6.1.2.1.2.2.1.1)</code> — interface table.</li>
+            <li><code>ifInOctets / ifOutOctets (.10 / .16)</code> — 32-bit byte counters (replaced by 64-bit <code>ifHCInOctets</code> for &gt;1 Gbps).</li>
+            <li><code>ifOperStatus (.8)</code> — 1 up / 2 down / 7 lower-layer-down, etc.</li>
+            <li>Vendor MIBs: <code>cpmCPUTotalPhysicalIndex</code> (Cisco CPU), <code>hpicfSensorObjectValue</code> (HP temperature), etc.</li>
+          </ul>
+          <p><b>SNMPv3 security parameters (USM):</b></p>
+          <ul>
+            <li><b>NoAuthNoPriv</b> — username only, no integrity, no encryption.</li>
+            <li><b>AuthNoPriv</b> — HMAC-MD5/SHA integrity, no encryption.</li>
+            <li><b>AuthPriv</b> — HMAC + encryption (DES/3DES/AES). Production setting.</li>
+          </ul>
+
+          <h2>Syslog message anatomy (BSD RFC 3164 / RFC 5424)</h2>
+          <p>Classic format: <code>&lt;PRI&gt; TIMESTAMP HOST PROGRAM[PID]: MESSAGE</code>.</p>
+          <ul>
+            <li><b>PRI</b> = facility × 8 + severity. E.g., <code>&lt;30&gt;</code> = facility 3 (daemon) × 8 + severity 6 (info).</li>
+            <li><b>Facilities (0–23):</b> 0 kern, 1 user, 2 mail, 3 daemon, 4 auth, 6 lpr, 10 authpriv, 16–23 local0–local7. Most Cisco devices use local6/local7.</li>
+            <li><b>Reliable transports:</b> classic UDP 514 = unreliable (drops in storms). Modern stacks use <b>TCP 6514 + TLS</b> (RFC 5425) or <b>RELP</b> for guaranteed delivery.</li>
+            <li><b>Structured data</b> (RFC 5424) lets fields like <code>[exampleSDID@32473 iut="3" eventID="1011"]</code> ride alongside the message.</li>
+          </ul>
+
+          <h2>Streaming telemetry (replacing legacy polling)</h2>
+          <ul>
+            <li><b>gNMI</b> (gRPC Network Management Interface) — push-based telemetry over HTTP/2 + protobuf. Subscribe to YANG paths; device streams updates.</li>
+            <li><b>OpenConfig</b> — vendor-neutral YANG models.</li>
+            <li><b>NETCONF</b> over SSH (port 830) — XML-based config + state.</li>
+            <li><b>RESTCONF</b> — HTTPS + JSON/XML rendering of NETCONF.</li>
+            <li><b>Telegraf / Prometheus / Grafana stack</b> — modern OSS metrics pipeline. Prometheus scrapes via SNMP_exporter or gNMI; Grafana visualizes.</li>
+            <li><b>Observability "three pillars":</b> Metrics, Logs, Traces.</li>
+          </ul>
+
+          <h2>NetFlow record fields (memorize the v5 7-tuple)</h2>
+          <p>NetFlow v5 keys each flow by 7 fields:</p>
+          <ol>
+            <li>Source IP</li>
+            <li>Destination IP</li>
+            <li>Source port</li>
+            <li>Destination port</li>
+            <li>L3 protocol (TCP/UDP/ICMP)</li>
+            <li>ToS / DSCP</li>
+            <li>Input interface (ifIndex)</li>
+          </ol>
+          <p>v9 + IPFIX use templates so providers can add MPLS labels, BGP next-hop AS, MAC addresses, etc.</p>
+
+          <h2>NTP authentication + security</h2>
+          <ul>
+            <li><b>Symmetric keys</b> (legacy) — pre-shared key MD5/SHA1 between client + server.</li>
+            <li><b>Autokey</b> (PKI-based, deprecated — broken).</li>
+            <li><b>NTS</b> (Network Time Security, RFC 8915) — TLS-based key exchange + authenticated UDP. Modern choice.</li>
+            <li><b>Restrict</b> the upstream NTP servers configured; do not run an open NTP server (used in amplification DDoS).</li>
+            <li>Block <code>monlist</code> (NTPv2 mode 6/7) on Internet-facing servers.</li>
+            <li>Use <b>at least 3 stratum-1 sources</b> for sanity / Byzantine tolerance.</li>
+          </ul>
+
+          <h2>Network diagrams — what each layer should show</h2>
+          <ul>
+            <li><b>L1 physical</b> — rack elevations, cable trays, patch panel labels, fiber polishing types, wall jack IDs, room numbers.</li>
+            <li><b>L2 link</b> — switch hostnames, port speeds, VLAN allowed lists per trunk, STP root, LACP bundles.</li>
+            <li><b>L3 routing</b> — subnets, gateways, routing protocol areas/ASNs, OSPF Area 0 boundary, default route source.</li>
+            <li><b>L4–L7 service</b> — load balancers, firewalls, DNS hierarchy, app endpoints, certs, WAF.</li>
+            <li><b>WAN / Internet</b> — circuits, ASNs, BGP peers, ISP contacts.</li>
+            <li><b>Wireless</b> — heatmap, AP locations, channel assignments, controller IP.</li>
+            <li><b>Trust + security</b> — zones, segmentation, ACL boundaries, identity stores.</li>
+          </ul>
+
+          <h2>IPAM + DCIM (the modern stack)</h2>
+          <ul>
+            <li><b>IPAM</b> (IP Address Management) — single source of truth for subnets, VLANs, gateways, DNS. Tools: NetBox, phpIPAM, Infoblox, BlueCat, Microsoft IPAM (built into Windows Server).</li>
+            <li><b>DCIM</b> (Data Center Infrastructure Management) — rack U slots, power draw, cooling, asset relationships. Tools: NetBox (free), Sunbird, Nlyte, Device42.</li>
+            <li><b>Source of truth</b> philosophy — IPAM/DCIM is authoritative; configs/diagrams are generated from it via automation.</li>
+            <li>Integrate with DNS (auto-create A/PTR), DHCP scopes, monitoring system, CMDB.</li>
+          </ul>
+
+          <h2>Change-management quality checks</h2>
+          <ul>
+            <li><b>Pre-checks</b>: routing-table snapshot, OSPF/BGP neighbor list, ping baselines, interface up counts, error counter delta.</li>
+            <li><b>Post-checks</b>: re-run the exact same probes; diff results.</li>
+            <li><b>Backout test</b>: actually verify the rollback worked in lab.</li>
+            <li><b>Communication template</b>: site, start/end window, scope, expected impact, owner, contact, backout decision time.</li>
+            <li><b>Maintenance windows</b>: align to lowest business impact (e.g., Sun 2-4am local).</li>
+            <li><b>Freeze periods</b>: avoid changes during year-end close, peak retail, election day, etc.</li>
+          </ul>
+
+          <h2>Service performance targets (memorize the numbers)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Metric</th><th align="left" style="padding:4px;border-bottom:1px solid #444">VoIP</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Video conf</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Web/SaaS</th></tr>
+            <tr><td>Latency one-way</td><td>&lt; 150 ms</td><td>&lt; 200 ms</td><td>&lt; 400 ms</td></tr>
+            <tr><td>Jitter</td><td>&lt; 30 ms</td><td>&lt; 50 ms</td><td>n/a</td></tr>
+            <tr><td>Packet loss</td><td>&lt; 1 %</td><td>&lt; 0.5 %</td><td>&lt; 1 %</td></tr>
+            <tr><td>MOS (voice quality)</td><td>&gt; 4.0 (toll quality)</td><td>n/a</td><td>n/a</td></tr>
+          </table>
+
+          <h2>Uptime ↔ downtime table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Uptime</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Downtime / year</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Downtime / month</th></tr>
+            <tr><td>99 % (two 9s)</td><td>3 d 15 h</td><td>7 h 18 m</td></tr>
+            <tr><td>99.9 % (three 9s)</td><td>8 h 45 m</td><td>43 m 49 s</td></tr>
+            <tr><td>99.95 %</td><td>4 h 22 m</td><td>21 m 54 s</td></tr>
+            <tr><td>99.99 % (four 9s)</td><td>52 m 35 s</td><td>4 m 22 s</td></tr>
+            <tr><td>99.999 % (five 9s)</td><td>5 m 15 s</td><td>26 s</td></tr>
+          </table>
+
+          <h2>Disaster recovery + business continuity quick math</h2>
+          <ul>
+            <li><b>RTO</b> (Recovery Time Objective) — how long can the service be down? Drives infra design (cold vs warm vs hot site, cluster, multi-region).</li>
+            <li><b>RPO</b> (Recovery Point Objective) — how much data loss is acceptable? Drives backup frequency + replication mode (async vs sync).</li>
+            <li><b>MTTD</b> (Mean Time To Detect) — how quickly alerts fire.</li>
+            <li><b>MTTR</b> (Mean Time To Repair / Recovery).</li>
+            <li><b>BIA</b> (Business Impact Analysis) — feeds RTO/RPO values per service.</li>
+            <li><b>Sites:</b> cold (hardware ready, no data), warm (data current, partial spin-up), hot (live failover, sync replication).</li>
+          </ul>
+
+          <h2>NaaS, ChatOps, NetDevOps (modern operating models)</h2>
+          <ul>
+            <li><b>NaaS</b> (Network as a Service) — vendor delivers network capabilities (SD-WAN/SASE/firewalls) on consumption pricing.</li>
+            <li><b>NetDevOps</b> — apply software engineering (Git, CI/CD, code review, IaC) to network config.</li>
+            <li><b>ChatOps</b> — operational tasks + alerts routed through Slack/Teams; bots run commands with audit trail.</li>
+            <li><b>GitOps</b> — desired state in Git; controller reconciles devices to match.</li>
+            <li><b>Source of truth</b> integrations: NetBox → Nornir / Ansible → device config push.</li>
+          </ul>
+
+          <h2>Ticketing best practice</h2>
+          <ul>
+            <li>Capture: who, what, when, where, screenshot, exact error wording.</li>
+            <li>Reproduction steps + impact (1 user / department / site / org).</li>
+            <li>Workaround documented even if root cause pending.</li>
+            <li>Tag with category (network/server/app), affected service, owning team.</li>
+            <li>SLA timer starts at ticket open; pause for vendor wait if allowed.</li>
+            <li>Close ticket only after user confirms resolution.</li>
+          </ul>
+
+          <h2>10 ops scenarios</h2>
+          <ol>
+            <li><b>"All firewall logs lost during last incident"</b> → log forwarding to remote syslog wasn't enabled; add ≥ 2 collectors, retain 1 yr min.</li>
+            <li><b>"SNMP polls timing out at peak load"</b> → polling too aggressive; tune to 1-2 min, prefer bulk gets, consider streaming telemetry.</li>
+            <li><b>"NTP drift on critical server causes Kerberos failures"</b> → server using broken stratum-15 source; configure ≥ 3 stratum-1/2 sources or NTS.</li>
+            <li><b>"Network change broke prod and rollback procedure unclear"</b> → mandatory rollback plan in every RFC; lab-test the rollback before CAB approval.</li>
+            <li><b>"Random switch in IDF rebooting nightly"</b> → review CDP/LLDP neighbor history, check temperature, PSU + uptime; correlate with PoE budget changes.</li>
+            <li><b>"Bandwidth report shows 10× more traffic than expected"</b> → check NetFlow top talkers; could be backup job, ransomware exfil, or misconfigured replication.</li>
+            <li><b>"Auditor asks for config from 18 months ago"</b> → produce from Git history of nightly config archive (Rancid/Oxidized/NetBox-DataSync).</li>
+            <li><b>"Outage hit RTO of 4h but recovery actually 6h"</b> → BIA revision needed; warm site insufficient — consider hot site with continuous replication.</li>
+            <li><b>"Stratum-1 GPS time server lost lock indoors"</b> → relocate antenna with sky view + lightning protection; add NTS-based secondary upstream.</li>
+            <li><b>"Major incident with no post-mortem"</b> → enforce blameless RCA within 1-2 weeks of every Sev1/2; update runbooks + alerts.</li>
+          </ol>
         `
       },
       {
@@ -5793,6 +10993,163 @@ tcp.analysis.retransmission</code></pre>
             <li>"Identify non-Wi-Fi RF interference" → spectrum analyzer.</li>
             <li>"Inspect TLS cert chain from CLI" → openssl s_client.</li>
           </ul>
+
+          <h2>Layer-by-layer diagnostic order (bottom-up)</h2>
+          <ol>
+            <li><b>L1 Physical</b> — link light on? Same color/speed on both sides? Cable seated? Run cable test if in doubt. Check SFP / DAC.</li>
+            <li><b>L2 Data Link</b> — correct VLAN on the port? Frames showing on switch (<code>show interfaces counters</code>)? MAC learned (<code>show mac address-table</code>)? Speed/duplex match? Spanning Tree blocking? Port err-disabled?</li>
+            <li><b>L3 Network</b> — correct IP/mask/gateway? Can ping default gateway? Routing table has path? ACL / firewall dropping? Check duplicate IP (gratuitous ARP / <code>arp -a</code> for two MACs).</li>
+            <li><b>L4 Transport</b> — port reachable? <code>nc -vz</code>, <code>Test-NetConnection</code>, <code>nmap -p</code>. App listening on server? <code>ss -tnlp</code>. Firewall rule? NAT?</li>
+            <li><b>L5–L7 Session/Pres/App</b> — DNS resolves? TLS handshake succeeds? Server returns 200 vs 4xx/5xx? Log on the server side?</li>
+          </ol>
+
+          <h2>Top-down diagnostic order (when one app fails but others work)</h2>
+          <ol>
+            <li>Reproduce on second device — is it user-specific or universal?</li>
+            <li>Check service status on server (running, listening on the right port).</li>
+            <li>Check DNS — is the client resolving the right IP?</li>
+            <li>Check TLS — cert valid, chain trusted, SNI right?</li>
+            <li>Test TCP port from a known-good network.</li>
+            <li>Trace path — has a route changed? New firewall rule?</li>
+            <li>Capture packet on client AND server simultaneously — compare.</li>
+          </ol>
+
+          <h2>"Divide and conquer" mid-layer approach</h2>
+          <p>Start in the middle: <i>can the client ping its gateway?</i></p>
+          <ul>
+            <li>Yes → problem is past the gateway. Try traceroute / DNS / port test.</li>
+            <li>No → problem is local segment. Drop to L1/L2 checks.</li>
+          </ul>
+
+          <h2>Common interface counter patterns (Cisco-style)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Counter rising</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Likely cause</th></tr>
+            <tr><td>CRC + input errors</td><td>Bad cable, EMI, dirty fiber, duplex mismatch under load</td></tr>
+            <tr><td>Runts + collisions</td><td>Half-duplex on one side; almost extinct except hubs/old gear</td></tr>
+            <tr><td>Late collisions</td><td>Duplex mismatch (full↔half)</td></tr>
+            <tr><td>Giants</td><td>Jumbo frame mismatch; one end supports jumbos and the other does not</td></tr>
+            <tr><td>Input drops + high pps</td><td>Buffer overrun on bursty traffic; CPU-bound or interface oversubscribed</td></tr>
+            <tr><td>Output drops</td><td>Egress congestion; QoS dropping low-priority class; check class-map</td></tr>
+            <tr><td>Pause frames (Ethernet flow control)</td><td>Receiver overwhelmed; downstream device asking sender to slow</td></tr>
+            <tr><td>Throttles / overruns / ignored</td><td>Software-switched packets exceeding control plane capacity</td></tr>
+            <tr><td>No counters increasing</td><td>Wrong interface; or actual L1 down (link light off)</td></tr>
+          </table>
+
+          <h2>DHCP troubleshooting walkthrough (DORA review)</h2>
+          <p><b>D</b>iscover (broadcast) → <b>O</b>ffer (server) → <b>R</b>equest (client) → <b>A</b>ck (server). Catch with <code>tcpdump -i any port 67 or port 68</code>.</p>
+          <ul>
+            <li><b>No Discover seen on server</b> → L2 issue, wrong VLAN, missing DHCP relay (<code>ip helper-address</code>) on router.</li>
+            <li><b>Offer sent but no Request</b> → client rejecting (wrong subnet for the segment, multiple offers conflict).</li>
+            <li><b>Ack not received by client</b> → unicast Ack blocked by ACL/firewall.</li>
+            <li><b>Pool exhausted</b> → too small scope, DHCP starvation attack, or lease time too long.</li>
+            <li><b>Stale reservation</b> → reservation IP doesn't match host MAC anymore.</li>
+            <li><b>Rogue DHCP</b> → second offer with wrong gateway/DNS; enable DHCP Snooping with trusted ports.</li>
+          </ul>
+
+          <h2>DNS troubleshooting decision tree</h2>
+          <ol>
+            <li><code>nslookup name</code> works from client → DNS is fine at client; problem is elsewhere.</li>
+            <li>Client fails but <code>nslookup name 8.8.8.8</code> works → local resolver/forwarder problem.</li>
+            <li>Both fail → record actually missing, or authoritative server unreachable.</li>
+            <li><code>dig +trace name</code> → walk root → TLD → authoritative; find where the chain breaks.</li>
+            <li><code>dig +short name @authoritative.ns</code> → bypasses cache; reveals stale TTL.</li>
+            <li>Check <code>nslookup -type=SOA domain</code> + serial number — should increment on every change.</li>
+            <li>For internal AD DNS — check that records register correctly (<code>ipconfig /registerdns</code>); split-horizon misconfig is common.</li>
+            <li><b>Encrypted DNS gotchas:</b> Windows DoH, iOS Private Relay, Cloudflare WARP can bypass corporate resolvers and break captive portals + filtering.</li>
+          </ol>
+
+          <h2>TLS handshake debugging</h2>
+          <pre><code># Inspect cert chain + cipher + ALPN
+openssl s_client -connect example.com:443 -servername example.com -alpn h2
+
+# Force TLS version to test compatibility
+openssl s_client -connect example.com:443 -tls1_2
+openssl s_client -connect example.com:443 -tls1_3
+
+# Show certificate end date
+openssl s_client -connect example.com:443 -servername example.com 2&gt;/dev/null | openssl x509 -noout -dates -subject -issuer
+
+# CRL / OCSP status
+openssl s_client -connect example.com:443 -status</code></pre>
+          <p><b>Common failures:</b></p>
+          <ul>
+            <li><b>Certificate expired</b> — biggest single cause of outages.</li>
+            <li><b>Hostname mismatch</b> — SAN missing the FQDN in use.</li>
+            <li><b>Untrusted chain</b> — intermediate cert not bundled on the server.</li>
+            <li><b>SNI bypass</b> — old client doesn't send SNI; server returns the wrong vhost cert.</li>
+            <li><b>Cipher mismatch</b> — server enforces TLS 1.3 only, client only supports 1.0/1.1.</li>
+            <li><b>Pinned cert</b> — mobile app refuses new cert chain (must update app).</li>
+          </ul>
+
+          <h2>Performance triage commands cheat</h2>
+          <pre><code># Linux throughput vs latency vs loss
+iperf3 -c server                          # raw TCP throughput
+iperf3 -c server -u -b 1G                 # UDP, see jitter + loss
+mtr server                                # per-hop loss + RTT live
+ping -i 0.2 -c 100 server                 # 20-sec ping flood at fine granularity
+ss -i                                     # TCP info: cwnd, rtt, retrans
+ethtool eth0                              # link speed/duplex/driver
+ethtool -S eth0                           # NIC counters
+tc -s qdisc                               # qdisc stats (drops, queue length)
+
+# Windows
+Test-NetConnection -ComputerName server -Port 443 -InformationLevel Detailed
+Get-NetAdapterStatistics
+pathping -n -p 200 -q 50 server           # 50 probes per hop, 200 ms spacing
+netsh interface tcp show global           # default TCP autotuning</code></pre>
+
+          <h2>Packet capture strategy</h2>
+          <ul>
+            <li><b>Capture at both ends</b> when possible. Compare timestamps to spot which side dropped.</li>
+            <li><b>Filter early</b> — capture only the conversation in question to avoid GB-sized pcaps. Example: <code>tcpdump -i eth0 host 10.0.0.5 and port 443 -w cap.pcap</code>.</li>
+            <li><b>Ring buffer</b> for long captures: <code>tcpdump -W 10 -C 100 -w cap.pcap</code> rotates 10 × 100 MB files.</li>
+            <li><b>Watch for retransmissions</b> in Wireshark (red lines): <code>tcp.analysis.retransmission</code>. High retrans = lossy path.</li>
+            <li><b>Duplicate ACKs</b> = receiver missing a segment → window pressure → throughput hit.</li>
+            <li><b>Zero window</b> from receiver → application not draining socket fast enough.</li>
+            <li><b>RST after SYN</b> = port closed (or load balancer rejecting); RST after Established = either side killed the session.</li>
+            <li><b>SACK / DSACK</b> blocks tell you the receiver got a duplicate or out-of-order segment.</li>
+          </ul>
+
+          <h2>The Wireshark "Expert Info" colors</h2>
+          <ul>
+            <li><b>Warning (yellow)</b> — retransmission, duplicate ACK, out-of-order.</li>
+            <li><b>Note (cyan)</b> — keepalive, window update.</li>
+            <li><b>Chat (blue)</b> — connect/reset/fin.</li>
+            <li><b>Error (red)</b> — malformed packet, decode failure.</li>
+          </ul>
+
+          <h2>Cloud-specific tools you may see</h2>
+          <ul>
+            <li><b>AWS VPC Reachability Analyzer / Network Insights</b> — symbolic path analysis between two ENIs across SGs/NACLs/route tables.</li>
+            <li><b>AWS VPC Flow Logs</b> — packet metadata to CloudWatch/S3 (like NetFlow).</li>
+            <li><b>Azure Network Watcher</b> + Connectivity Check + NSG Flow Logs.</li>
+            <li><b>GCP Connectivity Tests</b> + VPC Flow Logs.</li>
+            <li><b>Kubernetes:</b> <code>kubectl exec</code> into a pod and run <code>curl</code> / <code>nslookup</code> / <code>traceroute</code>; <code>kubectl get pod -o wide</code> for node + IP.</li>
+            <li><b>Cilium / Hubble</b> + <b>eBPF</b> — kernel-level visibility into pod-to-pod traffic.</li>
+          </ul>
+
+          <h2>Documentation during troubleshooting (do not skip)</h2>
+          <ol>
+            <li>Note what changed last (RFC #s, commit hashes, time of last config push).</li>
+            <li>Capture command outputs <i>before</i> mitigating — they're evidence + future runbook.</li>
+            <li>Record the symptom in user language ("can't open SharePoint") AND technical language ("HTTP 502 from reverse proxy").</li>
+            <li>Timeline each step + result.</li>
+            <li>After resolution, file an RCA + update runbook within 1-2 weeks.</li>
+          </ol>
+
+          <h2>10 cold-call troubleshooting scenarios</h2>
+          <ol>
+            <li><b>"My entire branch lost Internet 5 minutes ago"</b> → check ISP status (Service Health analog), router uptime, BFD logs, BGP neighbor; failover path.</li>
+            <li><b>"Phones lose audio mid-call only on Mondays at 9am"</b> → schedule conflict with backup or replication job saturating WAN; NetFlow top-talkers in that window.</li>
+            <li><b>"Slow login but fast web"</b> → DNS pointing to dead resolver; or AD domain controller unreachable; check Kerberos + DNS.</li>
+            <li><b>"VPN connects then disconnects in 60 s"</b> → IPsec Phase 2 lifetime mismatch; NAT-T not enabled; idle timeout.</li>
+            <li><b>"Site can ping by IP but not name"</b> → DNS resolver dead, hosts file overrides, split-DNS broken.</li>
+            <li><b>"One specific website is broken everywhere"</b> → check downforeveryoneorjustme; if up there, check local proxy / CDN / TLS interception.</li>
+            <li><b>"Wi-Fi works on phone but not laptop"</b> → laptop EAP supplicant cert problem; reinstall network profile or push via MDM.</li>
+            <li><b>"Cable runs at 100 Mbps despite Gig switch"</b> → patch cable is Cat3/Cat5 missing a pair; replace.</li>
+            <li><b>"Switch keeps shutting down a port"</b> → err-disabled by BPDU Guard or port security; identify cause + clear.</li>
+            <li><b>"After firewall upgrade, some apps slow"</b> → TLS inspection now decrypting; bypass cert-pinned apps + tune CPU allocation.</li>
+          </ol>
         `
       }
     ],
@@ -16126,22 +21483,318 @@ resource "aws_vpc" "main" {
       {
         title: '10. Troubleshooting Cloud',
         body: `
-          <h2>Standard playbook</h2>
+          <p>Cloud troubleshooting blends classic systems debugging (logs, metrics, network) with cloud-specific concerns: provider outages, IAM policy evaluation, eventual consistency, quotas, hidden cross-region dependencies, billing surprises. The "what changed?" question is usually the fastest path to root cause.</p>
+
+          <h2>Standard playbook (in order)</h2>
           <ol>
-            <li>Check provider status page first.</li>
-            <li>Verify IAM/permissions if API errors.</li>
-            <li>Check security groups / NACLs / route tables for connectivity issues.</li>
-            <li>Inspect logs (Activity / CloudTrail) for recent changes.</li>
-            <li>Look at metrics — CPU, memory, latency, error rate.</li>
-            <li>Compare against a known-good baseline.</li>
+            <li><b>Provider status page</b> — is this a regional outage or service degradation? AWS Health Dashboard, Azure Service Health, GCP Status Dashboard.</li>
+            <li><b>Personal Health Dashboard</b> — events affecting YOUR account specifically.</li>
+            <li><b>Recent changes</b> — CloudTrail / Activity Log / Cloud Audit Logs filtered to last 1-24 hours; correlate w/ deploy timeline.</li>
+            <li><b>Reproduce</b> — confirm the issue + minimum repro.</li>
+            <li><b>Symptom layer</b> — pinpoint OSI / stack layer (DNS? L3 route? L4 SG? L7 app?).</li>
+            <li><b>Logs</b> — CloudWatch Logs Insights / KQL / Cloud Logging filtered to component + timeframe.</li>
+            <li><b>Metrics</b> — CPU / mem / network / disk / queue depth / latency / error rate; compare vs baseline.</li>
+            <li><b>Traces</b> — find slow / failing hop in distributed call chain.</li>
+            <li><b>Permissions</b> — IAM policy simulator / Access Analyzer.</li>
+            <li><b>Quotas + limits</b> — service quotas dashboard; throttling often silent.</li>
+            <li><b>Compare baseline</b> — was this working before deploy / config change?</li>
+            <li><b>Mitigate first</b> (rollback / scale / failover) <b>then</b> root-cause.</li>
+            <li><b>Document</b> in runbook + RCA.</li>
           </ol>
-          <h2>Common gotchas</h2>
+
+          <h2>Permission + IAM troubleshooting</h2>
           <ul>
-            <li>Missing public IP on subnet → no Internet.</li>
-            <li>Default routes pointing to NAT not IGW for private subnets.</li>
-            <li>DNS resolution between VPCs requires Route 53 resolver / private zones.</li>
-            <li>Service quotas / limits silently throttle.</li>
-            <li>IAM eventual consistency — newly granted permissions need a brief retry.</li>
+            <li><b>"Access Denied" / "403 Forbidden"</b> — most common cloud error.</li>
+            <li><b>AWS IAM Policy Simulator</b> — model a principal + action + resource; shows allow / deny.</li>
+            <li><b>AWS IAM Access Analyzer + Policy Generator</b> — generate least-privilege from CloudTrail.</li>
+            <li><b>Azure RBAC: Access control (IAM) → Check access</b>.</li>
+            <li><b>GCP Policy Troubleshooter</b> — shows why a principal can/can't do a thing.</li>
+            <li><b>Order of evaluation:</b> Explicit DENY anywhere → SCP / Org Policy → resource-based → identity-based → permission boundary → session policy. Explicit Deny ALWAYS wins.</li>
+            <li><b>STS AssumeRole</b> failures — trust policy doesn't trust the principal; check Principal + Condition (external ID, MFA).</li>
+            <li><b>Workload identity issues</b> — EC2 instance profile attached? IMDSv2 enforced + caller setting token? EKS IRSA — service account annotation correct?</li>
+            <li><b>IAM eventual consistency</b> — newly-created credentials / roles take seconds to propagate. Retry with backoff for 30-60 s.</li>
+            <li><b>Cross-account confused deputy</b> — missing <code>external ID</code>; tighten trust policy.</li>
+            <li><b>KMS key policy</b> — even with IAM allow, KMS uses key policies; <code>kms:Decrypt</code> often needs explicit grant.</li>
+          </ul>
+
+          <h2>Network connectivity troubleshooting</h2>
+          <p>Walk the stack:</p>
+          <ol>
+            <li><b>Is the target alive?</b> — instance state Running; health-checked targets healthy.</li>
+            <li><b>Public IP / DNS?</b> — Elastic IP attached? AAAA / A record correct?</li>
+            <li><b>Route table</b> — 0.0.0.0/0 route to IGW (public subnet) or NAT GW (private)?</li>
+            <li><b>NACL</b> (AWS only) — STATELESS: must allow both inbound + outbound.</li>
+            <li><b>Security Group / NSG</b> — STATEFUL: inbound rule allows source + port?</li>
+            <li><b>Host firewall</b> — iptables / Windows Defender Firewall blocking?</li>
+            <li><b>Application listening</b> — <code>ss -tunlp | grep :port</code> on instance.</li>
+            <li><b>VPC Reachability Analyzer / Network Watcher Connectivity / GCP Connectivity Tests</b> — model the path.</li>
+            <li><b>VPC Flow Logs / NSG Flow Logs / VPC Flow Logs</b> — check ACCEPT vs REJECT on the packet.</li>
+            <li><b>Internet vs private path</b> — PrivateLink / Private Endpoint / PSC needed?</li>
+            <li><b>BGP on Direct Connect / ExpressRoute / Interconnect</b> — session up + prefixes advertised?</li>
+            <li><b>DNS resolution</b> — public DNS works but private VPC zone missing or unassociated?</li>
+          </ol>
+          <p><b>Symptom hints:</b></p>
+          <ul>
+            <li><b>"Connection timed out"</b> — usually SG / NACL / route / firewall blocking.</li>
+            <li><b>"Connection refused"</b> — host reachable but no listener on that port (or app crashed).</li>
+            <li><b>"Host unreachable"</b> — no route to the destination.</li>
+            <li><b>"Name or service not known"</b> — DNS failure.</li>
+            <li><b>TLS handshake fails</b> — cert expired / wrong SAN / SNI / cipher mismatch / clock skew.</li>
+            <li><b>Asymmetric path</b> — stateless NACL allowed outbound but not inbound for return; check both directions.</li>
+          </ul>
+
+          <h2>DNS troubleshooting</h2>
+          <ul>
+            <li><b>Public DNS</b> — <code>dig +trace example.com</code>; check NS chain, TTL, propagation.</li>
+            <li><b>VPC private DNS</b> — Route 53 private hosted zone associated with VPC? VPC has <code>enableDnsSupport</code> + <code>enableDnsHostnames</code>?</li>
+            <li><b>Cross-VPC resolution</b> — Route 53 Resolver inbound / outbound endpoints + rules; Azure Private DNS resolver; GCP Cloud DNS forwarding zones.</li>
+            <li><b>DNSSEC validation failure</b> — fix signing chain.</li>
+            <li><b>Caching</b> — stale records; flush local resolver, check TTL.</li>
+            <li><b>DNS firewall</b> blocking domain? Whitelist if intentional.</li>
+            <li><b>Split-horizon</b> — same name resolves differently internal vs external; verify expected view.</li>
+          </ul>
+
+          <h2>Service quotas + throttling</h2>
+          <ul>
+            <li>Every cloud service has <b>quotas / limits</b> per region per account.</li>
+            <li><b>AWS Service Quotas console</b> — view + request increases.</li>
+            <li><b>Azure Quotas</b> + <b>Quotas blade per resource provider</b>.</li>
+            <li><b>GCP Quotas</b> per project + per region.</li>
+            <li><b>Throttling errors:</b> 429 Too Many Requests; AWS "RequestLimitExceeded" / "Throttling"; Azure "TooManyRequests".</li>
+            <li><b>Mitigation:</b> exponential backoff + jitter; batch API calls; SDK default retry.</li>
+            <li><b>Burst credits</b> on burstable VMs (T-series, B-series) — exhausted → throttled.</li>
+            <li><b>Burst credit on EBS gp2</b> — exhausted → 100 IOPS baseline; move to gp3.</li>
+            <li><b>Lambda concurrency limit</b> — account-wide default 1000; request increase.</li>
+            <li><b>NAT GW limit</b> — 55,000 simultaneous connections per IP; scale by adding IPs / NATs.</li>
+            <li><b>S3 prefix limit</b> — 5,500 GET / 3,500 PUT per partitioned prefix; spread across prefixes.</li>
+          </ul>
+
+          <h2>Cost spike / surprise bill troubleshooting</h2>
+          <ul>
+            <li>Open <b>Cost Explorer / Cost Management / Billing Reports</b>; filter by service + day + tag.</li>
+            <li><b>Cost anomaly detection</b> alerts likely already triggered — read the report.</li>
+            <li>Common culprits: NAT GW egress, cross-region replication, versioned S3 accumulating, idle Load Balancers, unattached EBS, Spot interrupted then on-demand replacement, sudden auto-scale, CloudWatch Logs ingest spike, BigQuery query without LIMIT, DynamoDB unexpected scale.</li>
+            <li><b>CloudTrail / Activity Log</b> — who created the resource? Was it intentional?</li>
+            <li><b>VPC Flow Logs</b> — who's generating the egress?</li>
+            <li><b>Tag audit</b> — find untagged or owner-less resources.</li>
+            <li><b>Stop / pause / scale-down</b> first; ask later.</li>
+          </ul>
+
+          <h2>VM / instance troubleshooting</h2>
+          <ul>
+            <li><b>Instance won't start</b> — check capacity in AZ; switch instance type; check root volume snapshot health; resize EBS.</li>
+            <li><b>"Stopped" but billed</b> — EBS still charged for storage; terminate if not needed.</li>
+            <li><b>Can't SSH/RDP</b> — SG inbound; key pair issue; user-data didn't complete; instance health 2/2 failing.</li>
+            <li><b>SSM Session Manager</b> as fallback — no SSH needed; agent + IAM role required.</li>
+            <li><b>Console screenshot / serial console</b> — see boot output; helpful for kernel panics, fstab issues.</li>
+            <li><b>EBS detached unexpectedly</b> — check IAM events; force-detach if hung.</li>
+            <li><b>Disk full</b> on root volume — extend EBS + grow filesystem (<code>growpart</code> + <code>resize2fs</code>).</li>
+            <li><b>Excessive CPU</b> on T-series — credits depleted; check baseline + burst behavior.</li>
+            <li><b>Network throughput low</b> — instance type's network cap (e.g., t3.medium ~5 Gbps); upgrade or use ENA / SR-IOV.</li>
+          </ul>
+
+          <h2>Container / Kubernetes troubleshooting</h2>
+          <ul>
+            <li><b>kubectl get pods -A</b> — overall status; <b>describe pod</b> for events; <b>logs --previous</b> for crash loop.</li>
+            <li><b>Pending</b> — no node has resources matching requests; node selector / taint blocks; PVC unbound.</li>
+            <li><b>CrashLoopBackOff</b> — container exits repeatedly; check probes, entrypoint, env, secrets.</li>
+            <li><b>ImagePullBackOff</b> — bad image / tag / registry credentials. <code>kubectl describe</code> shows pull error.</li>
+            <li><b>OOMKilled</b> — exceeded memory limit. Raise limit or fix leak; check <code>kubectl describe</code> last state.</li>
+            <li><b>Readiness probe failing</b> — Service shows 0 endpoints; check app health.</li>
+            <li><b>DNS resolution fails</b> — CoreDNS pods healthy? NetworkPolicy blocking egress to kube-dns? <code>nslookup kubernetes</code> inside Pod.</li>
+            <li><b>Service routing</b> — endpoints empty → label selector mismatch.</li>
+            <li><b>Ingress 502 / 503</b> — backend unhealthy; check pod readiness + ingress controller logs.</li>
+            <li><b>EKS IRSA failing</b> — service account annotation, trust policy, sts:AssumeRoleWithWebIdentity, OIDC provider.</li>
+            <li><b>Out of nodes</b> — Cluster Autoscaler hit max; Karpenter not provisioning; capacity in AZ.</li>
+            <li><b>Spot pod terminated</b> — handle SIGTERM gracefully; use Pod Disruption Budgets + AWS Node Termination Handler.</li>
+            <li><b>K8s upgrade broke API</b> — deprecated API removed; convert manifests; use <code>kubectl convert</code>; check release notes.</li>
+          </ul>
+
+          <h2>Storage troubleshooting</h2>
+          <ul>
+            <li><b>S3 / Blob "Access Denied"</b> — bucket policy, IAM, Block Public Access, encryption key permission, MFA-Delete.</li>
+            <li><b>S3 versioning + lifecycle</b> — old versions retained; expire noncurrent.</li>
+            <li><b>EBS slow</b> — gp2 burst credits exhausted; switch to gp3 / io2 / Provisioned IOPS.</li>
+            <li><b>EFS / Azure Files latency</b> — check performance mode (general purpose vs max I/O); increase throughput mode.</li>
+            <li><b>Snapshot "pending"</b> long time — large first snapshot; check service health.</li>
+            <li><b>Object Lock prevents delete</b> — Governance mode bypassable; Compliance mode cannot.</li>
+            <li><b>Cross-region replication lag</b> — async; check replication metrics; bandwidth limits.</li>
+            <li><b>KMS key revoked</b> — objects encrypted with that key unreadable; rotate / restore key carefully.</li>
+            <li><b>NAT GW connection limits</b> hit when transferring many small objects.</li>
+          </ul>
+
+          <h2>Database troubleshooting</h2>
+          <ul>
+            <li><b>Connection limit</b> — managed DB max connections; use proxy (RDS Proxy, PgBouncer) or pool.</li>
+            <li><b>Slow query</b> — Performance Insights / Query Insights / Cloud SQL Insights; add index, rewrite query.</li>
+            <li><b>Replication lag</b> — high write volume; throttle or scale primary.</li>
+            <li><b>Failover</b> on Multi-AZ — apps must reconnect; use endpoint not IP.</li>
+            <li><b>Storage autoscale</b> hit ceiling — increase max storage.</li>
+            <li><b>Cosmos DB / DynamoDB throttling</b> — partition hot key; increase RU / WCU+RCU or on-demand.</li>
+            <li><b>Aurora / Cloud SQL / Cosmos / DynamoDB</b> regions — global tables / multi-master writes when latency demands.</li>
+          </ul>
+
+          <h2>Function-as-a-Service troubleshooting</h2>
+          <ul>
+            <li><b>Cold start</b> — pre-warm w/ provisioned concurrency; lighter runtime; smaller package; reuse SDK clients outside handler.</li>
+            <li><b>Timeout</b> — increase Lambda timeout up to 15 min; or move long work to Step Functions / Workflows.</li>
+            <li><b>Throttling</b> — concurrency limit; request increase + reserve concurrency.</li>
+            <li><b>VPC-bound Lambda slow</b> — ENI creation pre-2019 was slow; now fast w/ Hyperplane.</li>
+            <li><b>Permission errors</b> — execution role missing service permission.</li>
+            <li><b>Trigger not firing</b> — event source mapping wrong; permission on bucket / queue.</li>
+            <li><b>Memory tuning</b> — Lambda CPU scales with memory; right-size both.</li>
+            <li><b>Concurrent execution limits</b> — account-wide 1000 default.</li>
+          </ul>
+
+          <h2>Cross-cloud equivalence in troubleshooting tooling</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Need</th><th align="left" style="padding:4px;border-bottom:1px solid #444">AWS</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Azure</th><th align="left" style="padding:4px;border-bottom:1px solid #444">GCP</th></tr>
+            <tr><td>Service health</td><td>AWS Health Dashboard</td><td>Azure Service Health</td><td>GCP Status Dashboard</td></tr>
+            <tr><td>Personal health</td><td>Personal Health Dashboard</td><td>Service Health Personal</td><td>Personalized Service Health</td></tr>
+            <tr><td>Path connectivity tester</td><td>Reachability Analyzer</td><td>Network Watcher Connection Troubleshoot</td><td>Connectivity Tests</td></tr>
+            <tr><td>Network packet capture</td><td>Traffic Mirroring</td><td>NW Packet Capture</td><td>Packet Mirroring</td></tr>
+            <tr><td>Flow logs</td><td>VPC Flow Logs</td><td>NSG / VNet Flow Logs</td><td>VPC Flow Logs</td></tr>
+            <tr><td>IAM simulation</td><td>IAM Policy Simulator</td><td>Azure Check Access</td><td>Policy Troubleshooter</td></tr>
+            <tr><td>Audit log</td><td>CloudTrail (+ Lake)</td><td>Activity Log + Sign-ins + Audit</td><td>Cloud Audit Logs</td></tr>
+            <tr><td>Resource history</td><td>AWS Config</td><td>Resource Graph + Change Analysis</td><td>Asset Inventory + Change History</td></tr>
+            <tr><td>Quotas</td><td>Service Quotas</td><td>Quotas blade</td><td>IAM &amp; Admin → Quotas</td></tr>
+            <tr><td>Cost analysis</td><td>Cost Explorer + Anomaly Detection</td><td>Cost Management + Anomaly</td><td>Billing Reports + Smart Suggestions</td></tr>
+            <tr><td>Web console SSH fallback</td><td>SSM Session Manager + EC2 Serial Console</td><td>Azure Bastion / Run Command / Serial Console</td><td>IAP TCP forwarding / Serial Console</td></tr>
+            <tr><td>Container debug</td><td>kubectl + Container Insights</td><td>kubectl + Container Insights</td><td>kubectl + GKE Logging</td></tr>
+            <tr><td>Tracing</td><td>X-Ray</td><td>Application Insights</td><td>Cloud Trace</td></tr>
+            <tr><td>Threat detection</td><td>GuardDuty + Detective</td><td>Defender for Cloud</td><td>Security Command Center</td></tr>
+          </table>
+
+          <h2>Most common cloud gotchas (memorize)</h2>
+          <ol>
+            <li><b>Missing public IP</b> on instance in public subnet → no Internet (instance has only private IP).</li>
+            <li><b>Default route mis-set</b> — private subnet using IGW (no public IP) or public subnet using NAT GW.</li>
+            <li><b>NACL deny on return traffic</b> — stateless; allow ephemeral port range outbound (1024-65535).</li>
+            <li><b>DNS not resolving cross-VPC</b> — need Route 53 Resolver / private DNS / forwarding zone.</li>
+            <li><b>Service quotas silently throttling</b> — request increase ahead of time.</li>
+            <li><b>IAM eventual consistency</b> — retry with backoff for 30-60s after creation.</li>
+            <li><b>Encryption key permissions missing</b> — IAM allow + KMS key policy allow + grant.</li>
+            <li><b>Cross-account requires external ID</b> + Principal in trust policy + IAM allow on caller side.</li>
+            <li><b>S3 Block Public Access overrides bucket policy</b>.</li>
+            <li><b>SCP / Org Policy denying</b> something resource policy would otherwise allow — explicit Deny wins.</li>
+            <li><b>SG references other SG, not CIDR</b> — easier; auto-update on scale.</li>
+            <li><b>Multi-AZ deploy actually single-AZ</b> — verify subnet selection.</li>
+            <li><b>Auto-scaling failed to launch</b> — capacity in AZ; switch instance types; mixed instances policy.</li>
+            <li><b>Cold start latency</b> on first request to scaled-to-zero serverless.</li>
+            <li><b>Spot interrupted</b> mid-job — design for resumability + checkpoint state.</li>
+            <li><b>Region eventual replication</b> for global services (Route 53 changes, IAM users) — propagation takes seconds-minutes.</li>
+            <li><b>NAT GW per-AZ</b> — single NAT GW in one AZ is a single point of failure.</li>
+            <li><b>Service deprecation</b> — Lambda runtime EOL, EKS version EOL, deprecated APIs in K8s upgrades.</li>
+            <li><b>Region-specific service availability</b> — not every service in every region.</li>
+            <li><b>Account-level Block Public Access</b> can override a per-bucket setting.</li>
+          </ol>
+
+          <h2>Provider issue vs your issue</h2>
+          <p>Steps to decide:</p>
+          <ol>
+            <li>Status page shows incident in your region + service? — provider issue, ride it out or fail over to other region.</li>
+            <li>Does the issue affect only YOUR account? — likely IAM / network / config.</li>
+            <li>Other accounts in same org affected? — possibly SCP / Org Policy / shared service.</li>
+            <li>Issue began right after deploy? — your deploy; rollback.</li>
+            <li>Issue began at midnight? — auto-scale event, scheduled job, cron, certificate expiry.</li>
+            <li>Issue scales with load? — quota / throttle / autoscaler max.</li>
+            <li>File a support case with evidence: timestamp, region, service, error code, request ID, account ID.</li>
+          </ol>
+
+          <h2>Useful "what changed?" commands</h2>
+          <pre><code># AWS CloudTrail recent IAM changes
+aws cloudtrail lookup-events --lookup-attributes AttributeKey=EventName,AttributeValue=CreatePolicy --max-results 10
+
+# AWS Config — resources changed in last day
+aws configservice get-resource-config-history --resource-type AWS::EC2::SecurityGroup --resource-id sg-...
+
+# Azure Activity Log recent
+az monitor activity-log list --offset 1h
+
+# GCP Audit Log recent
+gcloud logging read 'protoPayload.methodName=...' --freshness=1h</code></pre>
+
+          <h2>Working with cloud support</h2>
+          <ul>
+            <li><b>Support tiers</b>: AWS Basic / Developer / Business / Enterprise; Azure Basic / Developer / Standard / Professional Direct; GCP Standard / Enhanced / Premium.</li>
+            <li>Production workloads should have at least Business / Standard tier.</li>
+            <li><b>Open case with:</b> service name, region, account ID, exact timestamp(s), error message + Request ID, IAM principal, sample reproducer command.</li>
+            <li><b>TAM</b> (Technical Account Manager) on Enterprise tier — ongoing relationship.</li>
+            <li>Cloud providers also publish <b>Well-Architected reviews</b>, <b>Trusted Advisor</b> recommendations, <b>FastTrack</b> programs.</li>
+          </ul>
+
+          <h2>Useful general debugging commands (cloud-aware)</h2>
+          <pre><code># Test endpoint reachability + TLS
+curl -v https://api.example.com
+openssl s_client -connect api.example.com:443 -servername api.example.com
+
+# DNS chain trace
+dig +trace api.example.com
+nslookup api.example.com 1.1.1.1
+
+# Trace network path
+mtr api.example.com
+traceroute -T -p 443 api.example.com
+
+# AWS CLI verbose
+aws s3 ls s3://bucket --debug
+
+# Azure CLI verbose
+az group list --debug
+
+# GCP CLI verbose
+gcloud compute instances list --log-http
+
+# Kubernetes shell into pod
+kubectl exec -it pod -- sh
+kubectl logs -f pod
+kubectl debug node/node-name -it --image=busybox</code></pre>
+
+          <h2>Post-incident review</h2>
+          <ul>
+            <li><b>Blameless postmortem</b> — focus on systems + process, not individuals.</li>
+            <li>Document <b>timeline</b> + <b>root cause</b> + <b>contributing factors</b> + <b>action items</b>.</li>
+            <li>Update runbooks + alerts + tests so it can't recur silently.</li>
+            <li>Track action-item completion.</li>
+            <li>Share lessons across teams (internal incident review meetings).</li>
+            <li>Map to MITRE ATT&amp;CK / Cyber Kill Chain for security incidents.</li>
+          </ul>
+
+          <h2>Best practices to PREVENT troubleshooting in the first place</h2>
+          <ul>
+            <li>Everything in IaC + version control.</li>
+            <li>Mandatory tagging + linting + policy-as-code.</li>
+            <li>SLOs + error-budget-driven rollouts.</li>
+            <li>Canary deploys + auto-rollback.</li>
+            <li>Pre-prod / staging environment matching prod.</li>
+            <li>Chaos drills + game days.</li>
+            <li>Tabletop DR drills.</li>
+            <li>Continuous CSPM + posture monitoring.</li>
+            <li>Quarterly access reviews + cleanup.</li>
+            <li>Runbooks per service.</li>
+            <li>Centralized logging + alerting.</li>
+            <li>Cost guardrails + anomaly detection.</li>
+            <li>Documentation + onboarding playbooks.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Cannot reach instance in public subnet" → check SG + NACL + route table + IGW + public IP.</li>
+            <li>"Cannot reach instance in private subnet from public Internet" → not designed to be reachable; use bastion / load balancer / Session Manager.</li>
+            <li>"NAT Gateway in only one AZ" → single AZ outage breaks egress; deploy per-AZ NAT GW.</li>
+            <li>"Throttling errors increasing" → backoff + service quota request.</li>
+            <li>"Just created IAM role, role assumption fails" → eventual consistency; retry briefly.</li>
+            <li>"S3 access denied despite IAM allow" → Block Public Access + bucket policy + KMS key policy + SCP — find the deny.</li>
+            <li>"Cross-region failover test" → DR strategy with traffic management (Route 53 health checks / Front Door / Cloud Load Balancing).</li>
+            <li>"Detect drift between IaC and reality" → terraform plan / AWS Config drift detection / Azure Resource Graph.</li>
+            <li>"Bill spiked overnight" → NAT GW egress / Spot interruption / log ingest / cross-region replication / DDoS / leaked credential running miner.</li>
+            <li>"Pod stuck Pending" → no node fits; check resources, taints, PVC.</li>
+            <li>"Logs aren't appearing" → log group retention / sampling / pipeline broken / agent not running.</li>
+            <li>"Compare current state to known-good baseline" → drift detection + change history.</li>
+            <li>"Pre-deploy validation that prevents misconfig" → policy-as-code at pipeline gate.</li>
+            <li>"K8s upgrade broke deployments" → deprecated API; convert manifests; check release notes.</li>
+            <li>"Provider region outage" → status page + multi-region DR + traffic shift.</li>
+            <li>"Increase Lambda concurrency" → request quota increase + reserved concurrency on critical functions.</li>
           </ul>
         `
       }
@@ -16215,197 +21868,1137 @@ resource "aws_vpc" "main" {
       {
         title: '1. Cloud Concepts',
         body: `
-          <h2>Benefits</h2>
+          <h2>What is cloud computing?</h2>
+          <p><b>Cloud computing</b> is the on-demand delivery of compute, storage, networking, databases, identity, AI, analytics, and other services over the Internet ("the cloud") on a pay-as-you-go basis. Instead of buying physical servers and running them in your own building, you rent capacity from a hyperscale provider — Microsoft (Azure), AWS, or Google (GCP) — and that provider operates the datacenters, hardware refresh, cooling, power, and physical security on your behalf. Azure is Microsoft's public cloud platform and is the focus of AZ-900.</p>
+          <p>The AZ-900 exam expects you to be fluent in <i>why</i> organizations adopt cloud, <i>what</i> the trade-offs are, and the <i>vocabulary</i> Microsoft uses to describe value (benefits) and economics (CapEx vs OpEx, consumption-based pricing). Memorize the definitions because Microsoft writes questions that hinge on a single word.</p>
+
+          <h2>Benefits (Microsoft's official list — memorize every one)</h2>
+          <p>Each benefit answers a specific business question. Know the definition + the scenario in which Microsoft would test it.</p>
           <ul>
-            <li><b>High availability</b> — SLA-backed uptime via redundancy.</li>
-            <li><b>Scalability</b> — vertical (scale up) and horizontal (scale out); manual or auto.</li>
-            <li><b>Elasticity</b> — scale dynamically with demand.</li>
-            <li><b>Reliability</b> — recover from failures.</li>
-            <li><b>Predictability</b> — performance + cost.</li>
-            <li><b>Security</b> — shared model + provider investment.</li>
-            <li><b>Governance</b> — central policy.</li>
-            <li><b>Manageability</b> — automation + monitoring.</li>
+            <li><b>High Availability (HA)</b> — <b>What:</b> ability of a workload to remain operational and accessible for an agreed percentage of time, typically expressed in a Service Level Agreement (SLA) such as 99.9% ("three nines") or 99.99% ("four nines"). <b>Why:</b> downtime costs revenue, reputation, and SLA penalties; the cloud provider engineers redundancy so a single hardware fault does not take you offline. <b>How used in Azure:</b> deploy a VM across multiple <b>Availability Zones</b> (physically separate datacenters in the same region), put a load balancer in front, and Microsoft signs an SLA — e.g., 99.99% for zonal VMs. HA is about <i>uptime</i>, not about disaster recovery.</li>
+            <li><b>Scalability</b> — <b>What:</b> the ability to increase or decrease resources to meet demand. Two flavors: <b>Vertical (scale up / scale down)</b> means giving the same VM more CPU/RAM (B2s → D4s_v5); <b>Horizontal (scale out / scale in)</b> means adding or removing identical instances behind a load balancer. <b>Why:</b> you can match cost to load instead of paying for peak capacity 24/7. <b>How used in Azure:</b> <b>Virtual Machine Scale Sets (VMSS)</b> and <b>App Service autoscale</b> add instances on CPU/memory/queue-length triggers. Scaling can be <b>manual</b> (you press the button) or <b>automatic</b> (autoscale rule).</li>
+            <li><b>Elasticity</b> — <b>What:</b> automatic, near-real-time scaling that follows actual demand up <i>and</i> down. <b>Why:</b> scalability with a brain — you do not have to predict load; the platform reacts. <b>How used in Azure:</b> Azure Functions Consumption plan spawns instances per request and removes them when idle; AKS Cluster Autoscaler grows the node pool when pods are pending. <b>Exam tip:</b> Microsoft draws a fine line — "scalability" is the <i>capability</i>, "elasticity" is <i>automatic + dynamic</i>.</li>
+            <li><b>Reliability</b> — <b>What:</b> a system's ability to recover from failures and continue functioning. <b>Why:</b> hardware fails, networks partition, regions occasionally have incidents; cloud is built on the assumption that failure is constant. <b>How used in Azure:</b> use <b>Availability Zones</b> for intra-region resilience, <b>region pairs</b> (East US ↔ West US) and <b>Azure Site Recovery</b> for cross-region disaster recovery, and <b>geo-redundant storage (GRS)</b> for data durability. Reliability covers both HA (no outage) and DR (recover after outage).</li>
+            <li><b>Predictability</b> — <b>What:</b> the ability to forecast both <i>performance</i> (consistent latency/throughput) and <i>cost</i> (consistent monthly bill). <b>Why:</b> finance teams need predictable spend; engineers need predictable response times. <b>How used in Azure:</b> <b>Reserved Instances</b> and <b>Savings Plans</b> lock in pricing for 1 or 3 years; <b>Azure Advisor</b> + <b>Cost Management</b> forecast spend; SKU tiers (Standard/Premium) give predictable IOPS. Predictability is one of the official "Pillars of cloud computing" Microsoft added in recent AZ-900 revisions.</li>
+            <li><b>Security</b> — <b>What:</b> protecting data, identities, networks, and workloads — combined effort of the provider (physical + hypervisor) and you (data + identity + apps). <b>Why:</b> compliance frameworks (ISO 27001, SOC 2, HIPAA, PCI-DSS, FedRAMP) require demonstrable controls; the cloud provider invests at a scale you cannot match. <b>How used in Azure:</b> <b>Microsoft Defender for Cloud</b> for posture, <b>Microsoft Sentinel</b> for SIEM/SOAR, <b>Microsoft Entra ID</b> for identity, <b>Key Vault</b> for secrets, default encryption at rest + in transit, DDoS protection on every VNet.</li>
+            <li><b>Governance</b> — <b>What:</b> the ability to enforce <i>rules</i> (what can be deployed, where, by whom, with which tags) across your entire estate from one place. <b>Why:</b> in a self-service cloud, anyone with a credit card can spin up a VM; without guardrails costs and risk explode. <b>How used in Azure:</b> <b>Azure Policy</b> (allow/deny/audit rules — e.g., "no public IPs on VMs"), <b>Management Groups</b> (hierarchy that scopes policies), <b>Blueprints</b> (deprecated → Template Specs + DeploymentStacks), <b>Resource Locks</b> (CanNotDelete / ReadOnly) to prevent accidental deletion.</li>
+            <li><b>Manageability</b> — <b>What:</b> ability to operate, monitor, and automate the environment without manually clicking through each resource. Has two halves Microsoft tests: <b>Management <i>of</i> the cloud</b> (auto-scale, self-healing, automation) and <b>Management <i>in</i> the cloud</b> (the portal, CLI, PowerShell, ARM/Bicep templates, REST API, SDKs). <b>Why:</b> at scale you must script and observe, not point-and-click. <b>How used in Azure:</b> <b>Azure Portal</b>, <b>Azure CLI</b> (<code>az</code>), <b>Azure PowerShell</b> (Az module), <b>ARM templates</b> + <b>Bicep</b> (declarative IaC), <b>Cloud Shell</b> (browser-based shell), <b>Azure Monitor</b> + <b>Log Analytics</b> + <b>Application Insights</b> for telemetry.</li>
           </ul>
-          <h2>Economic models</h2>
-          <p><b>CapEx</b> = up-front purchase (on-prem). <b>OpEx</b> = pay-as-you-go (cloud). Consumption-based billing.</p>
+
+          <h2>Economic models — CapEx vs OpEx (huge AZ-900 topic)</h2>
+          <p>The shift from on-prem to cloud is, in accounting terms, a shift from capital expenditure to operational expenditure. Expect at least one exam question on this.</p>
+          <ul>
+            <li><b>CapEx (Capital Expenditure)</b> — <b>What:</b> a large up-front purchase of an asset that is then depreciated over its useful life (typically 3–7 years for IT hardware). <b>Why on-prem:</b> you buy servers, racks, SANs, networking gear, licenses, and amortize the cost over years. <b>Pros:</b> long-term ownership; potential tax benefits via depreciation. <b>Cons:</b> high up-front spend; you must forecast capacity 3 years out (often overprovisioning by 2-3×); refresh cycles are disruptive; idle capacity is wasted cash.</li>
+            <li><b>OpEx (Operational Expenditure)</b> — <b>What:</b> an ongoing, recurring expense — like rent or electricity — fully deductible in the year it is incurred. <b>Why in cloud:</b> you pay monthly (or per-second) for what you actually consumed; no hardware to buy. <b>Pros:</b> low/zero up-front cost; pay-as-you-go matches cost to usage; no asset depreciation paperwork; no refresh cycles. <b>Cons:</b> can be higher long-term TCO for steady, predictable workloads (which is why Reserved Instances + Savings Plans exist); bill can spike if usage spikes.</li>
+            <li><b>Consumption-based pricing</b> — <b>What:</b> billing model where you pay for the precise units you used: per-second of VM uptime, per-GB-month of storage, per-million-requests for Functions, per-DTU/vCore for SQL. <b>Why it matters:</b> there is no "minimum buy" — turn the resource off and the bill stops (for most services; some have a small reservation charge). <b>How used in Azure:</b> the <b>Azure Pricing Calculator</b> estimates pre-purchase; the <b>Total Cost of Ownership (TCO) Calculator</b> compares on-prem CapEx vs Azure OpEx over 1–5 years.</li>
+          </ul>
+
+          <h2>Cloud deployment models (Microsoft terminology)</h2>
+          <ul>
+            <li><b>Public cloud</b> — <b>What:</b> shared infrastructure operated by a third-party provider (Azure, AWS, GCP) and offered to many tenants over the public Internet. <b>Why:</b> lowest cost, fastest provisioning, no hardware ownership. <b>How:</b> everything you build in <a>portal.azure.com</a> by default. Resources are logically isolated by subscription, RBAC, and VNets, even though hardware is shared.</li>
+            <li><b>Private cloud</b> — <b>What:</b> cloud-style infrastructure (self-service portal, automation, elasticity) but dedicated to a single organization, usually in your own datacenter or a co-location facility. <b>Why:</b> regulatory, sovereignty, latency, or data-residency requirements that prohibit public cloud. <b>How (Azure):</b> <b>Azure Stack Hub</b> (Azure-consistent stack in your own DC), <b>Azure Stack HCI</b> (hyper-converged on-prem), <b>VMware Cloud</b>. You own/operate the hardware (or a partner does).</li>
+            <li><b>Hybrid cloud</b> — <b>What:</b> a combination of public + private, connected so workloads and data can move between them. <b>Why:</b> a phased migration, a regulatory requirement to keep some data on-prem while bursting compute to cloud, or DR. <b>How (Azure):</b> <b>Azure Arc</b> (manage on-prem/multi-cloud servers, K8s, SQL from Azure Resource Manager), <b>ExpressRoute</b> (private fiber link to Azure), <b>VPN Gateway</b> (encrypted tunnel over Internet), <b>Azure AD Connect</b> (sync on-prem AD ↔ Entra ID).</li>
+            <li><b>Multi-cloud</b> — <b>What:</b> using multiple public clouds simultaneously (Azure + AWS + GCP). <b>Why:</b> avoid vendor lock-in, use best-of-breed services, regional coverage. <b>How (Azure):</b> Arc-enabled resources work across clouds; Microsoft Sentinel ingests AWS/GCP logs.</li>
+          </ul>
+
+          <h2>Shared responsibility model (introduced here, expanded next lesson)</h2>
+          <p><b>What:</b> the contract that defines which security and operational tasks the cloud provider owns vs which the customer owns. <b>Why:</b> a top cause of cloud breaches is customers assuming the provider covers something it does not (e.g., S3 / Blob bucket misconfiguration). <b>Universal rule:</b> the customer is <i>always</i> responsible for their own <b>data</b>, <b>identity & access management</b>, and <b>account management</b>; the provider is <i>always</i> responsible for the <b>physical datacenter</b>, the <b>physical network</b>, and the <b>physical hosts</b>. Everything in between (OS, runtime, middleware, app) shifts depending on whether the service is IaaS, PaaS, or SaaS.</p>
+
+          <h2>Acronyms you must own</h2>
+          <ul>
+            <li><b>SLA</b> — Service Level Agreement. The contractual uptime/performance commitment from Microsoft for a given service tier.</li>
+            <li><b>CapEx / OpEx</b> — Capital Expenditure / Operational Expenditure. The two ways IT spend is categorized in accounting.</li>
+            <li><b>TCO</b> — Total Cost of Ownership. The all-in 1–5-year cost of running a workload, including hardware, power, cooling, staff, licenses, and depreciation.</li>
+            <li><b>ROI</b> — Return on Investment. Net benefit ÷ cost, usually expressed as a percentage.</li>
+            <li><b>IaaS / PaaS / SaaS</b> — Infrastructure-/Platform-/Software-as-a-Service. The three classic cloud service models, covered in detail next lesson.</li>
+            <li><b>HA / DR</b> — High Availability / Disaster Recovery. HA = stay up during failure; DR = recover after a disaster.</li>
+            <li><b>RTO / RPO</b> — Recovery Time Objective / Recovery Point Objective. RTO = how long until you are back online; RPO = how much data loss you can tolerate.</li>
+            <li><b>VM</b> — Virtual Machine. The fundamental IaaS compute unit.</li>
+            <li><b>VNet</b> — Virtual Network. Azure's term for a logically isolated network in the cloud.</li>
+            <li><b>RBAC</b> — Role-Based Access Control. Permissions assigned by role rather than per-user.</li>
+            <li><b>ARM</b> — Azure Resource Manager. The deployment and management layer underneath every Azure resource.</li>
+            <li><b>Entra ID</b> — Microsoft Entra ID (formerly Azure Active Directory / AAD). Microsoft's cloud identity service.</li>
+            <li><b>MFA</b> — Multi-Factor Authentication. Second-factor verification (phone, Authenticator, FIDO2).</li>
+            <li><b>VMSS</b> — Virtual Machine Scale Set. Group of identical, auto-scaling VMs.</li>
+            <li><b>AKS</b> — Azure Kubernetes Service. Managed Kubernetes control plane.</li>
+            <li><b>ACI</b> — Azure Container Instances. Single-container, serverless container hosting.</li>
+            <li><b>CDN</b> — Content Delivery Network. Caches static content at edge points-of-presence to reduce latency.</li>
+            <li><b>BCDR</b> — Business Continuity and Disaster Recovery. The combined practice of staying running (BC) and recovering from disaster (DR).</li>
+          </ul>
+
+          <h2>Why organizations adopt cloud (drivers Microsoft loves to test)</h2>
+          <ul>
+            <li><b>Speed/agility</b> — provision a new VM in 2 minutes instead of 12 weeks of hardware procurement; deploy a new environment with one Bicep template.</li>
+            <li><b>Global reach</b> — Azure has 60+ regions on 6 continents; deploy close to users without building a datacenter.</li>
+            <li><b>Cost optimization</b> — pay for what you use; right-size aggressively; use Reservations or Savings Plans for steady workloads.</li>
+            <li><b>Innovation</b> — services like Azure OpenAI, Cognitive Services, Synapse, Cosmos DB are impractical to build in-house.</li>
+            <li><b>Disaster recovery</b> — geo-redundant storage and region-pair replication give DR that small companies could never build themselves.</li>
+            <li><b>Focus on the business</b> — let Microsoft worry about racking servers; your engineers work on differentiating apps.</li>
+          </ul>
+
+          <h2>Exam quick patterns (recognize these wordings)</h2>
+          <ul>
+            <li>"Recover quickly from a regional outage" → reliability / disaster recovery / region pair.</li>
+            <li>"Automatically increase resources when load rises and decrease when load falls" → <b>elasticity</b> (not just scalability — the "automatic + dynamic" wording is the giveaway).</li>
+            <li>"Pay only for what you use; no up-front hardware cost" → <b>OpEx</b> / consumption-based pricing.</li>
+            <li>"Apply organization-wide tagging and SKU rules" → <b>governance</b> via Azure Policy + Management Groups.</li>
+            <li>"Apps must remain available during a single datacenter failure in the region" → <b>Availability Zones</b> (HA, intra-region).</li>
+            <li>"Workloads run on-prem and in Azure with single management plane" → <b>hybrid cloud</b> + Azure Arc.</li>
+            <li>"Compare current on-prem cost vs Azure over 3 years" → <b>TCO Calculator</b> (vs Pricing Calculator, which is for sizing a new deployment).</li>
+          </ul>
         `
       },
       {
         title: '2. Cloud Service Models',
         body: `
-          <h2>IaaS, PaaS, SaaS in Azure</h2>
+          <h2>What is a cloud service model?</h2>
+          <p>A <b>cloud service model</b> defines how much of the stack the cloud provider operates and how much you operate. The three classic models — <b>IaaS</b>, <b>PaaS</b>, and <b>SaaS</b> — are points on a spectrum from "rent the hardware, do everything else yourself" to "rent the finished application, do nothing but log in." Microsoft adds two more flavors AZ-900 expects you to recognize: <b>FaaS</b> (serverless) and <b>DaaS</b> (Desktop-as-a-Service). The exam tests your ability to map a scenario to the right model.</p>
+
+          <h2>IaaS — Infrastructure as a Service</h2>
+          <p><b>Acronym:</b> Infrastructure as a Service.</p>
+          <p><b>What:</b> the provider gives you virtualized compute, storage, and networking — raw infrastructure. You bring the operating system, runtime, middleware, application, data, and patches. Conceptually equivalent to "renting a server in someone else's datacenter," except provisioning takes minutes instead of weeks and you pay per-second.</p>
+          <p><b>Why use it:</b> maximum control. You can run any OS, any kernel module, any legacy app that demands specific OS versions, and any storage configuration. Best fit for lift-and-shift migrations, custom Linux distros, GPU workloads, license-bound software (your DBA's old SQL Server image), or anything PaaS does not cover.</p>
+          <p><b>How used in Azure (services that are IaaS):</b></p>
           <ul>
-            <li><b>IaaS</b> — Azure Virtual Machines, Virtual Networks. You manage OS+ up.</li>
-            <li><b>PaaS</b> — Azure App Service, Azure SQL Database. Microsoft manages OS, runtime; you manage app + data.</li>
-            <li><b>SaaS</b> — Microsoft 365, Dynamics 365. Microsoft manages everything; you manage data + users.</li>
+            <li><b>Azure Virtual Machines (VM)</b> — Windows/Linux VMs in any of dozens of SKU families (B-series burstable, D-series general, E-series memory-optimized, F-series compute-optimized, M-series huge memory, N-series GPU). You pick CPU, RAM, disk, OS image.</li>
+            <li><b>Azure Virtual Network (VNet)</b> — your private network in the cloud: subnets, route tables, Network Security Groups, peering, gateways.</li>
+            <li><b>Azure Managed Disks</b> — block storage attached to VMs: Standard HDD, Standard SSD, Premium SSD, Ultra Disk.</li>
+            <li><b>Azure Load Balancer</b> (L4) — distributes traffic across IaaS VMs.</li>
+            <li><b>VM Scale Sets (VMSS)</b> — set of identical VMs that scale together; IaaS with auto-scaling.</li>
           </ul>
-          <h2>Shared responsibility</h2>
-          <table style="width:100%;font-size:13px"><tr><th>Layer</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr>
-          <tr><td>Data / Identity</td><td>You</td><td>You</td><td>You</td></tr>
-          <tr><td>App</td><td>You</td><td>You</td><td>MS</td></tr>
-          <tr><td>OS</td><td>You</td><td>MS</td><td>MS</td></tr>
-          <tr><td>Hypervisor / HW / DC</td><td>MS</td><td>MS</td><td>MS</td></tr>
+          <p><b>Your responsibilities:</b> OS patching, antivirus, OS hardening, application installation + updates, app config, identity, data, backup configuration, network ACLs. Microsoft handles only the host, hypervisor, network fabric, and physical datacenter.</p>
+
+          <h2>PaaS — Platform as a Service</h2>
+          <p><b>Acronym:</b> Platform as a Service.</p>
+          <p><b>What:</b> the provider gives you a managed runtime/platform on which you deploy your code or schema. The OS, patches, runtime version, scaling, load balancing, and infrastructure are all Microsoft's job; you just push your code or queries.</p>
+          <p><b>Why use it:</b> faster delivery, less ops toil. No OS patching, no installing .NET/Node/Python runtimes, no setting up load balancers. Best fit for greenfield web apps, microservices, APIs, mobile backends, and databases where you want managed backup/HA without standing up SQL Server yourself.</p>
+          <p><b>How used in Azure (services that are PaaS):</b></p>
+          <ul>
+            <li><b>Azure App Service</b> — managed web/API/mobile app hosting; supports .NET, Java, Node, Python, PHP, Ruby, containers; built-in autoscale, SSL, deployment slots.</li>
+            <li><b>Azure SQL Database</b> — managed SQL Server engine; Microsoft handles backups, patching, HA, geo-replication; you control schema + queries.</li>
+            <li><b>Azure Cosmos DB</b> — managed multi-model NoSQL with global distribution and SLA-backed single-digit-ms latency.</li>
+            <li><b>Azure Database for PostgreSQL / MySQL / MariaDB</b> — managed open-source database engines.</li>
+            <li><b>Azure Kubernetes Service (AKS)</b> — managed K8s control plane (Microsoft runs the masters for free; you pay for worker nodes).</li>
+            <li><b>Azure Service Bus, Event Grid, Event Hubs</b> — managed messaging / event streaming.</li>
+            <li><b>Azure Cache for Redis</b> — managed Redis.</li>
+            <li><b>Azure Logic Apps</b> — visual workflow PaaS.</li>
+          </ul>
+          <p><b>Your responsibilities:</b> the app code, data, config, identity, and choosing the right SKU/tier. Microsoft owns OS, runtime, scaling primitives, patching, and physical layers.</p>
+
+          <h2>SaaS — Software as a Service</h2>
+          <p><b>Acronym:</b> Software as a Service.</p>
+          <p><b>What:</b> the provider gives you a finished application accessed over the web; you sign in and use it. No code to deploy, no schema to manage; usually licensed per-user per-month.</p>
+          <p><b>Why use it:</b> zero infrastructure ownership, instant provisioning, predictable subscription cost, automatic updates pushed by the vendor.</p>
+          <p><b>How used in Microsoft's ecosystem (SaaS examples):</b></p>
+          <ul>
+            <li><b>Microsoft 365</b> (Exchange Online, SharePoint Online, OneDrive, Teams, Word/Excel/PowerPoint web).</li>
+            <li><b>Dynamics 365</b> — CRM/ERP suite.</li>
+            <li><b>Power Platform</b> — Power BI, Power Apps, Power Automate, Power Virtual Agents.</li>
+            <li><b>GitHub</b>, <b>LinkedIn</b> — Microsoft-owned SaaS.</li>
+            <li>Third-party SaaS reachable via Entra ID SSO: Salesforce, ServiceNow, Workday, Adobe, Slack.</li>
+          </ul>
+          <p><b>Your responsibilities:</b> identity + access (who logs in, with what MFA), data classification, user training, and license assignment. Microsoft owns literally everything else — code, OS, hardware, datacenters.</p>
+
+          <h2>Shared responsibility model — the diagonal table to memorize</h2>
+          <p><b>Universal rule, every model:</b> the customer always owns <b>data</b>, <b>information</b>, <b>devices</b> (mobile/PC), and <b>accounts and identities</b>. The provider always owns the <b>physical datacenter</b>, <b>physical network</b>, and <b>physical hosts</b>. Everything in between shifts.</p>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>Layer</th><th>On-prem</th><th>IaaS</th><th>PaaS</th><th>SaaS</th></tr>
+            <tr><td>Data &amp; access</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>Devices/Accounts</td><td>You</td><td>You</td><td>You</td><td>You</td></tr>
+            <tr><td>Identity directory</td><td>You</td><td>Shared</td><td>Shared</td><td>Microsoft</td></tr>
+            <tr><td>Applications</td><td>You</td><td>You</td><td>Shared</td><td>Microsoft</td></tr>
+            <tr><td>Network controls</td><td>You</td><td>You</td><td>Shared</td><td>Microsoft</td></tr>
+            <tr><td>Operating system</td><td>You</td><td>You</td><td>Microsoft</td><td>Microsoft</td></tr>
+            <tr><td>Hosts (hypervisor)</td><td>You</td><td>Microsoft</td><td>Microsoft</td><td>Microsoft</td></tr>
+            <tr><td>Physical network</td><td>You</td><td>Microsoft</td><td>Microsoft</td><td>Microsoft</td></tr>
+            <tr><td>Physical datacenter</td><td>You</td><td>Microsoft</td><td>Microsoft</td><td>Microsoft</td></tr>
           </table>
+          <p><b>Why this matters:</b> Microsoft tests scenarios like "your storage account had a public blob and was scraped — whose responsibility?" Answer: yours (data/access is always customer). "A datacenter HVAC failed and rebooted hosts — whose responsibility?" Answer: Microsoft (physical infrastructure).</p>
+
+          <h2>FaaS — Function/Serverless (subset of PaaS)</h2>
+          <p><b>Acronym:</b> Function as a Service.</p>
+          <p><b>What:</b> you upload a function (small unit of code); the platform runs it on demand in response to an event (HTTP request, queue message, timer, blob upload). No servers, VMs, or containers to manage; you pay per execution + per-GB-second of memory.</p>
+          <p><b>Why use it:</b> event-driven workloads with unpredictable or sparse traffic — you pay nothing when idle. Best fit for image-processing pipelines, webhooks, scheduled cleanup jobs, simple APIs.</p>
+          <p><b>How used in Azure:</b> <b>Azure Functions</b> (Consumption / Premium / Dedicated plans), <b>Azure Logic Apps</b> (visual), <b>Azure Container Apps</b> with KEDA-based scale-to-zero.</p>
+          <p><b>Trade-offs:</b> <i>cold start</i> latency on first invocation; max execution time limits (10 min on Consumption); harder to debug than long-running services.</p>
+
+          <h2>DaaS — Desktop as a Service</h2>
+          <p><b>Acronym:</b> Desktop as a Service.</p>
+          <p><b>What:</b> provider hosts virtual Windows desktops that users stream to any device (PC, Mac, iPad, browser).</p>
+          <p><b>Why:</b> remote/hybrid workforce, contractor access, BYOD security, regulated data that must not leave the cloud.</p>
+          <p><b>How used in Azure:</b> <b>Azure Virtual Desktop (AVD)</b> — multi-session Windows 10/11 Enterprise; <b>Windows 365 Cloud PC</b> — per-user fixed-spec cloud PC subscription.</p>
+
+          <h2>Choosing the right model — decision logic</h2>
+          <ul>
+            <li>Need root/admin access, custom kernel, or weird legacy software → <b>IaaS</b>.</li>
+            <li>Building a web app/API and want to ship fast → <b>PaaS</b> (App Service or Container Apps).</li>
+            <li>Event-driven, sparse, sub-10-min workload → <b>FaaS</b> (Functions).</li>
+            <li>Need a SQL database without running SQL Server → <b>PaaS</b> (Azure SQL Database).</li>
+            <li>Need email + file sharing + Teams for a company → <b>SaaS</b> (Microsoft 365).</li>
+            <li>Need to give 500 call-center agents a Windows desktop → <b>DaaS</b> (AVD / Windows 365).</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>IaaS</b> — Infrastructure as a Service. Rent virtual hardware.</li>
+            <li><b>PaaS</b> — Platform as a Service. Rent a managed runtime/platform.</li>
+            <li><b>SaaS</b> — Software as a Service. Rent the finished app.</li>
+            <li><b>FaaS</b> — Function as a Service. Event-driven, per-execution billing.</li>
+            <li><b>DaaS</b> — Desktop as a Service. Streamed Windows desktops.</li>
+            <li><b>SLA</b> — Service Level Agreement; tier differs per service and SKU.</li>
+            <li><b>SKU</b> — Stock Keeping Unit; a specific tier/size of an Azure service.</li>
+            <li><b>BYOL</b> — Bring Your Own License (Windows Server / SQL Server / RHEL via Azure Hybrid Benefit).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Want most control over OS and patching" → <b>IaaS</b>.</li>
+            <li>"Want Microsoft to handle OS patching but I write the code" → <b>PaaS</b>.</li>
+            <li>"Want to use Outlook and Teams without managing servers" → <b>SaaS</b>.</li>
+            <li>"Pay only when code runs in response to an event" → <b>FaaS</b> / Azure Functions Consumption plan.</li>
+            <li>"Storage account was set public by an admin; data leaked" → customer responsibility (data + access always customer).</li>
+            <li>"Datacenter cooling failure causes outage" → provider (Microsoft) responsibility (physical layer always provider).</li>
+            <li>"Need Windows desktop for 500 contractors on iPads" → <b>DaaS</b> (Azure Virtual Desktop / Windows 365).</li>
+          </ul>
         `
       },
       {
         title: '3. Azure Architecture — Regions, AZs, Resource Hierarchy',
         body: `
-          <h2>Physical</h2>
+          <h2>Why Azure architecture matters</h2>
+          <p>Every Azure resource you deploy lives at the intersection of a <b>physical location</b> (region/zone) and a <b>logical container</b> (subscription/resource group). AZ-900 expects you to know both stacks cold because they drive availability, latency, sovereignty, billing, and access control. Questions are usually scenarios — "highest availability inside one region" → AZ; "tightest billing isolation between dev and prod" → separate subscriptions.</p>
+
+          <h2>Physical architecture</h2>
+
+          <h3>Datacenter</h3>
+          <p><b>What:</b> a single Microsoft-owned building containing racks of servers, networking gear, generators, UPS, cooling. <b>Why you care:</b> the lowest unit of physical failure. Microsoft does not let you target a specific datacenter — that's the point of the higher-level abstractions (zones/regions). <b>Scale:</b> Microsoft operates 300+ datacenters globally.</p>
+
+          <h3>Availability Zone (AZ)</h3>
+          <p><b>What:</b> one or more physically separate datacenters within an Azure region, each with independent power, cooling, and networking. AZs in a region are interconnected by low-latency private fiber (&lt; 2 ms round trip) but engineered to fail independently. Most enabled regions have <b>3 zones</b>, labeled "1", "2", "3" — but those labels are scrambled per subscription so two customers' "Zone 1" may be different physical datacenters (prevents correlated risk).</p>
+          <p><b>Why:</b> protection against datacenter-level failure (power, fire, flood, network) without leaving the region. <b>How used:</b> deploy a workload <b>zone-redundantly</b> (e.g., zone-redundant Storage / SQL / App Gateway / Load Balancer) <i>or</i> pin instances to specific zones and spread them. SLA jumps to 99.99% for zonal VMs vs 99.9% for single-instance.</p>
+          <p><b>Two deployment styles:</b></p>
           <ul>
-            <li><b>Region</b> — set of datacenters in a geographic area (East US, West Europe).</li>
-            <li><b>Availability Zone</b> — physically separate DCs within a region. Most regions have 3.</li>
-            <li><b>Region pair</b> — paired regions for geo-replication (East US ↔ West US).</li>
-            <li><b>Sovereign regions</b> — Azure Government, Azure China.</li>
+            <li><b>Zonal</b> — pin resource to one zone (zone=1); you replicate across zones yourself.</li>
+            <li><b>Zone-redundant</b> — Azure spreads the resource across all zones automatically (ZRS storage, zone-redundant SQL, zone-redundant gateway).</li>
           </ul>
-          <h2>Resource hierarchy</h2>
-          <p><b>Management group → Subscription → Resource group → Resource</b>. Policies inherit down.</p>
+
+          <h3>Region</h3>
+          <p><b>What:</b> a set of datacenters deployed within a latency-defined perimeter and connected through a dedicated regional low-latency network. Examples: East US (Virginia), West US 3 (Arizona), West Europe (Netherlands), Australia East (NSW). Azure has 60+ regions worldwide — more than AWS or GCP.</p>
+          <p><b>Why:</b> regions are the primary unit for choosing <i>where</i> your data and compute live — driven by user latency, data residency law (GDPR, HIPAA), and disaster-recovery strategy. Pricing also varies by region.</p>
+          <p><b>Properties Microsoft tests:</b></p>
           <ul>
-            <li><b>Management group</b> — groups subscriptions for unified policy/RBAC.</li>
-            <li><b>Subscription</b> — billing + access boundary.</li>
-            <li><b>Resource group</b> — logical container; resources tied to one RG.</li>
-            <li><b>Resource</b> — VM, storage account, etc.</li>
+            <li>Not every service exists in every region. Check the "Products available by region" page.</li>
+            <li>Not every region has AZs (a few older/smaller regions are zone-less).</li>
+            <li>Special regions: <b>Azure Government</b> (US Gov clearance), <b>Azure China</b> (operated by 21Vianet, separate tenant), <b>Azure Government Secret/Top Secret</b> (air-gapped).</li>
+          </ul>
+
+          <h3>Region pair (paired region)</h3>
+          <p><b>What:</b> two regions Microsoft has pre-defined as a pair, usually within the same geography but ≥ 300 miles apart (e.g., East US ↔ West US, North Europe ↔ West Europe, Australia East ↔ Australia Southeast). <b>Why:</b> guarantees of <i>not-simultaneous</i> planned maintenance, prioritized recovery if a region-wide incident hits, and built-in cross-region replication for services like <b>GRS storage</b>, <b>Azure Site Recovery</b>, <b>SQL geo-replication</b>.</p>
+          <p><b>How used:</b> you don't choose the pair — Microsoft sets it. You opt-in by selecting a paired-region feature (GRS, geo-redundant SQL backup). <b>Note:</b> Microsoft introduced <b>"non-regional pairs"</b> for newer regions (Brazil South, UAE North) where you pick the partner.</p>
+
+          <h3>Sovereign clouds</h3>
+          <p>Isolated Azure instances for regulatory boundaries: <b>Azure Government</b> (FedRAMP High, IL5/IL6), <b>Azure China</b> (PRC law, separate sign-in), <b>Azure Government Secret/Top Secret</b> (classified workloads). They have their own portal URLs, separate tenants, and limited service availability.</p>
+
+          <h3>Azure datacenters fabric tier (no need to memorize granular terms, but recognize them)</h3>
+          <ul>
+            <li><b>Geography</b> — country/area boundary for compliance (US, Europe, Asia). Region pairs stay inside a geography.</li>
+            <li><b>Region</b> — the deployable unit you pick.</li>
+            <li><b>Availability Zone</b> — physically separate DC inside a region.</li>
+            <li><b>Datacenter</b> — single building.</li>
+          </ul>
+
+          <h2>Logical hierarchy (management scope)</h2>
+          <p>Inheritance flows top-down: a policy at the top applies to everything beneath. Top-to-bottom:</p>
+          <p><b>Tenant (Root Management Group) → Management Group → Subscription → Resource Group → Resource</b></p>
+
+          <h3>Tenant / Microsoft Entra ID</h3>
+          <p><b>What:</b> the identity boundary; the Entra ID directory that owns your subscriptions. One Microsoft account = one tenant by default; you can be a guest in others. <b>Why:</b> all RBAC, Conditional Access, and SSO start with the tenant. <b>How used:</b> every Azure subscription is bound to exactly one tenant; you can move a subscription between tenants with a transfer.</p>
+
+          <h3>Management Group (MG)</h3>
+          <p><b>What:</b> a container that holds subscriptions (or other management groups) so you can apply Azure Policy, RBAC, and budgets at scale. Forms a tree up to 6 levels deep below the root MG. <b>Why:</b> at scale you have dozens of subscriptions (one per workload, env, team); MGs let you say "all production subscriptions deny public IPs" once instead of repeating per subscription. <b>How used:</b> a common pattern is the <b>Cloud Adoption Framework (CAF) landing zone</b> hierarchy: <code>Tenant Root → Platform / Landing Zones / Sandbox / Decommissioned</code>, with environment-specific MGs below.</p>
+
+          <h3>Subscription</h3>
+          <p><b>What:</b> the billing and access boundary. A subscription has its own bill, its own quota limits (e.g., 25,000 vCPUs in East US), and its own RBAC inheritance. Each subscription belongs to one tenant and (optionally) one management group. <b>Why:</b> isolate cost reporting, separate billing owners, hit quotas independently, segregate access for prod vs dev. <b>How used:</b> common patterns — one subscription per environment (Prod/Dev/Test), per business unit, or per workload. Subscription types: <b>Free trial</b>, <b>Pay-as-you-go</b>, <b>Enterprise Agreement (EA)</b>, <b>Microsoft Customer Agreement (MCA)</b>, <b>CSP (Cloud Solution Provider)</b>, <b>Visual Studio / MSDN</b>.</p>
+
+          <h3>Resource Group (RG)</h3>
+          <p><b>What:</b> a logical container that holds related Azure resources for a single application, workload, or lifecycle. <b>Rules to memorize:</b> (1) every resource must live in exactly one RG; (2) the RG itself has a region (where its metadata lives) but its resources can span regions; (3) deleting the RG deletes every resource inside — clean, atomic cleanup; (4) you cannot nest RGs. <b>Why:</b> apply RBAC, tags, locks, and policies at the workload boundary; tear down an entire environment with one delete. <b>How used:</b> name them by workload + env, e.g. <code>rg-payments-prod-eastus</code>.</p>
+
+          <h3>Resource</h3>
+          <p><b>What:</b> any single Azure object — a VM, storage account, NIC, public IP, SQL database, App Service plan. Every resource has a globally unique <b>Resource ID</b> formatted: <code>/subscriptions/{subId}/resourceGroups/{rgName}/providers/{provider}/{type}/{name}</code>. <b>Why:</b> the ID is what Azure Resource Manager, RBAC, and tools reference — every audit log, every role assignment, every alert keys on it.</p>
+
+          <h2>Azure Resource Manager (ARM)</h2>
+          <p><b>Acronym:</b> Azure Resource Manager. <b>What:</b> the deployment + management layer that sits behind every Azure interface (Portal, CLI, PowerShell, REST). Every action — create/read/update/delete — flows through ARM. <b>Why:</b> consistent API across all services; unified RBAC; declarative templates (ARM JSON or <b>Bicep</b>) for repeatable deployments; transactional + idempotent. <b>How used:</b> when you author a Bicep file or call <code>az vm create</code>, ARM validates, places the request, and orchestrates the resource provider that owns that resource type.</p>
+
+          <h2>Policy + RBAC inheritance (huge exam theme)</h2>
+          <ul>
+            <li>Policies and role assignments <b>inherit downward</b> from scope: assigning Reader at Management Group X grants Reader on every subscription and resource under X.</li>
+            <li>You cannot apply a less-restrictive permission at a lower scope to override an upper-scope <i>deny</i>. RBAC is additive for <i>allow</i>; <b>Deny assignments</b> always win.</li>
+            <li>Azure Policy effects: <b>Audit</b>, <b>Deny</b>, <b>Append</b>, <b>Modify</b>, <b>DeployIfNotExists</b>, <b>AuditIfNotExists</b>.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>AZ</b> — Availability Zone. Physically separate DC inside a region.</li>
+            <li><b>MG</b> — Management Group. Container of subscriptions / sub-MGs.</li>
+            <li><b>RG</b> — Resource Group. Container of resources for one workload.</li>
+            <li><b>ARM</b> — Azure Resource Manager. The control plane API.</li>
+            <li><b>RBAC</b> — Role-Based Access Control. Permissions by role at a scope.</li>
+            <li><b>CAF</b> — Cloud Adoption Framework. Microsoft's enterprise landing-zone guidance.</li>
+            <li><b>EA / MCA / CSP</b> — Enterprise Agreement / Microsoft Customer Agreement / Cloud Solution Provider — billing/subscription types.</li>
+            <li><b>GRS / ZRS / LRS</b> — Geo / Zone / Locally Redundant Storage (covered next lesson).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Highest availability within a single region" → spread across <b>Availability Zones</b>.</li>
+            <li>"Recover from full region outage" → deploy to <b>paired region</b> + ASR or geo-redundant storage.</li>
+            <li>"Data must stay in Germany for GDPR" → pick a <b>Germany region</b>; geography boundary.</li>
+            <li>"Apply same Policy to all prod subscriptions once" → assign at a <b>Management Group</b> that contains them.</li>
+            <li>"Delete everything for an app in one click" → put it in its own <b>Resource Group</b>; delete the RG.</li>
+            <li>"Separate billing for dev vs prod" → separate <b>subscriptions</b>.</li>
+            <li>"Workload must run in a US government cleared environment" → <b>Azure Government</b> sovereign cloud.</li>
+            <li>"Two zonal VMs in same region" → SLA 99.99%; same region different AZs.</li>
           </ul>
         `
       },
       {
         title: '4. Core Azure Services — Compute & Networking',
         body: `
-          <h2>Compute</h2>
+          <h2>Compute services — what to deploy code on</h2>
+          <p>Compute = where your code runs. Azure offers a spectrum from "full server, you manage" (IaaS VMs) to "no servers, just code" (Functions). Pick by control needed, lifecycle, scaling pattern, and cost model.</p>
+
+          <h3>Azure Virtual Machines (VM)</h3>
+          <p><b>Acronym:</b> Virtual Machine. <b>What:</b> IaaS — virtualized server running Windows or Linux on Azure's hypervisor (Hyper-V derivative). You own the OS and everything above. <b>Why:</b> maximum control, support for legacy/custom workloads, BYO licensing. <b>How used:</b> pick a <b>SKU family</b> (B-burstable, D-general, E-memory, F-compute, M-huge memory, N-GPU, H-HPC), an <b>image</b> (Windows Server, Ubuntu, RHEL, SUSE, marketplace), and <b>managed disk</b> type (Standard HDD/SSD, Premium SSD, Ultra). Billed per-second when running; stopped-deallocated VMs pay only for disk.</p>
+
+          <h3>VM Scale Sets (VMSS)</h3>
+          <p><b>Acronym:</b> Virtual Machine Scale Sets. <b>What:</b> a managed set of identical VMs deployed from one image, automatically load-balanced and auto-scaled. <b>Why:</b> horizontal scaling without writing your own orchestration. <b>How used:</b> autoscale rules on CPU/queue/custom metrics; supports Spot VMs for cost savings; can deploy across Availability Zones for HA. New "Flexible" orchestration mode allows mixed SKUs.</p>
+
+          <h3>Azure App Service</h3>
+          <p><b>What:</b> PaaS for web apps, REST APIs, and mobile backends. Supports .NET, .NET Framework, Java, Node, Python, PHP, Ruby, and custom containers. <b>Why:</b> deploy from Git/GitHub Actions/Azure DevOps in minutes; built-in SSL, custom domains, autoscale, deployment slots (blue/green), authentication add-on. <b>How used:</b> create an <b>App Service Plan</b> (the VMs that host apps — Free/Shared/Basic/Standard/Premium/Isolated tiers), then deploy one or more <b>Web Apps</b> to it. Isolated tier = App Service Environment (ASE) inside your VNet.</p>
+
+          <h3>Azure Container Instances (ACI)</h3>
+          <p><b>Acronym:</b> Azure Container Instances. <b>What:</b> single container, serverless — give Azure a Docker image and it runs it; no VMs to provision. <b>Why:</b> fastest path to "run a container in the cloud"; per-second billing; good for batch jobs, build agents, simple sidecars. <b>How used:</b> <code>az container create</code>; not ideal for production microservices (no built-in load balancing/orchestration).</p>
+
+          <h3>Azure Container Apps (ACA)</h3>
+          <p><b>What:</b> serverless container platform built on Kubernetes + KEDA + Dapr — production-grade microservices without managing K8s. <b>Why:</b> scale-to-zero, event-driven autoscale, traffic splitting, no node management. <b>How used:</b> deploy revisions, set min/max replicas; Microsoft's preferred path for new container workloads short of full AKS.</p>
+
+          <h3>Azure Kubernetes Service (AKS)</h3>
+          <p><b>Acronym:</b> Azure Kubernetes Service. <b>What:</b> managed Kubernetes — Microsoft runs the control plane (master nodes) for free; you provision and pay for worker node pools (VMSS underneath). <b>Why:</b> full K8s API for portability, large microservice fleets, multi-tenant workloads. <b>How used:</b> integrates with Entra ID for RBAC, Azure CNI for networking, Azure Monitor for Containers, Azure Policy for governance.</p>
+
+          <h3>Azure Functions</h3>
+          <p><b>What:</b> FaaS — event-driven code, pay per execution. <b>Why:</b> ideal for spiky/sparse workloads, glue code, webhooks, scheduled jobs. <b>Plans:</b> <b>Consumption</b> (scale-to-zero, cold starts, 10-min cap), <b>Premium</b> (pre-warmed, VNet integration, longer execution), <b>Dedicated/App Service Plan</b> (run on existing plan). <b>Triggers:</b> HTTP, Timer, Queue, Service Bus, Event Grid, Blob, Cosmos DB change feed.</p>
+
+          <h3>Azure Virtual Desktop (AVD) + Windows 365</h3>
+          <p><b>AVD:</b> multi-session Windows 10/11 Enterprise streamed to any device — DaaS for shared pooled desktops. <b>Windows 365 Cloud PC:</b> per-user fixed-spec cloud PC, flat monthly subscription. <b>Why:</b> remote workers, BYOD, regulated data that must not leave Azure, contractor access.</p>
+
+          <h2>Networking services — how traffic moves</h2>
+
+          <h3>Virtual Network (VNet)</h3>
+          <p><b>What:</b> your private network in Azure — a CIDR block (e.g., 10.0.0.0/16) divided into <b>subnets</b> (10.0.1.0/24). Resources placed in a subnet get a private IP from it. <b>Why:</b> isolation, segmentation, routing control, baseline for all VM/AKS/PaaS networking. <b>How used:</b> every VNet exists in one region; cannot span regions (use peering). Subnets reserve 5 IPs each (network, default gateway, two DNS, broadcast).</p>
+
+          <h3>Subnet</h3>
+          <p><b>What:</b> a range carved from a VNet's address space. <b>Why:</b> different subnets for different tiers (web/app/db) so you apply different NSGs and route rules. <b>How used:</b> some Azure services require a delegated subnet (App Gateway, Bastion, Firewall, VPN Gateway each get their own).</p>
+
+          <h3>Network Security Group (NSG)</h3>
+          <p><b>Acronym:</b> Network Security Group. <b>What:</b> stateful L3/L4 firewall ruleset attached to a subnet or NIC. Inbound + outbound rules with priority, source/dest CIDR or service tag, port, protocol, allow/deny. <b>Why:</b> the first line of micro-segmentation inside a VNet. <b>How used:</b> rule 100 allow tcp 22 from <code>AzureLoadBalancer</code> service tag; lower numbers win.</p>
+
+          <h3>Application Security Group (ASG)</h3>
+          <p><b>Acronym:</b> Application Security Group. <b>What:</b> logical grouping of NICs by application role (Web, App, DB) so NSG rules reference roles instead of IPs. <b>Why:</b> simpler rules; reusable across IP changes.</p>
+
+          <h3>VNet peering</h3>
+          <p><b>What:</b> private, non-transitive connection between two VNets that makes them act like one network. Two types: <b>regional</b> (same region) and <b>global</b> (cross-region). <b>Why:</b> connect hub-spoke architectures, share services across teams. <b>How used:</b> traffic stays on Microsoft backbone; low latency; charged egress per GB. <b>Limit:</b> non-transitive — A↔B and B↔C does not give A↔C unless you add A↔C or route through a hub via Azure Firewall/NVA.</p>
+
+          <h3>VPN Gateway</h3>
+          <p><b>What:</b> encrypted IPsec tunnel from your VNet to either an on-prem network (<b>site-to-site / S2S</b>) or remote users (<b>point-to-site / P2S</b>). <b>Why:</b> connect on-prem datacenter or remote employees to Azure resources. <b>How used:</b> pick a SKU (Basic, VpnGw1–5, AZ-redundant); supports active-active. Lives in a dedicated <b>GatewaySubnet</b>.</p>
+
+          <h3>ExpressRoute (ER)</h3>
+          <p><b>Acronym:</b> ExpressRoute. <b>What:</b> a private, dedicated fiber connection from your network to Microsoft via a connectivity partner (Equinix, Megaport, AT&amp;T, etc.) — does <i>not</i> traverse the public Internet. <b>Why:</b> higher throughput (50 Mbps–100 Gbps), lower/predictable latency, financially-backed SLA, sensitive workloads. <b>How used:</b> ExpressRoute circuit + ExpressRoute Gateway in your VNet. More expensive than VPN; production-grade enterprises pair both (VPN as failover).</p>
+
+          <h3>Azure DNS</h3>
+          <p><b>What:</b> managed authoritative DNS hosting for public domains, plus <b>Private DNS Zones</b> for VNet-internal names. <b>Why:</b> consolidate DNS in Azure, integrate with Entra ID, auto-register VM hostnames in a private zone.</p>
+
+          <h3>Azure Load Balancer (ALB)</h3>
+          <p><b>What:</b> L4 (TCP/UDP) load balancer — fast, cheap, works for any TCP/UDP workload. <b>SKUs:</b> Basic (deprecated) and Standard (zone-redundant, secure-by-default). <b>Why:</b> distribute traffic to VMs/VMSS at L4. <b>How used:</b> Public LB for internet traffic; Internal LB (ILB) for VNet-internal.</p>
+
+          <h3>Application Gateway (AppGW)</h3>
+          <p><b>What:</b> L7 (HTTP/HTTPS) load balancer with path-based routing, SSL termination, end-to-end TLS, and optional <b>Web Application Firewall (WAF)</b> for OWASP rules. <b>Why:</b> single entry point with URL-based routing; protect web apps. <b>How used:</b> regional — does not span regions.</p>
+
+          <h3>Azure Front Door (AFD)</h3>
+          <p><b>What:</b> global L7 load balancer + CDN + WAF, with anycast entry from 100+ Microsoft edge POPs. <b>Why:</b> low-latency global routing, failover between regions, static content caching. <b>How used:</b> point public DNS at the Front Door endpoint; configure origins (App Service, VM, storage, AKS).</p>
+
+          <h3>Azure CDN</h3>
+          <p><b>Acronym:</b> Content Delivery Network. <b>What:</b> cached static content at edge POPs to reduce latency for users globally. Microsoft is migrating from "Azure CDN" to <b>Front Door Standard/Premium</b> as the unified product.</p>
+
+          <h3>Azure Firewall</h3>
+          <p><b>What:</b> managed, cloud-native stateful firewall service with L3–L7 rules, threat intelligence feed, FQDN filtering. <b>Why:</b> central egress filtering in hub-spoke; replaces NVA appliances. <b>SKUs:</b> Standard, Premium (TLS inspection, IDPS).</p>
+
+          <h3>Azure Bastion</h3>
+          <p><b>What:</b> managed jumpbox — RDP/SSH to your VMs through the Azure Portal without exposing public IPs. <b>Why:</b> eliminate the public RDP/SSH surface that brute-force attacks target. <b>How used:</b> deploys to a dedicated <code>AzureBastionSubnet</code>.</p>
+
+          <h3>NAT Gateway</h3>
+          <p><b>Acronym:</b> Network Address Translation Gateway. <b>What:</b> managed outbound NAT for a subnet — gives all VMs a shared static public IP for egress without exposing them inbound. <b>Why:</b> SNAT port exhaustion on the default Azure NAT is real; NAT Gateway gives 64K ports per IP, scalable to many IPs.</p>
+
+          <h2>Acronyms recap</h2>
           <ul>
-            <li><b>Virtual Machines</b> — IaaS, full OS control.</li>
-            <li><b>VM Scale Sets</b> — auto-scaling identical VMs behind LB.</li>
-            <li><b>App Service</b> — PaaS for web apps.</li>
-            <li><b>Container Instances (ACI)</b> — single container, serverless.</li>
-            <li><b>Azure Kubernetes Service (AKS)</b> — managed K8s.</li>
-            <li><b>Azure Functions</b> — serverless / FaaS.</li>
-            <li><b>Azure Virtual Desktop</b> — DaaS (Windows desktop in cloud).</li>
+            <li><b>VM / VMSS</b> — Virtual Machine / Virtual Machine Scale Set.</li>
+            <li><b>ACI / ACA / AKS</b> — Container Instances / Container Apps / Kubernetes Service.</li>
+            <li><b>FaaS / DaaS</b> — Function-as-a-Service / Desktop-as-a-Service.</li>
+            <li><b>AVD</b> — Azure Virtual Desktop.</li>
+            <li><b>VNet</b> — Virtual Network.</li>
+            <li><b>NSG / ASG</b> — Network/Application Security Group.</li>
+            <li><b>VPN / ER</b> — Virtual Private Network / ExpressRoute.</li>
+            <li><b>ALB / AppGW / AFD</b> — Azure Load Balancer / Application Gateway / Azure Front Door.</li>
+            <li><b>WAF</b> — Web Application Firewall.</li>
+            <li><b>CDN</b> — Content Delivery Network.</li>
+            <li><b>NAT</b> — Network Address Translation.</li>
+            <li><b>NVA</b> — Network Virtual Appliance (3rd-party firewall/router VM).</li>
+            <li><b>POP</b> — Point of Presence (edge location).</li>
           </ul>
-          <h2>Networking</h2>
+
+          <h2>Exam quick patterns</h2>
           <ul>
-            <li><b>Virtual Network (VNet)</b> — isolated network with subnets.</li>
-            <li><b>VNet peering</b> — connect VNets.</li>
-            <li><b>VPN Gateway</b> — site-to-site or point-to-site VPN over Internet.</li>
-            <li><b>ExpressRoute</b> — private dedicated link to Azure.</li>
-            <li><b>Azure DNS</b>, <b>Load Balancer</b> (L4), <b>Application Gateway</b> (L7 + WAF), <b>Front Door</b> (global L7 + CDN).</li>
+            <li>"Run web app, Microsoft handles OS patching, deploy from GitHub" → <b>App Service</b>.</li>
+            <li>"Run container, no orchestration needed, per-second billing" → <b>ACI</b>.</li>
+            <li>"Microservices at scale, full K8s API" → <b>AKS</b>.</li>
+            <li>"Code runs only on HTTP request, scale-to-zero" → <b>Functions</b> Consumption.</li>
+            <li>"Stream Windows desktop to iPad" → <b>Azure Virtual Desktop</b>.</li>
+            <li>"Private dedicated 10 Gbps link to Azure, not over Internet" → <b>ExpressRoute</b>.</li>
+            <li>"Encrypted tunnel from branch office to Azure over Internet" → <b>VPN Gateway (S2S)</b>.</li>
+            <li>"Layer 7 HTTPS load balancing with OWASP protection" → <b>Application Gateway + WAF</b>.</li>
+            <li>"Global anycast entry + CDN + WAF in front of regional app" → <b>Azure Front Door</b>.</li>
+            <li>"RDP into a VM without giving it a public IP" → <b>Azure Bastion</b>.</li>
+            <li>"Filter outbound traffic centrally from a hub VNet" → <b>Azure Firewall</b>.</li>
           </ul>
         `
       },
       {
         title: '5. Storage & Databases',
         body: `
-          <h2>Storage account services</h2>
+          <h2>Azure Storage Account — the container for unstructured storage</h2>
+          <p>An <b>Azure Storage Account</b> is the top-level namespace that exposes four data services under one billing/access boundary: <b>Blob</b>, <b>File</b>, <b>Queue</b>, and <b>Table</b>. Managed Disks live in a separate but related resource type. Pick the account <b>kind</b> (StorageV2 is the default and what Microsoft tests), <b>performance tier</b> (Standard HDD-backed or Premium SSD-backed), and <b>redundancy</b> (LRS/ZRS/GRS/GZRS).</p>
+
+          <h3>Blob storage (object storage)</h3>
+          <p><b>What:</b> object storage for unstructured data — images, video, backups, logs, IaC artifacts, data-lake files. Objects are stored in <b>containers</b>; each blob has a URL like <code>https://{account}.blob.core.windows.net/{container}/{blob}</code>. <b>Why:</b> cheap, infinitely scalable, durable; underpins Data Lake (Hierarchical Namespace on top of Blob = ADLS Gen2). <b>Three blob types:</b></p>
           <ul>
-            <li><b>Blob</b> — object storage. Tiers: Hot, Cool, Cold, Archive.</li>
-            <li><b>Files</b> — SMB/NFS shares in cloud.</li>
-            <li><b>Queue</b> — async messaging.</li>
-            <li><b>Table</b> — key-value NoSQL.</li>
-            <li><b>Disk</b> — managed disks for VMs.</li>
+            <li><b>Block blobs</b> — most common; objects up to ~190 TiB built from blocks; ideal for files and streaming.</li>
+            <li><b>Append blobs</b> — optimized for append-only writes (logs).</li>
+            <li><b>Page blobs</b> — random read/write 512-byte pages; backing store for unmanaged VHDs (rarely used since Managed Disks).</li>
           </ul>
-          <h2>Redundancy options</h2>
+          <p><b>Access tiers (lifecycle/cost optimization):</b></p>
           <ul>
-            <li><b>LRS</b> — 3 copies in 1 datacenter.</li>
-            <li><b>ZRS</b> — 3 zones in 1 region.</li>
-            <li><b>GRS</b> — LRS + async copy to paired region.</li>
-            <li><b>GZRS</b> — ZRS + paired region.</li>
+            <li><b>Hot</b> — frequent access; lowest read cost, highest storage cost. Default.</li>
+            <li><b>Cool</b> — infrequent; lower storage cost, higher read cost; min 30-day retention.</li>
+            <li><b>Cold</b> — rarer access; min 90-day retention.</li>
+            <li><b>Archive</b> — offline tape-class; lowest storage cost, hours-long rehydration; min 180-day retention.</li>
           </ul>
-          <h2>Databases</h2>
-          <p>Azure SQL Database (PaaS SQL), SQL Managed Instance, Azure Cosmos DB (multi-model NoSQL, global distribution), Azure Database for MySQL/PostgreSQL/MariaDB.</p>
+          <p><b>Lifecycle management</b> rules auto-tier blobs by age — e.g., "after 30 days move to Cool, after 180 to Archive, after 7 years delete."</p>
+
+          <h3>Azure Files (managed file shares)</h3>
+          <p><b>What:</b> fully managed SMB 3.x and NFS 4.1 file shares accessible from cloud or on-prem. <b>Why:</b> lift-and-shift apps that expect a file share; replace on-prem file servers. <b>How used:</b> mount with <code>net use</code> (Windows), <code>mount -t cifs</code> or <code>nfs</code> (Linux). Pair with <b>Azure File Sync</b> to cache hot data on on-prem Windows Servers and tier cold data to Azure. Tiers: Transaction-optimized, Hot, Cool, Premium (SSD).</p>
+
+          <h3>Azure Queue Storage</h3>
+          <p><b>What:</b> simple HTTP message queue (up to 64 KB messages, 500 TB queue). <b>Why:</b> decouple producer/consumer for async work. <b>How used:</b> background processing — web app drops a message, worker dequeues. For richer features (FIFO, sessions, dead-letter, transactions) use <b>Azure Service Bus</b> instead.</p>
+
+          <h3>Azure Table Storage</h3>
+          <p><b>What:</b> key-value / schemaless NoSQL store; legacy product. <b>Why:</b> very cheap structured-ish storage. <b>How used:</b> new workloads should use <b>Cosmos DB for Table API</b> instead — same API, global distribution, better SLA.</p>
+
+          <h3>Azure Managed Disks</h3>
+          <p><b>What:</b> block storage attached to VMs; Microsoft manages the underlying storage account, snapshots, encryption. <b>Disk tiers:</b></p>
+          <ul>
+            <li><b>Standard HDD</b> — cheapest; dev/test, infrequent.</li>
+            <li><b>Standard SSD</b> — better consistency; entry production.</li>
+            <li><b>Premium SSD</b> — production single-VM SLA (99.9%); high IOPS.</li>
+            <li><b>Premium SSD v2</b> — independent IOPS/throughput/size tuning; high-end production.</li>
+            <li><b>Ultra Disk</b> — sub-ms latency, up to 160K IOPS — SAP HANA, top-tier OLTP.</li>
+          </ul>
+          <p>Disks support snapshots, encryption (SSE with platform-managed or customer-managed keys), and shared disks (multiple VMs read/write — for clustering).</p>
+
+          <h2>Redundancy options (memorize replica counts)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>Option</th><th>Copies</th><th>Where</th><th>Survives</th><th>Durability</th></tr>
+            <tr><td><b>LRS</b> (Locally Redundant)</td><td>3</td><td>1 datacenter, same rack-group</td><td>disk/server failure</td><td>11 nines</td></tr>
+            <tr><td><b>ZRS</b> (Zone-Redundant)</td><td>3</td><td>3 AZs in 1 region</td><td>datacenter loss</td><td>12 nines</td></tr>
+            <tr><td><b>GRS</b> (Geo-Redundant)</td><td>6 = 3+3</td><td>LRS + LRS in paired region (async)</td><td>region loss</td><td>16 nines</td></tr>
+            <tr><td><b>GZRS</b> (Geo-Zone-Redundant)</td><td>6 = 3 zones + 3</td><td>ZRS + LRS in paired region</td><td>region loss + DC loss</td><td>16 nines</td></tr>
+            <tr><td><b>RA-GRS / RA-GZRS</b></td><td>same</td><td>read-access to secondary region</td><td>same + read fallback</td><td>same</td></tr>
+          </table>
+          <p><b>Acronyms:</b> LRS = Locally Redundant Storage, ZRS = Zone-Redundant Storage, GRS = Geo-Redundant Storage, GZRS = Geo-Zone-Redundant Storage, RA = Read-Access (to secondary).</p>
+
+          <h2>Security on storage</h2>
+          <ul>
+            <li><b>Encryption at rest</b> — Storage Service Encryption (SSE) with AES-256, always on; choose Microsoft-managed or customer-managed key (CMK in Key Vault).</li>
+            <li><b>Encryption in transit</b> — HTTPS only (disable HTTP); SMB 3.0 channel encryption.</li>
+            <li><b>Access control:</b> Entra ID RBAC, account keys (rotate!), <b>Shared Access Signatures (SAS)</b> for scoped time-limited URLs, stored access policies.</li>
+            <li><b>Network controls:</b> firewall (allow specific IPs), VNet service endpoints, <b>Private Endpoints</b> (private IP in your VNet — no public surface).</li>
+            <li><b>Soft delete</b> + <b>versioning</b> + <b>immutability policies</b> (WORM / Object Lock for compliance).</li>
+          </ul>
+
+          <h2>Data movement tools</h2>
+          <ul>
+            <li><b>AzCopy</b> — CLI for high-throughput uploads/downloads/copies.</li>
+            <li><b>Azure Storage Explorer</b> — free GUI client.</li>
+            <li><b>Azure Data Box</b> — ship a physical 100 TB appliance when network transfer is impractical (Data Box Disk 8 TB, Data Box 100 TB, Data Box Heavy 1 PB).</li>
+            <li><b>Azure Data Box Gateway / Stack Edge</b> — appliance staying on-prem as a cloud staging cache.</li>
+            <li><b>Azure File Sync</b> — sync on-prem Windows file servers to Azure Files.</li>
+            <li><b>Azure Migrate</b> — assessment + migration of servers, databases, web apps.</li>
+            <li><b>Database Migration Service (DMS)</b> — online migrations from SQL/Oracle/MySQL/PostgreSQL.</li>
+          </ul>
+
+          <h2>Database services</h2>
+
+          <h3>Azure SQL family</h3>
+          <ul>
+            <li><b>Azure SQL Database</b> — PaaS SQL Server engine; Microsoft manages OS, patching, backups. Deployment models: <b>Single Database</b>, <b>Elastic Pool</b>, <b>Hyperscale</b>. Purchase models: <b>DTU</b> (bundled compute+storage+IO units) or <b>vCore</b> (independent CPU, memory, storage). 99.99% SLA at the General Purpose tier.</li>
+            <li><b>Azure SQL Managed Instance</b> — near-100% SQL Server feature compatibility (CLR, cross-DB queries, SQL Agent) inside your VNet; ideal for lift-and-shift.</li>
+            <li><b>SQL Server on Azure VM</b> — IaaS; you patch SQL Server yourself.</li>
+          </ul>
+
+          <h3>Azure Cosmos DB</h3>
+          <p><b>What:</b> globally distributed, multi-model NoSQL (APIs: <b>NoSQL/Core</b>, <b>MongoDB</b>, <b>Cassandra</b>, <b>Gremlin</b> graph, <b>Table</b>, <b>PostgreSQL</b>). <b>Why:</b> single-digit-ms SLA, turnkey global replication, automatic indexing, five consistency levels (Strong, Bounded Staleness, Session, Consistent Prefix, Eventual). <b>Billing:</b> <b>Request Units (RU/s)</b> — provisioned, autoscale, or serverless.</p>
+
+          <h3>Open-source database PaaS</h3>
+          <ul>
+            <li><b>Azure Database for PostgreSQL</b> — Flexible Server (current), Single Server (legacy), Hyperscale (Citus, sharded).</li>
+            <li><b>Azure Database for MySQL</b> — Flexible Server (current), Single Server (retiring).</li>
+            <li><b>Azure Database for MariaDB</b> — retiring product.</li>
+          </ul>
+
+          <h3>Analytics / big data</h3>
+          <ul>
+            <li><b>Azure Synapse Analytics</b> — unified analytics (data warehouse + Spark + pipelines) over data lake.</li>
+            <li><b>Azure Data Lake Storage Gen2 (ADLS Gen2)</b> — Blob with Hierarchical Namespace; foundation for big-data analytics.</li>
+            <li><b>Azure Data Factory (ADF)</b> — ETL/ELT pipelines (think: SSIS in cloud).</li>
+            <li><b>Azure Databricks</b> — managed Apache Spark.</li>
+            <li><b>Azure HDInsight</b> — managed Hadoop/Spark/Kafka clusters.</li>
+            <li><b>Microsoft Fabric</b> — unified SaaS analytics (lakehouse + warehouse + real-time + Power BI) — Microsoft's new strategic analytics product.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>LRS / ZRS / GRS / GZRS / RA-GRS</b> — redundancy options (see table).</li>
+            <li><b>SSE</b> — Storage Service Encryption.</li>
+            <li><b>SAS</b> — Shared Access Signature (scoped token URL).</li>
+            <li><b>CMK / MMK</b> — Customer-Managed Key / Microsoft-Managed Key.</li>
+            <li><b>WORM</b> — Write Once Read Many (immutability).</li>
+            <li><b>ADLS Gen2</b> — Azure Data Lake Storage Gen2.</li>
+            <li><b>ADF</b> — Azure Data Factory.</li>
+            <li><b>DMS</b> — Database Migration Service.</li>
+            <li><b>DTU / vCore</b> — Database Transaction Unit / virtual Core (Azure SQL purchase models).</li>
+            <li><b>RU/s</b> — Request Units per second (Cosmos DB billing).</li>
+            <li><b>OLTP / OLAP</b> — Online Transaction / Analytical Processing.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Cheapest storage for files accessed once per year" → Blob <b>Archive</b> tier.</li>
+            <li>"Lift-and-shift app needs SMB file share in cloud" → <b>Azure Files</b>.</li>
+            <li>"Data must survive a full region outage" → <b>GRS / GZRS</b>.</li>
+            <li>"Three copies within one datacenter, cheapest redundancy" → <b>LRS</b>.</li>
+            <li>"Read-only copy of data in secondary region during normal ops" → <b>RA-GRS / RA-GZRS</b>.</li>
+            <li>"Globally distributed NoSQL with single-digit-ms SLA" → <b>Cosmos DB</b>.</li>
+            <li>"Managed SQL with near-100% SQL Server compat in my VNet" → <b>Azure SQL Managed Instance</b>.</li>
+            <li>"Ship 100 TB to Azure; bandwidth too slow" → <b>Azure Data Box</b>.</li>
+            <li>"Token-based time-limited URL for one blob" → <b>SAS</b>.</li>
+            <li>"Encrypt blobs with our own key in Key Vault" → <b>CMK (customer-managed key)</b>.</li>
+          </ul>
         `
       },
       {
         title: '6. Identity — Microsoft Entra ID',
         body: `
-          <p><b>Microsoft Entra ID</b> (formerly Azure Active Directory) is the cloud identity service.</p>
-          <h2>Key features</h2>
+          <h2>What is Microsoft Entra ID?</h2>
+          <p><b>Microsoft Entra ID</b> (renamed from <b>Azure Active Directory / Azure AD / AAD</b> in 2023) is Microsoft's cloud-based <b>identity and access management (IAM)</b> service. It authenticates users, devices, and applications, then authorizes access to Microsoft 365, Azure, and thousands of third-party SaaS apps via standards like <b>SAML 2.0</b>, <b>OAuth 2.0</b>, and <b>OpenID Connect (OIDC)</b>. Every Azure tenant has exactly one Entra ID directory; every subscription is bound to one Entra ID tenant.</p>
+          <p><b>Important distinction:</b> Entra ID is <i>not</i> on-prem Active Directory Domain Services (AD DS). It does not do Kerberos, LDAP, Group Policy, or domain join in the classical sense. It is HTTP/REST-based identity. For workloads that need full AD DS, Microsoft offers <b>Microsoft Entra Domain Services</b> (managed domain controllers compatible with classic AD) as a separate service.</p>
+
+          <h2>Authentication vs authorization</h2>
           <ul>
-            <li><b>SSO</b> across Microsoft + thousands of SaaS apps.</li>
-            <li><b>MFA</b> — phone, authenticator app, FIDO2 keys.</li>
-            <li><b>Conditional Access</b> — policies on user/device/location/risk.</li>
-            <li><b>Identity Protection</b> — risk-based detection.</li>
-            <li><b>Privileged Identity Management (PIM)</b> — just-in-time elevation for admin roles.</li>
-            <li><b>External identities / B2B / B2C</b> — guests, customer-facing IAM.</li>
+            <li><b>Authentication (AuthN)</b> — proving <i>who</i> you are. Entra ID handles this — username/password, MFA, certificate, passwordless. Returns a signed token.</li>
+            <li><b>Authorization (AuthZ)</b> — deciding <i>what</i> you can do once authenticated. <b>Azure RBAC</b> handles this for Azure resources; <b>Entra ID roles</b> (like Global Admin) handle directory-level permissions; app-specific permissions live inside each app.</li>
           </ul>
-          <h2>Auth vs authz</h2>
-          <p><b>Authentication</b> — Entra ID verifies who you are.<br><b>Authorization</b> — Azure RBAC decides what you can do on a resource.</p>
+          <p><b>Why memorize this split:</b> AZ-900 questions test the wording. "Verifying user identity with MFA" → AuthN. "Letting only Operations group manage VMs" → AuthZ via RBAC.</p>
+
+          <h2>Identity objects in Entra ID</h2>
+          <ul>
+            <li><b>User</b> — a person with credentials. Two kinds: <b>cloud-only</b> (created in Entra) and <b>synced</b> (mirrored from on-prem AD via Entra Connect / Cloud Sync).</li>
+            <li><b>Group</b> — collection of users/devices/groups. Types: <b>Security</b> (for RBAC/Conditional Access), <b>Microsoft 365</b> (also gets a mailbox + SharePoint). Membership: <b>Assigned</b> (manual) or <b>Dynamic</b> (rule-based, e.g., department = Engineering).</li>
+            <li><b>Device</b> — registered, Entra-joined, or hybrid-joined Windows/macOS/iOS/Android. Required for device-based Conditional Access.</li>
+            <li><b>Service Principal (SP)</b> — the identity of an application in your directory. Apps authenticate as a service principal to call APIs/resources.</li>
+            <li><b>App Registration</b> — the definition of an application (client ID, secrets/certs, redirect URIs); creates a corresponding service principal when consented in a tenant.</li>
+            <li><b>Managed Identity (MI)</b> — Microsoft-managed service principal whose credentials Azure rotates for you. Two flavors: <b>System-assigned</b> (tied to one resource's lifecycle) and <b>User-assigned</b> (standalone resource, attached to many).</li>
+            <li><b>Guest user (B2B)</b> — external user from another Entra/Microsoft/Google account invited via email.</li>
+          </ul>
+
+          <h2>Authentication methods (modern + legacy)</h2>
+          <ul>
+            <li><b>Password</b> — baseline; subject to spray/phishing.</li>
+            <li><b>MFA</b> — Multi-Factor Authentication. Something you know + have + are. Methods: Microsoft Authenticator push, OATH TOTP code, SMS/voice (least secure), FIDO2 hardware key, Windows Hello for Business.</li>
+            <li><b>Passwordless</b> — Microsoft's strategic direction: FIDO2 keys, Authenticator phone-as-token, Windows Hello.</li>
+            <li><b>Certificate-based authentication (CBA)</b> — for smart cards / CAC / PIV.</li>
+            <li><b>Self-Service Password Reset (SSPR)</b> — users reset their own password after verifying via MFA-style methods.</li>
+            <li><b>Password Protection</b> — banned-password list (global Microsoft list + your custom list) blocks weak passwords org-wide.</li>
+          </ul>
+
+          <h2>Single Sign-On (SSO) + federation</h2>
+          <p><b>SSO</b> = sign in once with Entra ID, access many apps. <b>Why:</b> fewer passwords = fewer phishing victims + lower help-desk cost. <b>How used:</b> Entra ID issues <b>SAML</b> tokens (legacy SaaS), <b>OIDC</b> ID tokens (modern web/mobile), or <b>OAuth</b> access tokens (APIs). Federation lets a partner's IdP authenticate users while Entra ID still authorizes — common pattern: AD FS → Entra ID.</p>
+
+          <h2>Conditional Access (CA)</h2>
+          <p><b>What:</b> the policy engine that evaluates every sign-in against signals and decides to <b>allow</b>, <b>block</b>, or require <b>controls</b> (MFA, compliant device, terms of use, password change). <b>Why:</b> moves you from "MFA always or never" to risk-appropriate enforcement. <b>How used:</b> a CA policy has <b>assignments</b> (users + groups, cloud apps, conditions like location/risk/device/client app) and <b>access controls</b> (block, grant with MFA/compliant device/etc.).</p>
+          <p><b>Conditions Microsoft tests:</b></p>
+          <ul>
+            <li><b>User risk / sign-in risk</b> — from Identity Protection (Low/Medium/High).</li>
+            <li><b>Device platform</b> — Windows, macOS, iOS, Android.</li>
+            <li><b>Location</b> — named locations / trusted IP ranges; geo-blocking.</li>
+            <li><b>Client apps</b> — modern auth vs legacy (Exchange ActiveSync, IMAP, POP).</li>
+            <li><b>Device state</b> — compliant (Intune) or Entra-joined.</li>
+          </ul>
+          <p>Common starter policy: "Require MFA for all users when not on a trusted location." Microsoft also publishes <b>Security Defaults</b> (one-click baseline MFA) and <b>Conditional Access templates</b> for common patterns.</p>
+
+          <h2>Microsoft Entra ID Protection</h2>
+          <p><b>What:</b> risk-based detection that scores each sign-in (anomalous travel, unfamiliar location, leaked credentials, malware-linked IP) and each user (token replay, attacker-in-the-middle). <b>Why:</b> automates response; feeds Conditional Access. <b>How used:</b> set policies like "require password change if user risk = High" or "require MFA if sign-in risk = Medium."</p>
+
+          <h2>Privileged Identity Management (PIM)</h2>
+          <p><b>Acronym:</b> Privileged Identity Management. <b>What:</b> just-in-time (JIT), time-bounded elevation for sensitive roles in Entra ID, Azure RBAC, and Microsoft 365. Admins are <b>eligible</b> for a role; they must <b>activate</b> it (with MFA, justification, optional approval) for a limited window. <b>Why:</b> eliminates standing privilege (the #1 thing red teams hunt for). <b>How used:</b> assign "Eligible Global Administrator" to admins; they request activation for up to 8 hours when needed. Includes access reviews, alerts on suspicious activations, and reporting.</p>
+
+          <h2>External identities — B2B and B2C</h2>
+          <ul>
+            <li><b>B2B Collaboration</b> — invite users from another Entra ID / Microsoft / Google / SAML IdP / email-OTP as <b>guests</b> in your tenant; grant them access to specific apps and resources. Typical use: contractors, partners.</li>
+            <li><b>B2C (Azure AD B2C / Entra External ID for customers)</b> — separate tenant type used to authenticate customers/consumers with social logins (Facebook, Google, Apple), local accounts, or federation. Used by public-facing apps.</li>
+          </ul>
+
+          <h2>Hybrid identity (on-prem ↔ Entra ID)</h2>
+          <ul>
+            <li><b>Microsoft Entra Connect</b> (legacy sync agent) and <b>Entra Cloud Sync</b> (newer, lightweight) — sync users/groups/hashes from on-prem AD to Entra ID.</li>
+            <li><b>Sync types:</b> <b>Password Hash Sync (PHS)</b> — Entra authenticates, default; <b>Pass-Through Authentication (PTA)</b> — Entra validates against on-prem AD via agent; <b>Federation (AD FS)</b> — on-prem AD FS does the auth.</li>
+            <li><b>Seamless SSO</b> — auto-sign-in for domain-joined PCs without prompts.</li>
+            <li><b>Entra Domain Services</b> — managed AD DS controllers with Kerberos/LDAP/Group Policy for legacy apps that need real AD.</li>
+          </ul>
+
+          <h2>Entra ID licenses (AZ-900 should recognize)</h2>
+          <ul>
+            <li><b>Free</b> — included with any Azure/Microsoft 365 subscription: directory, basic SSO, user/group mgmt.</li>
+            <li><b>Microsoft 365 Apps</b> — adds branding, SSPR cloud-only.</li>
+            <li><b>Premium P1</b> — Conditional Access, Group-based access management, dynamic groups, advanced reports, hybrid identity (Entra Connect Health).</li>
+            <li><b>Premium P2</b> — adds Identity Protection (risk-based CA) + PIM + access reviews + entitlement management.</li>
+          </ul>
+
+          <h2>Zero Trust (Microsoft's guiding model)</h2>
+          <p>Three principles: <b>Verify explicitly</b> (auth every request with all signals), <b>Use least privilege</b> (JIT, just-enough-access), <b>Assume breach</b> (segment, encrypt, monitor). Entra ID + Conditional Access + Defender for Cloud + Microsoft Sentinel are the Microsoft Zero Trust pillars.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>Entra ID</b> — Microsoft Entra ID (formerly Azure AD / AAD).</li>
+            <li><b>IAM</b> — Identity and Access Management.</li>
+            <li><b>AuthN / AuthZ</b> — Authentication / Authorization.</li>
+            <li><b>SSO</b> — Single Sign-On.</li>
+            <li><b>MFA</b> — Multi-Factor Authentication.</li>
+            <li><b>CA</b> — Conditional Access.</li>
+            <li><b>PIM</b> — Privileged Identity Management.</li>
+            <li><b>SP</b> — Service Principal.</li>
+            <li><b>MI</b> — Managed Identity.</li>
+            <li><b>SSPR</b> — Self-Service Password Reset.</li>
+            <li><b>SAML / OIDC / OAuth</b> — federation protocols.</li>
+            <li><b>FIDO2</b> — hardware-token passwordless standard.</li>
+            <li><b>JIT</b> — Just-In-Time access.</li>
+            <li><b>PHS / PTA</b> — Password Hash Sync / Pass-Through Authentication.</li>
+            <li><b>AD FS</b> — Active Directory Federation Services.</li>
+            <li><b>AD DS</b> — Active Directory Domain Services.</li>
+            <li><b>B2B / B2C</b> — Business-to-Business / Business-to-Consumer (external identities).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Verifying user with phone + password" → <b>AuthN</b> with <b>MFA</b>.</li>
+            <li>"Granting Reader access on RG" → <b>AuthZ</b> via <b>Azure RBAC</b>.</li>
+            <li>"Require MFA only from outside trusted office IPs" → <b>Conditional Access</b> with named location.</li>
+            <li>"Eliminate permanent Global Admin assignments" → <b>PIM</b> (eligible role + JIT activation).</li>
+            <li>"App needs to call Azure SQL without storing credentials" → <b>Managed Identity</b>.</li>
+            <li>"Invite contractor from another company to access SharePoint" → <b>B2B</b> guest invite.</li>
+            <li>"Customer-facing app with Google + Facebook sign-in" → <b>Entra External ID / B2C</b>.</li>
+            <li>"Risk-based detection requiring password reset on compromised account" → <b>Identity Protection</b> (requires Entra P2).</li>
+            <li>"Sync on-prem AD users to Entra so they sign in with same password" → <b>Entra Connect / Cloud Sync</b> with <b>Password Hash Sync</b>.</li>
+            <li>"Users reset their own forgotten password" → <b>SSPR</b>.</li>
+          </ul>
         `
       },
       {
         title: '7. Governance — RBAC, Policy, Locks, Blueprints',
         body: `
-          <h2>Azure RBAC</h2>
-          <p>Assign a <b>role</b> (Owner, Contributor, Reader, custom) to a <b>security principal</b> (user, group, SP, managed identity) at a <b>scope</b> (mgmt group → resource).</p>
-          <h2>Azure Policy</h2>
-          <p>Defines rules ("allowed locations", "must have tag X"). Evaluates resources, can audit or deny non-compliant. Initiatives = bundled policies.</p>
-          <h2>Resource locks</h2>
+          <h2>What is Azure governance?</h2>
+          <p><b>Governance</b> = the controls that keep a self-service cloud from turning into chaos. Microsoft's governance stack answers five questions: <i>Who can do what?</i> (RBAC), <i>What can be deployed where, by which rules?</i> (Azure Policy + Initiatives), <i>What must not be deleted or modified?</i> (Resource Locks), <i>Whose budget is this resource on?</i> (Tags + Cost Management), <i>How do we ship a compliant landing zone repeatedly?</i> (Blueprints → Template Specs + Deployment Stacks). AZ-900 tests each of these by scenario.</p>
+
+          <h2>Azure RBAC (Role-Based Access Control) — authorization for Azure resources</h2>
+          <p><b>Acronym:</b> Role-Based Access Control. <b>What:</b> the authorization system that decides which security principal can perform which action on which Azure resource. Every RBAC assignment is a triple: <b>Security Principal → Role Definition → Scope</b>.</p>
+
+          <h3>Security principals (the "who")</h3>
           <ul>
-            <li><b>ReadOnly</b> — block modifications.</li>
-            <li><b>Delete (CanNotDelete)</b> — block deletion.</li>
+            <li><b>User</b> — a single identity in Entra ID.</li>
+            <li><b>Group</b> — a collection; assign role to group, members inherit.</li>
+            <li><b>Service Principal (SP)</b> — application identity.</li>
+            <li><b>Managed Identity (MI)</b> — system- or user-assigned identity for an Azure resource.</li>
           </ul>
+
+          <h3>Role definitions (the "what")</h3>
+          <p>A role definition is a JSON document listing <b>Actions</b> (allowed control-plane operations), <b>NotActions</b> (excluded), <b>DataActions</b> (data-plane operations like reading a blob), and <b>NotDataActions</b>. ~120 built-in roles plus your custom roles. <b>Built-in roles to memorize:</b></p>
+          <ul>
+            <li><b>Owner</b> — full management + can delegate (manage access).</li>
+            <li><b>Contributor</b> — full management except access management; cannot grant roles.</li>
+            <li><b>Reader</b> — view everything; change nothing.</li>
+            <li><b>User Access Administrator</b> — manage user access only.</li>
+            <li><b>Service-specific roles</b> — Virtual Machine Contributor, Storage Blob Data Reader, Key Vault Secrets User, Network Contributor.</li>
+          </ul>
+
+          <h3>Scopes (the "where") — top-down inheritance</h3>
+          <p>Scope hierarchy mirrors the resource hierarchy: <b>Management Group → Subscription → Resource Group → Resource</b>. A role assigned higher up inherits down. <b>Example:</b> Reader on management group "Production" grants Reader on every subscription and resource under it.</p>
+
+          <h3>How RBAC evaluates a request</h3>
+          <ol>
+            <li>Collect all role assignments + deny assignments that apply to the principal at this scope and all parent scopes.</li>
+            <li>If any <b>Deny assignment</b> matches → blocked. (Deny always wins; created by Azure-managed services like Blueprints / Managed Apps — you cannot create them directly.)</li>
+            <li>If any role's <b>Actions</b> include the requested operation and no <b>NotActions</b> exclude it → allowed.</li>
+            <li>Otherwise → blocked.</li>
+          </ol>
+          <p>RBAC is <b>additive</b> for <i>allow</i> — granting Reader plus Contributor = effective Contributor (the union). There is no "deny over allow" in normal role assignments; you express deny via NotActions or a Deny assignment.</p>
+
+          <h3>Entra ID roles vs Azure RBAC roles (don't confuse)</h3>
+          <ul>
+            <li><b>Entra ID roles</b> (Global Admin, User Admin, Application Admin) — control the <i>directory</i> (users, apps, tenant settings).</li>
+            <li><b>Azure RBAC roles</b> (Owner, Contributor, Reader) — control <i>Azure resources</i> (VMs, storage, etc.).</li>
+            <li>Same person can be Global Admin in Entra and Reader in Azure — different planes.</li>
+          </ul>
+
+          <h2>Azure Policy</h2>
+          <p><b>What:</b> rule engine that audits or enforces standards across resources — independent of who deployed them. Policy answers "What rules must every resource follow?" RBAC answers "Who can deploy them?"</p>
+
+          <h3>Components</h3>
+          <ul>
+            <li><b>Policy definition</b> — a JSON rule with conditions + an <b>effect</b>. Examples: "Allowed locations = eastus, westus", "Storage accounts must have HTTPS-only".</li>
+            <li><b>Initiative</b> (Policy Set) — a bundle of related policy definitions for a goal (e.g., "NIST 800-53 baseline", "Microsoft Cloud Security Benchmark").</li>
+            <li><b>Assignment</b> — apply a definition or initiative at a scope (MG / Sub / RG).</li>
+            <li><b>Parameters</b> — make a definition reusable (allowed-locations parameter).</li>
+            <li><b>Compliance state</b> — Compliant / Non-compliant per resource, visible in Policy blade and Microsoft Defender for Cloud.</li>
+            <li><b>Exemptions</b> — temporary or waiver-based exclusions; logged for audit.</li>
+          </ul>
+
+          <h3>Policy effects (memorize)</h3>
+          <ul>
+            <li><b>Deny</b> — block non-compliant deployment at create/update time.</li>
+            <li><b>Audit</b> — let it through but log non-compliance.</li>
+            <li><b>Append</b> — add fields/tags to resources during creation.</li>
+            <li><b>Modify</b> — patch tags/properties on create/update.</li>
+            <li><b>DeployIfNotExists (DINE)</b> — auto-deploy a related resource if missing (e.g., enable diagnostic settings).</li>
+            <li><b>AuditIfNotExists</b> — audit when a related resource is missing.</li>
+            <li><b>Disabled</b> — turn the rule off without deleting it.</li>
+            <li><b>Manual / EnforceOPAConstraint</b> — newer effects for attestation + AKS Gatekeeper.</li>
+          </ul>
+          <p><b>Why use Policy vs RBAC?</b> RBAC controls <i>permissions</i>; Policy controls <i>configurations</i>. An Owner can deploy anything they have rights to — but Policy can still reject the deployment because it violates company standards (e.g., no public IPs).</p>
+
+          <h2>Resource Locks</h2>
+          <p><b>What:</b> protection against accidental deletion or modification. Applied at subscription, RG, or resource scope; inherit downward; require Owner or User Access Administrator role to set/remove. <b>Two types:</b></p>
+          <ul>
+            <li><b>CanNotDelete (Delete)</b> — read + modify allowed; delete blocked.</li>
+            <li><b>ReadOnly</b> — read allowed; modify + delete blocked. <i>Caution:</i> some operations Azure classifies as "modify" are surprising (listing storage keys = a write op, so ReadOnly blocks normal storage reads).</li>
+          </ul>
+          <p><b>Important:</b> locks are <i>not</i> RBAC and do not depend on it. Even Owner with full RBAC cannot delete a locked resource without first removing the lock.</p>
+
           <h2>Tags</h2>
-          <p>Key/value metadata for cost allocation, automation, ownership.</p>
+          <p><b>What:</b> key/value metadata pairs (max 50 per resource, 512-char key, 256-char value). <b>Why:</b> cost allocation, ownership, automation, lifecycle (e.g., Environment=Prod, Owner=alice, CostCenter=42, AutoShutdown=true). <b>How used:</b> filter Cost Management by tag; automate VM shutdown with a tag flag; enforce required tags via Azure Policy (Append/Modify/Deny). Not all resources inherit tags from RG — use Policy's Modify effect to inherit.</p>
+
+          <h2>Blueprints → Template Specs + Deployment Stacks</h2>
+          <p><b>Azure Blueprints</b> (deprecated July 2026) packaged ARM templates + role assignments + policy assignments + RG layout into a versioned, repeatable "landing zone." <b>Replacement path:</b></p>
+          <ul>
+            <li><b>Template Specs</b> — versioned ARM/Bicep templates stored as first-class resources, reusable across the tenant.</li>
+            <li><b>Deployment Stacks</b> — collection of resources managed as one unit, with deny-settings to protect them.</li>
+            <li><b>Azure Verified Modules (AVM)</b> — Microsoft-maintained Bicep/Terraform modules following CAF best practices.</li>
+            <li>Combined with <b>Microsoft Entra Permissions Management</b> and the <b>Cloud Adoption Framework</b> for governance at enterprise scale.</li>
+          </ul>
+
+          <h2>Microsoft Purview (governance for data)</h2>
+          <p><b>What:</b> unified data governance — discover, classify, label, and lineage-track data across Azure, on-prem, multi-cloud, and SaaS (M365). <b>Why:</b> compliance (GDPR, HIPAA, PCI), data discovery, sensitivity labeling. <b>How used:</b> scan storage and databases, auto-classify with built-in or custom classifiers, publish a data catalog, enforce DLP.</p>
+
+          <h2>Microsoft Cost Management + Budgets (covered next lesson — preview)</h2>
+          <p>Tags + RBAC + Policy are useless if nobody watches the bill. Cost Management dashboards, budgets with alerts, and Azure Advisor recommendations close the governance loop.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>RBAC</b> — Role-Based Access Control.</li>
+            <li><b>SP / MI</b> — Service Principal / Managed Identity.</li>
+            <li><b>MG / RG</b> — Management Group / Resource Group.</li>
+            <li><b>DINE</b> — DeployIfNotExists (policy effect).</li>
+            <li><b>OPA</b> — Open Policy Agent (engine behind AKS Gatekeeper).</li>
+            <li><b>CAF</b> — Cloud Adoption Framework.</li>
+            <li><b>WAF</b> — Well-Architected Framework (Microsoft's 5 pillars: reliability, security, cost optimization, operational excellence, performance efficiency). Don't confuse with Web Application Firewall.</li>
+            <li><b>DLP</b> — Data Loss Prevention.</li>
+            <li><b>AVM</b> — Azure Verified Modules.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Grant team rights to manage VMs but not give others access" → <b>Contributor</b> at the RG scope (NOT Owner — Owner can delegate).</li>
+            <li>"Block resource deployment outside East US + West US" → <b>Azure Policy</b> Allowed Locations with <b>Deny</b> effect.</li>
+            <li>"Prevent accidental deletion of production database" → <b>CanNotDelete</b> lock.</li>
+            <li>"Auto-add CostCenter tag when missing" → <b>Modify</b> (or Append) policy effect.</li>
+            <li>"Auto-enable diagnostic logs on every storage account" → <b>DeployIfNotExists (DINE)</b>.</li>
+            <li>"Same admin in tenant but different access to Azure resources" → Entra ID roles ≠ Azure RBAC roles.</li>
+            <li>"Limit Global Admin to JIT activation" → <b>PIM</b> (Entra ID feature, not RBAC).</li>
+            <li>"Standard set of policies + RBAC + RGs deployed for every new subscription" → <b>landing zone</b> via Template Specs + Bicep / Deployment Stacks (Blueprints retiring).</li>
+            <li>"Identify and label all PII across storage and SQL" → <b>Microsoft Purview</b>.</li>
+          </ul>
         `
       },
       {
         title: '8. Cost Management & SLAs',
         body: `
-          <h2>Pricing tools</h2>
+          <h2>Why cost + SLA matter on the exam</h2>
+          <p>Microsoft tests whether you can pick the right <b>pricing tool</b> for each phase (before vs after deploy), name the major <b>cost optimization levers</b> (Reservations, Savings Plans, Hybrid Benefit, Spot), and read a <b>composite SLA</b>. Expect at least 4-6 questions hitting these directly.</p>
+
+          <h2>Pricing tools — pre-deployment vs post-deployment</h2>
+
+          <h3>Azure Pricing Calculator (pre-deployment estimate)</h3>
+          <p><b>What:</b> web tool at <code>azure.microsoft.com/pricing/calculator</code> that estimates monthly cost for a proposed deployment — pick services, regions, SKUs, hours/GB; it sums them. <b>Why:</b> budget approval before clicking Deploy. <b>How used:</b> save estimates, share by URL, export Excel. Includes options for Reservations, Hybrid Benefit, dev/test pricing, support plan.</p>
+
+          <h3>Azure TCO Calculator (cost comparison)</h3>
+          <p><b>Acronym:</b> Total Cost of Ownership Calculator. <b>What:</b> compares 3-year cost of running workloads on-prem vs Azure. <b>Why:</b> migration business case for CFOs. <b>How used:</b> input your servers, databases, storage, network, electricity, IT labor — it factors hardware, software, power, cooling, real estate, staff, then outputs side-by-side TCO. Different tool from Pricing Calculator — Pricing = new Azure deployment; TCO = on-prem vs Azure.</p>
+
+          <h3>Microsoft Cost Management + Billing (post-deployment analysis)</h3>
+          <p><b>What:</b> the operational tool for analyzing <i>actual</i> spend after resources are running. <b>Features:</b></p>
           <ul>
-            <li><b>Pricing Calculator</b> — estimate cost of services BEFORE deploying.</li>
-            <li><b>TCO Calculator</b> — compare on-prem cost vs. Azure migration.</li>
-            <li><b>Microsoft Cost Management</b> — analyze actual spend, budgets, alerts (post-deploy).</li>
-            <li><b>Azure Advisor</b> — cost, security, reliability, performance recommendations.</li>
+            <li><b>Cost analysis</b> — break down spend by subscription, resource group, service, location, tag, or time period.</li>
+            <li><b>Budgets</b> — set monthly/quarterly/annual budget at any scope; alert via email/action group at thresholds (50%, 75%, 90%, 100%, forecasted overrun).</li>
+            <li><b>Cost alerts</b> — credit, anomaly, budget alerts.</li>
+            <li><b>Exports</b> — daily push to a storage account for Power BI / Synapse analysis.</li>
+            <li><b>Cost allocation</b> — chargeback to departments via tags.</li>
+            <li><b>Cost Management for AWS</b> (via Cost Management connector — covers multi-cloud spend in one pane). Microsoft is migrating to <b>FinOps toolkit</b> for advanced patterns.</li>
           </ul>
-          <h2>Cost optimization</h2>
-          <p>Reservations (1-yr / 3-yr commitment, up to 72% off), Azure Hybrid Benefit (use existing Windows/SQL licenses), Spot VMs, dev/test pricing, auto-shutdown.</p>
-          <h2>SLAs</h2>
-          <p>Service Level Agreement = guaranteed uptime % (e.g., 99.9%, 99.95%, 99.99%). Composite SLA = product of dependent service SLAs. Higher availability = multi-AZ / multi-region design.</p>
+
+          <h3>Azure Advisor (recommendations engine)</h3>
+          <p><b>What:</b> free personalized recommendations across five pillars: <b>Cost</b>, <b>Security</b>, <b>Reliability</b>, <b>Operational Excellence</b>, <b>Performance</b>. <b>Why:</b> Microsoft scans your actual usage and tells you "this VM is idle, downsize", "this disk is unattached, delete", "buy a Reservation". <b>How used:</b> review Cost tab weekly; apply or dismiss with justification.</p>
+
+          <h2>Cost optimization levers (every one is fair game on the exam)</h2>
+
+          <h3>Reserved Instances (RI) / Azure Reservations</h3>
+          <p><b>What:</b> commit to a specific service + region + SKU for <b>1 year or 3 years</b> in exchange for up to <b>72% discount</b> vs pay-as-you-go. <b>Why:</b> steady-state workloads (production DBs, baseline web tier). <b>How used:</b> buy via Cost Management → Reservations; covers VMs, Azure SQL DB / MI, Cosmos DB throughput, Storage capacity, App Service, Synapse, Databricks. Payment: All upfront, Monthly, or Partial. Can be exchanged or refunded (early termination fee may apply).</p>
+
+          <h3>Azure Savings Plans for Compute</h3>
+          <p><b>What:</b> commit to a <b>fixed hourly spend</b> (e.g., $5/hr) for 1 or 3 years; covers any VM family, region, or compute service (VMs, VMSS, App Service, Container Instances, Functions Premium). <b>Why:</b> more flexible than RI — workload can move SKUs / regions and discount still applies. Up to 65% savings (less than RI's 72%, in exchange for flexibility).</p>
+
+          <h3>Azure Hybrid Benefit (AHB)</h3>
+          <p><b>Acronym:</b> Azure Hybrid Benefit. <b>What:</b> bring your existing <b>Windows Server</b> + <b>SQL Server</b> licenses with Software Assurance (or qualifying RHEL/SUSE subscriptions) to Azure. <b>Why:</b> pay only for the underlying compute, not the license — up to 85% savings on Windows VMs combined with Reservations. <b>How used:</b> toggle "Azure Hybrid Benefit" on VM/SQL during create or after; Microsoft trusts your declaration but you must have Software Assurance licenses to claim.</p>
+
+          <h3>Spot Virtual Machines</h3>
+          <p><b>What:</b> bid for unused Azure capacity at up to <b>90% discount</b>; Azure can evict your VM with 30 seconds notice when capacity is reclaimed. <b>Why:</b> interruptible workloads — batch, dev/test, CI build farms, video encoding, big-data crunching. <b>How used:</b> set a max price; if spot price exceeds, eviction. Not for production or stateful workloads.</p>
+
+          <h3>Right-sizing + auto-shutdown</h3>
+          <p>Pick the smallest SKU that meets perf; downsize idle VMs (Advisor flags); auto-shutdown dev VMs on a schedule (built into VM blade). B-series burstable VMs accumulate CPU credits when idle and burst on demand — cheap for spiky low-utilization workloads.</p>
+
+          <h3>Dev/Test pricing + Visual Studio subscriptions</h3>
+          <p>Discounted rates on non-production workloads via Enterprise Dev/Test or Pay-As-You-Go Dev/Test subscriptions. Free Windows/SQL licenses inside dev/test VMs.</p>
+
+          <h3>Free + Always-Free services</h3>
+          <p>Azure Free Account: $200 credit for 30 days + 12 months of certain services free (B1S VM, 5 GB blob, 250 GB SQL DB) + always-free items (App Service tier F1, Azure Functions 1M executions/month, Cosmos DB 1000 RU/s + 25 GB).</p>
+
+          <h3>Pricing factors that drive cost</h3>
+          <ul>
+            <li><b>Resource type + SKU tier</b> (Premium SSD &gt; Standard SSD &gt; Standard HDD).</li>
+            <li><b>Usage time</b> — VMs billed per-second when running.</li>
+            <li><b>Region</b> — same SKU costs differently in East US vs West Europe.</li>
+            <li><b>Egress (data leaving Azure)</b> — bandwidth out costs money; inbound is free.</li>
+            <li><b>Cross-region traffic</b> + cross-AZ traffic — charged.</li>
+            <li><b>Reservation vs PAYG</b> — commitment level.</li>
+            <li><b>Subscription type</b> — EA / MCA / CSP / PAYG / Dev-Test.</li>
+          </ul>
+
+          <h2>Service Level Agreements (SLAs)</h2>
+
+          <h3>What an SLA is</h3>
+          <p><b>SLA</b> = Microsoft's contractual commitment for a service's availability/performance, plus <b>service credits</b> if Microsoft misses it (e.g., 10% credit for &lt;99.9%, 25% for &lt;99%). SLA is a refund, not insurance — your downtime cost is yours.</p>
+
+          <h3>SLA tiers (memorize)</h3>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>SLA</th><th>Allowed downtime / month</th><th>Allowed downtime / year</th><th>Common at</th></tr>
+            <tr><td>99% (two nines)</td><td>7h 18m</td><td>3d 15h</td><td>preview / single-instance</td></tr>
+            <tr><td>99.9% (three nines)</td><td>43m 49s</td><td>8h 45m</td><td>single VM w/ premium SSD; many PaaS</td></tr>
+            <tr><td>99.95%</td><td>21m 54s</td><td>4h 22m</td><td>VMs in same Availability Set</td></tr>
+            <tr><td>99.99% (four nines)</td><td>4m 22s</td><td>52m</td><td>VMs across Availability Zones; zone-redundant services</td></tr>
+            <tr><td>99.999% (five nines)</td><td>26s</td><td>5m 15s</td><td>Cosmos DB multi-region writes</td></tr>
+          </table>
+
+          <h3>Architectural SLA boosters in Azure</h3>
+          <ul>
+            <li><b>Single instance VM (Premium SSD)</b> — 99.9%.</li>
+            <li><b>Availability Set</b> (2+ VMs in same DC, different fault/update domains) — 99.95%.</li>
+            <li><b>Availability Zones</b> (2+ VMs across AZs) — <b>99.99%</b>.</li>
+            <li><b>Multi-region</b> — Azure does not publish a single SLA; you compose it via Traffic Manager / Front Door + per-region SLAs.</li>
+          </ul>
+
+          <h3>Composite SLA (math you may be asked to do)</h3>
+          <p>When an app depends on N services in series, the effective SLA is the <b>product</b> of each component's SLA. Example: a web app on App Service (99.95%) using Azure SQL (99.99%) → composite SLA = 0.9995 × 0.9999 ≈ 99.94%. <b>How to improve:</b> add parallel components — two regions with Traffic Manager turns a chain into a redundant path (1 − probability_both_fail). Always lower than the weakest link in series; always higher with parallel.</p>
+
+          <h3>SLA exclusions</h3>
+          <p>No SLA on: <b>Free / preview / Basic tier</b> services. Customer-caused outages (you misconfigured) excluded. Provider-acknowledged outage required to claim credit; you must file the claim.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>TCO</b> — Total Cost of Ownership.</li>
+            <li><b>PAYG</b> — Pay-As-You-Go.</li>
+            <li><b>RI</b> — Reserved Instance.</li>
+            <li><b>AHB</b> — Azure Hybrid Benefit.</li>
+            <li><b>SLA / SLO / SLI</b> — Service Level Agreement / Objective / Indicator. AZ-900 mostly tests SLA.</li>
+            <li><b>EA / MCA / CSP</b> — billing/subscription agreements.</li>
+            <li><b>FinOps</b> — Financial Operations practice — cross-functional cost governance.</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Estimate cost BEFORE deploying" → <b>Pricing Calculator</b>.</li>
+            <li>"Compare on-prem vs Azure over 3 years" → <b>TCO Calculator</b>.</li>
+            <li>"Analyze ACTUAL spend and set alerts" → <b>Microsoft Cost Management</b> (Budgets).</li>
+            <li>"Recommends I shut down idle VMs" → <b>Azure Advisor</b>.</li>
+            <li>"Lower bill on steady-state workloads, 1-3 year commit" → <b>Reservations</b>.</li>
+            <li>"Flexible compute commit across SKUs/regions" → <b>Savings Plan</b>.</li>
+            <li>"Already own Windows Server licenses" → <b>Azure Hybrid Benefit</b>.</li>
+            <li>"Interruptible batch jobs at up to 90% off" → <b>Spot VMs</b>.</li>
+            <li>"Two VMs in Availability Zones, what SLA?" → <b>99.99%</b>.</li>
+            <li>"Two VMs in Availability Set in one DC, what SLA?" → <b>99.95%</b>.</li>
+            <li>"Web app on App Service (99.95%) calls SQL (99.99%) — composite SLA?" → <b>0.9995 × 0.9999 ≈ 99.94%</b>.</li>
+            <li>"No SLA on this service" → <b>Free / Basic / Preview</b> tiers.</li>
+          </ul>
         `
       },
       {
         title: '9. Tools, Monitoring, Trust',
         body: `
-          <h2>Management tools</h2>
+          <h2>Why this lesson matters</h2>
+          <p>AZ-900 expects you to know <i>how</i> to interact with Azure (portal/CLI/PowerShell/Cloud Shell/IaC), <i>how</i> to watch what is happening (Monitor / Application Insights / Service Health / Resource Health), <i>how</i> to secure + respond (Defender for Cloud, Sentinel), and <i>where</i> to find compliance evidence (Service Trust Portal). Distinguish each tool's purpose — Microsoft loves pairing the closest two and asking which one fits the scenario.</p>
+
+          <h2>Management interfaces</h2>
+
+          <h3>Azure Portal</h3>
+          <p><b>What:</b> the web GUI at <code>portal.azure.com</code> — every Azure service exposed via a "blade". <b>Why:</b> discovery, learning, occasional one-off work; not for repeatable deployments. <b>How used:</b> dashboards, role-based views, integrated Cloud Shell, governance/policy blades. Mobile equivalent: <b>Azure Mobile App</b> (iOS / Android — view resources, run shell commands, see alerts).</p>
+
+          <h3>Azure CLI</h3>
+          <p><b>Acronym:</b> Command Line Interface. <b>What:</b> cross-platform shell command set under <code>az</code> (Bash-friendly, also runs on Windows). Written in Python. <b>Why:</b> scriptable, Linux-style, JMESPath query support (<code>--query</code>). <b>How used:</b> <code>az login</code>, then <code>az group create</code>, <code>az vm create</code>, <code>az resource list --query "[?location=='eastus']"</code>.</p>
+
+          <h3>Azure PowerShell (Az module)</h3>
+          <p><b>What:</b> PowerShell module set (<code>Az.*</code>) with cmdlets like <code>Get-AzVM</code>, <code>New-AzResourceGroup</code>. Replaces the older <code>AzureRM</code> module. <b>Why:</b> Windows admins, object-pipeline workflows. <b>How used:</b> <code>Connect-AzAccount</code>, then any <code>Verb-AzNoun</code> cmdlet.</p>
+
+          <h3>Azure Cloud Shell</h3>
+          <p><b>What:</b> browser-hosted shell — choose <b>Bash</b> (Azure CLI preinstalled) or <b>PowerShell</b> (Az module preinstalled). Persists user files in a small Azure Files share. <b>Why:</b> no local install, pre-authenticated, mobile-friendly. <b>How used:</b> click the &gt;_ icon in the Portal or visit <code>shell.azure.com</code>.</p>
+
+          <h3>Infrastructure as Code (IaC)</h3>
+          <p><b>What:</b> declarative template files that describe the desired state of Azure resources; idempotent, version-controlled, peer-reviewable. <b>Why:</b> repeatable environments, drift detection, change history, CI/CD. <b>Options on Azure:</b></p>
           <ul>
-            <li><b>Azure portal</b> — GUI.</li>
-            <li><b>Azure CLI</b> — cross-platform shell (<code>az</code>).</li>
-            <li><b>Azure PowerShell</b> — <code>Az</code> module.</li>
-            <li><b>Cloud Shell</b> — browser shell with CLI/PS preloaded.</li>
-            <li><b>ARM / Bicep / Terraform</b> — IaC.</li>
-            <li><b>Azure Mobile App</b>.</li>
+            <li><b>ARM templates</b> — JSON; native to Azure Resource Manager; verbose.</li>
+            <li><b>Bicep</b> — Microsoft's DSL that transpiles to ARM; cleaner syntax, modules, no curly-brace tax.</li>
+            <li><b>Terraform</b> (HashiCorp) — multi-cloud DSL with state management.</li>
+            <li><b>Pulumi</b> — IaC in TypeScript/Python/Go/C#.</li>
+            <li><b>Azure Developer CLI (azd)</b> — opinionated front-end that combines Bicep templates + GitHub Actions for full app deployment.</li>
           </ul>
-          <h2>Monitoring</h2>
+
+          <h3>Azure REST API + SDKs</h3>
+          <p>Underneath everything is the <b>Azure Resource Manager REST API</b>. SDKs for .NET, Java, Python, JS, Go, Ruby wrap it. Every CLI/PowerShell call eventually hits this API. Authenticated via Entra ID OAuth tokens.</p>
+
+          <h2>Monitoring + observability</h2>
+
+          <h3>Azure Monitor (the umbrella)</h3>
+          <p><b>What:</b> the unified observability platform. Collects two data shapes: <b>Metrics</b> (numeric time-series, 1-minute granularity, near-real-time) and <b>Logs</b> (structured events stored in a <b>Log Analytics workspace</b>). Adds <b>Alerts</b>, <b>Action Groups</b>, <b>Workbooks</b>, <b>Dashboards</b>. <b>Why:</b> single pane for telemetry across compute, network, app, and security.</p>
+
+          <h3>Log Analytics + Kusto Query Language (KQL)</h3>
+          <p><b>What:</b> the queryable log store inside Azure Monitor. Query with <b>KQL</b> (Kusto Query Language) — similar feel to SQL/Splunk SPL. <b>Why:</b> ad-hoc investigation, alert rules, scheduled queries. <b>How used:</b> <code>AzureActivity | where OperationName == "Delete VM" | summarize count() by Caller</code>.</p>
+
+          <h3>Application Insights (APM)</h3>
+          <p><b>Acronym:</b> Application Performance Monitoring. <b>What:</b> auto-instrumentation for web apps — collects request rate, dependencies, exceptions, page views, custom events. Now part of Azure Monitor. <b>Why:</b> understand application latency, find the slow SQL call, see end-user perf. <b>How used:</b> add SDK or enable codeless attach in App Service / AKS / VMs.</p>
+
+          <h3>Service Health</h3>
+          <p><b>What:</b> Microsoft-side status — incidents, planned maintenance, health advisories, security advisories that affect <i>your</i> subscriptions and regions. <b>Why:</b> when something seems broken, check this first to confirm it is Azure, not you. <b>How used:</b> set alerts so you are paged when Microsoft declares an outage in a region you use.</p>
+
+          <h3>Resource Health</h3>
+          <p><b>What:</b> per-resource health status — Available / Unavailable / Unknown / Degraded — based on platform signals (host failure, VM crash, network drop). <b>Why vs Service Health:</b> Resource Health is about <i>one resource you own</i>; Service Health is about <i>Microsoft platform incidents</i>. Microsoft tests this distinction.</p>
+
+          <h3>Azure Status</h3>
+          <p>Public global page at <code>status.azure.com</code> — shows region-wide outages without sign-in. Used by anyone evaluating an issue when the Portal itself is unreachable.</p>
+
+          <h3>Alerts + Action Groups</h3>
+          <p><b>Alert rule:</b> a condition over a metric / log / activity / service health event that fires when met. <b>Severity:</b> 0–4. <b>Action group:</b> the recipients of an alert — email, SMS, voice, webhook, ITSM (ServiceNow), Logic App, Function, Runbook, push to Azure Mobile App.</p>
+
+          <h2>Security + threat protection</h2>
+
+          <h3>Microsoft Defender for Cloud</h3>
+          <p><b>Formerly:</b> Azure Security Center + Azure Defender. <b>What:</b> Cloud Security Posture Management (<b>CSPM</b>) + Cloud Workload Protection (<b>CWPP</b>). <b>Two layers:</b></p>
           <ul>
-            <li><b>Azure Monitor</b> — metrics, logs (Log Analytics), alerts.</li>
-            <li><b>Application Insights</b> — APM for web apps.</li>
-            <li><b>Service Health</b> — incidents affecting your services.</li>
-            <li><b>Resource Health</b> — health of a specific resource.</li>
-            <li><b>Microsoft Defender for Cloud</b> — CSPM + CWPP.</li>
-            <li><b>Microsoft Sentinel</b> — cloud SIEM/SOAR.</li>
+            <li><b>Free CSPM (Foundational)</b> — Microsoft Cloud Security Benchmark, Secure Score, recommendations, asset inventory.</li>
+            <li><b>Defender plans (paid)</b> — runtime threat protection per workload: Defender for Servers, Storage, SQL, Containers, App Service, Key Vault, Resource Manager, DNS, APIs, etc.</li>
           </ul>
-          <h2>Trust Center & Compliance</h2>
-          <p>Service Trust Portal. Certifications: ISO 27001, SOC 1/2/3, FedRAMP, HIPAA, GDPR, PCI-DSS.</p>
+          <p><b>Secure Score</b> = single percentage rolling up your security posture across recommendations; higher is better.</p>
+
+          <h3>Microsoft Sentinel (SIEM / SOAR)</h3>
+          <p><b>Acronyms:</b> Security Information and Event Management (SIEM) + Security Orchestration, Automation, and Response (SOAR). <b>What:</b> Microsoft's cloud-native SIEM, built on Log Analytics + KQL + playbooks (Logic Apps). <b>Why:</b> ingest logs from Azure, M365, AWS, GCP, on-prem firewalls; detect, hunt, investigate, respond automatically. <b>How used:</b> connect data sources, enable analytic rules (Microsoft-provided + custom), automate response via playbooks (e.g., disable user on compromised-account alert).</p>
+
+          <h3>Microsoft Defender XDR</h3>
+          <p><b>XDR</b> = Extended Detection and Response. <b>What:</b> integrates Defender for Endpoint, Identity, Cloud Apps, Office 365 into a single console for cross-signal threat investigation. <b>Why:</b> a phishing email → token theft → cloud session is one attack across products; XDR correlates them.</p>
+
+          <h3>Azure Key Vault</h3>
+          <p><b>What:</b> managed secret/key/certificate store. Three object types: <b>Secrets</b> (strings/passwords), <b>Keys</b> (asymmetric/symmetric, optionally HSM-backed), <b>Certificates</b> (X.509). <b>Why:</b> centralize secrets, audit access, integrate with Managed Identities. <b>How used:</b> apps fetch secrets at runtime via Managed Identity → Key Vault.</p>
+
+          <h3>Azure DDoS Protection</h3>
+          <p><b>Acronym:</b> Distributed Denial of Service. <b>Two tiers:</b> Basic (free, on by default at the Azure backbone) and <b>Network/IP Protection</b> (paid, per-VNet or per-IP — adaptive mitigation, telemetry, cost protection refunds).</p>
+
+          <h2>Trust + compliance</h2>
+
+          <h3>Microsoft Service Trust Portal (STP)</h3>
+          <p><b>What:</b> hub for compliance documentation at <code>servicetrust.microsoft.com</code> — audit reports (SOC, ISO), data-protection documents, pen-test summaries, Microsoft's compliance offerings list, regional certifications. <b>Why:</b> auditors and procurement need evidence; download SOC 2 Type II reports here.</p>
+
+          <h3>Microsoft Privacy Statement + Online Services Terms (OST) + DPA</h3>
+          <p>Privacy Statement = data handling. OST → now called <b>Microsoft Product Terms</b>. <b>DPA</b> = Data Protection Addendum, the GDPR-required contract between you and Microsoft.</p>
+
+          <h3>Microsoft Purview Compliance Manager</h3>
+          <p>Scorecard + workflow to track compliance against frameworks (NIST 800-53, ISO 27001, HIPAA, GDPR). Assigns improvement actions.</p>
+
+          <h3>Compliance certifications Microsoft holds (recognize these names)</h3>
+          <ul>
+            <li><b>ISO 27001 / 27017 / 27018 / 27701</b> — information security, cloud security, cloud PII, privacy management.</li>
+            <li><b>SOC 1 / SOC 2 / SOC 3</b> — Service Organization Control reports (controls + audit).</li>
+            <li><b>FedRAMP High</b>, <b>DoD IL2/IL4/IL5/IL6</b> — US Gov.</li>
+            <li><b>HIPAA / HITRUST</b> — US healthcare.</li>
+            <li><b>PCI-DSS Level 1</b> — payment cards.</li>
+            <li><b>GDPR</b> — EU data protection.</li>
+            <li><b>FERPA</b> — US education.</li>
+            <li><b>CJIS</b> — US law enforcement.</li>
+            <li><b>IRS 1075</b> — US tax data.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>CLI</b> — Command Line Interface.</li>
+            <li><b>IaC</b> — Infrastructure as Code.</li>
+            <li><b>ARM</b> — Azure Resource Manager.</li>
+            <li><b>APM</b> — Application Performance Monitoring.</li>
+            <li><b>KQL</b> — Kusto Query Language.</li>
+            <li><b>CSPM / CWPP</b> — Cloud Security Posture Management / Cloud Workload Protection Platform.</li>
+            <li><b>SIEM / SOAR / XDR</b> — Security Information &amp; Event Management / Security Orchestration Automation &amp; Response / Extended Detection &amp; Response.</li>
+            <li><b>DDoS</b> — Distributed Denial of Service.</li>
+            <li><b>STP</b> — Service Trust Portal.</li>
+            <li><b>DPA</b> — Data Protection Addendum.</li>
+            <li><b>HSM</b> — Hardware Security Module (FIPS 140-2 / 140-3 certified key store).</li>
+          </ul>
+
+          <h2>Exam quick patterns</h2>
+          <ul>
+            <li>"Browser-based shell already authenticated" → <b>Cloud Shell</b>.</li>
+            <li>"Declarative repeatable deployment" → <b>Bicep / ARM / Terraform</b> (IaC).</li>
+            <li>"Status of my VM right now" → <b>Resource Health</b>.</li>
+            <li>"Microsoft platform incident in East US" → <b>Service Health</b> (or status.azure.com if Portal unreachable).</li>
+            <li>"APM for web app performance" → <b>Application Insights</b>.</li>
+            <li>"Centralized SIEM that ingests M365 + AWS logs" → <b>Microsoft Sentinel</b>.</li>
+            <li>"Posture management + Secure Score" → <b>Microsoft Defender for Cloud</b>.</li>
+            <li>"Store API keys, retrieve via Managed Identity" → <b>Azure Key Vault</b>.</li>
+            <li>"Download SOC 2 Type II report for auditor" → <b>Service Trust Portal</b>.</li>
+            <li>"Mitigate volumetric attack on public endpoint" → <b>Azure DDoS Protection</b>.</li>
+            <li>"Query logs with KQL" → <b>Log Analytics</b> (part of Azure Monitor).</li>
+          </ul>
         `
       },
       {
         title: '10. AZ-900 Exam Tips',
         body: `
-          <h2>Format</h2>
-          <p>~40–60 questions, 45–60 minutes. Multiple choice, drag-drop, scenario. Passing ~700/1000. No labs.</p>
-          <h2>Domains (current weighting)</h2>
+          <h2>Exam logistics</h2>
           <ul>
-            <li>Cloud concepts — 25–30%</li>
-            <li>Azure architecture & services — 35–40%</li>
-            <li>Azure management & governance — 30–35%</li>
+            <li><b>Code:</b> AZ-900 — Microsoft Azure Fundamentals.</li>
+            <li><b>Format:</b> ~40–60 questions in 45–60 minutes (Microsoft varies the count). Mix of single-answer multiple choice, multi-select, <b>case study with multiple linked questions</b>, drag-and-drop ordering, hot-area, and "yes/no" series. <b>No labs.</b></li>
+            <li><b>Score:</b> 700 / 1000 to pass (NOT a 70% raw score — Microsoft uses scaled scoring; you can miss a meaningful number of questions and still pass).</li>
+            <li><b>Cost:</b> ~$99 USD (varies by region / discount). Free voucher offered at most Microsoft Virtual Training Day events.</li>
+            <li><b>Delivery:</b> Pearson VUE — in test center or online proctored from home.</li>
+            <li><b>Validity:</b> AZ-900 does not expire on a renewal cycle (Microsoft Fundamentals certifications stay valid).</li>
+            <li><b>Prerequisites:</b> none. Recommended next steps: <b>AZ-104</b> Administrator, <b>AZ-204</b> Developer, <b>AZ-305</b> Architect, <b>SC-900</b> Security Fundamentals, <b>AI-900</b> AI Fundamentals.</li>
           </ul>
-          <h2>Most-missed traps</h2>
+
+          <h2>Domain weightings (Microsoft's official skills outline)</h2>
           <ul>
-            <li>Difference between Service Health vs Resource Health.</li>
-            <li>Region pair behavior (paired by Microsoft, not user-selectable).</li>
-            <li>Resource locks block delete even for Owners.</li>
-            <li>Azure Policy ≠ RBAC (policy = what's allowed to exist, RBAC = who can do what).</li>
-            <li>Cost Calc = estimate before; Cost Mgmt = analyze actual after.</li>
-            <li>Entra ID is identity, not a directory replacement for on-prem AD unless Domain Services added.</li>
+            <li><b>Describe cloud concepts</b> — <b>25–30%</b> (Lessons 1–2: benefits, deployment models, IaaS/PaaS/SaaS, shared responsibility, CapEx/OpEx).</li>
+            <li><b>Describe Azure architecture and services</b> — <b>35–40%</b> (Lessons 3–6: regions/AZs/region pairs, MG/Sub/RG/Resource, ARM, compute, networking, storage, databases, identity / Entra ID).</li>
+            <li><b>Describe Azure management and governance</b> — <b>30–35%</b> (Lessons 7–9: RBAC, Policy, locks, tags, Cost Mgmt, SLAs, tools, monitoring, trust).</li>
+          </ul>
+
+          <h2>Top 25 most-missed concepts (Microsoft instructor data)</h2>
+          <ol>
+            <li><b>Service Health vs Resource Health</b> — Service Health = Microsoft platform incidents affecting your services; Resource Health = state of <i>your</i> specific resource (Available / Unavailable / Degraded / Unknown).</li>
+            <li><b>Region pairs</b> — Microsoft defines pairs; you cannot choose them. Provides geo-replication for GRS and not-simultaneous maintenance.</li>
+            <li><b>Resource lock CanNotDelete vs ReadOnly</b> — CanNotDelete blocks delete only; ReadOnly blocks modify + delete. Even an Owner is blocked until lock removed.</li>
+            <li><b>Azure Policy vs RBAC</b> — Policy controls <i>what configurations are allowed</i>; RBAC controls <i>who can do what</i>. Both apply at any scope and inherit downward.</li>
+            <li><b>Pricing Calculator vs TCO Calculator vs Cost Management</b> — Pricing = estimate a future Azure deployment; TCO = compare on-prem vs Azure over 3 years; Cost Management = actual spend after deploy.</li>
+            <li><b>Entra ID ≠ on-prem AD</b> — Entra ID is HTTP/REST identity for cloud + SaaS. For Kerberos/LDAP/Group Policy use <b>Entra Domain Services</b> or extend on-prem AD via <b>Entra Connect</b>.</li>
+            <li><b>Availability Set vs Availability Zone</b> — Set = fault/update domains within ONE datacenter (99.95% SLA); Zone = physically separate DCs in a region (99.99% SLA).</li>
+            <li><b>Public vs Private vs Hybrid cloud</b> — read the wording carefully. Hybrid = mix of public + private with connectivity.</li>
+            <li><b>IaaS vs PaaS vs SaaS responsibility</b> — customer always owns data + identity + accounts; provider always owns physical layers; OS and app shift in between.</li>
+            <li><b>VPN Gateway vs ExpressRoute</b> — VPN = encrypted over Internet; ExpressRoute = private fiber via partner, no Internet.</li>
+            <li><b>Application Gateway vs Front Door vs Load Balancer</b> — ALB L4 regional; AppGW L7 regional (HTTP + WAF); Front Door L7 global anycast (+ CDN + WAF).</li>
+            <li><b>Storage redundancy options</b> — LRS (1 DC, 3 copies) → ZRS (3 zones) → GRS (LRS + paired region async) → GZRS (ZRS + paired region). RA-* = read access to secondary.</li>
+            <li><b>Blob tiers</b> — Hot / Cool / Cold / Archive; minimum retention 0 / 30 / 90 / 180 days; Archive needs rehydration (hours).</li>
+            <li><b>Reserved Instance vs Savings Plan vs Hybrid Benefit vs Spot</b> — RI = lock SKU+region for max discount; Savings Plan = lock hourly spend, flexible across compute; AHB = bring existing Windows/SQL license; Spot = unused capacity, evictable.</li>
+            <li><b>Subscription = billing + access boundary</b>. Separate dev vs prod by separate subscriptions, not just by RG.</li>
+            <li><b>Resource Group rules</b> — every resource in exactly one RG, RG cannot be nested, deleting RG deletes all resources inside, RG has a region but resources may span regions.</li>
+            <li><b>Service Principal vs Managed Identity</b> — both are app identities; Managed Identity = Microsoft rotates credentials for you.</li>
+            <li><b>Conditional Access</b> — Entra ID feature (P1 license); evaluates signals (user, device, location, risk) at sign-in. Security Defaults = free baseline.</li>
+            <li><b>PIM</b> — JIT activation of privileged roles. Requires Entra ID P2 license.</li>
+            <li><b>Defender for Cloud vs Sentinel</b> — Defender for Cloud = posture + workload protection (CSPM + CWPP); Sentinel = SIEM/SOAR (correlate logs, hunt, automate response).</li>
+            <li><b>Azure Advisor</b> — recommendations across Cost / Security / Reliability / Operational Excellence / Performance.</li>
+            <li><b>Composite SLA math</b> — services in series multiply (always &lt; weakest link); parallel components increase availability.</li>
+            <li><b>Compliance home</b> — <b>Service Trust Portal</b> for SOC/ISO reports; <b>Compliance Manager</b> (Purview) for tracking.</li>
+            <li><b>Bicep vs ARM</b> — Bicep = DSL that transpiles to ARM JSON; equivalent capability, cleaner syntax.</li>
+            <li><b>Azure Arc</b> — extend Azure management plane (Resource Manager + Policy + Defender) to on-prem and other clouds.</li>
+          </ol>
+
+          <h2>Question-reading strategy</h2>
+          <ul>
+            <li><b>Read every word — twice.</b> Microsoft frequently flips one keyword (e.g., "EXCEPT", "NOT", "least", "minimum cost") that changes the right answer.</li>
+            <li><b>Identify the constraint.</b> "Lowest cost", "highest availability", "least admin effort", "no public IP exposure", "regulated data must stay in country". The constraint usually picks one of 4 plausible options.</li>
+            <li><b>Eliminate two answers fast.</b> Most questions have two clearly wrong options and two tempting ones. Cross out the obvious-wrong first, then compare the two finalists against the constraint.</li>
+            <li><b>Watch for product-name twins.</b> Azure Front Door vs Application Gateway; Azure Files vs Blob; Azure SQL DB vs Managed Instance; Service Health vs Resource Health; ALB vs AppGW — Microsoft pairs these on purpose.</li>
+            <li><b>Drag-and-drop ordering</b> — read all options first; common Microsoft patterns: Plan → Build → Monitor; Detect → Investigate → Respond; high-to-low scope (MG → Sub → RG → Resource).</li>
+            <li><b>Case study questions</b> link to the same scenario — open the case study tab, skim the requirements, then answer each question. You cannot return to a case study once you leave.</li>
+            <li><b>Mark + review.</b> Flag uncertain questions; come back at the end if time allows. Don't leave any blank — no penalty for wrong answers.</li>
+            <li><b>Time budget.</b> ~1 minute per question. If you spend more than 2 minutes on one, mark it and move on.</li>
+          </ul>
+
+          <h2>"If you only memorize 20 facts, memorize these"</h2>
+          <ol>
+            <li>OpEx = pay-as-you-go cloud; CapEx = up-front on-prem.</li>
+            <li>IaaS = you patch OS; PaaS = Microsoft patches OS; SaaS = Microsoft owns whole app.</li>
+            <li>Customer always owns: data, identity, accounts. Provider always owns: physical DC, host, network.</li>
+            <li>Region = group of DCs; AZ = physically separate DCs in a region; region pair = MS-defined cross-region pair.</li>
+            <li>MG → Sub → RG → Resource (top-to-bottom inheritance).</li>
+            <li>RBAC = who can do what; Policy = what can be deployed.</li>
+            <li>Locks: CanNotDelete (delete only) vs ReadOnly (modify+delete).</li>
+            <li>SLA: single VM 99.9% → Avail Set 99.95% → Avail Zones 99.99%.</li>
+            <li>Composite SLA = product of dependent service SLAs.</li>
+            <li>Pricing Calc = before deploy; TCO Calc = on-prem vs Azure; Cost Mgmt = actual spend after.</li>
+            <li>Reservations 1/3-yr → up to 72% off; Spot up to 90% off (evictable); AHB uses existing Windows/SQL licenses.</li>
+            <li>LRS &lt; ZRS &lt; GRS &lt; GZRS (durability + cost).</li>
+            <li>Blob tiers Hot / Cool / Cold / Archive (min retention 0/30/90/180 days).</li>
+            <li>VPN Gateway = encrypted over Internet; ExpressRoute = private fiber.</li>
+            <li>ALB = L4; AppGW = L7 regional; Front Door = L7 global + CDN.</li>
+            <li>Entra ID = cloud IAM (HTTP). Entra Domain Services = managed AD DS (Kerberos/LDAP).</li>
+            <li>Conditional Access requires Entra ID P1; PIM + Identity Protection require P2.</li>
+            <li>Defender for Cloud = CSPM + CWPP; Sentinel = SIEM + SOAR.</li>
+            <li>Service Health (Microsoft side) vs Resource Health (one resource).</li>
+            <li>Service Trust Portal = compliance docs (SOC, ISO, pen-test reports).</li>
+          </ol>
+
+          <h2>Pre-exam checklist</h2>
+          <ul>
+            <li>Take Microsoft's free <b>AZ-900 Learning Path</b> on Microsoft Learn — official content tracks the skills outline exactly.</li>
+            <li>Use the <b>Microsoft Practice Assessment</b> (free, official) — questions in the real exam style.</li>
+            <li>Spend 1–2 hours in the Azure portal: create a free account, deploy a VM, a storage account, a Bicep template; touch every blade you can.</li>
+            <li>Test environment day-of: government-issued ID, quiet space (online proctor scans the room), reliable webcam + bandwidth, water + tissues allowed at test center but not online.</li>
+            <li>Skim the <b>Azure glossary</b> the night before — vocabulary drives 30% of the test.</li>
+          </ul>
+
+          <h2>After AZ-900 — what to study next</h2>
+          <ul>
+            <li><b>AZ-104</b> Azure Administrator — operational hands-on; the next step Microsoft expects.</li>
+            <li><b>SC-900</b> Security/Compliance/Identity Fundamentals — light, broad partner cert to AZ-900.</li>
+            <li><b>AI-900</b> Azure AI Fundamentals — covers Azure AI Foundry, Azure OpenAI, Cognitive Services.</li>
+            <li><b>DP-900</b> Data Fundamentals.</li>
+            <li><b>AZ-204</b> Developer / <b>AZ-305</b> Architect — for IC and solution-architect tracks.</li>
           </ul>
         `
       }
@@ -16480,69 +23073,532 @@ resource "aws_vpc" "main" {
         title: '1. PowerShell Fundamentals',
         body: `
           <h2>What is PowerShell?</h2>
-          <p>Object-based shell + scripting language from Microsoft. Two builds:</p>
+          <p><b>PowerShell</b> is Microsoft's object-oriented shell and scripting language. Unlike traditional Unix shells (bash, zsh, sh) that pipe <b>text</b> between programs, PowerShell pipes structured <b>.NET objects</b> with named properties and typed values. That single design choice — objects-in, objects-out — is what makes PowerShell a "true" scripting language for systems administration: you do not have to parse <code>ps aux</code> output with awk; you call <code>Get-Process | Where-Object CPU -gt 100</code> and operate directly on the CPU property.</p>
+          <p><b>Why it exists:</b> Microsoft built PowerShell to replace cmd.exe + VBScript for Windows administration. Today every Microsoft product (Windows Server, Exchange, Active Directory, Azure, M365, SQL Server, Hyper-V, Intune) ships PowerShell modules as a first-class management API. On-prem and cloud admins, DevOps engineers, security responders, and helpdesk technicians all use it daily.</p>
+
+          <h2>Two PowerShell editions — know the difference</h2>
           <ul>
-            <li><b>Windows PowerShell 5.1</b> — built into Windows, runs on .NET Framework.</li>
-            <li><b>PowerShell 7+ (Core)</b> — cross-platform (Windows, macOS, Linux), runs on .NET. Recommended.</li>
+            <li><b>Windows PowerShell 5.1</b> — the "legacy" edition. <b>What:</b> built into Windows 7/8/10/11 and Windows Server; runs on <b>.NET Framework 4.x</b>. <b>Why kept:</b> hundreds of older modules require it (some Exchange / SharePoint admin tools). <b>Limitations:</b> Windows-only, frozen at version 5.1 (Microsoft will not add new features), command name is <code>powershell.exe</code>. AZ-900 / CompTIA exams may reference this version.</li>
+            <li><b>PowerShell 7.x (formerly "PowerShell Core")</b> — the modern, supported edition. <b>What:</b> cross-platform — Windows, macOS, Linux — runs on the open-source, cross-platform <b>.NET</b> (formerly .NET Core) runtime. Command name is <code>pwsh</code> (so you can run both side-by-side on Windows). <b>Why use it:</b> ongoing feature releases, ternary operator, pipeline parallelism (<code>ForEach-Object -Parallel</code>), null-coalescing, better SSH-based remoting, container-friendly. <b>Recommended for all new scripts.</b></li>
           </ul>
-          <h2>Verb-Noun cmdlets</h2>
-          <p>Every cmdlet follows <code>Verb-Noun</code>: <code>Get-Process</code>, <code>Set-Location</code>, <code>New-Item</code>, <code>Remove-Item</code>.</p>
-          <pre><code>Get-Command -Verb Get        # list all Get-* cmdlets
-Get-Help Get-Process -Full   # full help
-Get-Help about_*             # conceptual help topics</code></pre>
-          <h2>Objects, not text</h2>
-          <p>Unlike bash, PowerShell pipes <i>objects</i>. <code>Get-Process | Sort-Object CPU -Descending</code> sorts by a property, not by parsing text.</p>
+          <p><b>Microsoft's stance:</b> Windows PowerShell 5.1 is in maintenance mode. PowerShell 7 is the strategic edition. Install on Windows via <code>winget install Microsoft.PowerShell</code>, on macOS via <code>brew install powershell</code>, on Linux via the official Microsoft repository packages.</p>
+
+          <h2>Cmdlets — the building block</h2>
+          <p><b>Acronym:</b> "cmdlet" = "command-let". Pronounced "command-let". <b>What:</b> a single compiled .NET class that performs one operation (get, set, create, remove, test, invoke). Each cmdlet ships in a <b>module</b>. The shell discovers them dynamically. There are roughly 1,500+ built-in cmdlets on a stock Windows 11 install plus tens of thousands more shipped by modules (Azure: ~5,000 cmdlets alone).</p>
+
+          <h3>Verb-Noun naming convention</h3>
+          <p>Every cmdlet follows a strict <code>Verb-Noun</code> pattern (PascalCase). The verb is from Microsoft's <i>approved verb list</i> — about 100 verbs in 6 categories (Common, Communications, Data, Lifecycle, Diagnostic, Security). Examples:</p>
+          <ul>
+            <li><b>Get-</b> retrieve — <code>Get-Process</code>, <code>Get-Service</code>, <code>Get-ChildItem</code>, <code>Get-Content</code>.</li>
+            <li><b>Set-</b> change existing — <code>Set-Location</code>, <code>Set-Content</code>, <code>Set-ExecutionPolicy</code>.</li>
+            <li><b>New-</b> create — <code>New-Item</code>, <code>New-PSSession</code>, <code>New-LocalUser</code>.</li>
+            <li><b>Remove-</b> delete — <code>Remove-Item</code>, <code>Remove-LocalUser</code>.</li>
+            <li><b>Start-</b> / <b>Stop-</b> / <b>Restart-</b> — lifecycle on a service, process, computer.</li>
+            <li><b>Test-</b> — non-destructive boolean check (<code>Test-Path</code>, <code>Test-Connection</code>).</li>
+            <li><b>Invoke-</b> — run a command, REST call, or scriptblock (<code>Invoke-Command</code>, <code>Invoke-RestMethod</code>, <code>Invoke-WebRequest</code>).</li>
+            <li><b>Out-</b> — send object to output (<code>Out-File</code>, <code>Out-Host</code>, <code>Out-GridView</code>).</li>
+          </ul>
+          <p><b>Why the convention matters:</b> predictable. If you know one cmdlet's name shape, you can guess the rest — <code>Get-Service</code> retrieves, so <code>Set-Service</code>, <code>Start-Service</code>, <code>Stop-Service</code>, <code>Restart-Service</code>, <code>New-Service</code>, <code>Remove-Service</code> all exist. Run <code>Get-Verb</code> to list approved verbs.</p>
+
+          <h3>Aliases</h3>
+          <p>Common short aliases for shell ergonomics: <code>ls</code> / <code>dir</code> → <code>Get-ChildItem</code>, <code>cd</code> → <code>Set-Location</code>, <code>cat</code> → <code>Get-Content</code>, <code>cp</code> → <code>Copy-Item</code>, <code>mv</code> → <code>Move-Item</code>, <code>rm</code> → <code>Remove-Item</code>, <code>ps</code> → <code>Get-Process</code>, <code>kill</code> → <code>Stop-Process</code>, <code>echo</code> → <code>Write-Output</code>. <b>List all aliases:</b> <code>Get-Alias</code>. <b>Best practice:</b> aliases at the prompt; full cmdlet names in scripts for clarity and code review.</p>
+
+          <h2>The discovery trinity — Get-Command, Get-Help, Get-Member</h2>
+          <p>These three cmdlets let you operate any module without prior memorization.</p>
+
+          <h3>Get-Command</h3>
+          <p>Lists or filters available commands.</p>
+          <pre><code>Get-Command                          # everything in scope
+Get-Command -Verb Get                # all Get-* cmdlets
+Get-Command -Noun Service            # all *-Service cmdlets
+Get-Command -Module Az.Storage       # cmdlets from the Az.Storage module
+Get-Command *user* -CommandType Cmdlet</code></pre>
+
+          <h3>Get-Help</h3>
+          <p>Built-in documentation per cmdlet. First run <code>Update-Help</code> as admin to download the latest help XML.</p>
+          <pre><code>Get-Help Get-Process                 # synopsis + syntax
+Get-Help Get-Process -Examples       # examples only
+Get-Help Get-Process -Detailed       # parameter descriptions
+Get-Help Get-Process -Full           # everything
+Get-Help Get-Process -Online         # open MSDN page in browser
+Get-Help about_pipelines             # conceptual topic (about_*)</code></pre>
+
+          <h3>Get-Member</h3>
+          <p>Inspect the properties and methods of any object on the pipeline — the most useful single command in PowerShell.</p>
+          <pre><code>Get-Process | Get-Member             # all members of System.Diagnostics.Process
+Get-Process | Get-Member -MemberType Property
+Get-Service | Get-Member -MemberType Method</code></pre>
+
+          <h2>Objects, not text — the core distinction</h2>
+          <p>In bash: <code>ps aux | grep chrome | awk '{print $2}' | xargs kill</code> — you parse text columns by position. In PowerShell: <code>Get-Process chrome | Stop-Process</code> — you pass objects, and <code>Stop-Process</code> reads the <code>Id</code> property automatically. <b>Why this matters:</b></p>
+          <ul>
+            <li>No fragile string parsing — column positions never matter.</li>
+            <li>Type safety — <code>Sort-Object Length</code> sorts numerically because <code>Length</code> is an int.</li>
+            <li>IntelliSense in PowerShell ISE / VS Code / Windows Terminal reveals members live.</li>
+            <li>Cmdlets accept structured input via parameters or pipeline binding, not free text.</li>
+          </ul>
+
+          <h2>The pipeline operator <code>|</code></h2>
+          <p>Sends the <b>output object(s)</b> of one command as <b>input object(s)</b> to the next. Two binding modes the runtime tries (in order): <b>ByValue</b> (input type matches the parameter type) and <b>ByPropertyName</b> (input object has a property whose name matches a parameter).</p>
+          <pre><code>Get-Process | Where-Object WorkingSet -gt 100MB | Sort-Object CPU -Descending | Select-Object -First 5</code></pre>
+          <p>That single line: list processes → keep those using more than 100 MB RAM → sort by CPU descending → take top 5. No awk, no temp files.</p>
+
+          <h2>Running PowerShell</h2>
+          <ul>
+            <li><b>powershell.exe</b> — Windows PowerShell 5.1 (legacy).</li>
+            <li><b>pwsh</b> — PowerShell 7+ (recommended).</li>
+            <li><b>Windows Terminal</b> — modern tabbed terminal that hosts pwsh, powershell.exe, cmd, WSL, Azure Cloud Shell in tabs.</li>
+            <li><b>VS Code + PowerShell extension</b> — modern script editor with debugger, IntelliSense, integrated terminal.</li>
+            <li><b>PowerShell ISE</b> — legacy 5.1 IDE; do not use for new scripts.</li>
+            <li><b>Azure Cloud Shell</b> — browser PowerShell preloaded with Az module + cross-cloud auth.</li>
+          </ul>
+
+          <h2>Execution policy (security gate)</h2>
+          <p><b>What:</b> a safety setting that controls whether scripts can run. <b>Not</b> a true security boundary — it stops accidents, not adversaries. <b>Levels:</b></p>
+          <ul>
+            <li><b>Restricted</b> — no scripts; interactive commands only. Default on Windows clients.</li>
+            <li><b>AllSigned</b> — only signed scripts (any trusted publisher).</li>
+            <li><b>RemoteSigned</b> — local scripts run; downloaded scripts (with "Zone.Identifier" mark) require signature. Default on Windows Server.</li>
+            <li><b>Unrestricted</b> — runs everything but warns on downloaded scripts.</li>
+            <li><b>Bypass</b> — runs anything silently.</li>
+          </ul>
+          <p>Inspect + set:</p>
+          <pre><code>Get-ExecutionPolicy -List
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned</code></pre>
+
+          <h2>Scopes — where commands run</h2>
+          <ul>
+            <li><b>Process</b> — current PowerShell session only.</li>
+            <li><b>CurrentUser</b> — that user's settings (registry / profile).</li>
+            <li><b>LocalMachine</b> — all users on the machine.</li>
+            <li><b>MachinePolicy / UserPolicy</b> — Group Policy enforced (Active Directory).</li>
+          </ul>
+          <p>Group Policy can lock execution policy machine-wide; <code>Set-ExecutionPolicy</code> at lower scope will be ignored if Group Policy overrides.</p>
+
+          <h2>Profile script (your "shellrc")</h2>
+          <p><code>$PROFILE</code> auto-variable points to the profile script that runs at every shell start. Typical path: <code>~\\Documents\\PowerShell\\Profile.ps1</code> for pwsh, <code>~\\Documents\\WindowsPowerShell\\Profile.ps1</code> for 5.1. Use it to set aliases, import modules, customize prompt, set <code>$PSDefaultParameterValues</code>.</p>
+
+          <h2>Modules — the package unit</h2>
+          <p>A <b>module</b> is a versioned bundle of cmdlets/functions/types. Sources:</p>
+          <ul>
+            <li><b>Built-in</b> — ship with the OS (Microsoft.PowerShell.Management, ActiveDirectory, NetSecurity, Hyper-V, etc.).</li>
+            <li><b>PowerShell Gallery</b> — public registry at <code>powershellgallery.com</code>. Install with <code>Install-Module Az -Scope CurrentUser</code>.</li>
+            <li><b>Internal repository</b> — private NuGet feed for company modules.</li>
+          </ul>
+          <p>Manage modules:</p>
+          <pre><code>Get-Module -ListAvailable            # everything installed
+Import-Module Az                     # explicit load (modern PS auto-imports on first cmdlet call)
+Update-Module Az
+Uninstall-Module OldThing</code></pre>
+
+          <h2>Common Parameters — present on every cmdlet</h2>
+          <p>Microsoft auto-adds these to every cmdlet so you do not re-implement them:</p>
+          <ul>
+            <li><b>-Verbose</b> — write informational text via <code>Write-Verbose</code>.</li>
+            <li><b>-Debug</b> — write debug text via <code>Write-Debug</code>.</li>
+            <li><b>-ErrorAction</b> — Continue / Stop / SilentlyContinue / Inquire / Ignore.</li>
+            <li><b>-ErrorVariable</b> — capture errors into a named variable.</li>
+            <li><b>-WarningAction / -WarningVariable</b>.</li>
+            <li><b>-InformationAction / -InformationVariable</b>.</li>
+            <li><b>-OutVariable</b> — capture output into a variable while still streaming it.</li>
+            <li><b>-OutBuffer</b> — buffering control.</li>
+            <li><b>-PipelineVariable</b> — name the current pipeline object.</li>
+            <li><b>-WhatIf</b> — show what would happen without doing it (cmdlets that support state change).</li>
+            <li><b>-Confirm</b> — interactive yes/no prompt.</li>
+          </ul>
+
+          <h2>Acronyms + jargon</h2>
+          <ul>
+            <li><b>PowerShell / pwsh</b> — official name; <code>pwsh</code> is the binary for v7+.</li>
+            <li><b>cmdlet</b> — compiled command (single .NET class).</li>
+            <li><b>PSObject / PSCustomObject</b> — wrapper type that adds dynamic properties.</li>
+            <li><b>ISE</b> — Integrated Scripting Environment (legacy 5.1 IDE).</li>
+            <li><b>PSRemoting / WinRM</b> — PowerShell Remoting protocol (Windows Remote Management).</li>
+            <li><b>DSC</b> — Desired State Configuration (declarative config management).</li>
+            <li><b>Az / AzureRM</b> — Azure modules. Az = current; AzureRM = deprecated 2024.</li>
+            <li><b>$PROFILE</b> — auto-variable for profile script path.</li>
+            <li><b>$_</b> / <b>$PSItem</b> — current pipeline object.</li>
+          </ul>
+
+          <h2>Try these right now</h2>
+          <pre><code>$PSVersionTable                       # which edition + version
+Get-Command -Verb Get -Noun Process
+Get-Process | Sort-Object CPU -Desc | Select-Object -First 3
+Get-Service | Where-Object Status -eq 'Running' | Measure-Object
+Get-Help about_Pipelines              # read this conceptual help</code></pre>
         `
       },
       {
         title: '2. Variables, Types, Operators',
         body: `
+          <h2>Variables — the storage primitive</h2>
+          <p><b>What:</b> a <b>variable</b> in PowerShell is a typed slot in memory you name with a leading dollar sign. <b>Why:</b> store values, intermediate results, parameters, and pipeline captures. <b>How used:</b> assign with <code>=</code>; read with <code>$name</code>; introspect with <code>Get-Variable</code>; remove with <code>Remove-Variable name</code>.</p>
           <pre><code>$name = "Chris"
 $age  = 32
 $path = "C:\\Users"
 $list = 1,2,3,4,5
 $hash = @{ Name = "alice"; Role = "admin" }
+$null                     # the literal null
+$true / $false            # boolean literals</code></pre>
 
-# Strict type
-[int]$num = "42"
-
-# Interpolation
-"Hello $name, you are $age"
-
-# Expression in string
-"Sum: $($list.Count * 2)"</code></pre>
-          <h2>Operators</h2>
+          <h3>Naming rules</h3>
           <ul>
-            <li>Comparison: <code>-eq -ne -lt -gt -le -ge -like -match -contains</code></li>
-            <li>Logic: <code>-and -or -not -xor</code></li>
-            <li>Arithmetic: <code>+ - * / %</code></li>
+            <li>Start with <code>$</code> (sigil), then letters/digits/underscore.</li>
+            <li><b>Case-insensitive</b> for both variable and cmdlet names: <code>$Name</code> and <code>$name</code> are the same variable.</li>
+            <li>Spaces / special chars allowed if you wrap in braces: <code>\${My Var}</code> — but avoid in production code.</li>
+            <li><b>Convention:</b> <code>$camelCase</code> for locals; <code>$PascalCase</code> for parameters and exported names.</li>
           </ul>
-          <p><b>Note:</b> Use <code>-eq</code> NOT <code>==</code>. <code>=</code> is assignment only.</p>
+
+          <h3>Automatic (auto) variables — managed by the engine</h3>
+          <p>PowerShell pre-creates dozens. Top ones to memorize:</p>
+          <ul>
+            <li><b>$_ / $PSItem</b> — current pipeline object.</li>
+            <li><b>$args</b> — all unbound parameters passed to a script/function.</li>
+            <li><b>$PSVersionTable</b> — engine version + edition + OS.</li>
+            <li><b>$Host</b> — info about the hosting application (console / ISE / VS Code).</li>
+            <li><b>$Error</b> — array of recent errors; <code>$Error[0]</code> = newest.</li>
+            <li><b>$LASTEXITCODE</b> — exit code from the most recent <i>native</i> command.</li>
+            <li><b>$?</b> — boolean: did the last command succeed?</li>
+            <li><b>$PWD</b> — current working directory object.</li>
+            <li><b>$HOME</b> — user profile path.</li>
+            <li><b>$PSScriptRoot</b> — directory of the currently-running script.</li>
+            <li><b>$PSCommandPath</b> — full path of the running script.</li>
+            <li><b>$MyInvocation</b> — details of how the script was called.</li>
+            <li><b>$null</b> — the null literal (use <code>$null -eq $x</code>, not <code>$x -eq $null</code>).</li>
+          </ul>
+
+          <h3>Variable providers ("drives")</h3>
+          <p>Variables, environment vars, the registry, certificates, etc., are exposed as PSDrives. List them with <code>Get-PSDrive</code>. Examples:</p>
+          <ul>
+            <li><code>Variable:</code> — your variables (<code>dir variable:</code> lists them).</li>
+            <li><code>Env:</code> — environment variables (<code>$env:PATH</code>, <code>$env:USERNAME</code>).</li>
+            <li><code>HKLM: / HKCU:</code> — Windows registry hives.</li>
+            <li><code>Cert:</code> — certificate stores.</li>
+            <li><code>Function: / Alias:</code> — defined functions/aliases.</li>
+          </ul>
+
+          <h2>.NET type system — PowerShell sits on top</h2>
+          <p>Every value is a strongly-typed .NET object. Inspect type with <code>.GetType()</code>:</p>
+          <pre><code>(5).GetType().FullName             # System.Int32
+"hi".GetType().FullName            # System.String
+(1..5).GetType().FullName          # System.Object[]
+$h = @{a=1}; $h.GetType().FullName # System.Collections.Hashtable</code></pre>
+
+          <h3>Common types</h3>
+          <ul>
+            <li><b>[int] / [Int32]</b> — 32-bit integer.</li>
+            <li><b>[long] / [Int64]</b> — 64-bit integer.</li>
+            <li><b>[double]</b> — 64-bit floating point.</li>
+            <li><b>[decimal]</b> — precise decimal for money.</li>
+            <li><b>[string]</b> — UTF-16 string.</li>
+            <li><b>[char]</b> — single character.</li>
+            <li><b>[bool]</b> — <code>$true</code> / <code>$false</code>.</li>
+            <li><b>[datetime]</b> — date + time; <code>Get-Date</code> returns one.</li>
+            <li><b>[timespan]</b> — duration.</li>
+            <li><b>[guid]</b> — globally unique identifier.</li>
+            <li><b>[array]</b> — fixed-size ordered list.</li>
+            <li><b>[hashtable]</b> — unordered key/value (insertion order not guaranteed pre-PS5).</li>
+            <li><b>[ordered]</b> — ordered dictionary (use <code>[ordered]@{...}</code> when key order matters).</li>
+            <li><b>[pscustomobject]</b> — flexible object with named properties.</li>
+            <li><b>[scriptblock]</b> — block of code that can be passed and invoked.</li>
+            <li><b>[regex]</b> — compiled regular expression.</li>
+            <li><b>[xml]</b> — parsed XML document (accelerator).</li>
+          </ul>
+
+          <h3>Type accelerators + explicit casting</h3>
+          <p>A <b>type accelerator</b> is a short alias for a long .NET type name. List all with <code>[psobject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Get</code> (advanced) — but everyday accelerators you will use: <code>[int]</code>, <code>[string]</code>, <code>[bool]</code>, <code>[regex]</code>, <code>[xml]</code>, <code>[adsi]</code>, <code>[wmi]</code>.</p>
+          <pre><code>[int]$num = "42"                   # cast string to int (throws on bad input)
+[int]"42" + 3                       # 45 (numeric add)
+"42" + 3                            # "423" (string concat — left operand wins)
+[bool]"true"                        # $true
+[datetime]"2026-01-15"              # parses ISO date
+[guid]::NewGuid()                   # generate new GUID</code></pre>
+
+          <h3>Strict-typed parameters and variables</h3>
+          <p>Annotate the variable to constrain its type. Any later assignment of a wrong type either coerces (if possible) or throws.</p>
+          <pre><code>[int]$Count = 5
+$Count = "abc"     # throws: Cannot convert value "abc" to type "System.Int32"</code></pre>
+
+          <h2>Strings — single vs double quotes</h2>
+          <ul>
+            <li><b>Double-quoted</b> — interpolate <code>$variable</code> and <code>$(expression)</code>; interpret backslash escapes via backtick.</li>
+            <li><b>Single-quoted</b> — literal; no interpolation. Use for paths and regex.</li>
+          </ul>
+          <pre><code>$name = "alice"
+"Hello $name"                       # Hello alice
+'Hello $name'                       # Hello $name
+"Sum: $($list.Count * 2)"           # subexpression operator $(...)
+
+# Here-strings — multiline
+$msg = @"
+Hello $name
+this is line 2
+"@</code></pre>
+
+          <h2>Arrays + collections</h2>
+          <pre><code>$nums = 1,2,3,4,5
+$nums = @(1,2,3)                    # explicit array
+$nums[0]                            # first
+$nums[-1]                           # last
+$nums[1..3]                         # slice (2,3,4)
+$nums.Count                         # length
+$nums += 6                          # append (creates new array — O(n))
+$nums.Where({ $_ -gt 2 })           # filter via method
+$nums.ForEach({ $_ * 2 })           # transform via method
+
+# ArrayList / Generic.List for fast append
+$big = [System.Collections.Generic.List[int]]::new()
+$big.Add(1); $big.Add(2)</code></pre>
+
+          <h2>Hashtables + custom objects</h2>
+          <pre><code># Hashtable (unordered)
+$user = @{ Name = "alice"; Role = "admin"; Active = $true }
+$user.Name
+$user["Role"]
+$user.Add("Email", "a@b.com")
+
+# Ordered dictionary
+$cfg = [ordered]@{ Server="db1"; Port=5432; Pool=10 }
+
+# PSCustomObject (preferred for output objects)
+$obj = [pscustomobject]@{
+  Name = "alice"
+  Age  = 32
+  Tags = "admin","ops"
+}
+$obj.Name</code></pre>
+
+          <h2>Operators — categories</h2>
+
+          <h3>Assignment</h3>
+          <p><code>=</code> assign; <code>+=  -=  *=  /=  %=</code> compound; <code>??=</code> null-coalescing assign (PS7+).</p>
+
+          <h3>Arithmetic</h3>
+          <p><code>+  -  *  /  %  ..</code> (range). <code>1..10</code> produces 1,2,3,...,10. Works with letters: <code>'a'..'e'</code>.</p>
+
+          <h3>Comparison (case-insensitive by default; prefix <code>c</code> for case-sensitive, <code>i</code> for explicit insensitive)</h3>
+          <ul>
+            <li><code>-eq / -ne</code> — equal / not equal.</li>
+            <li><code>-lt / -le / -gt / -ge</code> — less than, etc.</li>
+            <li><code>-like / -notlike</code> — wildcard match (<code>*</code> and <code>?</code>).</li>
+            <li><code>-match / -notmatch</code> — regex match; populates <code>$Matches</code>.</li>
+            <li><code>-contains / -notcontains</code> — collection contains value (left = collection).</li>
+            <li><code>-in / -notin</code> — value in collection (left = value).</li>
+            <li><code>-is / -isnot</code> — type check (<code>$x -is [int]</code>).</li>
+            <li><code>-as</code> — try-cast; returns null on failure (vs <code>[int]</code> which throws).</li>
+          </ul>
+          <p><b>Critical:</b> NEVER use <code>==</code>. PowerShell does not have it; <code>=</code> is assignment. Use <code>-eq</code>.</p>
+          <p>When the <i>left</i> operand is a collection, comparison <i>filters</i>: <code>1,2,3,4 -gt 2</code> returns <code>3,4</code>.</p>
+
+          <h3>Logical</h3>
+          <p><code>-and  -or  -not  -xor</code>. Aliases: <code>!</code> for <code>-not</code>.</p>
+
+          <h3>Bitwise</h3>
+          <p><code>-band  -bor  -bxor  -bnot  -shl  -shr</code>.</p>
+
+          <h3>String</h3>
+          <p><code>-replace</code> regex replace; <code>-split</code> split into array; <code>-join</code> array → string; <code>+</code> concat; <code>*</code> repeat (<code>"-" * 30</code>).</p>
+
+          <h3>Type</h3>
+          <p><code>-is  -isnot  -as</code>.</p>
+
+          <h3>PS7+ additions</h3>
+          <ul>
+            <li><b>Ternary</b>: <code>condition ? whenTrue : whenFalse</code>.</li>
+            <li><b>Null-coalescing</b>: <code>$x ?? "default"</code>.</li>
+            <li><b>Null-conditional</b>: <code>$obj?.Property</code>, <code>$arr?[0]</code>.</li>
+            <li><b>Pipeline chain</b>: <code>&amp;&amp;</code> and <code>||</code> — run next command only on success / failure (like bash).</li>
+          </ul>
+
+          <h2>Comments</h2>
+          <pre><code># single-line
+&lt;# block
+   multi-line
+   comment #&gt;
+&lt;# .SYNOPSIS
+   Comment-based help block for functions/scripts
+   .DESCRIPTION
+   ...
+#&gt;</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>PSDrive</b> — PowerShell-provider drive (Variable:, Env:, HKLM:, Cert:).</li>
+            <li><b>PSObject / PSCustomObject</b> — wrapper for arbitrary properties; preferred output type.</li>
+            <li><b>$_ / $PSItem</b> — current pipeline object.</li>
+            <li><b>$Error / $LASTEXITCODE / $?</b> — error array / native exit code / success boolean.</li>
+            <li><b>[ordered]</b> — ordered dictionary accelerator.</li>
+            <li><b>Type accelerator</b> — short alias for a .NET type ([int], [regex], [datetime]).</li>
+          </ul>
+
+          <h2>Exam + interview gotchas</h2>
+          <ul>
+            <li><code>=</code> is assignment, <b>not</b> equality. Equality is <code>-eq</code>.</li>
+            <li>String + int — left-operand wins. <code>"5" + 1 = "51"</code>; <code>5 + "1" = 6</code>.</li>
+            <li>Compare with collection on LEFT = filter (<code>$nums -gt 5</code> returns matching elements).</li>
+            <li><code>$null -eq $x</code> is the recommended order (avoids null-array gotcha).</li>
+            <li><code>+=</code> on arrays creates a NEW array each time — O(n²) in loops. Use <code>[List[T]]</code> for hot loops.</li>
+            <li>Default hashtable enumeration order is insertion order in PS5+, but rely on <code>[ordered]</code> if you depend on it.</li>
+            <li>Comparison operators are case-insensitive by default; prefix <code>c</code> for case-sensitive (<code>-ceq</code>, <code>-cmatch</code>).</li>
+          </ul>
         `
       },
       {
         title: '3. The Pipeline & Common Cmdlets',
         body: `
+          <h2>What is the pipeline?</h2>
+          <p>The <b>pipeline</b> is PowerShell's mechanism to chain commands so the <i>output objects</i> of one become the <i>input objects</i> of the next, using the <code>|</code> character. Unlike Unix pipes (text), PowerShell pipes pass real .NET objects with their full property graph intact. <b>Why it matters:</b> every workhorse cmdlet (Where-Object, Sort-Object, ForEach-Object, Select-Object, Group-Object) operates on properties of the upstream object — no parsing, no fragility.</p>
           <pre><code>Get-Process |
   Where-Object { $_.CPU -gt 100 } |
   Sort-Object CPU -Descending |
   Select-Object -First 5 Name, CPU, Id</code></pre>
-          <h2>Workhorse cmdlets</h2>
+
+          <h2>Streaming vs batch</h2>
+          <p><b>What:</b> the pipeline is <i>streaming</i> — objects flow one at a time through every stage. <b>Why it matters:</b> you can pipe a million-row file through filter + transform stages without loading everything into memory. Each cmdlet has a <code>begin</code> (setup), <code>process</code> (per-object), <code>end</code> (teardown) block; <code>process</code> fires once per pipeline input.</p>
+
+          <h2>Parameter binding modes</h2>
+          <p>How does <code>Get-Service | Stop-Service</code> work without an explicit parameter? PowerShell tries two binding modes in order:</p>
           <ul>
-            <li><b>Where-Object</b> — filter (alias <code>?</code>).</li>
-            <li><b>Select-Object</b> — pick properties / first N (alias <code>select</code>).</li>
-            <li><b>Sort-Object</b> — order.</li>
-            <li><b>Group-Object</b> — count by property.</li>
-            <li><b>Measure-Object</b> — sum, avg, max, min, count.</li>
-            <li><b>ForEach-Object</b> — iterate (alias <code>%</code>).</li>
-            <li><b>Format-Table / Format-List</b> — output only; use at end.</li>
+            <li><b>ByValue</b> — if the upstream object's <i>type</i> matches the parameter type. Example: <code>ServiceController</code> object → <code>-InputObject</code> parameter.</li>
+            <li><b>ByPropertyName</b> — if the upstream object has a <i>property</i> whose name matches the parameter. Example: object with a <code>Name</code> property → <code>-Name</code> parameter.</li>
           </ul>
-          <p><code>$_</code> is the current pipeline object. In PS 5.1+ you can also use <code>$PSItem</code>.</p>
+          <p>Inspect with <code>Get-Help cmdlet -Parameter *</code> — look for "Accept pipeline input? true (ByValue / ByPropertyName)".</p>
+
+          <h2>The 8 workhorse cmdlets</h2>
+
+          <h3>Where-Object — filter</h3>
+          <p><b>Alias:</b> <code>?</code> (also <code>where</code>). <b>What:</b> keep only pipeline objects matching a condition. <b>Two syntaxes:</b></p>
+          <pre><code># Script-block syntax (any expression)
+Get-Process | Where-Object { $_.WorkingSet -gt 200MB -and $_.Name -like 'chrome*' }
+
+# Comparison syntax (PS3+; simpler, more readable)
+Get-Process | Where-Object WorkingSet -gt 200MB
+
+# Method form (PS4+; fastest)
+(Get-Process).Where({ $_.CPU -gt 100 })
+(Get-Process).Where({ $_.CPU -gt 100 }, 'First', 5)   # short-circuit after 5</code></pre>
+
+          <h3>Select-Object — pick properties / N items / unique</h3>
+          <p><b>Alias:</b> <code>select</code>. <b>Use cases:</b></p>
+          <pre><code>Get-Process | Select-Object Name, Id, CPU            # pick columns
+Get-Process | Select-Object -First 5                  # top N
+Get-Process | Select-Object -Last 5                   # bottom N
+Get-Process | Select-Object -Skip 10 -First 5         # paging
+Get-Service | Select-Object -Unique Status            # distinct values
+Get-Process | Select-Object -ExpandProperty Name      # unwrap to flat string array
+
+# Calculated properties (rename / compute)
+Get-Process | Select-Object Name,
+  @{ Name='MemMB'; Expression={ [math]::Round($_.WorkingSet/1MB,1) } }</code></pre>
+
+          <h3>Sort-Object — order</h3>
+          <pre><code>Get-Process | Sort-Object CPU -Descending
+Get-Service | Sort-Object Status, DisplayName            # multi-key
+Get-ChildItem | Sort-Object Length -Top 5                # PS6+ partial sort (faster)
+Get-Process | Sort-Object -Property @{ Expression='WS'; Descending=$true }</code></pre>
+
+          <h3>ForEach-Object — iterate / transform</h3>
+          <p><b>Aliases:</b> <code>%</code>, <code>foreach</code>. <b>What:</b> run a script block once per input object.</p>
+          <pre><code>1..5 | ForEach-Object { $_ * 10 }                     # 10,20,30,40,50
+Get-ChildItem *.log | ForEach-Object { $_.FullName }  # extract paths
+
+# Three-block form: begin / process / end
+Get-Service | ForEach-Object -Begin { $c=0 } -Process { $c++ } -End { "Saw $c services" }
+
+# PS7+ parallel
+1..20 | ForEach-Object -Parallel { Start-Sleep 1; $_ } -ThrottleLimit 5
+
+# Method form (faster, no Cmdlet overhead)
+(1..5).ForEach({ $_ * 10 })
+(Get-Service).ForEach('Stop')                          # invoke method on each</code></pre>
+
+          <h3>Group-Object — bucket by property</h3>
+          <pre><code>Get-Process | Group-Object -Property Company
+Get-Service | Group-Object Status -NoElement            # count only
+Get-ChildItem -Recurse | Group-Object Extension | Sort-Object Count -Descending</code></pre>
+
+          <h3>Measure-Object — aggregate stats</h3>
+          <pre><code>Get-ChildItem -File | Measure-Object Length -Sum -Average -Maximum
+Get-Process | Measure-Object CPU -Average                # average CPU
+Get-Content big.log | Measure-Object -Line -Word -Character</code></pre>
+
+          <h3>Compare-Object — diff two collections</h3>
+          <pre><code>Compare-Object (Get-Content a.txt) (Get-Content b.txt)
+# SideIndicator: =&gt; only in second, &lt;= only in first, == both (with -IncludeEqual)</code></pre>
+
+          <h3>Tee-Object — split pipeline</h3>
+          <pre><code>Get-Process | Tee-Object -FilePath procs.txt | Where-Object CPU -gt 100</code></pre>
+
+          <h2>Out-* and Format-* — terminate the pipeline</h2>
+          <p><b>Rule:</b> Format-* and Out-* cmdlets emit formatting objects, NOT real objects — put them at the END of the pipeline. Anything after them sees formatting records, not data.</p>
+          <ul>
+            <li><b>Format-Table (ft)</b> — tabular columns. <code>Get-Process | ft Name, CPU -AutoSize</code>.</li>
+            <li><b>Format-List (fl)</b> — vertical key:value list. Good for objects with many properties.</li>
+            <li><b>Format-Wide (fw)</b> — single-property multi-column view.</li>
+            <li><b>Format-Custom (fc)</b> — tree view with nested objects.</li>
+            <li><b>Out-Host</b> — write to console (default; PS adds it implicitly).</li>
+            <li><b>Out-File</b> — write to a file. <code>-Encoding utf8</code> recommended.</li>
+            <li><b>Out-GridView</b> — interactive grid (Windows PS 5.1 / PS7 on Windows only).</li>
+            <li><b>Out-Null</b> — discard. <code>$null = ...</code> or <code>| Out-Null</code>.</li>
+            <li><b>Out-String</b> — convert to a single string for logging.</li>
+          </ul>
+
+          <h2>Export / Import — persist objects</h2>
+          <pre><code>Get-Process | Export-Csv procs.csv -NoTypeInformation
+Import-Csv procs.csv | Where-Object CPU -gt 100
+
+Get-Service | ConvertTo-Json | Set-Content services.json
+Get-Content services.json | ConvertFrom-Json
+
+Get-Process | Export-Clixml procs.xml             # preserves full object graph
+Import-Clixml procs.xml                            # round-trip with types</code></pre>
+
+          <h2>Pipeline control + redirection</h2>
+          <ul>
+            <li><b>Streams:</b> 1 Output, 2 Error, 3 Warning, 4 Verbose, 5 Debug, 6 Information, * all.</li>
+            <li><b>Redirect:</b> <code>cmd 2&gt;errors.log</code>, <code>cmd *&gt;all.log</code>, <code>cmd 2&gt;&amp;1</code> merge stderr into stdout.</li>
+            <li><b>Discard:</b> <code>cmd | Out-Null</code> or <code>[void]( cmd )</code> or <code>$null = cmd</code>.</li>
+            <li><b>$PSDefaultParameterValues</b> — set default parameters across the session: <code>$PSDefaultParameterValues['Export-Csv:NoTypeInformation']=$true</code>.</li>
+          </ul>
+
+          <h2>Performance notes</h2>
+          <ul>
+            <li>Method <code>.Where()</code> / <code>.ForEach()</code> are 3–10× faster than the cmdlet equivalents — they skip pipeline plumbing.</li>
+            <li>Filter early: put <code>Where-Object</code> close to the source.</li>
+            <li>Use cmdlet-native filters when available (<code>-Filter</code> on <code>Get-ChildItem</code>, <code>Get-ADUser</code>) — pushed down to the provider, not done client-side.</li>
+            <li><code>Select-Object -First N</code> short-circuits the upstream pipeline — use it to cap expensive sources.</li>
+            <li>Avoid appending to arrays with <code>$arr += $x</code> in tight loops — quadratic. Use <code>[System.Collections.Generic.List[T]]</code>.</li>
+            <li>Format-* at the end only — anything piped after is operating on formatting tokens.</li>
+          </ul>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>$_ / $PSItem</b> — current pipeline object.</li>
+            <li><b>ft / fl / fw</b> — Format-Table / List / Wide.</li>
+            <li><b>?</b> / <b>%</b> — Where-Object / ForEach-Object aliases.</li>
+            <li><b>CSV / JSON / CLIXML</b> — export formats (CLIXML preserves types).</li>
+            <li><b>ByValue / ByPropertyName</b> — pipeline binding modes.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Format-* terminates the data pipeline. <b>Never pipe its output into Where-Object</b>.</li>
+            <li><code>Select-Object -ExpandProperty</code> returns the raw underlying values, not wrapped objects — useful for piping into commands that need strings.</li>
+            <li><code>Where-Object Name -eq 'foo'</code> (comparison syntax) does NOT accept multiple conditions — wrap in a scriptblock <code>{ ... -and ... }</code>.</li>
+            <li><code>ForEach-Object -Parallel</code> (PS7+) runs in <i>runspaces</i> — variables from the parent must be referenced via <code>$using:var</code>.</li>
+            <li>Empty pipelines yield nothing — <code>$null</code>-safe code is your responsibility.</li>
+          </ul>
         `
       },
       {
         title: '4. Flow Control & Functions',
         body: `
+          <h2>Why flow control + functions matter</h2>
+          <p>Flow-control keywords (<code>if</code>, <code>switch</code>, <code>for</code>, <code>foreach</code>, <code>while</code>, <code>do</code>, <code>break</code>, <code>continue</code>, <code>return</code>) let your script make decisions and iterate. <b>Functions</b> turn one-liners into reusable, parameterized building blocks. <b>Advanced functions</b> (with <code>[CmdletBinding()]</code>) make your code indistinguishable from a real cmdlet — pipeline-aware, parameter-validated, supports common parameters (<code>-Verbose</code>, <code>-WhatIf</code>, <code>-ErrorAction</code>).</p>
+
+          <h2>Conditionals</h2>
+
+          <h3>if / elseif / else</h3>
           <pre><code>if ($x -gt 10) {
   "big"
 } elseif ($x -gt 0) {
@@ -16551,240 +23607,1432 @@ $hash = @{ Name = "alice"; Role = "admin" }
   "zero or negative"
 }
 
-switch ($status) {
-  "OK"      { "good" }
-  "Warn"    { "watch it" }
-  default   { "unknown" }
+# Ternary (PS 7+)
+$label = $x -gt 0 ? "positive" : "non-positive"
+
+# Null-coalescing (PS 7+)
+$name = $InputName ?? "default"</code></pre>
+          <p><b>Truthiness rules:</b> <code>$null</code>, <code>0</code>, <code>""</code>, empty array <code>@()</code>, and <code>$false</code> are falsy. A single-element array of <code>$false</code> wrapped is truthy (the array exists). String <code>"false"</code> is truthy (non-empty string).</p>
+
+          <h3>switch — pattern matcher</h3>
+          <p>Powerful: matches by value, wildcard, regex, scriptblock, or type. Handles arrays automatically.</p>
+          <pre><code>switch ($status) {
+  "OK"     { "good" }
+  "Warn"   { "watch it" }
+  default  { "unknown" }
 }
 
-foreach ($n in 1..5) { "Number $n" }
+# Wildcard mode
+switch -Wildcard ($file) {
+  "*.log" { "log file" }
+  "*.csv" { "csv file" }
+}
 
+# Regex mode + captured matches
+switch -Regex ($email) {
+  '^(\\w+)@(\\w+)' { "user=$($Matches[1]) domain=$($Matches[2])" }
+}
+
+# Process an array — each element runs all matching cases
+switch (1..10) {
+  { $_ -lt 5 }    { "small: $_" }
+  { $_ % 2 -eq 0 } { "even: $_" }
+}
+
+# Read file lines
+switch -File 'errors.log' {
+  "*FATAL*" { "FATAL line: $_" }
+}</code></pre>
+          <p><b>Switch options:</b> <code>-Wildcard</code>, <code>-Regex</code>, <code>-Exact</code>, <code>-CaseSensitive</code>, <code>-File</code>. Use <code>break</code> in a case to stop matching further cases on the same value.</p>
+
+          <h2>Loops</h2>
+
+          <h3>foreach statement (keyword) — collection iteration</h3>
+          <pre><code>foreach ($n in 1..5) { "Number $n" }
+foreach ($file in Get-ChildItem *.log) { $file.FullName }</code></pre>
+          <p>Distinct from <code>ForEach-Object</code> cmdlet: <code>foreach</code> statement eagerly evaluates the collection (loads it all); <code>ForEach-Object</code> streams one at a time.</p>
+
+          <h3>for — counter loop</h3>
+          <pre><code>for ($i = 0; $i -lt 10; $i++) { "i=$i" }</code></pre>
+
+          <h3>while + do/while + do/until</h3>
+          <pre><code>$i = 0
 while ($i -lt 5) { $i++; "loop $i" }
 
 do {
   $reply = Read-Host "y/n"
 } while ($reply -notin "y","n")
 
-function Get-Square {
+do {
+  $tries++
+  $ok = Try-Login
+} until ($ok -or $tries -ge 3)</code></pre>
+
+          <h3>Loop control</h3>
+          <ul>
+            <li><b>break</b> — exit current loop (or switch case).</li>
+            <li><b>continue</b> — skip to next iteration.</li>
+            <li><b>break LABEL / continue LABEL</b> — target an outer labeled loop (<code>:outer foreach (...)</code>).</li>
+            <li><b>return</b> — exit a function; returns the supplied value AND any prior implicit output of that function.</li>
+          </ul>
+
+          <h2>Functions</h2>
+
+          <h3>Basic function</h3>
+          <pre><code>function Get-Square {
   param([int]$n)
   return $n * $n
 }
-Get-Square -n 7    # 49
+Get-Square -n 7        # 49
+Get-Square 7           # positional</code></pre>
+          <p><b>Return value rule:</b> in PowerShell, EVERY uncaptured expression in the function body becomes output. <code>return</code> is rarely needed and is mostly a flow-control jump. Avoid <code>return $x</code> followed by more code — that code never runs but is misleading.</p>
 
-# Advanced function
-function Get-Status {
-  [CmdletBinding()]
+          <h3>Parameter declaration</h3>
+          <pre><code>function Do-Thing {
   param(
-    [Parameter(Mandatory)][string]$Name,
-    [switch]$Verbose
+    [string]$Name,                                 # untyped default
+    [int]$Count = 1,                               # default value
+    [string[]]$Tags,                               # typed array
+    [switch]$Force                                  # flag (no value)
   )
+  ...
+}</code></pre>
+
+          <h3>Advanced function — the [CmdletBinding()] superpowers</h3>
+          <pre><code>function Get-MyStatus {
+  [CmdletBinding(SupportsShouldProcess, ConfirmImpact='High')]
+  param(
+    [Parameter(Mandatory, Position=0, ValueFromPipeline,
+               ValueFromPipelineByPropertyName, HelpMessage='Service name')]
+    [ValidateNotNullOrEmpty()]
+    [Alias('ComputerName')]
+    [string[]]$Name,
+
+    [Parameter()]
+    [ValidateSet('Started','Stopped','Paused')]
+    [string]$ExpectedStatus = 'Started',
+
+    [Parameter()]
+    [ValidateRange(1, 60)]
+    [int]$TimeoutSec = 10,
+
+    [Parameter()]
+    [ValidatePattern('^\\S+\\.\\S+$')]
+    [string]$Pattern,
+
+    [Parameter()]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$Path
+  )
+  begin   { Write-Verbose "Starting $($MyInvocation.MyCommand.Name)" }
   process {
-    Write-Verbose "Checking $Name"
-    Get-Service -Name $Name -ErrorAction SilentlyContinue
+    foreach ($n in $Name) {
+      if ($PSCmdlet.ShouldProcess($n, 'Stop service')) {
+        Get-Service -Name $n -ErrorAction Stop
+      }
+    }
+  }
+  end     { Write-Verbose 'Done' }
+}</code></pre>
+          <p><b>What you get with <code>[CmdletBinding()]</code>:</b></p>
+          <ul>
+            <li>All Common Parameters automatic: <code>-Verbose</code>, <code>-Debug</code>, <code>-ErrorAction</code>, <code>-WarningAction</code>, <code>-WhatIf</code>, <code>-Confirm</code>, etc.</li>
+            <li><code>$PSCmdlet</code> automatic variable — gives access to <code>WriteVerbose</code>, <code>ShouldProcess</code>, etc.</li>
+            <li>Pipeline input support via <code>ValueFromPipeline</code> / <code>ValueFromPipelineByPropertyName</code>.</li>
+            <li>The <code>begin</code> / <code>process</code> / <code>end</code> block model — same as real cmdlets.</li>
+            <li>Validation attributes — fail fast on bad input.</li>
+          </ul>
+
+          <h3>Validation attributes (memorize)</h3>
+          <ul>
+            <li><b>[ValidateNotNull()]</b> / <b>[ValidateNotNullOrEmpty()]</b> — reject null / empty.</li>
+            <li><b>[ValidateSet('A','B','C')]</b> — only these values; gives tab completion.</li>
+            <li><b>[ValidateRange(min,max)]</b> — numeric range.</li>
+            <li><b>[ValidateLength(min,max)]</b> — string length.</li>
+            <li><b>[ValidatePattern('regex')]</b> — must match regex.</li>
+            <li><b>[ValidateScript({ ... })]</b> — arbitrary boolean check (e.g., file exists).</li>
+            <li><b>[ValidateCount(min,max)]</b> — array element count.</li>
+            <li><b>[AllowNull()]</b> / <b>[AllowEmptyString()]</b> / <b>[AllowEmptyCollection()]</b> — allow when paired with Mandatory.</li>
+          </ul>
+
+          <h3>Parameter sets — mutually exclusive parameter groups</h3>
+          <pre><code>function Get-Thing {
+  [CmdletBinding(DefaultParameterSetName='ByName')]
+  param(
+    [Parameter(ParameterSetName='ByName', Mandatory)][string]$Name,
+    [Parameter(ParameterSetName='ById',   Mandatory)][int]$Id
+  )
+  switch ($PSCmdlet.ParameterSetName) {
+    'ByName' { "lookup by name $Name" }
+    'ById'   { "lookup by id $Id" }
   }
 }</code></pre>
+
+          <h3>Pipeline-aware function (process block)</h3>
+          <pre><code>function Convert-ToMB {
+  param([Parameter(ValueFromPipeline)][long]$Bytes)
+  process { [math]::Round($Bytes / 1MB, 2) }
+}
+Get-ChildItem -File | Select-Object -ExpandProperty Length | Convert-ToMB</code></pre>
+
+          <h3>Splatting — pass parameters as a hashtable</h3>
+          <pre><code>$params = @{
+  Path        = 'C:\\Logs'
+  Filter      = '*.log'
+  Recurse     = $true
+  ErrorAction = 'SilentlyContinue'
+}
+Get-ChildItem @params</code></pre>
+          <p><b>Why use splatting:</b> long parameter lists become readable; reuse the same hashtable across multiple calls; build parameters conditionally.</p>
+
+          <h2>Scope</h2>
+          <p>PowerShell uses lexical scoping: <b>Global</b>, <b>Script</b> (current .ps1 file), <b>Function</b> (current function/block), <b>Local</b>. Use <code>$script:var</code> to reach the script scope; <code>$global:var</code> for global (rarely a good idea).</p>
+
+          <h2>Error handling preview (full lesson later)</h2>
+          <pre><code>try {
+  Get-Item NoSuchFile -ErrorAction Stop
+}
+catch [System.IO.FileNotFoundException] {
+  "file missing"
+}
+catch {
+  "other error: $_"
+}
+finally {
+  "cleanup runs always"
+}</code></pre>
+          <p><b>Critical:</b> <code>try/catch</code> only fires on <b>terminating</b> errors. Most cmdlets emit non-terminating errors — add <code>-ErrorAction Stop</code> to force them into the catch.</p>
+
+          <h2>Comment-based help</h2>
+          <p>Put a special comment block above a function and <code>Get-Help</code> automatically formats it. Tags: <code>.SYNOPSIS</code>, <code>.DESCRIPTION</code>, <code>.PARAMETER Name</code>, <code>.EXAMPLE</code>, <code>.INPUTS</code>, <code>.OUTPUTS</code>, <code>.NOTES</code>, <code>.LINK</code>.</p>
+          <pre><code>&lt;#
+.SYNOPSIS
+  Compute squared value.
+.DESCRIPTION
+  Long form description.
+.PARAMETER n
+  Number to square.
+.EXAMPLE
+  Get-Square -n 4
+  16
+#&gt;
+function Get-Square { param([int]$n) $n*$n }</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>CmdletBinding</b> — attribute turning a function into an "advanced function".</li>
+            <li><b>ShouldProcess / -WhatIf / -Confirm</b> — safety harness for destructive actions.</li>
+            <li><b>splatting</b> — passing a hashtable/array as parameters with <code>@</code>.</li>
+            <li><b>parameter set</b> — named group of mutually exclusive parameters.</li>
+            <li><b>$PSCmdlet</b> — auto variable inside advanced functions; gateway to ShouldProcess, ParameterSetName.</li>
+            <li><b>begin / process / end</b> — block lifecycle for pipeline-aware functions.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Every expression in a function = output. Do NOT debug with <code>Write-Host</code>; it bypasses streams (use <code>Write-Verbose</code>).</li>
+            <li><code>return</code> in PowerShell does not "purify" earlier output — it just stops execution.</li>
+            <li>Pipeline-aware functions need <code>process</code> block — without it, only the LAST piped object is seen.</li>
+            <li><code>foreach</code> statement loads everything; <code>ForEach-Object</code> streams. Choose based on memory.</li>
+            <li><code>switch -Regex</code> populates <code>$Matches</code>; numeric groups by index, named groups with <code>(?&lt;name&gt;...)</code>.</li>
+            <li>Splat key names must EXACTLY match parameter names (or aliases); typos pass silently as positional or fail with "unbound argument".</li>
+          </ul>
         `
       },
       {
         title: '5. Files, Registry, Providers',
         body: `
-          <pre><code># Files / dirs
-Get-ChildItem -Path C:\\Logs -Recurse -Filter *.log
-New-Item -Path .\\report.txt -ItemType File
-Set-Content -Path .\\report.txt -Value "hello"
-Add-Content -Path .\\report.txt -Value "line 2"
-Get-Content .\\report.txt
-Test-Path .\\report.txt
-Copy-Item src dst
-Move-Item src dst
-Remove-Item .\\report.txt -Confirm:$false
+          <h2>The unified provider model</h2>
+          <p>PowerShell exposes <i>any</i> hierarchical data store (filesystem, registry, env vars, certificates, IIS metabase, AD, SQL, WSMan config) as a navigable <b>PSDrive</b>. Same cmdlets — <code>Get-ChildItem</code>, <code>Get-Item</code>, <code>Set-Item</code>, <code>New-Item</code>, <code>Remove-Item</code>, <code>Copy-Item</code>, <code>Move-Item</code>, <code>Test-Path</code> — work everywhere. List drives with <code>Get-PSDrive</code>; list installed providers with <code>Get-PSProvider</code>.</p>
+          <pre><code>Get-PSProvider           # Alias, Environment, FileSystem, Function, Registry, Variable, Certificate
+Get-PSDrive              # all mounted drives including custom New-PSDrive ones</code></pre>
 
-# Encoding (avoid UTF-16 BOM surprises in PS 5.1)
-Out-File -FilePath data.txt -Encoding utf8
+          <h2>FileSystem provider — daily driver</h2>
+          <h3>Listing + filtering</h3>
+          <pre><code>Get-ChildItem                                            # current dir
+Get-ChildItem C:\\Logs -Recurse                          # recurse
+Get-ChildItem C:\\Logs -Recurse -Filter *.log            # provider-side filter (fast)
+Get-ChildItem -Force                                     # include hidden + system
+Get-ChildItem -File / -Directory                         # filter by item type
+Get-ChildItem -Recurse -Depth 2                          # limit recursion depth (PS5+)
+Get-ChildItem -Include *.log,*.txt -Recurse -Path C:\\Logs\\*</code></pre>
+          <p><b>-Filter vs -Include:</b> <code>-Filter</code> is one provider-evaluated pattern, pushed down to the filesystem (way faster on big trees); <code>-Include</code> is client-side and accepts arrays, but requires <code>-Recurse</code> or a wildcard <code>Path</code>.</p>
 
-# Registry as a drive
-Get-ChildItem HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
-Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*  |
-  Select-Object DisplayName, DisplayVersion
+          <h3>Reading + writing</h3>
+          <pre><code>Get-Content app.log                                      # array of lines
+Get-Content app.log -Raw                                 # one big string (preserves newlines)
+Get-Content app.log -TotalCount 100                      # head 100 lines
+Get-Content app.log -Tail 20                             # tail 20
+Get-Content app.log -Wait                                # tail -f equivalent
+Get-Content data.txt -Encoding utf8                      # specify encoding
 
-# Environment
-$env:USERNAME
+Set-Content report.txt "hello"                           # overwrite
+Add-Content report.txt "line 2"                          # append
+"line 3" | Out-File report.txt -Append -Encoding utf8</code></pre>
+
+          <h3>Encoding (the #1 file gotcha)</h3>
+          <ul>
+            <li><b>Windows PowerShell 5.1</b> default = <b>UTF-16 LE with BOM</b> for <code>Out-File</code> / <code>Set-Content</code>. Surprises every cross-platform script. Always pass <code>-Encoding utf8</code> explicitly.</li>
+            <li><b>PowerShell 7+</b> default = <b>UTF-8 without BOM</b>. Saner; matches the rest of the world.</li>
+            <li>Encodings to know: <code>utf8</code>, <code>utf8NoBOM</code>, <code>utf8BOM</code>, <code>unicode</code> (UTF-16 LE), <code>bigendianunicode</code>, <code>ascii</code>, <code>default</code> (system code page), <code>oem</code>.</li>
+            <li>Read with explicit encoding too: <code>Get-Content file -Encoding utf8</code>. Mismatches cause garbled non-ASCII characters.</li>
+          </ul>
+
+          <h3>Create / copy / move / delete</h3>
+          <pre><code>New-Item .\\report.txt -ItemType File
+New-Item .\\reports -ItemType Directory
+Copy-Item src.txt dst.txt
+Copy-Item .\\reports .\\backup -Recurse
+Move-Item src.txt subdir\\
+Remove-Item report.txt -Force
+Remove-Item .\\reports -Recurse -Force
+Rename-Item old.txt new.txt</code></pre>
+
+          <h3>WhatIf / Confirm safety harness</h3>
+          <p>Any cmdlet that supports ShouldProcess (most -Item ones) accepts <code>-WhatIf</code> (preview) and <code>-Confirm</code> (interactive yes/no). Use BEFORE destructive operations.</p>
+          <pre><code>Remove-Item *.tmp -WhatIf       # shows what WOULD be removed, removes nothing
+Remove-Item *.tmp -Confirm      # prompts per file</code></pre>
+
+          <h3>Path manipulation</h3>
+          <pre><code>Test-Path C:\\Logs                                       # boolean exists check
+Test-Path C:\\Logs -PathType Container                   # must be a directory
+Resolve-Path .\\subdir                                    # to absolute
+Split-Path C:\\dir\\file.txt -Parent                     # C:\\dir
+Split-Path C:\\dir\\file.txt -Leaf                       # file.txt
+Split-Path C:\\dir\\file.txt -LeafBase                   # file
+Split-Path C:\\dir\\file.txt -Extension                  # .txt
+Join-Path C:\\dir subdir\\file.txt                       # cross-platform safe joiner
+[System.IO.Path]::GetTempFileName()                       # temp file path</code></pre>
+
+          <h3>File metadata</h3>
+          <pre><code>Get-Item file.txt | Select-Object FullName, Length, LastWriteTime, CreationTime, Attributes
+(Get-Item file.txt).VersionInfo                          # for executables
+Get-ChildItem -Hidden                                    # show hidden
+Get-FileHash file.zip -Algorithm SHA256                  # integrity check
+Get-Acl file.txt                                         # ACL / NTFS permissions
+Set-Acl                                                  # apply ACL</code></pre>
+
+          <h3>Streams + ADS (NTFS alternate data streams)</h3>
+          <pre><code>Get-Content file.exe -Stream Zone.Identifier             # MOTW (Mark of the Web)
+Unblock-File downloaded.ps1                              # strips Zone.Identifier
+Get-Item file.exe -Stream *                              # list all streams</code></pre>
+
+          <h2>Registry provider — HKLM: / HKCU: / HKCR: / HKU: / HKCC:</h2>
+          <p><b>Important:</b> Use the PSDrive prefix (<code>HKLM:\\SOFTWARE\\...</code>) — <b>not</b> the raw <code>HKEY_LOCAL_MACHINE\\...</code> path. The PSDrives map to the hives:</p>
+          <ul>
+            <li><b>HKLM:</b> — HKEY_LOCAL_MACHINE (machine-wide).</li>
+            <li><b>HKCU:</b> — HKEY_CURRENT_USER (per-user).</li>
+            <li><b>HKCR:</b> — HKEY_CLASSES_ROOT (file associations, ProgIDs).</li>
+            <li><b>HKU:</b> — HKEY_USERS (all loaded user profiles).</li>
+            <li><b>HKCC:</b> — HKEY_CURRENT_CONFIG.</li>
+          </ul>
+
+          <h3>Reading</h3>
+          <pre><code>Get-ChildItem HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
+Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run
+Get-ItemPropertyValue HKLM:\\... -Name OneDrive
+
+# Find installed apps via uninstall keys (both 64- and 32-bit views)
+Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* |
+  Where-Object DisplayName | Select-Object DisplayName, DisplayVersion, Publisher
+Get-ItemProperty HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* |
+  Where-Object DisplayName | Select-Object DisplayName, DisplayVersion</code></pre>
+
+          <h3>Writing</h3>
+          <pre><code>New-Item -Path HKCU:\\Software\\MyApp -Force
+New-ItemProperty -Path HKCU:\\Software\\MyApp -Name Mode -Value 'Dark' -PropertyType String
+Set-ItemProperty -Path HKCU:\\Software\\MyApp -Name Mode -Value 'Light'
+Remove-ItemProperty -Path HKCU:\\Software\\MyApp -Name Mode
+Remove-Item -Path HKCU:\\Software\\MyApp -Recurse</code></pre>
+          <p><b>PropertyType values:</b> <code>String</code>, <code>ExpandString</code> (REG_EXPAND_SZ), <code>Binary</code>, <code>DWord</code>, <code>QWord</code>, <code>MultiString</code> (REG_MULTI_SZ).</p>
+          <p><b>Privilege note:</b> writing under HKLM requires elevation (Run as Administrator).</p>
+
+          <h2>Environment variables — Env: drive</h2>
+          <pre><code>$env:USERNAME                            # read
 $env:PATH
-$env:NEW_VAR = "value"</code></pre>
-          <h2>Providers</h2>
-          <p>Drives like <code>HKLM:</code>, <code>Env:</code>, <code>Cert:</code>, <code>WSMan:</code> let you navigate registry, env vars, certs the same way you navigate <code>C:</code>.</p>
+$env:NEW_VAR = "value"                   # process-scope only (dies with shell)
+Get-ChildItem Env:                       # list all
+Get-Item Env:USERNAME
+
+# Persistent (machine / user) — use .NET
+[Environment]::SetEnvironmentVariable('FOO', 'bar', 'User')
+[Environment]::SetEnvironmentVariable('FOO', 'bar', 'Machine')   # needs admin
+[Environment]::GetEnvironmentVariable('PATH', 'Machine')</code></pre>
+          <p><b>Critical:</b> setting <code>$env:VAR</code> only affects the current process. Child shells inherit, but a new shell session does not. Use <code>[Environment]::SetEnvironmentVariable</code> with scope User or Machine for persistence; new sessions pick it up.</p>
+
+          <h2>Other useful providers</h2>
+          <ul>
+            <li><b>Cert:</b> — certificate stores: <code>Get-ChildItem Cert:\\LocalMachine\\My</code>, <code>Get-Item Cert:\\CurrentUser\\Root\\&lt;thumbprint&gt;</code>. Pair with <code>Import-PfxCertificate</code> / <code>Export-PfxCertificate</code>.</li>
+            <li><b>Function:</b> + <b>Alias:</b> — defined functions / aliases. <code>dir function:</code> lists every function.</li>
+            <li><b>Variable:</b> — your variables. <code>Remove-Item variable:foo</code>.</li>
+            <li><b>WSMan:</b> — WinRM configuration.</li>
+            <li><b>AD:</b> — Active Directory (with ActiveDirectory module).</li>
+            <li><b>IIS:</b> — IIS webserver (WebAdministration module).</li>
+          </ul>
+
+          <h2>Custom PSDrive</h2>
+          <pre><code>New-PSDrive -Name Logs -PSProvider FileSystem -Root C:\\App\\Logs
+Get-ChildItem Logs:\\
+Remove-PSDrive -Name Logs</code></pre>
+
+          <h2>Item vs ItemProperty (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse" border="1" cellpadding="4">
+            <tr><th>Concept</th><th>FileSystem</th><th>Registry</th></tr>
+            <tr><td><b>Item</b></td><td>file or directory</td><td>registry KEY</td></tr>
+            <tr><td><b>ItemProperty</b></td><td>file attribute (LastWriteTime, Length)</td><td>registry VALUE under a key</td></tr>
+          </table>
+          <p>So in the registry: <code>Get-Item HKCU:\\Software\\MyApp</code> returns the key; <code>Get-ItemProperty HKCU:\\Software\\MyApp</code> returns the values under it.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>PSDrive / PSProvider</b> — the abstraction + the implementation.</li>
+            <li><b>BOM</b> — Byte Order Mark; UTF-16 always has one, UTF-8 optional.</li>
+            <li><b>MOTW</b> — Mark of the Web; NTFS Zone.Identifier stream from downloaded files.</li>
+            <li><b>ADS</b> — Alternate Data Stream (NTFS feature).</li>
+            <li><b>ACL</b> — Access Control List (NTFS permissions).</li>
+            <li><b>REG_SZ / REG_EXPAND_SZ / REG_DWORD / REG_QWORD / REG_BINARY / REG_MULTI_SZ</b> — registry value types.</li>
+            <li><b>HKLM / HKCU / HKCR / HKU / HKCC</b> — registry hives.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Default encoding differs between PS 5.1 (UTF-16 BOM) and PS 7 (UTF-8 no BOM). Always pass <code>-Encoding</code> explicitly in scripts.</li>
+            <li><code>-Include</code> needs a wildcard <code>Path</code> or <code>-Recurse</code>. Otherwise it silently matches nothing.</li>
+            <li>Registry writes to HKLM require admin elevation; HKCU does not.</li>
+            <li><code>$env:VAR = 'x'</code> is process-scoped only. For permanent, use <code>[Environment]::SetEnvironmentVariable</code>.</li>
+            <li>UAC-elevated shell sees different HKCU than the user's normal shell — they are different SIDs.</li>
+            <li>32-bit installers register under <code>HKLM:\\SOFTWARE\\WOW6432Node</code> on 64-bit Windows — always check both views.</li>
+            <li><code>Remove-Item -Recurse -Force</code> on a deep path is destructive — preview with <code>-WhatIf</code> first.</li>
+          </ul>
         `
       },
       {
         title: '6. Working with Services, Processes, Events',
         body: `
-          <pre><code># Services
-Get-Service
+          <h2>Why this lesson</h2>
+          <p>Services, processes, scheduled tasks, event logs, and perf counters are the day-to-day surface area of Windows administration. PowerShell wraps each as a typed object family with consistent verbs. Master these cmdlets and most "look at the server / make this stop / why did it crash" jobs collapse to one-liners.</p>
+
+          <h2>Services — Windows service control</h2>
+          <p><b>What is a service?</b> A Windows <b>service</b> is a long-running background process managed by the Service Control Manager (SCM), started before users log on, hosted under a service account (LocalSystem, NetworkService, LocalService, or a domain/MSA account). Examples: <code>Spooler</code> (print), <code>W32Time</code> (clock), <code>wuauserv</code> (Windows Update), <code>MSSQLSERVER</code> (SQL).</p>
+          <pre><code>Get-Service                                              # all services
 Get-Service spooler
+Get-Service -Name 'W*'                                   # name wildcard
+Get-Service -DisplayName 'Windows Update'
+Get-Service | Where-Object Status -eq 'Running'
+
 Start-Service spooler
 Stop-Service spooler -Force
 Restart-Service spooler
+Suspend-Service / Resume-Service                          # pause if supported
+
 Set-Service -Name spooler -StartupType Automatic
+Set-Service -Name spooler -StartupType AutomaticDelayedStart  # PS6+
+Set-Service -Name spooler -StartupType Disabled
 
-# Processes
-Get-Process
+# Cross-machine (uses RPC, requires admin on target)
+Get-Service -ComputerName SERVER01 -Name spooler
+
+# New-Service / Remove-Service (admin)
+New-Service -Name MyAgent -BinaryPathName 'C:\\Tools\\agent.exe' -DisplayName 'My Agent' -StartupType Automatic
+Remove-Service -Name MyAgent</code></pre>
+
+          <h3>StartupType values + service account</h3>
+          <ul>
+            <li><b>Automatic</b> — start at boot.</li>
+            <li><b>AutomaticDelayedStart</b> — start ~2 min after boot so the login flow stays fast.</li>
+            <li><b>Manual</b> — start on demand.</li>
+            <li><b>Disabled</b> — cannot start (admin block).</li>
+          </ul>
+          <p>Service accounts (in property <code>StartName</code>): <code>LocalSystem</code> = highest local privilege; <code>NT AUTHORITY\\NetworkService</code> = network-capable with low privs; <code>NT AUTHORITY\\LocalService</code> = lowest; <code>DOMAIN\\gMSA$</code> = group Managed Service Account (preferred for prod). Read full details via WMI/CIM (next lesson):</p>
+          <pre><code>Get-CimInstance Win32_Service -Filter "Name='spooler'" |
+  Select-Object Name, StartName, ProcessId, StartMode, State, PathName</code></pre>
+
+          <h2>Processes — running programs</h2>
+          <pre><code>Get-Process                                              # all
 Get-Process notepad
-Stop-Process -Name notepad -Force
-Start-Process notepad
-Wait-Process -Id 1234
+Get-Process -Id 1234
+Get-Process | Sort-Object CPU -Descending | Select-Object -First 5
+Get-Process | Where-Object WorkingSet -gt 500MB
 
-# Event log
+# Useful columns: Id, Name, CPU, WS (Working Set), VM (Virtual Mem), Handles, Threads, StartTime, Path
+Get-Process notepad | Format-List Id, Name, Path, StartTime, Company, CPU
+
+Start-Process notepad
+Start-Process -FilePath 'C:\\Tools\\app.exe' -ArgumentList '/quiet','/log'
+Start-Process powershell -Verb RunAs                     # elevated (UAC prompt)
+Start-Process notepad -Wait                              # block until exit
+$p = Start-Process notepad -PassThru                     # capture process object
+$p.WaitForExit()
+$p.ExitCode
+
+Stop-Process -Name notepad -Force
+Stop-Process -Id 1234
+
+Wait-Process -Id 1234 -Timeout 30                        # block until exit or timeout
+Debug-Process -Name app                                   # attach a debugger</code></pre>
+          <p><b>Note:</b> <code>Get-Process -IncludeUserName</code> needs admin. <code>Start-Process -Credential</code> can launch a process as another user (interactive sessions are limited by Windows).</p>
+
+          <h2>Scheduled tasks (Task Scheduler)</h2>
+          <p>Modern <code>ScheduledTasks</code> module (Server 2012+, Windows 8+) replaces the old <code>schtasks.exe</code>.</p>
+          <pre><code>Get-ScheduledTask
+Get-ScheduledTask -TaskName 'GoogleUpdateTaskMachineUA'
+Get-ScheduledTaskInfo -TaskName 'Backup'                 # last run + next run
+
+# Create
+$action  = New-ScheduledTaskAction  -Execute 'pwsh' -Argument '-File C:\\jobs\\backup.ps1'
+$trigger = New-ScheduledTaskTrigger -Daily -At 2am
+$prin    = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+$set     = New-ScheduledTaskSettingsSet -StartWhenAvailable
+Register-ScheduledTask -TaskName 'NightlyBackup' -Action $action -Trigger $trigger -Principal $prin -Settings $set
+
+# Run / unregister
+Start-ScheduledTask -TaskName 'NightlyBackup'
+Stop-ScheduledTask  -TaskName 'NightlyBackup'
+Unregister-ScheduledTask -TaskName 'NightlyBackup' -Confirm:$false</code></pre>
+
+          <h2>Event logs — investigate what happened</h2>
+          <p>Two cmdlets:</p>
+          <ul>
+            <li><b>Get-EventLog</b> — legacy <i>classic</i> logs only (Application, System, Security, Setup, ForwardedEvents). Windows PowerShell 5.1 only; not in PS 7.</li>
+            <li><b>Get-WinEvent</b> — modern; reads classic AND Crimson/ETW channels (thousands of provider-specific logs). <b>Use this.</b></li>
+          </ul>
+
+          <h3>Common patterns</h3>
+          <pre><code>Get-WinEvent -ListLog *                                   # all log names
+Get-WinEvent -ListLog System | Format-List
 Get-WinEvent -LogName System -MaxEvents 50
+
+# FAST filtering: use -FilterHashtable (server-side, like WHERE in SQL)
 Get-WinEvent -FilterHashtable @{
-  LogName='Security'
-  Id=4625              # failed logon
-  StartTime=(Get-Date).AddDays(-1)
+  LogName   = 'Security'
+  Id        = 4625                                       # failed logon
+  StartTime = (Get-Date).AddDays(-1)
 }
 
-# Performance counters
-Get-Counter '\\Processor(_Total)\\% Processor Time' -SampleInterval 1 -MaxSamples 5</code></pre>
+Get-WinEvent -FilterHashtable @{
+  LogName  = 'System'
+  Level    = 1,2                                          # Critical + Error
+  StartTime= (Get-Date).AddHours(-6)
+}
+
+# Slow but flexible: Where-Object (client-side)
+Get-WinEvent -LogName Application -MaxEvents 1000 |
+  Where-Object { $_.LevelDisplayName -eq 'Error' -and $_.ProviderName -like 'MSSQL*' }
+
+# XPath filter for advanced cases
+Get-WinEvent -LogName Security -FilterXPath "*[System[EventID=4624 and TimeCreated[timediff(@SystemTime) &lt;= 3600000]]]"</code></pre>
+
+          <h3>High-value Event IDs to memorize</h3>
+          <ul>
+            <li><b>Security 4624</b> — successful logon.</li>
+            <li><b>Security 4625</b> — failed logon (brute force / wrong password).</li>
+            <li><b>Security 4634 / 4647</b> — logoff / user-initiated logoff.</li>
+            <li><b>Security 4672</b> — special privileges assigned (admin token).</li>
+            <li><b>Security 4688</b> — process creation (if audit enabled).</li>
+            <li><b>Security 4720 / 4726</b> — account created / deleted.</li>
+            <li><b>Security 4728 / 4732 / 4756</b> — added to security group.</li>
+            <li><b>System 41</b> — unexpected shutdown (kernel power).</li>
+            <li><b>System 1074</b> — clean shutdown / restart initiated by user/service.</li>
+            <li><b>System 6005 / 6006</b> — event log started / stopped (boot / shutdown).</li>
+            <li><b>System 7036</b> — service entered Running/Stopped state.</li>
+            <li><b>Application 1000</b> — app crash; <b>1001</b> WER report.</li>
+            <li><b>PowerShell 4104</b> — script-block logging (very useful for IR).</li>
+          </ul>
+
+          <h3>Write your own events</h3>
+          <pre><code>New-EventLog -LogName Application -Source 'MyApp'
+Write-EventLog -LogName Application -Source 'MyApp' -EntryType Error -EventId 1001 -Message 'Job failed: timeout'</code></pre>
+
+          <h2>Performance counters — real-time + historical telemetry</h2>
+          <pre><code># Current value(s)
+Get-Counter '\\Processor(_Total)\\% Processor Time' -SampleInterval 1 -MaxSamples 5
+Get-Counter '\\Memory\\Available MBytes'
+
+# Multiple counters with continuous sampling
+$paths = '\\Processor(_Total)\\% Processor Time','\\Memory\\Available MBytes','\\LogicalDisk(C:)\\% Free Space'
+Get-Counter -Counter $paths -SampleInterval 5 -MaxSamples 10 -Continuous
+
+# List available counters
+Get-Counter -ListSet *                                    # every counter set
+Get-Counter -ListSet 'Processor' | Select-Object -ExpandProperty Paths</code></pre>
+          <p>Counter paths look like <code>\\Object(Instance)\\Counter</code>. Use a backslash, an object name, optional instance in parens, then the counter. <code>_Total</code> aggregates all instances.</p>
+
+          <h2>Reboots / shutdowns</h2>
+          <pre><code>Restart-Computer                                         # local
+Restart-Computer -ComputerName SRV1,SRV2 -Force -Wait -Timeout 600
+Stop-Computer
+Test-Connection SRV1 -Count 1                            # quick reachability</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>SCM</b> — Service Control Manager.</li>
+            <li><b>MSA / gMSA</b> — Managed / Group Managed Service Account.</li>
+            <li><b>WER</b> — Windows Error Reporting.</li>
+            <li><b>ETW</b> — Event Tracing for Windows; modern event channels are ETW-based.</li>
+            <li><b>SID</b> — Security Identifier (S-1-5-...).</li>
+            <li><b>WMI / CIM</b> — Windows Management Instrumentation / Common Information Model (next lesson).</li>
+            <li><b>UAC</b> — User Account Control; needed for elevation.</li>
+            <li><b>RPC</b> — Remote Procedure Call; how <code>-ComputerName</code> reaches remote SCM.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li><code>Set-Service -StartupType</code> requires admin and may need the SCM to refresh; verify with <code>Get-Service | Select StartType</code>.</li>
+            <li><code>Stop-Process -Force</code> kills uncleanly — data loss possible. Prefer graceful (<code>Stop-Service</code> for services, <code>CloseMainWindow()</code> for GUI apps).</li>
+            <li><code>Get-Process</code> alone does NOT return CPU instantly — first sample is the lifetime total; for current rate use <code>Get-Counter</code>.</li>
+            <li><code>-FilterHashtable</code> is ~100× faster than piping <code>Get-WinEvent</code> output through <code>Where-Object</code>; always prefer it.</li>
+            <li>Security log access requires admin + the SeSecurityPrivilege; otherwise you get "no events were found".</li>
+            <li><code>Get-EventLog</code> is gone in PS 7 — scripts must use <code>Get-WinEvent</code>.</li>
+            <li><code>schtasks.exe</code> still works but pre-dates objects — prefer the <code>ScheduledTasks</code> module for any new code.</li>
+          </ul>
         `
       },
       {
         title: '7. Networking & WMI/CIM',
         body: `
-          <pre><code># Network basics
-Test-Connection google.com -Count 4
-Test-NetConnection www.microsoft.com -Port 443
-Resolve-DnsName github.com
-Get-NetIPAddress
-Get-NetAdapter
-Get-NetRoute
+          <h2>Why this lesson</h2>
+          <p>Helpdesk + sysadmin work lives on two surfaces: <b>the network stack</b> (TCP/IP, DNS, routes, firewalls, REST calls) and <b>system inventory</b> (CPU, RAM, BIOS, disks, OS, network adapters). PowerShell wraps the first with the <b>Net*</b> cmdlets and the second with <b>CIM/WMI</b>. Master both and you can diagnose any "is it up?", "what's installed?", or "why can't I reach X?" without leaving the shell.</p>
 
-# REST API
-$resp = Invoke-RestMethod -Uri "https://api.github.com/repos/microsoft/PowerShell"
+          <h2>Connectivity testing</h2>
+
+          <h3>Test-Connection — ICMP ping (and more)</h3>
+          <pre><code>Test-Connection google.com -Count 4
+Test-Connection google.com -Quiet                        # boolean
+Test-Connection google.com -Count 1 -TimeoutSeconds 2
+Test-Connection -TargetName 'SRV1','SRV2','SRV3'         # batch
+
+# PS7+ extras
+Test-Connection google.com -Traceroute                   # full traceroute object
+Test-Connection google.com -MtuSize                      # path MTU discovery
+Test-Connection 8.8.8.8 -Repeat                          # continuous (Ctrl+C to stop)</code></pre>
+          <p><b>What:</b> wraps ICMP echo (the classic <code>ping</code>). <b>Why:</b> verify reachability + round-trip latency. <b>Limitation:</b> ICMP often blocked at firewalls — failure ≠ host down.</p>
+
+          <h3>Test-NetConnection — TCP-level reachability</h3>
+          <p>Windows-only, more useful than ping for real services.</p>
+          <pre><code>Test-NetConnection www.microsoft.com -Port 443           # specific port (TCP handshake)
+Test-NetConnection 8.8.8.8 -CommonTCPPort HTTP           # HTTP/RDP/SMB/WINRM/PING shortcuts
+Test-NetConnection www.microsoft.com -InformationLevel Detailed
+Test-NetConnection -ComputerName SRV1 -DiagnoseRouting   # local interface + route</code></pre>
+          <p>Returns <code>TcpTestSucceeded</code> (boolean) — the property to gate on. Replace shell scripts that grep nmap output.</p>
+
+          <h3>Resolve-DnsName — DNS lookup</h3>
+          <pre><code>Resolve-DnsName github.com
+Resolve-DnsName github.com -Type MX                      # mail records
+Resolve-DnsName github.com -Type TXT
+Resolve-DnsName github.com -Server 1.1.1.1               # bypass local resolver
+Resolve-DnsName github.com -DnsOnly                      # skip hosts file / cache
+Resolve-DnsName -Name _kerberos._tcp.contoso.com -Type SRV</code></pre>
+          <p>Replaces <code>nslookup</code> with proper object output (Address, Type, TTL, Section).</p>
+
+          <h3>Net* adapters / IP / routes</h3>
+          <pre><code>Get-NetAdapter                                           # NIC list
+Get-NetAdapter | Where-Object Status -eq 'Up' | Format-Table Name, MacAddress, LinkSpeed
+Get-NetAdapter Ethernet | Restart-NetAdapter
+
+Get-NetIPAddress                                         # IPv4 + IPv6 addresses
+Get-NetIPAddress -AddressFamily IPv4
+Get-NetIPConfiguration                                   # combined view: adapter + IP + gateway + DNS
+
+Get-NetRoute -AddressFamily IPv4                         # routing table
+Get-DnsClientServerAddress                               # configured DNS servers
+
+# Modify (admin)
+New-NetIPAddress -InterfaceIndex 12 -IPAddress 10.0.0.5 -PrefixLength 24 -DefaultGateway 10.0.0.1
+Set-DnsClientServerAddress -InterfaceIndex 12 -ServerAddresses 1.1.1.1,8.8.8.8
+Remove-NetIPAddress -IPAddress 10.0.0.5
+
+# Firewall
+Get-NetFirewallProfile
+Get-NetFirewallRule -DisplayName '*Remote Desktop*'
+New-NetFirewallRule -DisplayName 'Allow App on 8080' -Direction Inbound -Protocol TCP -LocalPort 8080 -Action Allow
+
+# TCP sessions, listeners
+Get-NetTCPConnection -State Listen
+Get-NetTCPConnection -RemoteAddress 192.168.1.100</code></pre>
+
+          <h2>HTTP / REST from PowerShell</h2>
+
+          <h3>Invoke-WebRequest (web scraping / downloads)</h3>
+          <pre><code>$r = Invoke-WebRequest -Uri 'https://example.com'
+$r.StatusCode
+$r.Headers
+$r.Content                                               # raw body string
+$r.ParsedHtml                                            # IE-engine HTML DOM (PS 5.1 Windows only)
+
+Invoke-WebRequest -Uri 'https://example.com/file.zip' -OutFile .\\file.zip
+Invoke-WebRequest -Uri 'https://example.com/api' -Method POST -Body 'x=1&amp;y=2' -ContentType 'application/x-www-form-urlencoded'
+
+# Auth + retries (PS7+)
+Invoke-WebRequest -Uri $url -Authentication Bearer -Token (ConvertTo-SecureString $tok -AsPlainText -Force)
+Invoke-WebRequest -Uri $url -MaximumRetryCount 3 -RetryIntervalSec 5</code></pre>
+
+          <h3>Invoke-RestMethod (typed REST client)</h3>
+          <pre><code>$resp = Invoke-RestMethod -Uri 'https://api.github.com/repos/microsoft/PowerShell'
 $resp.full_name
 $resp.stargazers_count
 
-# Download
-Invoke-WebRequest -Uri "https://example.com/file.zip" -OutFile .\\file.zip
+# POST JSON
+$body = @{ name='alice'; role='admin' } | ConvertTo-Json
+Invoke-RestMethod -Uri 'https://api.example.com/users' -Method POST -Body $body -ContentType 'application/json'
 
-# CIM (replacement for WMI)
-Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture
+# Headers + bearer
+$headers = @{ Authorization = "Bearer $token"; Accept = 'application/json' }
+Invoke-RestMethod -Uri 'https://api.example.com/me' -Headers $headers
+
+# Pagination loop
+$next = 'https://api.example.com/items'
+while ($next) {
+  $r = Invoke-RestMethod -Uri $next
+  $r.items
+  $next = $r.next_page
+}</code></pre>
+          <p><b>Difference:</b> <code>Invoke-WebRequest</code> returns the full HTTP response object (status, headers, raw body). <code>Invoke-RestMethod</code> parses JSON / XML responses into PowerShell objects automatically. Use <i>WebRequest</i> when you need response metadata; <i>RestMethod</i> for clean API consumption.</p>
+
+          <h2>CIM vs WMI — the inventory layer</h2>
+          <p><b>Acronyms:</b> <b>WMI</b> = Windows Management Instrumentation (Microsoft's classic management API); <b>CIM</b> = Common Information Model (DMTF open standard WMI is based on). The classes are the same (<code>Win32_*</code>, <code>CIM_*</code>); the protocol differs.</p>
+          <ul>
+            <li><b>Get-WmiObject</b> (legacy) — uses DCOM over RPC. Removed in PowerShell 7. Avoid in new code.</li>
+            <li><b>Get-CimInstance</b> (modern) — uses WS-Management (WinRM) by default; falls back to DCOM via <code>New-CimSession</code>. Cross-platform (PS 7 talks to WS-MAN servers).</li>
+          </ul>
+          <p>Rule: always use <code>Get-CimInstance</code> in new scripts.</p>
+
+          <h3>Common classes (memorize)</h3>
+          <pre><code>Get-CimInstance Win32_OperatingSystem |
+  Select-Object Caption, Version, OSArchitecture, LastBootUpTime, InstallDate
+
+Get-CimInstance Win32_ComputerSystem |
+  Select-Object Manufacturer, Model, TotalPhysicalMemory, NumberOfLogicalProcessors
+
+Get-CimInstance Win32_BIOS |
+  Select-Object Manufacturer, SerialNumber, SMBIOSBIOSVersion
+
+Get-CimInstance Win32_Processor |
+  Select-Object Name, NumberOfCores, MaxClockSpeed
+
 Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" |
-  Select-Object DeviceID, @{n='FreeGB';e={[math]::Round($_.FreeSpace/1GB,2)}}
-Get-CimInstance Win32_BIOS | Select-Object Manufacturer, SerialNumber</code></pre>
+  Select-Object DeviceID, VolumeName,
+    @{ n='SizeGB'; e={ [math]::Round($_.Size/1GB,1) } },
+    @{ n='FreeGB'; e={ [math]::Round($_.FreeSpace/1GB,1) } },
+    @{ n='Used%';  e={ [math]::Round(($_.Size-$_.FreeSpace)/$_.Size*100,1) } }
+
+Get-CimInstance Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=TRUE' |
+  Select-Object Description, IPAddress, DefaultIPGateway, DNSServerSearchOrder, MACAddress
+
+Get-CimInstance Win32_Service -Filter "Name='spooler'" |
+  Select-Object Name, StartName, StartMode, State, PathName, ProcessId
+
+Get-CimInstance Win32_Product                            # installed MSIs (SLOW + triggers reconfig — see gotcha)
+Get-CimInstance Win32_QuickFixEngineering | Sort-Object InstalledOn -Descending  # hotfixes
+Get-CimInstance Win32_Volume -Filter 'DriveType=3'       # volumes (incl. mount points)</code></pre>
+
+          <h3>DriveType codes for Win32_LogicalDisk</h3>
+          <p><b>0</b>=Unknown, <b>1</b>=No root, <b>2</b>=Removable, <b>3</b>=Local fixed disk, <b>4</b>=Network drive, <b>5</b>=CD-ROM, <b>6</b>=RAM disk.</p>
+
+          <h3>Remote CIM sessions (WinRM)</h3>
+          <pre><code>$sess = New-CimSession -ComputerName SRV1,SRV2 -Credential (Get-Credential)
+Get-CimInstance -CimSession $sess Win32_LogicalDisk -Filter 'DriveType=3'
+Remove-CimSession $sess
+
+# Pre-PS7 / legacy targets (DCOM fallback)
+$opt = New-CimSessionOption -Protocol Dcom
+New-CimSession -ComputerName OLDBOX -SessionOption $opt</code></pre>
+
+          <h3>CIM methods (Invoke-CimMethod)</h3>
+          <pre><code># Reboot a remote machine via CIM
+Invoke-CimMethod -CimSession $sess -ClassName Win32_OperatingSystem -MethodName Reboot
+
+# Run a process on the remote host
+Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = 'notepad.exe' }</code></pre>
+
+          <h2>Namespaces, queries, filtering</h2>
+          <pre><code>Get-CimInstance -ClassName Win32_OperatingSystem -Namespace root\\cimv2
+Get-CimClass Win32_*                                     # list classes in a namespace
+
+# WQL query (SQL-like dialect)
+Get-CimInstance -Query "SELECT * FROM Win32_Service WHERE State='Running' AND StartMode='Auto'"</code></pre>
+          <p><b>Tip:</b> always pass <code>-Filter</code> (server-side) instead of piping into <code>Where-Object</code> (client-side). For Win32_LogicalDisk on a SAN host, the difference is seconds vs minutes.</p>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>ICMP</b> — Internet Control Message Protocol (used by ping/traceroute).</li>
+            <li><b>MTU</b> — Maximum Transmission Unit (largest packet on a path).</li>
+            <li><b>DNS / SRV / MX / TXT / PTR</b> — record types.</li>
+            <li><b>NIC</b> — Network Interface Card.</li>
+            <li><b>REST / HTTP / JSON / XML</b> — API protocol / format.</li>
+            <li><b>WMI</b> — Windows Management Instrumentation.</li>
+            <li><b>CIM</b> — Common Information Model (DMTF).</li>
+            <li><b>WQL</b> — WMI Query Language (SQL-like).</li>
+            <li><b>WinRM / WS-Man</b> — Windows Remote Management (HTTP-based; default 5985/5986).</li>
+            <li><b>DCOM / RPC</b> — legacy distributed object protocols WMI used.</li>
+            <li><b>QFE</b> — Quick Fix Engineering (Windows hotfix term).</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li><code>Test-Connection</code> exit semantics changed in PS7 — use <code>-Quiet</code> for clean boolean.</li>
+            <li><code>Test-NetConnection</code> is Windows-only. Use <code>Test-Connection -TcpPort</code> (PS7+) for cross-platform TCP checks.</li>
+            <li>Avoid <code>Win32_Product</code> — querying it triggers Windows Installer to re-evaluate every MSI's repair check (CPU + slow + can repair packages!). Use Add/Remove Programs registry keys instead (HKLM:\\SOFTWARE\\...\\Uninstall) — see lesson 5.</li>
+            <li>WMI vs CIM date format: WMI uses CIMDateTime (<code>20260516120000.000000+000</code>); <code>Get-CimInstance</code> returns real <code>[datetime]</code> objects. Saves you from manual parsing.</li>
+            <li><code>Get-WmiObject</code> removed in PowerShell 7 — port scripts to <code>Get-CimInstance</code>.</li>
+            <li>Always prefer <code>-Filter</code> (WQL string) over <code>Where-Object</code> for CIM — server-side filtering.</li>
+            <li>Remote CIM needs WinRM enabled on the target (<code>Enable-PSRemoting</code> covers it).</li>
+            <li><code>Invoke-WebRequest</code> in PS 5.1 uses IE's HTML parser; if IE is uninstalled (Win11 24H2+), pass <code>-UseBasicParsing</code>.</li>
+          </ul>
         `
       },
       {
         title: '8. Active Directory & User Management',
         body: `
-          <p>Requires the <code>ActiveDirectory</code> RSAT module.</p>
-          <pre><code>Import-Module ActiveDirectory
+          <h2>What is Active Directory?</h2>
+          <p><b>Active Directory Domain Services (AD DS)</b> is Microsoft's on-prem directory service. <b>What:</b> a hierarchical database of users, groups, computers, and policies, served by <b>Domain Controllers (DCs)</b> over LDAP, Kerberos, and DNS. <b>Why:</b> centralized authentication, authorization, and configuration (Group Policy) for every Windows machine joined to the domain. <b>How used:</b> domain join puts a computer object in AD; users sign in once at the workstation and that token is good for any service in the forest (SSO via Kerberos).</p>
 
-# Find users
-Get-ADUser -Filter * -Properties LastLogonDate |
-  Where-Object { $_.LastLogonDate -lt (Get-Date).AddDays(-90) -and $_.Enabled } |
-  Select-Object SamAccountName, LastLogonDate
+          <h3>Logical structure (vocabulary you must know)</h3>
+          <ul>
+            <li><b>Forest</b> — top-level security boundary; one or more domain trees sharing a schema + global catalog.</li>
+            <li><b>Tree</b> — domain hierarchy that shares a contiguous DNS namespace (<code>contoso.com → emea.contoso.com</code>).</li>
+            <li><b>Domain</b> — administrative + replication unit (<code>contoso.com</code>).</li>
+            <li><b>OU (Organizational Unit)</b> — container inside a domain that groups objects for delegation + Group Policy.</li>
+            <li><b>Object</b> — user, computer, group, contact, printer, GPO, OU.</li>
+            <li><b>DC (Domain Controller)</b> — server running AD DS; holds a writable copy of the domain database.</li>
+            <li><b>RODC</b> — Read-Only Domain Controller (branch office, reduced attack surface).</li>
+            <li><b>GC (Global Catalog)</b> — partial replica of every object in the forest; used by cross-domain lookups + Exchange.</li>
+            <li><b>FSMO</b> — Flexible Single Master Operations roles (Schema, Domain Naming, RID, PDCe, Infrastructure). Move with <code>Move-ADDirectoryServerOperationMasterRole</code>.</li>
+            <li><b>GPO (Group Policy Object)</b> — config policy linked to a Site/Domain/OU; applies to users + computers at login/boot.</li>
+            <li><b>Schema</b> — definition of object classes and attributes; rare to extend.</li>
+            <li><b>Trust</b> — cross-domain authentication relationship.</li>
+            <li><b>Site</b> — physical topology grouping for replication efficiency.</li>
+          </ul>
 
-# Create user
+          <h3>Identity attributes commonly confused</h3>
+          <ul>
+            <li><b>SamAccountName</b> — pre-Windows-2000 short name (<code>jdoe</code>), 20-char max, unique per domain.</li>
+            <li><b>UserPrincipalName (UPN)</b> — modern login name (<code>jdoe@contoso.com</code>), unique forest-wide.</li>
+            <li><b>DistinguishedName (DN)</b> — full LDAP path (<code>CN=Jane Doe,OU=Users,DC=contoso,DC=com</code>).</li>
+            <li><b>ObjectGUID</b> — immutable 128-bit identifier; survives renames/moves.</li>
+            <li><b>SID</b> — Security Identifier (<code>S-1-5-21-...</code>); what NTFS ACLs and Kerberos tokens use.</li>
+          </ul>
+
+          <h2>ActiveDirectory module — install + load</h2>
+          <p>Cmdlets ship in the <b>RSAT (Remote Server Administration Tools)</b> ActiveDirectory module. Install on Windows 10/11:</p>
+          <pre><code># Windows 10/11 (admin)
+Add-WindowsCapability -Online -Name 'Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0'
+
+# Windows Server
+Install-WindowsFeature RSAT-AD-PowerShell
+
+Import-Module ActiveDirectory
+Get-Command -Module ActiveDirectory | Measure-Object        # ~140 cmdlets</code></pre>
+
+          <h2>Users — search, create, modify</h2>
+
+          <h3>Searching with -Filter (preferred) vs -LDAPFilter</h3>
+          <pre><code># -Filter (PowerShell expression — server-side translated)
+Get-ADUser -Filter "Enabled -eq \\$true -and Department -eq 'Finance'"
+Get-ADUser -Filter "GivenName -like 'J*'" -Properties Department, Title
+
+# -LDAPFilter (raw LDAP query)
+Get-ADUser -LDAPFilter '(department=Finance)' -Properties department
+
+# Get a specific user
+Get-ADUser jdoe -Properties *                                # all attributes
+Get-ADUser -Identity jdoe -Properties LastLogonDate, MemberOf, PasswordLastSet
+
+# Stale accounts
+Get-ADUser -Filter 'Enabled -eq $true' -Properties LastLogonDate |
+  Where-Object { $_.LastLogonDate -lt (Get-Date).AddDays(-90) } |
+  Select-Object SamAccountName, LastLogonDate, DistinguishedName</code></pre>
+          <p><b>Note on LastLogonDate:</b> AD replicates <code>LastLogonTimestamp</code> only every 14 days by default, so it lags. For exact last logon per-DC use <code>lastLogon</code> attribute on each DC.</p>
+
+          <h3>Create + modify user</h3>
+          <pre><code>$pw = ConvertTo-SecureString 'P@ssw0rd!' -AsPlainText -Force
 New-ADUser \`
-  -Name "Jane Doe" \`
+  -Name 'Jane Doe' \`
+  -GivenName 'Jane' -Surname 'Doe' \`
   -SamAccountName jdoe \`
-  -UserPrincipalName "jdoe@contoso.com" \`
-  -AccountPassword (ConvertTo-SecureString "P@ssw0rd!" -AsPlainText -Force) \`
-  -Enabled $true \`
-  -Path "OU=Users,DC=contoso,DC=com"
+  -UserPrincipalName 'jdoe@contoso.com' \`
+  -EmailAddress 'jane.doe@contoso.com' \`
+  -Title 'Engineer' -Department 'IT' \`
+  -Path 'OU=Users,DC=contoso,DC=com' \`
+  -AccountPassword $pw \`
+  -ChangePasswordAtLogon $true \`
+  -Enabled $true
 
-# Groups
-Add-ADGroupMember -Identity "IT-Admins" -Members jdoe
-Get-ADGroupMember "IT-Admins"
+Set-ADUser jdoe -Title 'Senior Engineer' -Department 'Platform'
+Set-ADUser jdoe -Replace @{ extensionAttribute1 = 'building-7' }
+Rename-ADObject -Identity (Get-ADUser jdoe) -NewName 'Jane Smith'
+Move-ADObject -Identity (Get-ADUser jdoe) -TargetPath 'OU=Engineering,DC=contoso,DC=com'</code></pre>
 
-# Lock / unlock
-Unlock-ADAccount -Identity jdoe
-Disable-ADAccount -Identity jdoe</code></pre>
-          <h2>Local user management</h2>
-          <pre><code>New-LocalUser -Name "tempuser" -NoPassword
-Add-LocalGroupMember -Group "Administrators" -Member "tempuser"
-Get-LocalUser</code></pre>
+          <h3>Password + account lockout</h3>
+          <pre><code>Set-ADAccountPassword jdoe -Reset -NewPassword (ConvertTo-SecureString 'New#Pass!' -AsPlainText -Force)
+Set-ADUser jdoe -ChangePasswordAtLogon $true
+Unlock-ADAccount jdoe
+Disable-ADAccount jdoe
+Enable-ADAccount jdoe
+Remove-ADUser jdoe -Confirm:$false</code></pre>
+
+          <h2>Groups — security vs distribution; scope</h2>
+          <ul>
+            <li><b>Security group</b> — used for permissions/ACLs.</li>
+            <li><b>Distribution group</b> — Exchange mail list; no permissions.</li>
+          </ul>
+          <p><b>Group scope (AGDLP rule):</b></p>
+          <ul>
+            <li><b>Global</b> — members from same domain; visible forest-wide.</li>
+            <li><b>Domain Local</b> — members from anywhere; usable only in same domain.</li>
+            <li><b>Universal</b> — members from anywhere; usable anywhere (replicated to Global Catalog).</li>
+          </ul>
+          <p><b>Best practice (AGDLP):</b> Accounts → Global → Domain Local → Permissions. Put users in <i>global</i> groups, nest those into <i>domain local</i> groups, assign permissions to <i>domain local</i> groups.</p>
+          <pre><code>New-ADGroup -Name 'IT-Admins' -GroupScope Global -GroupCategory Security -Path 'OU=Groups,DC=contoso,DC=com'
+Add-ADGroupMember -Identity 'IT-Admins' -Members jdoe, asmith
+Remove-ADGroupMember -Identity 'IT-Admins' -Members jdoe -Confirm:\$false
+
+Get-ADGroupMember 'IT-Admins'
+Get-ADGroupMember 'IT-Admins' -Recursive                     # flatten nested
+Get-ADUser jdoe -Properties MemberOf | Select-Object -ExpandProperty MemberOf
+Get-ADPrincipalGroupMembership jdoe                          # direct memberships
+Get-ADGroup -Filter "Name -like 'IT-*'"</code></pre>
+
+          <h2>Computers + OUs</h2>
+          <pre><code>Get-ADComputer -Filter * -Properties OperatingSystem, LastLogonDate
+Get-ADComputer -Filter "OperatingSystem -like '*Server 2012*'"  # find stale OS
+Disable-ADAccount -Identity 'OLD-SRV01\$'                      # disable computer (note trailing $)
+Reset-ComputerMachinePassword                                  # on the workstation, fix broken secure channel
+
+Get-ADOrganizationalUnit -Filter * | Select-Object Name, DistinguishedName
+New-ADOrganizationalUnit -Name 'Engineering' -Path 'DC=contoso,DC=com' -ProtectedFromAccidentalDeletion $true</code></pre>
+
+          <h2>Group Policy (GPO) via PowerShell</h2>
+          <pre><code>Import-Module GroupPolicy
+Get-GPO -All | Select-Object DisplayName, Id, ModificationTime
+Get-GPOReport -All -ReportType Html -Path C:\\reports\\gpos.html
+New-GPO -Name 'Lockscreen Timeout' -Comment 'Security baseline'
+New-GPLink -Name 'Lockscreen Timeout' -Target 'OU=Users,DC=contoso,DC=com'
+
+# Force GP refresh on a remote computer
+Invoke-GPUpdate -Computer 'WKS01' -Force</code></pre>
+
+          <h2>Reading raw LDAP — when AD module missing</h2>
+          <pre><code>$searcher = [adsisearcher]"(&amp;(objectClass=user)(samAccountName=jdoe))"
+$searcher.FindOne().Properties
+
+# Direct binding
+$user = [adsi]"LDAP://CN=Jane Doe,OU=Users,DC=contoso,DC=com"
+$user.title = 'New Title'
+$user.SetInfo()</code></pre>
+
+          <h2>Local accounts (no domain) — Microsoft.PowerShell.LocalAccounts</h2>
+          <pre><code>Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember -Group 'Administrators'
+
+New-LocalUser -Name 'tempuser' -Password (Read-Host -AsSecureString)
+New-LocalUser -Name 'svc_app' -NoPassword                       # passwordless (for testing only)
+Add-LocalGroupMember -Group 'Administrators' -Member 'tempuser'
+Disable-LocalUser -Name 'tempuser'
+Remove-LocalUser -Name 'tempuser'
+
+Set-LocalUser -Name 'svc_app' -Password (ConvertTo-SecureString 'P@ss!' -AsPlainText -Force)</code></pre>
+
+          <h2>Microsoft Entra ID (cloud) — Microsoft Graph PowerShell</h2>
+          <p>The old <code>AzureAD</code> and <code>MSOnline</code> modules are deprecated. Use <b>Microsoft Graph PowerShell SDK</b>.</p>
+          <pre><code>Install-Module Microsoft.Graph -Scope CurrentUser
+Connect-MgGraph -Scopes 'User.Read.All','Group.ReadWrite.All'
+
+Get-MgUser -All
+Get-MgUser -UserId jdoe@contoso.onmicrosoft.com -Property displayName,signInActivity
+
+New-MgUser -DisplayName 'Jane Doe' -UserPrincipalName 'jdoe@contoso.onmicrosoft.com' \`
+  -AccountEnabled \$true -MailNickname jdoe \`
+  -PasswordProfile @{ Password='TempP@ss1'; ForceChangePasswordNextSignIn=\$true }
+
+Update-MgUser -UserId jdoe@contoso.onmicrosoft.com -Department 'Engineering'
+Get-MgGroup -Filter "displayName eq 'IT-Admins'"
+New-MgGroupMember -GroupId &lt;guid&gt; -DirectoryObjectId (Get-MgUser -UserId jdoe).Id
+
+Disconnect-MgGraph</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>AD DS</b> — Active Directory Domain Services.</li>
+            <li><b>DC / RODC</b> — Domain Controller / Read-Only DC.</li>
+            <li><b>GC</b> — Global Catalog.</li>
+            <li><b>FSMO</b> — Flexible Single Master Operations.</li>
+            <li><b>OU</b> — Organizational Unit.</li>
+            <li><b>GPO</b> — Group Policy Object.</li>
+            <li><b>SAM</b> — Security Account Manager; <b>SamAccountName</b> = pre-Win2000 logon.</li>
+            <li><b>UPN</b> — User Principal Name (<code>user@domain</code>).</li>
+            <li><b>DN / CN / OU / DC</b> — Distinguished Name components: Common Name / Organizational Unit / Domain Component.</li>
+            <li><b>SID</b> — Security Identifier.</li>
+            <li><b>RSAT</b> — Remote Server Administration Tools.</li>
+            <li><b>LDAP / LDAPS</b> — Lightweight Directory Access Protocol (over TLS).</li>
+            <li><b>Kerberos / NTLM</b> — AD authentication protocols (Kerberos preferred; NTLM legacy).</li>
+            <li><b>AGDLP</b> — Account → Global → Domain Local → Permission (group nesting best practice).</li>
+            <li><b>gMSA</b> — group Managed Service Account.</li>
+            <li><b>Microsoft Graph</b> — unified REST API for Entra ID + M365 (replaces AzureAD / MSOnline).</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li><code>LastLogonDate</code> lags up to 14 days (replicated copy of <code>LastLogonTimestamp</code>). For real-time, query <code>lastLogon</code> on every DC and take max.</li>
+            <li>Computer accounts have a <code>$</code> suffix in <code>SamAccountName</code>: <code>WKS01$</code>.</li>
+            <li>Passwords stored as <code>SecureString</code> — never as plain text; use <code>ConvertTo-SecureString -AsPlainText -Force</code> for scripts (acceptable for non-production); for prod use <code>Read-Host -AsSecureString</code> or pull from Key Vault.</li>
+            <li><code>Remove-ADUser</code> is irreversible unless AD Recycle Bin is enabled (<code>Enable-ADOptionalFeature 'Recycle Bin Feature'</code>).</li>
+            <li><code>-Filter</code> uses PowerShell-style operators (<code>-eq</code>, <code>-like</code>) — quote them; <code>-LDAPFilter</code> uses LDAP syntax (<code>(samAccountName=jdoe)</code>).</li>
+            <li>Default cmdlets return a short attribute set. Add <code>-Properties</code> to get specific attributes, or <code>-Properties *</code> for everything (slow).</li>
+            <li><code>AzureAD</code> + <code>MSOnline</code> modules retired; migrate to <code>Microsoft.Graph</code>.</li>
+            <li><code>Disable-ADAccount</code> vs <code>Remove-ADUser</code>: HR off-boarding flow disables first, removes later — preserves SID + group memberships for forensics.</li>
+          </ul>
         `
       },
       {
         title: '9. Remoting & Sessions',
         body: `
-          <h2>Enable PSRemoting</h2>
-          <pre><code>Enable-PSRemoting -Force     # on the target, as admin
-Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value "server01"</code></pre>
-          <h2>One-off remote command</h2>
-          <pre><code>Invoke-Command -ComputerName server01 -ScriptBlock {
-  Get-Service spooler
-}
+          <h2>What is PowerShell Remoting?</h2>
+          <p><b>PowerShell Remoting (PSRemoting)</b> is the ability to run cmdlets and scripts on another machine as if you were sitting at its console. <b>Why it matters:</b> manage 1 or 1,000 servers without RDP or copying scripts around. Output returns as deserialized objects you can pipe locally. <b>How used:</b> three transports — <b>WinRM</b> (default Windows), <b>SSH</b> (cross-platform, PS7+), <b>Hyper-V VM</b>/<b>Container</b> (no network needed, for VMs without WinRM/SSH).</p>
 
-# Multi-target, parallel
-Invoke-Command -ComputerName (Get-Content servers.txt) -ScriptBlock {
-  Get-CimInstance Win32_OperatingSystem | Select PSComputerName, Caption
-}</code></pre>
-          <h2>Persistent session</h2>
-          <pre><code>$s = New-PSSession -ComputerName server01 -Credential (Get-Credential)
-Invoke-Command -Session $s -ScriptBlock { Get-Process | Measure-Object }
-Enter-PSSession $s    # interactive
+          <h2>Acronyms first</h2>
+          <ul>
+            <li><b>PSRemoting</b> — feature name; uses <b>WinRM</b> by default.</li>
+            <li><b>WinRM</b> — Windows Remote Management; HTTP/HTTPS-based wire protocol implementing <b>WS-Management</b> (DMTF SOAP-over-HTTP). Default ports <b>5985</b> (HTTP) + <b>5986</b> (HTTPS).</li>
+            <li><b>WS-Man</b> — the open standard WinRM implements.</li>
+            <li><b>CredSSP</b> — Credential Security Support Provider; lets remote session forward your creds to a third hop (the "double hop" problem).</li>
+            <li><b>JEA</b> — Just Enough Administration; constrained endpoint exposing only specific cmdlets to delegated users.</li>
+            <li><b>PSSession</b> — persistent connection object.</li>
+            <li><b>SSH</b> — cross-platform transport supported in PS 7.</li>
+          </ul>
+
+          <h2>Enable PSRemoting</h2>
+          <pre><code># On the target (admin elevated)
+Enable-PSRemoting -Force                            # starts WinRM, opens firewall, registers default config
+
+# Verify on target
+Get-Service WinRM
+Get-PSSessionConfiguration                          # default endpoints: Microsoft.PowerShell, PowerShell.7, ...
+Test-WSMan SERVER01                                 # confirm listener responds
+
+# On the client (workgroup, no AD-trusted SPN)
+Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value 'SERVER01' -Concatenate
+# or wildcard for a subnet — security trade-off
+Set-Item WSMan:\\localhost\\Client\\TrustedHosts -Value '*.lab.local'</code></pre>
+          <p><b>Domain vs workgroup:</b> domain-joined machines authenticate via Kerberos automatically; workgroup machines must register the remote in <code>TrustedHosts</code> and pass explicit credentials.</p>
+
+          <h2>One-off remote command — Invoke-Command</h2>
+          <pre><code>Invoke-Command -ComputerName SERVER01 -ScriptBlock { Get-Service spooler }
+
+# Multi-target — fans out in parallel (default throttle 32)
+Invoke-Command -ComputerName (Get-Content .\\servers.txt) -ScriptBlock {
+  [pscustomobject]@{
+    Host = $env:COMPUTERNAME
+    OS   = (Get-CimInstance Win32_OperatingSystem).Caption
+    Up   = ((Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime).Days
+  }
+} -ThrottleLimit 50
+
+# Pass parameters in
+$svc = 'spooler'
+Invoke-Command -ComputerName SRV1 -ScriptBlock { Get-Service $using:svc }
+Invoke-Command -ComputerName SRV1 -ScriptBlock { param($n) Get-Service $n } -ArgumentList $svc
+
+# Run a local script file on the remote
+Invoke-Command -ComputerName SRV1 -FilePath .\\Get-Inventory.ps1</code></pre>
+          <p><b>The $using: scope modifier:</b> remote scriptblocks run in a separate runspace; local vars are not visible. Prefix with <code>$using:</code> to reference them.</p>
+
+          <h2>Persistent sessions — New-PSSession</h2>
+          <pre><code>$cred = Get-Credential CONTOSO\\admin
+$s = New-PSSession -ComputerName SRV1 -Credential $cred
+
+# Run many commands without reconnecting (faster, preserves state)
+Invoke-Command -Session $s -ScriptBlock { $x = 42 }
+Invoke-Command -Session $s -ScriptBlock { $x }                  # 42 — state persists
+
+# Interactive
+Enter-PSSession $s                                              # prompt now is [SRV1]:
+Get-Service spooler
 Exit-PSSession
+
+# Reuse + tear down
+$s | Format-List Id, ComputerName, State, ConfigurationName, Availability
+Disconnect-PSSession $s                                          # leave it open server-side
+Connect-PSSession -ComputerName SRV1 -Name $s.Name              # reattach later
 Remove-PSSession $s</code></pre>
-          <h2>SSH-based PSRemoting</h2>
-          <p>PS 7 supports SSH transport for cross-platform: <code>Enter-PSSession -HostName host -UserName me -SSHTransport</code>.</p>
+
+          <h2>SSH-based remoting (PowerShell 7+, cross-platform)</h2>
+          <pre><code>Enter-PSSession -HostName ubuntu01 -UserName chris -SSHTransport
+Invoke-Command -HostName ubuntu01,debian02 -UserName chris -SSHTransport -ScriptBlock { uname -a }
+
+$s = New-PSSession -HostName ubuntu01 -UserName chris -SSHTransport
+Invoke-Command -Session $s -ScriptBlock { Get-Process | Sort CPU -Desc | Select -First 5 }</code></pre>
+          <p><b>Setup on Linux/macOS target:</b> install <code>pwsh</code> + OpenSSH server; add a <code>Subsystem powershell /usr/bin/pwsh -sshs -NoLogo</code> line in <code>/etc/ssh/sshd_config</code>; restart sshd. Authentication uses your normal SSH key.</p>
+
+          <h2>Hyper-V VM + container remoting</h2>
+          <pre><code>Enter-PSSession -VMName 'TestVM' -Credential (Get-Credential)           # no network needed
+Invoke-Command -VMName 'TestVM' -ScriptBlock { Get-Service }
+Enter-PSSession -ContainerId &lt;id&gt;                                       # into a running container</code></pre>
+
+          <h2>Implicit remoting (Import-PSSession)</h2>
+          <pre><code>$s = New-PSSession -ComputerName Exchange01 -ConfigurationName Microsoft.Exchange
+Import-PSSession $s -CommandName 'Get-Mailbox','Set-Mailbox' -Prefix Ex
+Get-ExMailbox jdoe                                                       # runs on Exchange, returns locally</code></pre>
+          <p><b>Why:</b> use a remote module without installing it locally. Common pattern for Exchange on-prem, SQL admin endpoints, custom JEA endpoints.</p>
+
+          <h2>The double-hop problem</h2>
+          <p><b>What:</b> credentials from your first remote hop are <i>not</i> automatically forwarded to a second hop. Symptom: open shell to SRV1, run command that touches SRV2 → "access denied" even though your account would normally have rights.</p>
+          <p><b>Solutions:</b></p>
+          <ul>
+            <li><b>CredSSP</b> — easiest but stores plaintext creds in memory; security risk. Enable per-host: <code>Enable-WSManCredSSP -Role Client -DelegateComputer SRV1</code> and on server <code>-Role Server</code>; then <code>Invoke-Command -Authentication CredSSP</code>.</li>
+            <li><b>Kerberos resource-based constrained delegation (RBCD)</b> — preferred; no creds stored. Configure on the resource computer: <code>Set-ADComputer SRV2 -PrincipalsAllowedToDelegateToAccount (Get-ADComputer SRV1)</code>.</li>
+            <li><b>Passing creds explicitly</b> — accept a <code>[PSCredential]</code> parameter and use it on every hop.</li>
+            <li><b>JEA virtual account</b> — endpoint runs under its own privileged identity; user does not pass creds.</li>
+          </ul>
+
+          <h2>JEA — Just Enough Administration</h2>
+          <p><b>What:</b> a constrained PSRemoting endpoint exposing a tightly defined set of cmdlets/parameters; the user connects with their own creds but the endpoint executes under a temporary <b>virtual account</b> (RunAs). <b>Why:</b> let helpdesk restart IIS app pools without granting them admin. <b>How used:</b> create a <code>.psrc</code> role capability file (cmdlets/functions allowed) + a <code>.pssc</code> session configuration file binding roles to AD groups, then register: <code>Register-PSSessionConfiguration -Name HelpDesk -Path .\\HelpDesk.pssc</code>. Users connect with <code>Enter-PSSession -ConfigurationName HelpDesk</code>.</p>
+
+          <h2>Authentication options</h2>
+          <ul>
+            <li><b>Default</b> — Kerberos (domain) or Negotiate (NTLM fallback).</li>
+            <li><b>Kerberos</b> — explicit Kerberos only.</li>
+            <li><b>Negotiate</b> — Kerberos then NTLM.</li>
+            <li><b>Basic</b> — username + password in HTTP header; <b>only over HTTPS</b>.</li>
+            <li><b>CredSSP</b> — delegates creds (double-hop).</li>
+            <li><b>Digest</b> — challenge-response (rarely used).</li>
+            <li><b>Certificate</b> — client cert auth over HTTPS.</li>
+          </ul>
+          <pre><code>Invoke-Command -ComputerName SRV1 -Authentication Kerberos -ScriptBlock { ... }
+Invoke-Command -ComputerName SRV1 -UseSSL -Credential $cred -ScriptBlock { ... }   # 5986</code></pre>
+
+          <h2>Output: live objects vs deserialized</h2>
+          <p>Objects returned across PSRemoting are <b>deserialized</b> — properties preserved, methods stripped (with a few exceptions like <code>ToString()</code>). <code>$o.GetType().Name</code> shows <code>Deserialized.System.Diagnostics.Process</code>. <b>Why care:</b> you cannot call <code>.Kill()</code> on a returned process — invoke methods inside the remote scriptblock.</p>
+          <pre><code># Wrong — Kill() not available on deserialized object
+$p = Invoke-Command SRV1 { Get-Process notepad }
+$p.Kill()                                                           # error
+
+# Right — kill on the remote
+Invoke-Command SRV1 { (Get-Process notepad).Kill() }</code></pre>
+
+          <h2>Background + long-running</h2>
+          <pre><code># PSJobs — local background jobs
+$j = Start-Job -ScriptBlock { Start-Sleep 30; Get-Process }
+Get-Job; Receive-Job $j -Wait; Remove-Job $j
+
+# Remote jobs
+Invoke-Command -ComputerName SRV1 -AsJob -ScriptBlock { 1..100000 | Measure-Object }
+
+# Scheduled jobs (PS 5.1 only)
+Register-ScheduledJob -Name Nightly -ScriptBlock { ... } -Trigger (New-JobTrigger -Daily -At 2am)
+
+# ThreadJobs (PS7+, lighter than PSJob)
+Start-ThreadJob -ScriptBlock { ... }</code></pre>
+
+          <h2>Throttling, timeouts, errors</h2>
+          <ul>
+            <li><code>-ThrottleLimit N</code> — concurrent fan-out cap (default 32).</li>
+            <li><code>-AsJob</code> — return immediately, fetch results later.</li>
+            <li><code>-SessionOption (New-PSSessionOption -OpenTimeout 30000 -IdleTimeout 7200000)</code> — tune timeouts (milliseconds).</li>
+            <li><code>-ErrorAction Continue</code> — keep running across hosts on per-host failure.</li>
+          </ul>
+
+          <h2>Security hardening checklist</h2>
+          <ul>
+            <li>Use <b>HTTPS listener (5986)</b> with a real cert; disable HTTP listener in untrusted networks.</li>
+            <li>Restrict who can connect via <code>Set-PSSessionConfiguration -ShowSecurityDescriptorUI</code> (or ACL).</li>
+            <li>Avoid <b>CredSSP</b> unless required; prefer Kerberos RBCD.</li>
+            <li>Enable <b>script-block logging</b> (Event 4104) + <b>module logging</b> via Group Policy for forensics.</li>
+            <li>Use <b>JEA</b> for delegated administration.</li>
+            <li>Constrain <code>TrustedHosts</code> to specific names, not <code>*</code>.</li>
+          </ul>
+
+          <h2>Gotchas</h2>
+          <ul>
+            <li>Workgroup machines: NTLM only, must add to <code>TrustedHosts</code> + pass <code>-Credential</code>.</li>
+            <li>Default WinRM port is 5985 (HTTP). 5986 = HTTPS. Both must be open in the path firewall.</li>
+            <li><code>$using:</code> only works inside <code>Invoke-Command</code> / scheduled jobs / <code>ForEach-Object -Parallel</code> — not in plain script blocks.</li>
+            <li>Deserialized objects have no methods — invoke methods on the remote side.</li>
+            <li><code>Enter-PSSession</code> changes the prompt; <code>Exit-PSSession</code> returns. <code>Ctrl+C</code> in interactive mode does NOT exit the session — it cancels the running command.</li>
+            <li>SSH transport works on Linux/macOS/Windows; install OpenSSH + register the PowerShell subsystem in sshd_config.</li>
+            <li>Output across sessions truncates very deep object graphs at depth 1 by default — use <code>ConvertTo-Json -Depth N</code> if you need full fidelity.</li>
+          </ul>
         `
       },
       {
         title: '10. Error Handling, Modules, Scripting Best Practices',
         body: `
-          <h2>Error handling</h2>
-          <pre><code>try {
+          <h2>Why this lesson</h2>
+          <p>Production-grade scripts need three things one-liners never bother with: <b>predictable error semantics</b> (so failures fail loudly), <b>module structure</b> (so code is reusable, versioned, distributable), and <b>discipline</b> (signing, validation, logging, no plaintext secrets). This lesson closes the PowerShell Mastery track and turns you from "knows cmdlets" into "ships maintainable PowerShell."</p>
+
+          <h2>Error handling — terminating vs non-terminating</h2>
+          <p><b>Critical distinction PowerShell tests:</b></p>
+          <ul>
+            <li><b>Terminating errors</b> — stop execution immediately; trigger <code>try/catch</code>. Examples: syntax errors, throws via <code>throw</code>, type cast failures, <code>-ErrorAction Stop</code>.</li>
+            <li><b>Non-terminating errors</b> — append to <code>$Error</code> + write to error stream, but the next pipeline object continues. Most cmdlets default to non-terminating. <b>They will NOT trigger catch unless you force them.</b></li>
+          </ul>
+          <pre><code># Force non-terminating into try/catch
+try {
   Get-Item .\\missing.txt -ErrorAction Stop
 }
 catch [System.IO.FileNotFoundException] {
-  Write-Warning "File not found"
+  Write-Warning "File not found: $($_.TargetObject)"
+}
+catch [System.UnauthorizedAccessException] {
+  Write-Warning "Permission denied"
 }
 catch {
-  Write-Error "Unexpected: $_"
+  # Catch-all (last)
+  Write-Error "Unexpected: $($_.Exception.Message)"
+  throw                                                  # rethrow if needed
 }
 finally {
-  Write-Verbose "cleanup"
+  # Always runs — cleanup, release locks, dispose handles
+  Write-Verbose 'cleanup'
+}</code></pre>
+
+          <h3>Preference variables (script-wide error policy)</h3>
+          <pre><code>$ErrorActionPreference = 'Stop'             # default: 'Continue'
+$WarningPreference     = 'Continue'
+$VerbosePreference     = 'SilentlyContinue'
+$DebugPreference       = 'SilentlyContinue'
+$InformationPreference = 'Continue'
+$ProgressPreference    = 'SilentlyContinue'  # silence progress bars in CI</code></pre>
+          <p><b>Valid values:</b> <code>Continue</code>, <code>Stop</code>, <code>SilentlyContinue</code>, <code>Ignore</code>, <code>Inquire</code>, <code>Break</code>.</p>
+
+          <h3>Per-cmdlet error controls</h3>
+          <pre><code>Get-Process notepad -ErrorAction Stop -ErrorVariable err
+Get-Process notepad -ErrorAction SilentlyContinue        # alias SilentlyContinue = ignore quietly + log to $Error
+Get-Process -ErrorAction Ignore                          # do NOT even log to $Error</code></pre>
+
+          <h3>$Error and the error record</h3>
+          <pre><code>$Error[0]                                                # newest
+$Error[0].Exception.GetType().FullName                   # exception type
+$Error[0].CategoryInfo
+$Error[0].FullyQualifiedErrorId
+$Error[0].ScriptStackTrace
+$Error[0].InvocationInfo.PositionMessage
+$Error.Clear()</code></pre>
+
+          <h3>Throwing your own errors</h3>
+          <pre><code>throw 'fatal: db unreachable'                            # simplest
+throw [System.IO.FileNotFoundException]::new('not found','x.txt')
+
+# Inside an advanced function, prefer Write-Error + ThrowTerminatingError for typed errors
+function Test-Thing {
+  [CmdletBinding()]
+  param([string]$Path)
+  if (-not (Test-Path $Path)) {
+    $PSCmdlet.ThrowTerminatingError(
+      [System.Management.Automation.ErrorRecord]::new(
+        [System.IO.FileNotFoundException]::new("Missing $Path"),
+        'PathNotFound',
+        'ObjectNotFound',
+        $Path
+      )
+    )
+  }
+}</code></pre>
+
+          <h3>Trap (legacy)</h3>
+          <p><code>trap { ... }</code> catches any terminating error in scope. Rare in modern code — use <code>try/catch</code>.</p>
+
+          <h2>Logging + output streams</h2>
+          <p>PowerShell has 6 output streams. Use the right one for the right job:</p>
+          <ul>
+            <li><b>1 — Success</b> — <code>Write-Output</code> or implicit. Goes to the pipeline; this is data.</li>
+            <li><b>2 — Error</b> — <code>Write-Error</code>. To <code>$Error</code> + error stream.</li>
+            <li><b>3 — Warning</b> — <code>Write-Warning</code>.</li>
+            <li><b>4 — Verbose</b> — <code>Write-Verbose</code>. Visible only with <code>-Verbose</code>.</li>
+            <li><b>5 — Debug</b> — <code>Write-Debug</code>. Visible only with <code>-Debug</code>.</li>
+            <li><b>6 — Information</b> — <code>Write-Information</code> (PS5+). Use instead of <code>Write-Host</code> in scripts.</li>
+          </ul>
+          <p><b>Never use <code>Write-Host</code> in functions/modules</b> — it bypasses the pipeline and cannot be redirected/captured. Use <code>Write-Output</code> for data + <code>Write-Verbose</code>/<code>Write-Information</code> for status.</p>
+          <pre><code>Start-Transcript -Path .\\session.log -Append    # capture everything to a file
+# ... do work ...
+Stop-Transcript</code></pre>
+
+          <h2>Modules — package, version, distribute</h2>
+
+          <h3>Module types</h3>
+          <ul>
+            <li><b>Script module (.psm1)</b> — file containing functions/classes/variables. Most common.</li>
+            <li><b>Binary module (.dll)</b> — compiled .NET assembly with cmdlets.</li>
+            <li><b>Manifest module (.psd1)</b> — metadata file (version, author, dependencies, exported members). Required for the gallery.</li>
+            <li><b>Dynamic module</b> — created at runtime with <code>New-Module</code>.</li>
+          </ul>
+
+          <h3>Anatomy of a script module</h3>
+          <pre><code>MyTools/
+  MyTools.psd1               # manifest
+  MyTools.psm1               # root module — dot-sources public/private
+  Public/
+    Get-Foo.ps1              # exported
+    Set-Bar.ps1
+  Private/
+    helper.ps1               # internal only
+  Tests/
+    MyTools.Tests.ps1        # Pester tests</code></pre>
+          <pre><code># Generate a manifest
+New-ModuleManifest -Path .\\MyTools\\MyTools.psd1 \`
+  -RootModule MyTools.psm1 \`
+  -ModuleVersion '1.0.0' \`
+  -Author 'Chris' \`
+  -Description 'Internal helper cmdlets' \`
+  -FunctionsToExport @('Get-Foo','Set-Bar') \`
+  -PowerShellVersion '5.1'</code></pre>
+
+          <h3>Install / find / update from PowerShell Gallery</h3>
+          <pre><code>Find-Module Az                                              # search gallery
+Install-Module -Name Microsoft.Graph -Scope CurrentUser     # no admin needed
+Update-Module Az
+Uninstall-Module OldThing
+Get-InstalledModule
+Get-Module -ListAvailable                                   # everything resolvable
+Publish-Module -Path .\\MyTools -NuGetApiKey $env:GALLERY_KEY</code></pre>
+
+          <h3>Auto-loading + import</h3>
+          <p>If a module is on the <code>PSModulePath</code> and exports a cmdlet you call, PowerShell auto-imports it. Speed up startup by importing only what you need with <code>Import-Module -Name X -Function Y</code>.</p>
+
+          <h2>Script signing + execution policy</h2>
+          <pre><code># Create a self-signed code-signing cert (test only)
+$cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject 'CN=Chris Dev' \`
+        -CertStoreLocation Cert:\\CurrentUser\\My
+
+# Sign
+Set-AuthenticodeSignature -FilePath .\\Deploy.ps1 -Certificate $cert
+
+# Verify
+Get-AuthenticodeSignature .\\Deploy.ps1                     # Status: Valid
+
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned         # require sig on downloaded</code></pre>
+
+          <h2>Secrets management</h2>
+          <p>Plain credentials in scripts = breach waiting to happen. Use:</p>
+          <pre><code>Install-Module Microsoft.PowerShell.SecretManagement      -Scope CurrentUser
+Install-Module Microsoft.PowerShell.SecretStore           -Scope CurrentUser
+
+Register-SecretVault -Name Local -ModuleName Microsoft.PowerShell.SecretStore -DefaultVault
+Set-Secret -Name 'db-prod' -Secret (Read-Host -AsSecureString)
+$cred = Get-Secret -Name 'db-prod' -AsPlainText                   # use in scripts</code></pre>
+          <p>Other vault providers exist: Azure Key Vault, HashiCorp Vault, KeePass, Bitwarden, AWS Secrets Manager, 1Password — install the corresponding <code>SecretManagement.*</code> module.</p>
+
+          <h2>Linting + testing</h2>
+
+          <h3>PSScriptAnalyzer (static analysis / linter)</h3>
+          <pre><code>Install-Module PSScriptAnalyzer -Scope CurrentUser
+Invoke-ScriptAnalyzer -Path .\\Deploy.ps1
+Invoke-ScriptAnalyzer -Path .\\ -Recurse -Severity Error,Warning
+Invoke-ScriptAnalyzer -Settings PSGallery .\\src              # use bundled ruleset</code></pre>
+          <p>Catches: unapproved verbs, plaintext passwords, missing OutputType, unused parameters, <code>Write-Host</code> usage, ShouldProcess missing, deprecated cmdlets.</p>
+
+          <h3>Pester — the test framework</h3>
+          <pre><code>Install-Module Pester -Scope CurrentUser -SkipPublisherCheck
+Invoke-Pester .\\Tests
+
+# A test file (Add.Tests.ps1)
+Describe 'Add-Numbers' {
+  It 'sums two ints' { (Add-Numbers 2 3) | Should -Be 5 }
+  It 'throws on null' { { Add-Numbers $null 1 } | Should -Throw }
+}</code></pre>
+
+          <h2>Style + best practices (production checklist)</h2>
+          <ul>
+            <li><b>Every script/function</b> starts with <code>[CmdletBinding()]</code> + typed <code>param()</code> block + validation attributes.</li>
+            <li><b>Approved verbs only</b> — <code>Get-Verb</code>; PSScriptAnalyzer flags violators.</li>
+            <li><b>Set <code>$ErrorActionPreference = 'Stop'</code></b> at the top of automation scripts so failures bubble up.</li>
+            <li><b>Use <code>SupportsShouldProcess</code></b> + <code>$PSCmdlet.ShouldProcess()</code> for destructive operations; gives free <code>-WhatIf</code> / <code>-Confirm</code>.</li>
+            <li><b>Output objects, not strings</b> — <code>[pscustomobject]@{ Name=...; Value=... }</code>. Lets callers pipe.</li>
+            <li><b>Avoid <code>Write-Host</code> in libraries</b> — use <code>Write-Output</code> for data, <code>Write-Verbose</code> for status.</li>
+            <li><b>Avoid aliases in scripts</b> — write <code>Where-Object</code> not <code>?</code>; <code>ForEach-Object</code> not <code>%</code>. PSScriptAnalyzer rule.</li>
+            <li><b>Comment-based help</b> (<code>.SYNOPSIS</code> / <code>.PARAMETER</code> / <code>.EXAMPLE</code>) on every public function.</li>
+            <li><b>One responsibility per function</b>. Compose with the pipeline.</li>
+            <li><b>Use <code>[OutputType()]</code></b> attribute so Get-Help shows the contract.</li>
+            <li><b>Test with Pester</b>; lint with PSScriptAnalyzer; CI via GitHub Actions.</li>
+            <li><b>Store secrets in <code>SecretManagement</code></b>; never hardcode passwords.</li>
+            <li><b>Sign published scripts</b>; use <code>RemoteSigned</code> or <code>AllSigned</code> execution policy.</li>
+            <li><b>Strict mode</b>: <code>Set-StrictMode -Version Latest</code> catches typos in property access and uninitialized vars.</li>
+            <li><b>Cross-version mindfulness</b>: target PS 7+ unless required to support 5.1.</li>
+          </ul>
+
+          <h2>End-to-end example — audit logon failures</h2>
+          <pre><code>[CmdletBinding()]
+[OutputType([pscustomobject])]
+param(
+  [Parameter(Position=0)]
+  [ValidateRange(1,30)]
+  [int]$Days = 1,
+
+  [Parameter()]
+  [ValidateNotNullOrEmpty()]
+  [string]$ExportPath = '.\\failed-logons.csv'
+)
+
+\$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+\$start = (Get-Date).AddDays(-\$Days)
+Write-Verbose "Querying Security log since \$start"
+
+try {
+  \$events = Get-WinEvent -FilterHashtable @{
+    LogName   = 'Security'
+    Id        = 4625
+    StartTime = \$start
+  }
+}
+catch [System.Exception] {
+  if (\$_.Exception.Message -match 'No events were found') {
+    Write-Information 'No failures in window.' -InformationAction Continue
+    return
+  }
+  throw
 }
 
-# Common parameters
-Get-Process -ErrorAction Stop -ErrorVariable err
-$ErrorActionPreference = "Stop"     # script-wide</code></pre>
-          <h2>Modules</h2>
-          <pre><code>Get-Module -ListAvailable
-Import-Module Az
-Install-Module -Name Microsoft.Graph -Scope CurrentUser
-Update-Module Az
-Get-InstalledModule</code></pre>
-          <h2>Script best practices</h2>
-          <ul>
-            <li>Use <code>[CmdletBinding()]</code> + <code>param()</code> with types and validation.</li>
-            <li>Set <code>$ErrorActionPreference = "Stop"</code> in production scripts.</li>
-            <li>Use <code>-WhatIf</code> and <code>-Confirm</code> for destructive cmdlets during testing.</li>
-            <li>Sign scripts and set <code>Set-ExecutionPolicy RemoteSigned -Scope CurrentUser</code>.</li>
-            <li>Use approved verbs (<code>Get-Verb</code>).</li>
-            <li>Lint with PSScriptAnalyzer: <code>Invoke-ScriptAnalyzer .\\script.ps1</code>.</li>
-            <li>Store secrets in <code>SecretManagement</code> module, never plaintext.</li>
-          </ul>
-          <h2>Example: audit logon failures</h2>
-          <pre><code>[CmdletBinding()]
-param([int]$Days = 1)
-
-$start = (Get-Date).AddDays(-$Days)
-Get-WinEvent -FilterHashtable @{
-  LogName   = 'Security'
-  Id        = 4625
-  StartTime = $start
-} |
-ForEach-Object {
-  [PSCustomObject]@{
-    Time     = $_.TimeCreated
-    User     = $_.Properties[5].Value
-    Source   = $_.Properties[19].Value
-    Workstation = $_.Properties[13].Value
+\$results = foreach (\$e in \$events) {
+  [pscustomobject]@{
+    Time        = \$e.TimeCreated
+    User        = \$e.Properties[5].Value
+    Domain      = \$e.Properties[6].Value
+    Source      = \$e.Properties[19].Value
+    Workstation = \$e.Properties[13].Value
+    LogonType   = \$e.Properties[10].Value
+    Failure     = \$e.Properties[8].Value
   }
-} |
-Export-Csv -Path .\\failed-logons.csv -NoTypeInformation
-Write-Host "Exported failed logons since $start"</code></pre>
+}
+
+\$results | Export-Csv -Path \$ExportPath -NoTypeInformation -Encoding utf8
+Write-Information "Exported \$(\$results.Count) records to \$ExportPath" -InformationAction Continue
+\$results                                                     # pipe to caller too</code></pre>
+
+          <h2>Acronyms recap</h2>
+          <ul>
+            <li><b>$Error / $LASTEXITCODE / $?</b> — error history / native exit code / success boolean.</li>
+            <li><b>$PSCmdlet</b> — auto var in advanced functions; gives <code>ShouldProcess</code>, <code>ThrowTerminatingError</code>, <code>ParameterSetName</code>.</li>
+            <li><b>PSGallery</b> — PowerShell module repository.</li>
+            <li><b>PSScriptAnalyzer</b> — static analysis / linter.</li>
+            <li><b>Pester</b> — BDD-style test framework.</li>
+            <li><b>SecretManagement / SecretStore</b> — secrets abstraction + local encrypted vault.</li>
+            <li><b>JEA</b> — Just Enough Administration (lesson 9).</li>
+            <li><b>SBOM</b> — Software Bill of Materials; <code>Save-Module</code> + commit module deps for reproducible installs.</li>
+            <li><b>StrictMode</b> — runtime mode that errors on undefined properties / variables.</li>
+          </ul>
+
+          <h2>Final gotchas</h2>
+          <ul>
+            <li><code>try/catch</code> only catches <b>terminating</b> errors. Add <code>-ErrorAction Stop</code> or <code>$ErrorActionPreference='Stop'</code>.</li>
+            <li><code>throw</code> stops the script; <code>Write-Error</code> writes to the error stream but continues (unless caller is in <code>Stop</code> mode).</li>
+            <li><code>return $x</code> does NOT replace prior pipeline output — every uncaptured expression in the function body is emitted.</li>
+            <li><code>Write-Host</code> bypasses the pipeline — output cannot be captured or redirected. Avoid in libraries; OK for interactive scripts.</li>
+            <li>Always include <code>-Encoding utf8</code> when writing files that other tools will read; PS 5.1 default is UTF-16 BOM.</li>
+            <li>Module auto-load fails if functions live in <code>Private/</code> and aren't exported — list them in <code>FunctionsToExport</code> in the manifest.</li>
+            <li><code>Install-Module -Scope AllUsers</code> needs admin; <code>-Scope CurrentUser</code> does not.</li>
+            <li>Always set <code>FunctionsToExport</code>, <code>CmdletsToExport</code>, <code>AliasesToExport</code>, <code>VariablesToExport</code> to explicit lists in the manifest — wildcards expand to everything.</li>
+          </ul>
+
+          <h2>What's next</h2>
+          <ul>
+            <li>Build a real internal module — wrap a domain-specific REST API.</li>
+            <li>Add Pester tests + a GitHub Actions workflow running PSScriptAnalyzer + Pester on every push.</li>
+            <li>Learn <b>DSC (Desired State Configuration)</b> for declarative config management.</li>
+            <li>Practice with the <b>Az</b> + <b>Microsoft.Graph</b> modules for cloud automation.</li>
+            <li>Read <b>The PowerShell Cookbook</b> (Lee Holmes) + <b>The PowerShell Style Guide</b> (poshcode).</li>
+          </ul>
         `
       }
     ],
