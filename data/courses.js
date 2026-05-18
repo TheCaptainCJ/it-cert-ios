@@ -5735,6 +5735,154 @@ sum=$(( 3 + 5 ))</code></pre>
             <li>"GPO precedence" → LSDOU (Local → Site → Domain → OU; OU is closest, applied last → wins).</li>
             <li>"Failed logon event ID" → 4625.</li>
           </ul>
+
+          <h2>NTFS standard vs special permission matrix</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Standard right</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Includes special permissions</th></tr>
+            <tr><td>Full Control</td><td>All — incl. Take Ownership, Change Permissions</td></tr>
+            <tr><td>Modify</td><td>Read + Write + Delete + R&amp;X</td></tr>
+            <tr><td>Read &amp; Execute</td><td>Read + Traverse Folder / Execute File</td></tr>
+            <tr><td>List Folder Contents</td><td>Same as R&amp;X but folder-only inheritance</td></tr>
+            <tr><td>Read</td><td>Read Data, Read Attributes, Read Extended Attributes, Read Permissions</td></tr>
+            <tr><td>Write</td><td>Create Files / Write Data, Create Folders / Append, Write Attributes</td></tr>
+          </table>
+          <p><b>Inheritance</b> default ON; <b>Disable inheritance</b> via Advanced Security → "Convert inherited to explicit" preserves current ACE set as explicit.</p>
+
+          <h2>Account Lockout Policy values to memorize</h2>
+          <ul>
+            <li><b>Account lockout threshold</b> — bad attempts before lockout (typical 5-10).</li>
+            <li><b>Account lockout duration</b> — minutes locked (15 typical; 0 = until admin unlocks).</li>
+            <li><b>Reset account lockout counter after</b> — minutes idle before bad-attempt counter zeros (15 typical).</li>
+            <li><b>Allow Administrator account lockout</b> — Win11 22H2+ default ON (lockout out-of-the-box).</li>
+            <li>Modern: <b>Account Lockout for Admins</b> mitigates brute force on local admin.</li>
+            <li><b>CIS L1</b> recommends 5 / 15 / 15.</li>
+          </ul>
+
+          <h2>Password Policy + NIST 800-63B 2024 guidance</h2>
+          <ul>
+            <li><b>Length</b> — 8 char minimum, 14+ recommended; passwords up to 64 char allowed; spaces/Unicode OK.</li>
+            <li><b>Complexity</b> — NIST no longer requires special-char rules; instead enforce <b>breached-password check</b> against HaveIBeenPwned / vendor breach lists.</li>
+            <li><b>Don't force periodic rotation</b> unless evidence of compromise — leads to weaker mutations.</li>
+            <li><b>Don't allow common passwords</b> (Password1!) — block top-100k list.</li>
+            <li><b>Forbidden context-related</b> — username, name, date-of-birth.</li>
+            <li><b>Length over complexity</b>: 16-char passphrase &gt; 8-char gibberish.</li>
+            <li><b>Storage</b> — bcrypt / scrypt / Argon2id with per-user salt; never MD5/SHA-1/no-salt.</li>
+            <li><b>Microsoft</b>: Entra Password Protection blocks weak + custom-banned-list passwords forest-wide.</li>
+          </ul>
+
+          <h2>Smart card + certificate-based auth</h2>
+          <ul>
+            <li><b>Smart cards</b> hold X.509 cert + private key; insert into reader, enter PIN.</li>
+            <li><b>CAC / PIV</b> — DoD / federal civilian smart cards.</li>
+            <li><b>Virtual smart card (VSC)</b> — TPM-backed software equivalent.</li>
+            <li><b>YubiKey 5 / Titan / Feitian</b> — FIDO2 + smart card + OTP combos.</li>
+            <li><b>Use case:</b> 2nd factor; cert auth to RDP, VPN, web apps.</li>
+            <li><b>Windows config:</b> Group Policy → Enable smart-card logon required; map to user via altSecurityIdentities.</li>
+          </ul>
+
+          <h2>BitLocker management tasks (CLI cheat)</h2>
+          <pre><code>manage-bde -status                       # show all volume states
+manage-bde -on C: -recoverypassword      # encrypt + generate recovery key
+manage-bde -protectors -get C:           # list key protectors
+manage-bde -unlock D: -recoverypassword 123456-...
+manage-bde -pause C: / -resume C:
+manage-bde -off C:                       # decrypt
+
+# PowerShell
+Get-BitLockerVolume
+Enable-BitLocker -MountPoint C: -EncryptionMethod XtsAes256 -UsedSpaceOnly -TpmProtector
+Add-BitLockerKeyProtector -MountPoint C: -RecoveryPasswordProtector
+Suspend-BitLocker -MountPoint C: -RebootCount 1     # suspend for BIOS update
+BackupToAAD-BitLockerKeyProtector -MountPoint C: -KeyProtectorId &lt;ID&gt;</code></pre>
+
+          <h2>Windows Defender Firewall — advanced</h2>
+          <ul>
+            <li><b>Three profiles:</b> Domain, Private, Public — automatically selected by network location awareness.</li>
+            <li><b>Default actions:</b> block inbound, allow outbound (Win11).</li>
+            <li><b>Rule types:</b> Inbound, Outbound, Connection Security (IPsec).</li>
+            <li><b>Rule criteria:</b> program path, service, protocol+port, scope IP, profile, user/group.</li>
+            <li><b>Connection Security Rules</b> — IPsec policies; isolate domain hosts; tunnel between gateways.</li>
+            <li><b>CLI:</b> <code>netsh advfirewall</code> family; modern PS <code>New-NetFirewallRule -DisplayName 'X' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080</code>.</li>
+            <li><b>Diagnostic:</b> <code>Get-NetFirewallRule -DisplayName 'X' | Get-NetFirewallPortFilter</code>.</li>
+            <li><b>Audit firewall events:</b> Filtering Platform Connection (5156) + Failure (5152) events.</li>
+          </ul>
+
+          <h2>Attack Surface Reduction (ASR) rules — Defender for Endpoint</h2>
+          <ul>
+            <li>Block Office apps from creating child processes.</li>
+            <li>Block executable content from email + webmail.</li>
+            <li>Block JavaScript / VBScript from launching downloaded content.</li>
+            <li>Block Office macros from making Win32 API calls.</li>
+            <li>Block Adobe Reader from creating child processes.</li>
+            <li>Block credential stealing from LSASS subsystem.</li>
+            <li>Block process creations from PSExec + WMI commands.</li>
+            <li>Block untrusted + unsigned processes from USB.</li>
+            <li><b>Audit mode</b> first; promote to Block once verified no business impact.</li>
+            <li>Configure via Intune, Defender portal, GPO, PowerShell.</li>
+          </ul>
+
+          <h2>Windows Hello + passkeys (modern auth)</h2>
+          <ul>
+            <li><b>Windows Hello</b> — biometric / PIN backed by TPM. PIN is device-bound, never leaves; biometric template stored in secure enclave.</li>
+            <li><b>Windows Hello for Business (WHfB)</b> — replaces password completely for corp identities; uses Entra ID + cert / key trust.</li>
+            <li><b>Passkeys</b> — FIDO2 credentials synced via cloud (iCloud, Google, Microsoft account) or hardware-bound (YubiKey).</li>
+            <li><b>FIDO2 + WebAuthn</b> — phishing-resistant by design (origin-bound).</li>
+            <li><b>Pluton</b> — Microsoft's CPU-integrated TPM successor, found in new AMD/Intel/Qualcomm chips.</li>
+            <li><b>Resident keys / discoverable credentials</b> stored in authenticator memory.</li>
+          </ul>
+
+          <h2>Conditional Access scenarios (Entra ID)</h2>
+          <ul>
+            <li><b>Require MFA</b> when sign-in risk = medium/high (Identity Protection).</li>
+            <li><b>Block legacy auth</b> (POP/IMAP/SMTP basic).</li>
+            <li><b>Require compliant device</b> (Intune-managed).</li>
+            <li><b>Require hybrid Entra-joined device</b> for admins.</li>
+            <li><b>Sign-in frequency</b> — re-authenticate every 4h for privileged roles.</li>
+            <li><b>Geo-block</b> non-business countries.</li>
+            <li><b>Block downloads to unmanaged devices</b> (M365 App Protection).</li>
+            <li><b>Require terms of use</b> for guests.</li>
+          </ul>
+
+          <h2>Privileged access workstation (PAW)</h2>
+          <ul>
+            <li>Dedicated workstation used ONLY for admin tasks (no browsing, email, productivity apps).</li>
+            <li>Locked down via Microsoft Security Baseline + ASR + Credential Guard + AppLocker.</li>
+            <li>Network-isolated from corp data flows.</li>
+            <li>Logs forwarded directly to SIEM.</li>
+            <li>Used in tiered admin model: <b>Tier 0</b> (DCs, AD, key infra), <b>Tier 1</b> (servers, apps), <b>Tier 2</b> (workstations, end-user). Each tier has its own PAW.</li>
+          </ul>
+
+          <h2>Local Security Authority (LSA) protection</h2>
+          <ul>
+            <li><b>LSA</b> (lsass.exe) — handles credential validation, holds NT hashes + Kerberos tickets in memory.</li>
+            <li><b>LSA Protection (RunAsPPL)</b> — runs LSASS as PPL (Protected Process Light); denies code injection / memory read.</li>
+            <li><b>Credential Guard</b> moves LSA secrets into isolated VBS process (LsaIso.exe).</li>
+            <li>Enable via registry <code>HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\RunAsPPL = 1</code> or Group Policy.</li>
+            <li>Mitigates Mimikatz <code>sekurlsa::logonpasswords</code>.</li>
+          </ul>
+
+          <h2>Common Windows hardening checklists you'll see referenced</h2>
+          <ul>
+            <li><b>CIS Benchmarks</b> — most-cited; Level 1 (basic) and Level 2 (high-security).</li>
+            <li><b>STIG</b> (Security Technical Implementation Guide) — DoD config baseline; very strict.</li>
+            <li><b>Microsoft Security Baselines</b> — Security Compliance Toolkit (SCT); ADMX + Policy Analyzer.</li>
+            <li><b>ASD Essential Eight</b> (Australian); <b>NCSC 14 Cloud Principles</b> (UK).</li>
+            <li><b>NIST 800-171 + 800-53</b> — federal control frameworks.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"BitLocker recovery key location" → Entra ID / AD / Microsoft account / printed file.</li>
+            <li>"Effective NTFS+share permissions" → most restrictive of both.</li>
+            <li>"Failed logon event ID" → 4625.</li>
+            <li>"Run binaries only if approved" → AppLocker (Enterprise) / WDAC.</li>
+            <li>"Block Mimikatz credential dumping" → Credential Guard / LSA Protection.</li>
+            <li>"Open untrusted Office docs in container" → Application Guard.</li>
+            <li>"Anti-ransomware folder protection" → Controlled Folder Access.</li>
+            <li>"Stop user disabling AV" → Tamper Protection.</li>
+            <li>"Rotate local admin password automatically" → LAPS.</li>
+            <li>"Phishing-resistant Windows sign-in" → Windows Hello / FIDO2 / Passkey.</li>
+          </ul>
         `
       },
       {
