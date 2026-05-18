@@ -195,6 +195,177 @@
           opts.appendChild(b);
         });
         document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else if (s.type === 'multiselect') {
+        // PBQ: pick ALL correct answers
+        const answers = (s.answers || []).slice().sort().join(',');
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p class="q-text">${s.prompt}</p>
+            <p style="font-size:12px;color:var(--muted);margin:-6px 0 10px">Select ALL that apply (${s.answers.length}).</p>
+            <div class="q-options" id="labOpts"></div>
+            <div class="q-explain" id="labExp" style="display:none"></div>
+            <button class="btn primary" id="labCheck" style="margin-top:10px;width:100%">Check answer</button>
+            <button class="btn primary" id="labNext" style="margin-top:8px;display:none;width:100%">Next ›</button>
+          </div>`;
+        const opts = document.getElementById('labOpts');
+        const picked = new Set();
+        s.options.forEach((opt, i) => {
+          const b = document.createElement('button');
+          b.className = 'q-opt';
+          b.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span><span>${opt}</span>`;
+          b.addEventListener('click', () => {
+            if (opts.dataset.locked) return;
+            if (picked.has(i)) { picked.delete(i); b.classList.remove('selected'); }
+            else { picked.add(i); b.classList.add('selected'); }
+          });
+          opts.appendChild(b);
+        });
+        document.getElementById('labCheck').onclick = () => {
+          if (opts.dataset.locked) return;
+          opts.dataset.locked = '1';
+          Array.from(opts.children).forEach((c, idx) => {
+            const isAnswer = s.answers.indexOf(idx) !== -1;
+            const wasPicked = picked.has(idx);
+            if (isAnswer && wasPicked) c.classList.add('correct');
+            else if (isAnswer && !wasPicked) c.classList.add('correct');
+            else if (!isAnswer && wasPicked) c.classList.add('wrong');
+          });
+          const exp = document.getElementById('labExp');
+          exp.style.display = 'block';
+          const userAns = Array.from(picked).sort().join(',');
+          const correct = userAns === answers;
+          exp.innerHTML = (correct ? '<b style="color:var(--accent-2)">Correct.</b> ' : '<b style="color:var(--danger)">Not quite.</b> ') + s.explain;
+          document.getElementById('labCheck').style.display = 'none';
+          document.getElementById('labNext').style.display = 'block';
+        };
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else if (s.type === 'order') {
+        // PBQ: click items in correct sequence
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p class="q-text">${s.prompt}</p>
+            <p style="font-size:12px;color:var(--muted);margin:-6px 0 10px">Tap items in the CORRECT ORDER.</p>
+            <div class="q-options" id="labOpts"></div>
+            <div id="labOrderPicked" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+            <div class="q-explain" id="labExp" style="display:none"></div>
+            <button class="btn" id="labReset" style="margin-top:10px;width:100%">Reset</button>
+            <button class="btn primary" id="labNext" style="margin-top:8px;display:none;width:100%">Next ›</button>
+          </div>`;
+        const opts = document.getElementById('labOpts');
+        const pickedOrder = [];
+        const shuffled = s.items.map((t, i) => ({ t, i }));
+        shuffle(shuffled);
+        shuffled.forEach((entry) => {
+          const b = document.createElement('button');
+          b.className = 'q-opt';
+          b.innerHTML = `<span class="letter">·</span><span>${entry.t}</span>`;
+          b.dataset.idx = entry.i;
+          b.addEventListener('click', () => {
+            if (opts.dataset.locked) return;
+            if (b.classList.contains('selected')) return;
+            b.classList.add('selected');
+            pickedOrder.push(entry.i);
+            b.querySelector('.letter').textContent = pickedOrder.length;
+            const pickedDiv = document.getElementById('labOrderPicked');
+            pickedDiv.textContent = 'Order so far: ' + pickedOrder.map(x => x + 1).join(' → ');
+            if (pickedOrder.length === s.items.length) {
+              opts.dataset.locked = '1';
+              const correct = pickedOrder.every((v, k) => v === k);
+              Array.from(opts.children).forEach((c) => {
+                const idx = parseInt(c.dataset.idx, 10);
+                const pos = pickedOrder.indexOf(idx);
+                if (pos === idx) c.classList.add('correct');
+                else c.classList.add('wrong');
+              });
+              const exp = document.getElementById('labExp');
+              exp.style.display = 'block';
+              exp.innerHTML = (correct ? '<b style="color:var(--accent-2)">Correct order.</b> ' : '<b style="color:var(--danger)">Order wrong.</b> ') + s.explain;
+              document.getElementById('labNext').style.display = 'block';
+            }
+          });
+          opts.appendChild(b);
+        });
+        document.getElementById('labReset').onclick = () => { step += 0; render(); };
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else if (s.type === 'fillblank') {
+        // PBQ: type exact answer (case-insensitive); s.answer string or array of strings
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p class="q-text">${s.prompt}</p>
+            <input type="text" id="labFill" placeholder="${s.placeholder || 'Type your answer'}" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:15px;font-family:inherit;margin-top:8px" autocomplete="off" autocapitalize="off" spellcheck="false">
+            <div class="q-explain" id="labExp" style="display:none"></div>
+            <button class="btn primary" id="labCheck" style="margin-top:10px;width:100%">Check</button>
+            <button class="btn primary" id="labNext" style="margin-top:8px;display:none;width:100%">Next ›</button>
+          </div>`;
+        const input = document.getElementById('labFill');
+        input.focus();
+        const accepted = Array.isArray(s.answer) ? s.answer : [s.answer];
+        const norm = v => String(v).trim().toLowerCase().replace(/\s+/g, ' ');
+        document.getElementById('labCheck').onclick = () => {
+          if (input.disabled) return;
+          input.disabled = true;
+          const userVal = norm(input.value);
+          const isCorrect = accepted.some(a => norm(a) === userVal);
+          input.style.borderColor = isCorrect ? 'var(--accent-2)' : 'var(--danger)';
+          const exp = document.getElementById('labExp');
+          exp.style.display = 'block';
+          exp.innerHTML = (isCorrect ? '<b style="color:var(--accent-2)">Correct.</b> ' : `<b style="color:var(--danger)">Expected:</b> <code>${escapeHtml(accepted[0])}</code>. `) + s.explain;
+          document.getElementById('labCheck').style.display = 'none';
+          document.getElementById('labNext').style.display = 'block';
+        };
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') document.getElementById('labCheck').click();
+        });
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else if (s.type === 'dragmatch') {
+        // PBQ: match pairs - left items + right items
+        // s.pairs = [{left,right}, ...]; user picks each left's correct right via dropdown
+        runner.innerHTML = header + `
+          <div class="q-card">
+            <p class="q-text">${s.prompt}</p>
+            <p style="font-size:12px;color:var(--muted);margin:-6px 0 10px">Match each item on the left with the correct option on the right.</p>
+            <div id="labMatch" style="display:flex;flex-direction:column;gap:10px"></div>
+            <div class="q-explain" id="labExp" style="display:none"></div>
+            <button class="btn primary" id="labCheck" style="margin-top:10px;width:100%">Check matches</button>
+            <button class="btn primary" id="labNext" style="margin-top:8px;display:none;width:100%">Next ›</button>
+          </div>`;
+        const container = document.getElementById('labMatch');
+        const rightOptions = s.pairs.map(p => p.right);
+        s.pairs.forEach((pair, i) => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;gap:8px;align-items:center';
+          const label = document.createElement('div');
+          label.style.cssText = 'flex:1;font-size:14px;padding:10px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px';
+          label.textContent = pair.left;
+          const sel = document.createElement('select');
+          sel.style.cssText = 'flex:1;padding:10px;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;color:var(--fg);font-size:14px;font-family:inherit';
+          sel.dataset.idx = i;
+          sel.innerHTML = '<option value="">Pick...</option>' + rightOptions.map((r, j) => `<option value="${j}">${r}</option>`).join('');
+          row.appendChild(label);
+          row.appendChild(sel);
+          container.appendChild(row);
+        });
+        document.getElementById('labCheck').onclick = () => {
+          const selects = container.querySelectorAll('select');
+          let allCorrect = true;
+          selects.forEach((sel) => {
+            const i = parseInt(sel.dataset.idx, 10);
+            const picked = parseInt(sel.value, 10);
+            sel.disabled = true;
+            if (picked === i) sel.style.borderColor = 'var(--accent-2)';
+            else { sel.style.borderColor = 'var(--danger)'; allCorrect = false; }
+          });
+          const exp = document.getElementById('labExp');
+          exp.style.display = 'block';
+          exp.innerHTML = (allCorrect ? '<b style="color:var(--accent-2)">All correct.</b> ' : '<b style="color:var(--danger)">Some mismatched.</b> ') + s.explain;
+          document.getElementById('labCheck').style.display = 'none';
+          document.getElementById('labNext').style.display = 'block';
+        };
+        document.getElementById('labNext').onclick = () => { step++; render(); };
+      } else {
+        // Unknown step type — skip
+        runner.innerHTML = header + `<div class="q-card"><p>Unknown step type: ${s.type}</p><button class="btn primary" id="labNext" style="margin-top:14px;width:100%">Skip ›</button></div>`;
+        document.getElementById('labNext').onclick = () => { step++; render(); };
       }
     }
   }

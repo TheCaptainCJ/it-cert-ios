@@ -1,12 +1,16 @@
 // IT Cert iOS — Scenario Labs
 // Mobile-friendly: no real shell. Each lab = ordered steps.
 // Step types:
-//   - choice : { type:'choice', prompt, options[], answer (idx), explain }
-//   - command: { type:'command', prompt, cmd, explain }  (display + memorize)
-//   - note   : { type:'note', text }                     (concept callout)
+//   - choice     : { type:'choice', prompt, options[], answer (idx), explain }
+//   - command    : { type:'command', prompt, cmd, explain }  (display + memorize)
+//   - note       : { type:'note', text }                     (concept callout)
+//   - multiselect: { type:'multiselect', prompt, options[], answers[idx,...], explain }  (PBQ: select all)
+//   - order      : { type:'order', prompt, items[], explain }  (PBQ: items must be picked in array order)
+//   - fillblank  : { type:'fillblank', prompt, answer (string or [strings]), placeholder?, explain }  (PBQ: type exact)
+//   - dragmatch  : { type:'dragmatch', prompt, pairs[{left,right}], explain }  (PBQ: match left -> right)
 //
-// User taps through. Choice steps must be answered correctly OR explanation
-// is shown for any pick. Progress tracked per lab.
+// User taps through. Wrong answer still shows explanation + proceeds.
+// Progress tracked per lab.
 
 const LABS = {
 
@@ -112,6 +116,104 @@ const LABS = {
           options: ['IaaS', 'PaaS', 'SaaS', 'FaaS only'],
           answer: 1,
           explain: 'PaaS — provider manages OS + runtime; developer just deploys code. Examples: Azure App Service, AWS Elastic Beanstalk.' }
+      ]
+    },
+    {
+      id: 'a1-pbq1',
+      title: 'PBQ: Identify Connectors',
+      objective: '3.1 Cable types — match connector to use',
+      steps: [
+        { type: 'note', text: 'PBQ-style: identify the right connector / cable for each scenario. Performance-based questions on the real exam look exactly like this.' },
+        { type: 'dragmatch',
+          prompt: 'Match each scenario with the correct cable / connector.',
+          pairs: [
+            { left: '1 Gbps Ethernet drop in office', right: 'Cat 6 UTP w/ RJ45' },
+            { left: 'Cable modem broadband', right: 'RG-6 coax w/ F-type' },
+            { left: 'Single-mode fiber transceiver', right: 'LC duplex' },
+            { left: 'Cable TV / OTA tuner', right: 'Coax w/ F-type' },
+            { left: 'Legacy analog phone line', right: 'Cat 3 UTP w/ RJ11' },
+            { left: 'External NVMe SSD enclosure 40 Gbps', right: 'Thunderbolt 4 USB-C' }
+          ],
+          explain: 'Memorize: RJ45 = Ethernet (Cat 5e/6/6a/8). RJ11 = telephone. F-type = coax for cable. LC = small fiber connector dominating modern SFP+. Thunderbolt = 40+ Gbps over USB-C.' },
+        { type: 'multiselect',
+          prompt: 'Which cable types support 10 Gbps Ethernet to full 100 m?',
+          options: ['Cat 5e', 'Cat 6', 'Cat 6a', 'Cat 7', 'Cat 8 (to 30 m only)', 'Multimode OM4'],
+          answers: [2, 3],
+          explain: 'Cat 6a = 10 Gbps @ 100 m. Cat 7 also 10 Gbps @ 100 m but rare in NA. Cat 6 = 10 Gbps but only to 55 m. Cat 8 = 25/40 Gbps but only 30 m. OM4 = fiber, NOT copper.' },
+        { type: 'fillblank',
+          prompt: '10 Gbps Ethernet over copper at 100 m — minimum category required (answer in form "Cat 6a"):',
+          answer: ['cat 6a', 'cat6a', '6a'],
+          placeholder: 'e.g., Cat 6a',
+          explain: 'Cat 6a is the lowest TIA-rated category supporting 10 Gbps at the full 100 m channel.' },
+        { type: 'order',
+          prompt: 'Place these copper cable categories in INCREASING bandwidth capability:',
+          items: ['Cat 5e (1 Gbps)', 'Cat 6 (10 Gbps@55m)', 'Cat 6a (10 Gbps@100m)', 'Cat 8 (40 Gbps@30m)'],
+          explain: 'Cat 5e → Cat 6 → Cat 6a → Cat 8 by max throughput. Distance limits matter on the exam — Cat 6 caps short.' }
+      ]
+    },
+    {
+      id: 'a1-pbq2',
+      title: 'PBQ: Subnet a /24 for 4 Departments',
+      objective: '2.5 IP addressing — VLSM subnetting',
+      steps: [
+        { type: 'note', text: 'Given 192.168.10.0/24. Need 4 subnets, ~50 hosts each. Determine new prefix + subnet networks.' },
+        { type: 'multiselect',
+          prompt: 'Which prefix length produces 4 equal subnets from a /24?',
+          options: ['/25', '/26', '/27', '/28'],
+          answers: [1],
+          explain: 'Borrow 2 bits from host (/24+2 = /26). 2² = 4 subnets. /26 = 64 addresses, 62 usable per subnet (meets 50-host need).' },
+        { type: 'fillblank',
+          prompt: 'Subnet mask in dotted decimal for /26:',
+          answer: ['255.255.255.192'],
+          placeholder: '255.x.x.x',
+          explain: '/26 = 24 + 2 borrowed bits. Borrowed octet = 11000000 = 192.' },
+        { type: 'fillblank',
+          prompt: 'Block size (increment) of /26?',
+          answer: ['64'],
+          placeholder: 'Number',
+          explain: '256 − 192 = 64. Subnets land at multiples of 64 in the last octet.' },
+        { type: 'order',
+          prompt: 'Place the four /26 subnet network addresses in order from first to last:',
+          items: ['192.168.10.0/26', '192.168.10.64/26', '192.168.10.128/26', '192.168.10.192/26'],
+          explain: 'Starting at .0, advance by block size 64 each time: .0, .64, .128, .192. Each subnet uses .1–.62 as usable hosts and ends at broadcast (.63, .127, .191, .255).' },
+        { type: 'fillblank',
+          prompt: 'Broadcast address of subnet 192.168.10.64/26?',
+          answer: ['192.168.10.127'],
+          placeholder: 'IP',
+          explain: 'Next subnet starts at .128, so broadcast = .128 − 1 = .127.' }
+      ]
+    },
+    {
+      id: 'a1-pbq3',
+      title: 'PBQ: Diagnose Wired Network',
+      objective: '5.7 — troubleshoot networking',
+      steps: [
+        { type: 'note', text: 'User: "Wired Ethernet not working." You arrive at desk. Walk through diagnosis.' },
+        { type: 'order',
+          prompt: 'Apply bottom-up troubleshooting steps in the CORRECT layer order:',
+          items: [
+            '1. Check link light on NIC + switch port (L1)',
+            '2. Confirm correct VLAN + no err-disable (L2)',
+            '3. Verify ipconfig shows valid IP + gateway (L3)',
+            '4. Test TCP port to a server (L4)',
+            '5. Validate name resolution + app response (L7)'
+          ],
+          explain: 'Bottom-up = L1 → L2 → L3 → L4 → L7. Catch failures cheapest at the bottom.' },
+        { type: 'fillblank',
+          prompt: 'IP address 169.254.10.55 means what?',
+          answer: ['apipa', 'automatic private ip addressing'],
+          placeholder: 'Acronym',
+          explain: 'APIPA — Automatic Private IP Addressing. Indicates DHCP could not reach a server. Check DHCP relay / VLAN / DHCP service.' },
+        { type: 'multiselect',
+          prompt: 'Tools that locate which wall jack a closet port matches:',
+          options: ['Tone generator + probe', 'Cable tester (continuity)', 'Multimeter', 'OTDR', 'LLDP / CDP neighbor lookup'],
+          answers: [0, 4],
+          explain: 'Tone generator ("fox + hound") audibly identifies the cable end-to-end. LLDP/CDP on a managed switch reports the wall jack ID if configured.' },
+        { type: 'choice',
+          prompt: 'Workstation shows 1 Gbps link, but throughput tests at 95 Mbps. Most likely cause?',
+          options: ['Bad NIC driver', 'Duplex mismatch (one side half)', 'Cat 5 cable in path / split pair', 'Misconfigured DNS'],
+          answer: 2,
+          explain: 'Link negotiates at 1 Gbps but a Cat 3/5 patch in the chain, or a split-pair termination, drops effective throughput to ~100 Mbps. Replace + recertify with a cable certifier.' }
       ]
     }
   ],
