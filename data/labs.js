@@ -1574,6 +1574,128 @@ const LABS = {
           answer: 0,
           explain: 'Private Endpoint puts a private IP for a PaaS service inside your VNet. Disables public access.' }
       ]
+    },
+    {
+      id: 'az-pbq1',
+      title: 'PBQ: Azure Resource Hierarchy',
+      objective: 'Azure architecture',
+      steps: [
+        { type: 'note', text: 'Place each Azure construct in its correct scope level.' },
+        { type: 'order',
+          prompt: 'Order Azure scopes from BROADEST to NARROWEST:',
+          items: [
+            '1. Tenant (Microsoft Entra ID root)',
+            '2. Management Group',
+            '3. Subscription',
+            '4. Resource Group',
+            '5. Resource'
+          ],
+          explain: 'Inheritance flows top-down. Policy or RBAC at MG cascades to every subscription/RG/resource beneath.' },
+        { type: 'dragmatch',
+          prompt: 'Match each scope to its typical use.',
+          pairs: [
+            { left: 'Tenant', right: 'Identity boundary (Entra ID)' },
+            { left: 'Management Group', right: 'Apply policy + RBAC across many subscriptions' },
+            { left: 'Subscription', right: 'Billing + quota boundary' },
+            { left: 'Resource Group', right: 'Lifecycle + permissions container for one workload' },
+            { left: 'Resource', right: 'VM / storage account / database / etc.' }
+          ],
+          explain: 'Memorize: Tenant = identity. MG = grouping. Sub = bill. RG = lifecycle. Resource = thing.' },
+        { type: 'multiselect',
+          prompt: 'Resource Group facts (pick TRUE):',
+          options: [
+            'Every resource lives in exactly one RG',
+            'RG itself has a region (where its metadata sits)',
+            'Resources can be in different regions than their RG',
+            'You can nest RGs inside each other',
+            'Deleting an RG deletes every resource inside'
+          ],
+          answers: [0, 1, 2, 4],
+          explain: 'RGs CANNOT be nested. Everything else is true. Resource region ≠ RG region is common.' },
+        { type: 'fillblank',
+          prompt: 'SLA for two VMs deployed across Availability Zones in one region:',
+          answer: ['99.99', '99.99%', '4 nines'],
+          placeholder: 'percent',
+          explain: 'Multi-AZ VMs in same region get 99.99% SLA. Single instance with Premium SSD = 99.9%. Availability Set (same DC, fault/update domains) = 99.95%.' }
+      ]
+    },
+    {
+      id: 'az-pbq2',
+      title: 'PBQ: Identify Azure Service',
+      objective: 'Azure services',
+      steps: [
+        { type: 'note', text: 'Pick the right Azure service for each scenario.' },
+        { type: 'dragmatch',
+          prompt: 'Match the need to the Azure service.',
+          pairs: [
+            { left: 'Run a Windows VM with full OS control', right: 'Azure Virtual Machines (IaaS)' },
+            { left: 'Host a web API with Microsoft patching OS', right: 'App Service (PaaS)' },
+            { left: 'Run a container without orchestration', right: 'Azure Container Instances (ACI)' },
+            { left: 'Run microservices on managed Kubernetes', right: 'AKS' },
+            { left: 'Code runs only on HTTP request, scale-to-zero', right: 'Azure Functions (FaaS)' },
+            { left: 'Stream Windows desktops to iPads', right: 'Azure Virtual Desktop (DaaS)' }
+          ],
+          explain: 'Compute spectrum: VM → App Service → Container Apps/AKS → Functions. Pick by control vs ops effort.' },
+        { type: 'multiselect',
+          prompt: 'Which storage redundancy survives a full REGION outage?',
+          options: ['LRS', 'ZRS', 'GRS', 'GZRS', 'RA-GRS', 'RA-GZRS'],
+          answers: [2, 3, 4, 5],
+          explain: 'GRS/GZRS replicate to paired region. RA-GRS/RA-GZRS add read access to secondary. LRS=1 DC; ZRS=3 zones same region.' },
+        { type: 'fillblank',
+          prompt: 'Cloud security posture management service in Azure (acronym):',
+          answer: ['cspm', 'defender for cloud', 'mdc'],
+          placeholder: 'acronym',
+          explain: 'Microsoft Defender for Cloud = CSPM (posture + Secure Score) + CWPP (workload protection per plan).' },
+        { type: 'choice',
+          prompt: 'Best Azure service for global anycast L7 entry point + WAF + CDN for a multi-region web app:',
+          options: ['Azure Load Balancer', 'Application Gateway', 'Azure Front Door', 'Traffic Manager'],
+          answer: 2,
+          explain: 'Front Door = global anycast L7 + CDN + WAF. AppGW = regional L7. ALB = regional L4. Traffic Manager = DNS-based, no caching/WAF.' }
+      ]
+    },
+    {
+      id: 'az-pbq3',
+      title: 'PBQ: Cost Tool Picker',
+      objective: 'Azure cost management',
+      steps: [
+        { type: 'dragmatch',
+          prompt: 'Match each cost task to the correct Azure tool.',
+          pairs: [
+            { left: 'Estimate monthly cost BEFORE deploying', right: 'Azure Pricing Calculator' },
+            { left: 'Compare 3-year on-prem vs Azure cost', right: 'Azure TCO Calculator' },
+            { left: 'Analyze ACTUAL spend + set budgets + alerts', right: 'Microsoft Cost Management' },
+            { left: 'See cost-saving recommendations (idle VMs, RIs)', right: 'Azure Advisor (Cost tab)' }
+          ],
+          explain: 'Memorize Pricing vs TCO vs Cost Management vs Advisor — most common AZ-900 exam confusion.' },
+        { type: 'multiselect',
+          prompt: 'Pick the discount mechanisms available in Azure:',
+          options: [
+            'Reservations (1-3 yr commit)',
+            'Savings Plan for Compute (1-3 yr hourly commit)',
+            'Spot Virtual Machines (evictable)',
+            'Azure Hybrid Benefit (BYO Windows/SQL licenses)',
+            'Dev/Test pricing',
+            'Pay-As-You-Go (no discount, baseline)'
+          ],
+          answers: [0, 1, 2, 3, 4],
+          explain: 'All except PAYG provide a discount. PAYG = baseline on-demand pricing.' },
+        { type: 'fillblank',
+          prompt: 'Reservation maximum discount in Azure (up to)',
+          answer: ['72', '72%', '72 percent'],
+          placeholder: 'percent',
+          explain: '3-year all-upfront RI saves up to 72% vs PAYG. Spot up to 90% but evictable.' },
+        { type: 'order',
+          prompt: 'Cost analysis workflow in order:',
+          items: [
+            '1. View Cost Management dashboard by subscription/RG',
+            '2. Filter top services by spend',
+            '3. Group by tag (env / owner / project) for chargeback',
+            '4. Set budget alert at 80% threshold',
+            '5. Apply Advisor recommendations (right-size + RIs)',
+            '6. Review monthly trend; adjust commitments'
+          ],
+          explain: 'Dashboard → break down → tag → alert → optimize → review. Anomaly detection catches sudden spikes early.' }
+      ]
     }
   ],
 
@@ -1653,6 +1775,132 @@ const LABS = {
           options: ['Eyeball it', 'Invoke-ScriptAnalyzer .\\Get-ServerHealth.psm1', 'Just run it in prod', 'No tooling exists'],
           answer: 1,
           explain: 'PSScriptAnalyzer flags style + correctness issues (approved verbs, plural nouns, secrets, etc.).' }
+      ]
+    },
+    {
+      id: 'ps-pbq1',
+      title: 'PBQ: Cmdlet + Pipeline Reasoning',
+      objective: 'Pipeline + objects',
+      steps: [
+        { type: 'note', text: 'Walk through PowerShell pipeline mechanics.' },
+        { type: 'fillblank',
+          prompt: 'Automatic variable representing the current pipeline object:',
+          answer: ['$_', '$psitem'],
+          placeholder: 'variable',
+          explain: '$_ (or modern $PSItem) is the current pipeline object inside Where-Object / ForEach-Object scriptblocks.' },
+        { type: 'dragmatch',
+          prompt: 'Match the cmdlet alias to its full name.',
+          pairs: [
+            { left: '?', right: 'Where-Object' },
+            { left: '%', right: 'ForEach-Object' },
+            { left: 'select', right: 'Select-Object' },
+            { left: 'gci', right: 'Get-ChildItem' },
+            { left: 'gm', right: 'Get-Member' },
+            { left: 'ft', right: 'Format-Table' }
+          ],
+          explain: 'Aliases save typing at the prompt. Use FULL cmdlet names in scripts for clarity + linter happiness.' },
+        { type: 'multiselect',
+          prompt: 'Operators that are LEGAL PowerShell comparisons:',
+          options: ['-eq', '-ne', '==', '-lt', '-gt', '=', '-like', '-match'],
+          answers: [0, 1, 3, 4, 6, 7],
+          explain: 'PowerShell uses -eq / -ne / -lt / -gt / -le / -ge / -like / -match. NO == operator. = is assignment ONLY.' },
+        { type: 'order',
+          prompt: 'Pipeline binding modes in cmdlet-binding attempt order:',
+          items: [
+            '1. ByValue (entire object matches parameter type)',
+            '2. ByPropertyName (matching property name on the object)'
+          ],
+          explain: 'ByValue checked first. If fails, ByPropertyName tried. Get-Help cmdlet -Parameter * reveals which params accept pipeline.' }
+      ]
+    },
+    {
+      id: 'ps-pbq2',
+      title: 'PBQ: Advanced Function Anatomy',
+      objective: 'Functions + parameter validation',
+      steps: [
+        { type: 'note', text: 'Build a production-grade advanced function. Pick the correct attributes.' },
+        { type: 'dragmatch',
+          prompt: 'Match each validation attribute to its purpose.',
+          pairs: [
+            { left: '[ValidateSet(...)]', right: 'Enforces one of a fixed list of values (gives tab completion)' },
+            { left: '[ValidateRange(min,max)]', right: 'Numeric range' },
+            { left: '[ValidatePattern("regex")]', right: 'Must match regex' },
+            { left: '[ValidateScript({...})]', right: 'Arbitrary boolean check (e.g., file exists)' },
+            { left: '[ValidateNotNullOrEmpty()]', right: 'Reject null / empty string / empty collection' },
+            { left: '[ValidateLength(min,max)]', right: 'String length bounds' }
+          ],
+          explain: 'Memorize the catalog. Validation runs BEFORE function body — fail fast.' },
+        { type: 'multiselect',
+          prompt: 'What does [CmdletBinding()] add to a function?',
+          options: [
+            'Common parameters (-Verbose / -Debug / -ErrorAction / etc.)',
+            'Support for $PSCmdlet automatic variable',
+            'Ability to support -WhatIf / -Confirm via SupportsShouldProcess',
+            'Pipeline-binding via ValueFromPipeline parameter attribute',
+            'Built-in encryption',
+            'Automatic logging to Sentinel'
+          ],
+          answers: [0, 1, 2, 3],
+          explain: '[CmdletBinding()] converts a basic function into an advanced function. No magic logging or crypto. SupportsShouldProcess opt-in for destructive cmdlets.' },
+        { type: 'fillblank',
+          prompt: 'Snippet attribute on a parameter to mark it as MANDATORY:',
+          answer: ['[parameter(mandatory)]', '[parameter(mandatory=$true)]', 'mandatory'],
+          placeholder: '[Parameter(...)]',
+          explain: '[Parameter(Mandatory)] (or Mandatory=$true) forces the caller to supply it. Pair with [ValidateNotNullOrEmpty()] for sanity.' },
+        { type: 'order',
+          prompt: 'Pipeline-aware function lifecycle blocks in correct order:',
+          items: ['1. begin { setup once before pipeline }', '2. process { runs per pipeline object }', '3. end { teardown after pipeline done }'],
+          explain: 'process block is the per-object handler — REQUIRED for pipeline support. Without it, only the LAST piped object is processed.' }
+      ]
+    },
+    {
+      id: 'ps-pbq3',
+      title: 'PBQ: Error Handling + Best Practices',
+      objective: 'Error handling',
+      steps: [
+        { type: 'note', text: 'Production scripts need explicit error handling. Choose the right approach for each scenario.' },
+        { type: 'choice',
+          prompt: 'A non-terminating error from Get-Item — how to force it into try/catch?',
+          options: [
+            'Add -ErrorAction Stop',
+            'Wrap in begin block',
+            'Use trap statement only',
+            'Cannot be caught'
+          ],
+          answer: 0,
+          explain: '-ErrorAction Stop (or $ErrorActionPreference = "Stop") promotes non-terminating to terminating so try/catch fires.' },
+        { type: 'multiselect',
+          prompt: 'Valid PowerShell preference variables:',
+          options: ['$ErrorActionPreference', '$WarningPreference', '$VerbosePreference', '$DebugPreference', '$InformationPreference', '$ConfirmPreference', '$RandomActionPreference'],
+          answers: [0, 1, 2, 3, 4, 5],
+          explain: '$RandomActionPreference does not exist. All others control output streams.' },
+        { type: 'fillblank',
+          prompt: 'Linter command to scan a PowerShell script for issues:',
+          answer: ['invoke-scriptanalyzer', 'invoke-scriptanalyzer .\\script.ps1', 'scriptanalyzer'],
+          placeholder: 'cmd',
+          explain: 'Invoke-ScriptAnalyzer (PSScriptAnalyzer module) flags style, correctness, security issues. Required pre-commit gate in production.' },
+        { type: 'order',
+          prompt: 'Best-practice order for a destructive cmdlet (e.g., Remove-User):',
+          items: [
+            '1. param block with [CmdletBinding(SupportsShouldProcess)]',
+            '2. Validate input via [ValidateScript({...})]',
+            '3. Inside body: if ($PSCmdlet.ShouldProcess($target, "Remove")) { ... }',
+            '4. Wrap risky call in try/catch with -ErrorAction Stop',
+            '5. Write-Verbose progress + Write-Error on fail',
+            '6. Document with comment-based help (.SYNOPSIS / .EXAMPLE)'
+          ],
+          explain: 'ShouldProcess gives free -WhatIf / -Confirm. Always combine with -ErrorAction Stop in try/catch.' },
+        { type: 'dragmatch',
+          prompt: 'Match cmdlet to writing-to-stream behavior.',
+          pairs: [
+            { left: 'Write-Output', right: 'To pipeline (stream 1)' },
+            { left: 'Write-Error', right: 'Error stream (2) + $Error[0]' },
+            { left: 'Write-Warning', right: 'Warning stream (3)' },
+            { left: 'Write-Verbose', right: 'Stream 4, visible only with -Verbose' },
+            { left: 'Write-Debug', right: 'Stream 5, visible only with -Debug' },
+            { left: 'Write-Information', right: 'Stream 6 (PS 5+); replaces Write-Host in scripts' }
+          ],
+          explain: 'Avoid Write-Host in libraries — it bypasses the pipeline. Use Write-Output for data + Write-Verbose / Write-Information for diagnostics.' }
       ]
     }
   ]
