@@ -312,6 +312,103 @@ const LABS = {
           answer: 1,
           explain: 'Real IT never asks for your password. Always verify by calling the helpdesk on a number you trust.' }
       ]
+    },
+    {
+      id: 'a2-pbq1',
+      title: 'PBQ: CompTIA 7-Step Malware Removal',
+      objective: '3.3 — malware removal',
+      steps: [
+        { type: 'note', text: 'User reports files renamed with .lock extension + ransom note on desktop. Apply 7-step process.' },
+        { type: 'order',
+          prompt: 'Place ALL seven steps in correct CompTIA order:',
+          items: [
+            '1. Investigate + verify malware symptoms',
+            '2. Quarantine — disconnect from network',
+            '3. Disable System Restore (Windows)',
+            '4. Remediate — update AV defs + scan + remove',
+            '5. Schedule scans + run updates',
+            '6. Re-enable System Restore + create clean restore point',
+            '7. Educate the end user'
+          ],
+          explain: 'CompTIA-tested order. Step 3 (disable System Restore) prevents reinfection from tainted restore points during cleanup.' },
+        { type: 'multiselect',
+          prompt: 'During step 2 quarantine, which actions to take?',
+          options: ['Unplug Ethernet', 'Disable Wi-Fi', 'Power off — preserve evidence first if forensics needed', 'Forward sample to vendor for analysis', 'Pay ransom'],
+          answers: [0, 1, 3],
+          explain: 'Isolate network ASAP. Powering off destroys volatile evidence; if forensics needed, image RAM first. NEVER pay ransom as default policy.' },
+        { type: 'fillblank',
+          prompt: 'Term for malware lacking on-disk file footprint (uses PowerShell + WMI + registry only):',
+          answer: ['fileless', 'fileless malware'],
+          placeholder: 'one word',
+          explain: 'Fileless malware lives in memory + abuses LOLBins (Living Off the Land Binaries). Detected via behavior + script-block logging.' },
+        { type: 'choice',
+          prompt: 'Best long-term defense against ransomware re-encryption?',
+          options: ['Daily backup to same NAS', 'Offline / immutable / air-gapped backup with tested restore', 'BitLocker on user devices only', 'Disable Windows Update'],
+          answer: 1,
+          explain: 'Backup that ransomware cannot reach = offline / WORM Object Lock / air-gapped. Tested restore quarterly. Backup with no restore test = no backup.' }
+      ]
+    },
+    {
+      id: 'a2-pbq2',
+      title: 'PBQ: NTFS Permissions Conflict',
+      objective: '2.5 — Windows security settings',
+      steps: [
+        { type: 'note', text: 'User alice is in groups Marketing + Sales. Folder C:\\Reports has Marketing=Modify, Sales=Read, Everyone=Read. Determine effective access.' },
+        { type: 'fillblank',
+          prompt: 'Effective NTFS permission for alice on C:\\Reports?',
+          answer: ['modify', 'm'],
+          placeholder: 'one word',
+          explain: 'NTFS Allow permissions accumulate (UNION). alice gets Modify from Marketing + Read from Sales = Modify (since Modify includes Read).' },
+        { type: 'note', text: 'Admin adds explicit "Deny Write" for alice on the folder.' },
+        { type: 'fillblank',
+          prompt: 'New effective permission for alice?',
+          answer: ['read', 'read only', 'read & execute'],
+          placeholder: 'one phrase',
+          explain: 'Deny ALWAYS overrides Allow in NTFS. Modify (which includes Write) is blocked; Read + Execute still allowed.' },
+        { type: 'note', text: 'Folder shared as \\\\server\\reports with share permission Everyone=Read.' },
+        { type: 'choice',
+          prompt: 'alice accesses the folder over the network (SMB). Effective access?',
+          options: ['Modify (NTFS wins)', 'Read (most restrictive of NTFS + share)', 'Full Control', 'No access'],
+          answer: 1,
+          explain: 'Across network: effective = MOST RESTRICTIVE intersection of NTFS + share. Share=Read overrides NTFS=Modify → effective = Read.' },
+        { type: 'multiselect',
+          prompt: 'Which actions can alice do at her workstation (local access, no share involved)?',
+          options: ['Read files', 'Modify files', 'Delete files', 'Take ownership'],
+          answers: [0],
+          explain: 'Local access bypasses share permissions. NTFS Deny Write blocks Modify + Delete. Take Ownership requires Full Control or Admin.' }
+      ]
+    },
+    {
+      id: 'a2-pbq3',
+      title: 'PBQ: Windows Boot Repair Order',
+      objective: '3.1 — Windows boot troubleshooting',
+      steps: [
+        { type: 'note', text: 'PC fails to boot. Black screen, "Bootmgr is missing" message. Apply repair commands in correct order.' },
+        { type: 'order',
+          prompt: 'Apply bootrec commands in the recommended order:',
+          items: [
+            '1. bootrec /fixmbr',
+            '2. bootrec /fixboot',
+            '3. bootrec /scanos',
+            '4. bootrec /rebuildbcd'
+          ],
+          explain: 'Standard MBR repair flow: fix MBR → fix boot sector → discover Windows installs → rebuild BCD entries. UEFI systems use bcdboot instead.' },
+        { type: 'fillblank',
+          prompt: 'For UEFI systems, command that copies boot files to EFI System Partition:',
+          answer: ['bcdboot c:\\windows /s s: /f uefi', 'bcdboot', 'bcdboot c:\\windows'],
+          placeholder: 'bcdboot ...',
+          explain: 'bcdboot rebuilds the UEFI boot manager. Full syntax: bcdboot C:\\Windows /s S: /f UEFI (where S: = mounted ESP letter in WinRE).' },
+        { type: 'multiselect',
+          prompt: 'Tools to repair corrupt system files:',
+          options: ['sfc /scannow', 'DISM /Online /Cleanup-Image /RestoreHealth', 'chkdsk /f /r', 'format c:'],
+          answers: [0, 1, 2],
+          explain: 'DISM repairs Component Store; SFC then uses it to repair system files. chkdsk fixes file-system errors. Format wipes the drive (NOT a repair).' },
+        { type: 'choice',
+          prompt: 'BitLocker recovery prompt at boot after firmware update. Cause?',
+          options: ['BIOS update changed TPM measurement', 'BitLocker forgot the password', 'Cosmic rays flipped a bit', 'Hard drive died'],
+          answer: 0,
+          explain: 'TPM PCR registers track firmware + boot config. Any change requires recovery key. Always SUSPEND BitLocker before firmware updates.' }
+      ]
     }
   ],
 
@@ -698,6 +795,177 @@ const LABS = {
           options: ['Provider-managed keys', 'CMK / BYOK with HSM-backed KMS', 'Plaintext keys in code', 'No keys'],
           answer: 1,
           explain: 'Customer-Managed Keys give you lifecycle control. Audit usage via cloud audit logs.' }
+      ]
+    },
+    {
+      id: 's-pbq1',
+      title: 'PBQ: Identify Attack Type',
+      objective: '2.4 — analyze indicators',
+      steps: [
+        { type: 'note', text: 'Various security scenarios — pick the correct attack name from each description.' },
+        { type: 'dragmatch',
+          prompt: 'Match each scenario with its attack name.',
+          pairs: [
+            { left: 'Floods CAM table on a switch with bogus MACs', right: 'MAC flooding' },
+            { left: 'Forged ARP replies redirect victim traffic to attacker', right: 'ARP poisoning / spoofing' },
+            { left: 'Phone numbers ported to attacker SIM, OTP codes stolen', right: 'SIM swap' },
+            { left: 'Crafted ICMP echo to spoofed broadcast → amplified flood', right: 'Smurf attack' },
+            { left: 'Stolen TGT replayed against domain controllers', right: 'Pass-the-Ticket' },
+            { left: 'Attacker registers lookalike-domain login + reverse-proxies real M365 login + steals session cookie', right: 'AitM phishing (EvilProxy)' }
+          ],
+          explain: 'Memorize the names + their distinguishing trick. Many Sec+ questions are "which attack matches this description".' },
+        { type: 'multiselect',
+          prompt: 'Select attacks that target the CIA confidentiality pillar specifically:',
+          options: ['Eavesdropping / sniffing', 'DDoS', 'Phishing for credentials', 'Defacement', 'Side-channel attack', 'Ransomware encryption'],
+          answers: [0, 2, 4],
+          explain: 'Confidentiality = unauthorized disclosure. DDoS targets availability; defacement targets integrity; ransomware targets availability + integrity.' },
+        { type: 'fillblank',
+          prompt: 'Type of attack where attacker poisons resolver cache with false DNS records:',
+          answer: ['dns cache poisoning', 'dns poisoning', 'cache poisoning', 'pharming'],
+          placeholder: 'phrase',
+          explain: 'DNS cache poisoning / DNS spoofing redirects victims to attacker-controlled sites. DNSSEC + source-port randomization mitigate.' },
+        { type: 'order',
+          prompt: 'Kill-chain phases in correct order (Lockheed Martin):',
+          items: [
+            '1. Reconnaissance',
+            '2. Weaponization',
+            '3. Delivery',
+            '4. Exploitation',
+            '5. Installation',
+            '6. Command & Control (C2)',
+            '7. Actions on Objectives'
+          ],
+          explain: 'Memorize the 7 phases. Defenders aim to break the chain as early as possible.' }
+      ]
+    },
+    {
+      id: 's-pbq2',
+      title: 'PBQ: Cryptography Picker',
+      objective: '1.4 / 4.3 — applied cryptography',
+      steps: [
+        { type: 'note', text: 'Choose the right cryptographic primitive for each requirement.' },
+        { type: 'dragmatch',
+          prompt: 'Match the requirement to the correct primitive.',
+          pairs: [
+            { left: 'Symmetric block cipher (encryption at rest)', right: 'AES-256-GCM' },
+            { left: 'Asymmetric key exchange (Perfect Forward Secrecy)', right: 'ECDHE (X25519)' },
+            { left: 'Digital signature (modern)', right: 'EdDSA (Ed25519)' },
+            { left: 'Password hashing (memory-hard)', right: 'Argon2id' },
+            { left: 'Generic cryptographic hash', right: 'SHA-256' },
+            { left: 'MAC for short messages', right: 'HMAC-SHA256' }
+          ],
+          explain: 'Modern picks: AES-GCM for AEAD, ECDHE for key exchange w/ PFS, Ed25519 for signatures, Argon2id for passwords, SHA-256 for general hashing. AVOID MD5, SHA-1, RC4, 3DES, DES.' },
+        { type: 'multiselect',
+          prompt: 'Algorithms considered BROKEN / deprecated:',
+          options: ['MD5', 'SHA-1', 'AES-256', 'DES', '3DES', 'RC4', 'ECDSA P-256'],
+          answers: [0, 1, 3, 4, 5],
+          explain: 'MD5 + SHA-1 broken collisions. DES + 3DES weak / deprecated. RC4 cryptanalyzed. AES-256 + ECDSA still strong.' },
+        { type: 'fillblank',
+          prompt: 'Recommended TLS minimum version in 2025:',
+          answer: ['tls 1.2', '1.2', 'tls1.2'],
+          placeholder: 'TLS x.y',
+          explain: 'TLS 1.2 baseline (PCI requirement). TLS 1.3 preferred (faster + AEAD only). Disable TLS 1.0 / 1.1 / SSL.' },
+        { type: 'choice',
+          prompt: 'Best storage for a corporate signing key?',
+          options: ['Embedded in source code', 'Plaintext file with strong permissions', 'HSM / cloud KMS with audit logging', 'Encrypted with a password also in the same repo'],
+          answer: 2,
+          explain: 'HSM (Hardware Security Module) or cloud KMS keeps the key in tamper-resistant hardware; access logged. Source code = leak risk.' }
+      ]
+    },
+    {
+      id: 's-pbq3',
+      title: 'PBQ: Incident Response Steps',
+      objective: '4.4 — IR process (NIST SP 800-61)',
+      steps: [
+        { type: 'note', text: 'Phishing campaign detected. Two finance users clicked + entered credentials. Mailbox rules forwarding to external. Begin IR.' },
+        { type: 'order',
+          prompt: 'NIST SP 800-61 phases in correct order:',
+          items: [
+            '1. Preparation',
+            '2. Detection & Analysis',
+            '3. Containment',
+            '4. Eradication',
+            '5. Recovery',
+            '6. Lessons Learned (Post-mortem)'
+          ],
+          explain: 'Memorize: Preparation → Detection → Containment → Eradication → Recovery → Lessons Learned. Preparation is ongoing, not one-time.' },
+        { type: 'multiselect',
+          prompt: 'Containment actions for the compromised users:',
+          options: ['Revoke active sessions in Entra ID / IdP', 'Reset passwords + force MFA re-enroll', 'Remove malicious inbox forwarding rules', 'Hunt for OAuth grant abuse', 'Disable accounts permanently'],
+          answers: [0, 1, 2, 3],
+          explain: 'Revoke tokens + rotate creds + remove inbox-rule persistence + audit OAuth grants. Permanent disable hurts business; temporary lock + investigate is right.' },
+        { type: 'fillblank',
+          prompt: 'GDPR breach-notification deadline to supervisory authority (max hours):',
+          answer: ['72', '72 hours'],
+          placeholder: 'hours',
+          explain: 'GDPR Article 33: notify within 72 hours of becoming aware unless unlikely to result in risk to rights/freedoms of data subjects.' },
+        { type: 'choice',
+          prompt: 'Best long-term mitigation against credential-phishing kits like EvilProxy?',
+          options: ['Annual training only', 'Phishing-resistant FIDO2 / passkeys', 'Force password change every 30 days', 'Block all external mail'],
+          answer: 1,
+          explain: 'Origin-bound FIDO2 / passkeys cannot be relayed through reverse-proxy phishing. Eliminate SMS + push notifications for high-value accounts.' },
+        { type: 'order',
+          prompt: 'Lessons-Learned post-mortem outputs (in correct documentation order):',
+          items: [
+            '1. Timeline of events (ts → action)',
+            '2. Root-cause analysis (5 Whys / Fishbone)',
+            '3. Impact assessment (users / data / cost)',
+            '4. Detection gaps + new alerts',
+            '5. Prevention actions + owners + due dates',
+            '6. Communications + regulatory notifications log'
+          ],
+          explain: 'Blameless post-mortem within 1-2 weeks of any Sev1/Sev2. Owner + date on every action prevents follow-up rot.' }
+      ]
+    },
+    {
+      id: 's-pbq4',
+      title: 'PBQ: Network Hardening Checklist',
+      objective: '3.2 / 3.4 — secure baseline',
+      steps: [
+        { type: 'note', text: 'Harden new switch + small office network. Pick + order baseline tasks.' },
+        { type: 'multiselect',
+          prompt: 'Required hardening items for a managed switch:',
+          options: [
+            'Change default admin password + enable MFA on mgmt',
+            'Update firmware to latest stable',
+            'Disable unused services (Telnet, HTTP, SNMPv1/v2c)',
+            'Configure SSH + HTTPS only for mgmt',
+            'Enable BPDU Guard + DHCP Snooping + DAI + IP Source Guard',
+            'Leave default VLAN 1 on trunks for compatibility',
+            'Configure NTP + Syslog forwarding to SIEM',
+            'Apply ACL on management VLAN'
+          ],
+          answers: [0, 1, 2, 3, 4, 6, 7],
+          explain: 'All items EXCEPT leaving native VLAN 1 — that\'s a VLAN-hopping risk. Move native off VLAN 1 + force-tag it.' },
+        { type: 'dragmatch',
+          prompt: 'Match the protocol with its secure replacement.',
+          pairs: [
+            { left: 'Telnet (23)', right: 'SSH (22)' },
+            { left: 'FTP (20/21)', right: 'SFTP (22) or FTPS (990)' },
+            { left: 'HTTP (80)', right: 'HTTPS (443)' },
+            { left: 'SNMPv1 / v2c (161)', right: 'SNMPv3 with AuthPriv' },
+            { left: 'LDAP (389)', right: 'LDAPS (636)' },
+            { left: 'POP3 (110)', right: 'POP3S (995)' }
+          ],
+          explain: 'Memorize plaintext → encrypted pair for every protocol. Sec+ + Net+ test these heavily.' },
+        { type: 'order',
+          prompt: 'Defense-in-depth layers in correct outward-to-inward order:',
+          items: [
+            '1. Perimeter (Internet edge firewall + IPS + DDoS)',
+            '2. Network (segmentation + east-west)',
+            '3. Endpoint (host firewall + EDR + patching)',
+            '4. Application (WAF + secure code + input validation)',
+            '5. Data (encryption + DLP + classification)',
+            '6. Identity (strong auth + MFA + PIM)',
+            '7. Physical (badges + cameras + locks)',
+            '8. Administrative (policy + training)'
+          ],
+          explain: 'Layered controls so a single failure doesn\'t equal a full breach. Test by removing one layer + checking redundancy.' },
+        { type: 'fillblank',
+          prompt: 'Stripped-down model where every request authenticated, authorized, encrypted; no implicit trust by network location:',
+          answer: ['zero trust', 'zero-trust', 'ztna', 'zero trust architecture'],
+          placeholder: 'phrase',
+          explain: 'Zero Trust (NIST SP 800-207). ZTNA brokers per-app access replacing flat VPN.' }
       ]
     }
   ],
