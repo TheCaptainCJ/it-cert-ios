@@ -5121,6 +5121,170 @@ sum=$(( 3 + 5 ))</code></pre>
             <li>"Lives in RAM / uses PowerShell + WMI" → fileless malware.</li>
             <li>CompTIA 7-step removal — order is exam-critical.</li>
           </ul>
+
+          <h2>Notable malware families (recognize names)</h2>
+          <ul>
+            <li><b>Emotet</b> — modular trojan / loader; spread via macro-laden Office docs; takedown 2021 + resurgence.</li>
+            <li><b>TrickBot</b> — banking + loader partner of Ryuk/Conti.</li>
+            <li><b>Qakbot / Qbot</b> — banker + loader; takedown Aug 2023, resurgent.</li>
+            <li><b>IcedID / BokBot</b> — banking + initial access broker.</li>
+            <li><b>Ryuk / Conti / LockBit / BlackCat (ALPHV) / BlackBasta / Akira / Cl0p / Royal / Play</b> — ransomware-as-a-service operators.</li>
+            <li><b>WannaCry</b> — 2017 worm + ransomware using EternalBlue SMB exploit.</li>
+            <li><b>NotPetya</b> — 2017 destructive wiper disguised as ransomware.</li>
+            <li><b>Stuxnet</b> — first known nation-state cyber-weapon; targeted Iran's nuclear centrifuges via PLC manipulation.</li>
+            <li><b>Cobalt Strike</b> — legit pen-test tool widely abused for post-exploitation C2.</li>
+            <li><b>Mimikatz</b> — credential dumper; reads LSASS process memory.</li>
+            <li><b>Pegasus / Predator</b> — commercial spyware (NSO Group / Intellexa) on mobile.</li>
+            <li><b>Mirai</b> — IoT botnet behind 2016 Dyn DDoS.</li>
+            <li><b>Raccoon / Vidar / RedLine / Lumma / StealC</b> — info-stealers harvesting browser secrets + crypto wallets.</li>
+            <li><b>SolarWinds SUNBURST</b> — supply-chain backdoor; 2020.</li>
+            <li><b>3CX</b> — supply-chain compromise of legit VoIP client; 2023.</li>
+            <li><b>XZ-utils backdoor (CVE-2024-3094)</b> — supply-chain ssh backdoor caught pre-stable; 2024.</li>
+          </ul>
+
+          <h2>MITRE ATT&amp;CK quick-reference (14 tactics)</h2>
+          <ol>
+            <li>Initial Access</li>
+            <li>Execution</li>
+            <li>Persistence</li>
+            <li>Privilege Escalation</li>
+            <li>Defense Evasion</li>
+            <li>Credential Access</li>
+            <li>Discovery</li>
+            <li>Lateral Movement</li>
+            <li>Collection</li>
+            <li>Command and Control</li>
+            <li>Exfiltration</li>
+            <li>Impact</li>
+            <li>Reconnaissance</li>
+            <li>Resource Development</li>
+          </ol>
+          <p>Each tactic has many <b>techniques</b> + <b>sub-techniques</b> (e.g., T1059.001 PowerShell). SOC teams map detection coverage to ATT&amp;CK matrix.</p>
+
+          <h2>Modern AV-evasion techniques (defenders must know)</h2>
+          <ul>
+            <li><b>Packers + crypters</b> (UPX, ConfuserEx, Themida, custom) — compress / encrypt the payload; decrypted in memory.</li>
+            <li><b>Code signing abuse</b> — stolen / fraudulent certs; revoked but cached.</li>
+            <li><b>Living off the land (LOLBins)</b> — abuse <code>rundll32</code>, <code>regsvr32</code>, <code>mshta</code>, <code>certutil -urlcache</code>, <code>bitsadmin /transfer</code>, <code>wmic</code>, <code>powershell -enc</code>, <code>msbuild</code>, <code>installutil</code>.</li>
+            <li><b>Process injection</b> — DLL injection, reflective DLL, process hollowing, APC injection, atom bombing.</li>
+            <li><b>Token impersonation</b> + <b>UAC bypass</b> (fodhelper, eventvwr, sdclt).</li>
+            <li><b>AMSI bypass</b> — patch <code>AmsiScanBuffer</code> in memory; obfuscate scripts.</li>
+            <li><b>ETW patching</b> — disable Event Tracing for Windows to blind EDR.</li>
+            <li><b>BYOVD</b> (Bring Your Own Vulnerable Driver) — load signed legit driver with known kernel CVE; disable AV/EDR from kernel.</li>
+            <li><b>Anti-VM checks</b> — abort if MAC OUI / disk size / process names indicate sandbox (VirtualBox / VMware).</li>
+            <li><b>Sleep / time-bombs</b> — wait for analysis window to end before activating.</li>
+            <li><b>HTTPS C2</b> via legit CDN (Cloudflare Workers, GitHub Pages, Discord, Slack webhooks).</li>
+            <li><b>Domain fronting</b> (less common since major CDNs blocked it).</li>
+          </ul>
+
+          <h2>EDR vs AV vs XDR vs MDR (memorize the line)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Tool</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What it does</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Examples</th></tr>
+            <tr><td>AV (legacy)</td><td>Signature + heuristic file scan</td><td>McAfee classic, Symantec EP, ClamAV</td></tr>
+            <tr><td>NGAV</td><td>ML + behavior, no static signatures only</td><td>Cylance, SentinelOne Static</td></tr>
+            <tr><td>EDR</td><td>Continuous endpoint telemetry + investigation + remote response</td><td>CrowdStrike Falcon, SentinelOne, Defender for Endpoint, Sophos Intercept X, Carbon Black</td></tr>
+            <tr><td>XDR</td><td>EDR + correlated email + identity + network + cloud</td><td>Microsoft Defender XDR, Palo Alto Cortex XDR, Trend Micro Vision One</td></tr>
+            <tr><td>MDR</td><td>Outsourced 24/7 SOC running EDR/XDR</td><td>Arctic Wolf, Red Canary, eSentire, Expel</td></tr>
+            <tr><td>NDR</td><td>Network detection on packet/flow data</td><td>Darktrace, Vectra, Cisco Secure Network Analytics</td></tr>
+            <tr><td>SIEM</td><td>Log aggregation + correlation</td><td>Splunk, Microsoft Sentinel, QRadar, Elastic</td></tr>
+            <tr><td>SOAR</td><td>Playbook automation responding to alerts</td><td>Splunk SOAR, Palo Alto XSOAR, Tines, Torq</td></tr>
+          </table>
+
+          <h2>IOC + IOA types (Indicator of Compromise / Attack)</h2>
+          <ul>
+            <li><b>File hashes</b> — MD5 / SHA-1 / SHA-256.</li>
+            <li><b>Domains + URLs</b> — known C2.</li>
+            <li><b>IPs</b> — known infrastructure (rotates fast).</li>
+            <li><b>Registry keys / file paths</b> — persistence artifacts.</li>
+            <li><b>YARA rules</b> — pattern-match binaries by strings + structure.</li>
+            <li><b>Sigma rules</b> — log-based detection signatures, vendor-agnostic.</li>
+            <li><b>JA3 / JA4</b> — TLS client / server fingerprint.</li>
+            <li><b>SSL fingerprints</b> — cert chain + extensions.</li>
+            <li><b>Process tree anomalies</b> — Word spawning PowerShell (rare in benign).</li>
+            <li><b>Behavioral IOA</b> — credential dumping pattern, lateral movement via SMB admin shares.</li>
+          </ul>
+
+          <h2>Memory forensics + investigation</h2>
+          <ul>
+            <li><b>Volatility 3</b> — open-source memory analysis framework.</li>
+            <li><b>WinDbg + LiveKD</b> — Microsoft kernel debugger.</li>
+            <li><b>FTK Imager</b> — capture RAM + disk image.</li>
+            <li><b>Magnet RAM Capture</b> — quick RAM dump.</li>
+            <li><b>Process Hacker / Process Explorer</b> — inspect handles, DLLs, strings.</li>
+            <li><b>Autoruns</b> — every Windows persistence location.</li>
+            <li><b>TCPView</b> — sockets per process in real time.</li>
+            <li><b>Sysmon</b> — extended Windows event logging (process tree, network, file create, registry).</li>
+            <li><b>chainsaw / hayabusa</b> — fast Windows event-log triage tools.</li>
+            <li><b>KAPE</b> + <b>Velociraptor</b> — IR triage collection at scale.</li>
+          </ul>
+
+          <h2>Phishing kit + delivery chain (typical 2025 flow)</h2>
+          <ol>
+            <li>Attacker buys lookalike domain + sets up Cloudflare-fronted reverse proxy (EvilProxy / Modlishka).</li>
+            <li>Spear-phish email with MFA-bypassing landing page.</li>
+            <li>Victim enters creds + MFA OTP → attacker session cookie captured.</li>
+            <li>Replay cookie via residential proxy to evade conditional access.</li>
+            <li>Inbox rules forward sensitive mail; OAuth app added for persistence.</li>
+            <li>Lateral movement via OneDrive / SharePoint / Teams.</li>
+            <li>Mailbox-rule + OAuth abuse to silently exfil.</li>
+          </ol>
+          <p><b>Mitigations:</b> phishing-resistant MFA (FIDO2 / passkeys), block legacy auth, alert on new OAuth grants, look for impossible-travel sign-ins, anti-spoofing (SPF/DKIM/DMARC reject), URL rewriting in mail gateway, security awareness training.</p>
+
+          <h2>Ransomware playbook (incident-response checklist)</h2>
+          <ol>
+            <li><b>Isolate</b> infected hosts (disconnect LAN + Wi-Fi; preserve power for memory capture).</li>
+            <li><b>Preserve evidence</b> — image disk + RAM before shutdown if possible.</li>
+            <li><b>Identify strain</b> — note extension, ransom note text; check ID Ransomware site.</li>
+            <li><b>Check for decryption keys</b> — NoMoreRansom.org sometimes has them for older families.</li>
+            <li><b>Engage IR firm + legal + cyber insurance</b> — many require notification within hours.</li>
+            <li><b>Notify regulators</b> per jurisdiction (GDPR 72h, HIPAA, state AGs, SEC 4-day rule).</li>
+            <li><b>Restore from offline / immutable backup</b> — verify integrity + scan before restoring.</li>
+            <li><b>Rebuild domain controllers + reset Kerberos krbtgt twice</b> (24 h apart) if AD compromised.</li>
+            <li><b>Rotate all credentials</b>, OAuth tokens, API keys, certs.</li>
+            <li><b>Run blameless post-mortem</b> + update controls + tabletop exercises quarterly.</li>
+          </ol>
+
+          <h2>Mobile + macOS malware (less common but tested)</h2>
+          <ul>
+            <li><b>iOS:</b> Sandboxed app model + code signing; mainstream malware rare outside jailbroken devices. Targeted spyware (Pegasus, Predator) uses zero-click exploits.</li>
+            <li><b>Android:</b> Sideload risk + permissive permissions; banking trojans (Anubis, Cerberus, BRATA) common via fake Play apps + smishing.</li>
+            <li><b>macOS:</b> Increasingly targeted — Atomic Stealer (AMOS), Cuckoo, RustBucket, KandyKorn (DPRK). Distributed via cracked apps + fake updates.</li>
+            <li><b>Defenses:</b> Official app store only, latest OS, MDM with app allow-list, EDR for macOS (Defender for Endpoint Mac, Jamf Protect, CrowdStrike Falcon for Mac), iOS Lockdown Mode for high-risk users.</li>
+          </ul>
+
+          <h2>Anti-malware best-practice baseline</h2>
+          <ul>
+            <li>Patch OS + browser + Office monthly minimum; critical out-of-band same week.</li>
+            <li>Endpoint EDR everywhere — not just AV.</li>
+            <li>Application allowlisting (WDAC, AppLocker, Carbon Black) on high-value endpoints.</li>
+            <li>Office macro block from Internet (default since 2022).</li>
+            <li>PowerShell ScriptBlock + Module + Transcript logging + Constrained Language Mode.</li>
+            <li>LAPS for local admin password randomization.</li>
+            <li>MFA + phishing-resistant for all admins.</li>
+            <li>Least-privilege admin tier model.</li>
+            <li>DNS-layer filtering (Cisco Umbrella, NextDNS, Cloudflare Gateway).</li>
+            <li>Web proxy / SWG with TLS inspection.</li>
+            <li>Email gateway with sandboxing, URL rewriting, attachment detonation.</li>
+            <li>Backup 3-2-1-1-0 with immutability + tested restore.</li>
+            <li>Network segmentation; lateral-movement detection.</li>
+            <li>Security awareness training + phishing simulations quarterly.</li>
+            <li>Tabletop incident exercises annually.</li>
+            <li>Threat-intel feeds integrated into SIEM / firewall (MISP, OTX).</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"User clicked malicious link; AV alerted" → confirm + quarantine + investigate phish source.</li>
+            <li>"Files renamed with .lockbit extension" → ransomware; follow 7-step + IR playbook + restore from backup.</li>
+            <li>"100% CPU on idle PC + crypto wallet pings" → cryptominer; remove + check persistence.</li>
+            <li>"Outlook rule auto-forwards finance email to external" → mailbox-rule abuse post-credential-theft; reset password + revoke sessions.</li>
+            <li>"Antivirus mysteriously disabled" → tamper indicator; enable Tamper Protection + EDR investigation.</li>
+            <li>"Workstation talks to many internal hosts on SMB" → potential worm spread; isolate + audit.</li>
+            <li>"DPRK / APT label" → use ATT&amp;CK technique mapping for hunting.</li>
+            <li>"Living off the land (LOLBins)" → script-block logging + AMSI required to detect.</li>
+            <li>"Stolen NTLM hash usable" → pass-the-hash; Credential Guard mitigates.</li>
+            <li>"After cleaning, malware comes back on reboot" → persistence (scheduled task / registry Run / service / driver / WMI subscription) — use Autoruns + EDR.</li>
+          </ul>
         `
       },
       {
