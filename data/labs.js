@@ -1059,6 +1059,176 @@ const LABS = {
         { type: 'command', prompt: 'Install fail2ban for brute-force protection:', cmd: 'sudo apt install fail2ban -y\nsudo systemctl enable --now fail2ban\nsudo fail2ban-client status sshd',
           explain: 'fail2ban watches auth logs and bans offending IPs via iptables/nftables.' }
       ]
+    },
+    {
+      id: 'l-pbq1',
+      title: 'PBQ: Linux Permissions',
+      objective: '2.4 — file permissions + special bits',
+      steps: [
+        { type: 'note', text: 'Translate between numeric (octal) and symbolic Linux file permissions.' },
+        { type: 'fillblank',
+          prompt: 'Numeric mode for "rwxr-xr-x":',
+          answer: ['755'],
+          placeholder: 'three digits',
+          explain: 'r=4, w=2, x=1. Owner=7 (4+2+1), Group=5 (4+1), Other=5. Default for executables/dirs.' },
+        { type: 'fillblank',
+          prompt: 'Numeric mode for "-rw-------" (private file like SSH key):',
+          answer: ['600'],
+          placeholder: 'three digits',
+          explain: 'Owner rw=6, Group=0, Other=0. ssh refuses to use a private key with broader permissions.' },
+        { type: 'dragmatch',
+          prompt: 'Match special bit to behavior.',
+          pairs: [
+            { left: '4xxx (setuid)', right: 'Run as file owner' },
+            { left: '2xxx (setgid)', right: 'Run as group OR new files inherit dir group' },
+            { left: '1xxx (sticky)', right: 'Only owner can delete files in dir (/tmp pattern)' },
+            { left: 'chattr +i', right: 'Immutable — even root cannot modify until -i' }
+          ],
+          explain: 'setuid: passwd (4755). setgid on dirs: shared project folders inherit group. sticky: /tmp. immutable: critical config files.' },
+        { type: 'multiselect',
+          prompt: 'Commands that change Linux permissions:',
+          options: ['chmod', 'chown', 'chgrp', 'setfacl', 'getfacl', 'umask'],
+          answers: [0, 3, 5],
+          explain: 'chmod sets mode. setfacl applies POSIX ACLs. umask sets default mode mask for new files. chown/chgrp change OWNER/GROUP, not permissions. getfacl reads.' },
+        { type: 'order',
+          prompt: 'Steps to make a script executable + run it (correct order):',
+          items: [
+            '1. nano script.sh (write code starting with #!/usr/bin/env bash)',
+            '2. chmod +x script.sh',
+            '3. ./script.sh    (relative path execution)',
+            '4. (optional) mv script.sh /usr/local/bin/ + run by name'
+          ],
+          explain: 'Shebang first line, then add execute bit. /usr/local/bin is in $PATH so name-only works after move.' }
+      ]
+    },
+    {
+      id: 'l-pbq2',
+      title: 'PBQ: systemd Service Lifecycle',
+      objective: '2.7 — manage services',
+      steps: [
+        { type: 'note', text: 'Daemon called myapp must start at boot, auto-restart on crash, log to journal.' },
+        { type: 'order',
+          prompt: 'Steps to deploy a new systemd service in correct order:',
+          items: [
+            '1. Write /etc/systemd/system/myapp.service unit file',
+            '2. sudo systemctl daemon-reload (re-read units)',
+            '3. sudo systemctl enable myapp (start at boot)',
+            '4. sudo systemctl start myapp (start now)',
+            '5. systemctl status myapp (verify running)',
+            '6. journalctl -u myapp -f (follow logs)'
+          ],
+          explain: 'daemon-reload after editing unit file. enable+start = start now AND at boot. Combine: systemctl enable --now myapp.' },
+        { type: 'dragmatch',
+          prompt: 'Match systemctl verb to behavior.',
+          pairs: [
+            { left: 'start', right: 'Begin service now' },
+            { left: 'enable', right: 'Auto-start at boot' },
+            { left: 'restart', right: 'Stop then start (drops connections)' },
+            { left: 'reload', right: 'Re-read config without dropping connections' },
+            { left: 'mask', right: 'Strongest disable — symlinks unit to /dev/null' },
+            { left: 'daemon-reload', right: 'Reload systemd config after unit-file edit' }
+          ],
+          explain: 'enable+start vs restart vs reload most-tested. reload only works if service supports SIGHUP / has ExecReload.' },
+        { type: 'fillblank',
+          prompt: 'Single command to start now AND enable at boot:',
+          answer: ['systemctl enable --now myapp', 'sudo systemctl enable --now myapp', 'enable --now'],
+          placeholder: 'systemctl ...',
+          explain: 'systemctl enable --now SERVICE = enable + start in one command.' },
+        { type: 'multiselect',
+          prompt: 'Useful journalctl filters:',
+          options: ['-u <service>', '--since "1 hour ago"', '-p err', '-f', '-k (kernel)', '-x'],
+          answers: [0, 1, 2, 3, 4, 5],
+          explain: 'All valid. -u filter by unit, --since time, -p priority, -f follow, -k kernel only, -x explain with catalog entries.' },
+        { type: 'choice',
+          prompt: 'Service shows "active (exited)". Meaning?',
+          options: [
+            'Service crashed',
+            'Service ran to completion (oneshot type) — expected',
+            'Service is hung',
+            'Service is starting'
+          ],
+          answer: 1,
+          explain: 'Type=oneshot units exit after their job runs. status "active (exited)" = success. (Failed = "failed".)' }
+      ]
+    },
+    {
+      id: 'l-pbq3',
+      title: 'PBQ: Disk + LVM Setup',
+      objective: '1.2 / 1.7 — storage management',
+      steps: [
+        { type: 'note', text: 'Add new disk /dev/sdb, create LVM volume, mount persistently.' },
+        { type: 'order',
+          prompt: 'LVM creation steps in correct order:',
+          items: [
+            '1. pvcreate /dev/sdb     # mark physical volume',
+            '2. vgcreate vg_data /dev/sdb     # create volume group',
+            '3. lvcreate -L 50G -n lv_app vg_data     # create logical volume',
+            '4. mkfs.ext4 /dev/vg_data/lv_app     # format',
+            '5. mkdir /mnt/app && mount /dev/vg_data/lv_app /mnt/app',
+            '6. Add UUID entry to /etc/fstab for persistent mount'
+          ],
+          explain: 'PV → VG → LV → mkfs → mount → fstab. LVM allows online expand: lvextend -r -L +20G; resize2fs / xfs_growfs.' },
+        { type: 'multiselect',
+          prompt: 'Commands that list block devices + filesystems:',
+          options: ['lsblk', 'blkid', 'df -h', 'fdisk -l', 'mount', 'ls /dev/sd*'],
+          answers: [0, 1, 2, 3, 4],
+          explain: 'lsblk tree view. blkid UUID + label + type. df mounted FS usage. fdisk -l partition table. mount currently mounted. ls /dev/sd* just nodes (least useful).' },
+        { type: 'fillblank',
+          prompt: 'Best identifier for /etc/fstab entries (NOT /dev/sdX which can shift):',
+          answer: ['uuid', 'UUID'],
+          placeholder: 'word',
+          explain: 'UUID survives device reorder + cloning. Get via blkid /dev/sdX.' },
+        { type: 'choice',
+          prompt: 'Filesystem default on modern RHEL?',
+          options: ['ext4', 'XFS', 'Btrfs', 'ZFS'],
+          answer: 1,
+          explain: 'RHEL 7+ default = XFS. Ubuntu default = ext4. openSUSE root = Btrfs. ZFS via OpenZFS available cross-distro.' },
+        { type: 'dragmatch',
+          prompt: 'Match mount option to purpose.',
+          pairs: [
+            { left: 'noexec', right: 'Disallow execution from this FS' },
+            { left: 'nosuid', right: 'Ignore setuid bits' },
+            { left: 'nodev', right: 'No device nodes interpreted' },
+            { left: 'ro', right: 'Read-only mount' },
+            { left: 'noatime', right: 'Skip last-access updates (perf)' }
+          ],
+          explain: 'Hardening mounts: /tmp noexec,nosuid,nodev defeats privilege escalation paths.' }
+      ]
+    },
+    {
+      id: 'l-pbq4',
+      title: 'PBQ: Network Troubleshooting on Linux',
+      objective: '3.1 — networking troubleshooting',
+      steps: [
+        { type: 'note', text: 'App on server can\'t reach external DB. Walk through Linux diagnostics.' },
+        { type: 'order',
+          prompt: 'Bottom-up Linux diagnostic command order:',
+          items: [
+            '1. ip a (verify IP + interface up)',
+            '2. ip route (default gateway + routes)',
+            '3. ping 8.8.8.8 (Internet reachability)',
+            '4. cat /etc/resolv.conf + nslookup db.example.com (DNS)',
+            '5. nc -vz db.example.com 5432 (TCP port reachability)',
+            '6. ss -tnp state established (verify connections)',
+            '7. tcpdump -i any host db.example.com (capture if needed)'
+          ],
+          explain: 'IP → route → ICMP → DNS → port → connections → packet trace. Stop at first failure + fix that layer.' },
+        { type: 'fillblank',
+          prompt: 'Modern replacement for netstat -ano on Linux:',
+          answer: ['ss -tnlp', 'ss', 'ss -tunlp'],
+          placeholder: 'command',
+          explain: 'ss is the replacement; faster + kernel-direct. Common flags: -t TCP, -u UDP, -n no resolve, -l listen, -p process.' },
+        { type: 'multiselect',
+          prompt: 'Tools to test DNS resolution:',
+          options: ['dig', 'host', 'nslookup', 'getent hosts', 'curl', 'ping'],
+          answers: [0, 1, 2, 3],
+          explain: 'dig + host + nslookup are dedicated DNS. getent uses NSS (includes /etc/hosts). curl + ping do DNS implicitly but aren\'t inspection tools.' },
+        { type: 'choice',
+          prompt: 'Port 5432 reachable but app times out. Likely cause?',
+          options: ['DNS broken', 'TCP works → app-layer (auth / TLS / pg_hba) issue', 'Cable issue', 'Wrong gateway'],
+          answer: 1,
+          explain: 'TCP handshake completing means L1-L4 OK. Look at PostgreSQL pg_hba.conf, SSL config, app credentials.' }
+      ]
     }
   ],
 
@@ -1162,6 +1332,161 @@ const LABS = {
           options: ['Skip post-mortem', 'Document gaps, fix runbook, schedule next drill', 'Disable monitoring', 'Pay vendor'],
           answer: 1,
           explain: 'Untested DR is broken DR. Every drill must capture lessons + update runbook.' }
+      ]
+    },
+    {
+      id: 'c-pbq1',
+      title: 'PBQ: Service Model Identification',
+      objective: '1.1 — IaaS / PaaS / SaaS / FaaS',
+      steps: [
+        { type: 'note', text: 'Identify the cloud service model for each example.' },
+        { type: 'dragmatch',
+          prompt: 'Match each cloud product to its service model.',
+          pairs: [
+            { left: 'EC2 / Azure VM / Compute Engine', right: 'IaaS' },
+            { left: 'App Service / Elastic Beanstalk / Cloud Run', right: 'PaaS' },
+            { left: 'Microsoft 365 / Salesforce / Workday', right: 'SaaS' },
+            { left: 'Lambda / Azure Functions / Cloud Run Functions', right: 'FaaS' },
+            { left: 'EKS / AKS / GKE / Fargate', right: 'CaaS' },
+            { left: 'AVD / Windows 365 / WorkSpaces', right: 'DaaS' }
+          ],
+          explain: 'Memorize the famous products → model. CaaS = Container as a Service. DaaS = Desktop as a Service. FaaS = serverless functions.' },
+        { type: 'order',
+          prompt: 'Cloud abstractions ordered from MOST customer control to LEAST:',
+          items: [
+            '1. On-prem (you own everything)',
+            '2. IaaS (you manage OS+ up)',
+            '3. PaaS (you manage app + data)',
+            '4. SaaS (provider manages everything)'
+          ],
+          explain: 'Trade-off: more abstraction = less control + less ops work. SaaS leaves you only data + identity to own.' },
+        { type: 'multiselect',
+          prompt: 'In IaaS, customer is responsible for:',
+          options: ['Hypervisor patches', 'Guest OS patches', 'Application code', 'Data + access', 'Physical security', 'Storage encryption keys (CMK option)'],
+          answers: [1, 2, 3, 5],
+          explain: 'IaaS: you own OS+app+data. Provider owns hypervisor + physical. Customer can opt for CMK over provider-managed keys.' },
+        { type: 'fillblank',
+          prompt: 'Service model where customer manages only data + identity:',
+          answer: ['saas', 'software as a service'],
+          placeholder: 'acronym',
+          explain: 'SaaS: provider runs hardware + OS + runtime + app. You configure + bring data + manage user accounts.' }
+      ]
+    },
+    {
+      id: 'c-pbq2',
+      title: 'PBQ: Pick Storage Class',
+      objective: '2.1 — cloud storage tiers',
+      steps: [
+        { type: 'note', text: 'Match each workload to the most cost-effective AWS S3 storage class.' },
+        { type: 'dragmatch',
+          prompt: 'Match access pattern to storage class.',
+          pairs: [
+            { left: 'Active website assets, accessed thousands times/day', right: 'S3 Standard' },
+            { left: 'Backup accessed monthly, rapid restore needed', right: 'S3 Standard-IA' },
+            { left: 'Compliance archive, restore tolerable in minutes-hours', right: 'S3 Glacier Instant / Flexible' },
+            { left: 'Tape-replacement archive, restore 1-12h, lowest cost', right: 'S3 Glacier Deep Archive' },
+            { left: 'Workload with unknown / shifting access pattern', right: 'S3 Intelligent-Tiering' }
+          ],
+          explain: 'Standard = hot. Standard-IA = warm. Glacier = cold. Deep Archive = frozen. Intelligent-Tiering auto-tiers by access pattern.' },
+        { type: 'multiselect',
+          prompt: 'Defenses against ransomware on cloud object storage:',
+          options: ['S3 Object Lock (WORM)', 'Versioning enabled', 'Cross-account backup copy', 'MFA Delete', 'Server-side encryption', 'Make bucket public'],
+          answers: [0, 1, 2, 3],
+          explain: 'Object Lock + Versioning + MFA Delete + Cross-account separation = ransomware-resilient. Encryption alone does not prevent destruction. Public = breach.' },
+        { type: 'fillblank',
+          prompt: 'NIST term for backup that cannot be modified during retention window:',
+          answer: ['immutable', 'immutable backup', 'worm'],
+          placeholder: 'one word',
+          explain: 'Immutable / WORM (Write Once Read Many) backups survive ransomware + insider deletion within retention period.' },
+        { type: 'choice',
+          prompt: 'GLBA-regulated bank wants long retention with infrequent access at lowest cost. Pick:',
+          options: ['S3 Standard', 'S3 Standard-IA', 'S3 Glacier Flexible Retrieval', 'S3 Glacier Deep Archive'],
+          answer: 3,
+          explain: 'Deep Archive ~$0.001/GB-mo. Restore 1-12h. Perfect for 7-yr SOX/GLBA archive.' }
+      ]
+    },
+    {
+      id: 'c-pbq3',
+      title: 'PBQ: Multi-AZ vs Multi-Region',
+      objective: '4.2 — HA + DR design',
+      steps: [
+        { type: 'note', text: 'Design HA + DR for a customer-facing web app.' },
+        { type: 'dragmatch',
+          prompt: 'Match goal to architecture.',
+          pairs: [
+            { left: 'Tolerate single DC failure within a region', right: 'Multi-AZ deployment (3 AZs)' },
+            { left: 'Survive full region outage', right: 'Multi-region active-passive or active-active' },
+            { left: 'Lowest cost DR — minimal core running, scale on disaster', right: 'Pilot light' },
+            { left: 'Scaled-down full stack ready, scale up on failover', right: 'Warm standby' },
+            { left: 'Backups only, rebuild from scratch', right: 'Backup & restore (highest RTO/RPO)' }
+          ],
+          explain: 'DR strategy ladder — Backup-Restore → Pilot Light → Warm Standby → Multi-Site Active-Active. Cost increases up the ladder; RTO/RPO decreases.' },
+        { type: 'order',
+          prompt: 'DR ladder from HIGHEST RTO/RPO to LOWEST:',
+          items: [
+            '1. Backup & Restore (hours-days)',
+            '2. Pilot Light (10s of minutes)',
+            '3. Warm Standby (minutes)',
+            '4. Multi-Site Active-Active (near-zero)'
+          ],
+          explain: 'Trade cost for RTO/RPO. Active-active = double infra + complex routing but instant failover.' },
+        { type: 'multiselect',
+          prompt: 'Items to include in a DR runbook:',
+          options: ['Step-by-step failover procedure', 'Contact list (paged + escalation)', 'Decision criteria for declaring disaster', 'Communication templates', 'Backout procedure', 'Sample login credentials'],
+          answers: [0, 1, 2, 3, 4],
+          explain: 'Never store credentials in runbooks. Use a secrets vault.' },
+        { type: 'fillblank',
+          prompt: 'How often DR drills should occur AT MINIMUM:',
+          answer: ['annually', 'yearly', '1 year', 'once a year'],
+          placeholder: 'period',
+          explain: 'NIST + ISO best practice: full DR test annually; tabletop quarterly; backup-restore test monthly.' }
+      ]
+    },
+    {
+      id: 'c-pbq4',
+      title: 'PBQ: Cloud Cost Optimization',
+      objective: '5.3 — cost management',
+      steps: [
+        { type: 'note', text: 'Cloud bill jumped 40%. Find + apply optimization levers.' },
+        { type: 'multiselect',
+          prompt: 'Cost optimization levers for steady-state workloads:',
+          options: [
+            'Reserved Instances (1-3 yr commit)',
+            'Savings Plans (compute spend commit)',
+            'Spot / Preemptible for interruptible jobs',
+            'Right-sizing via Compute Optimizer / Azure Advisor',
+            'Hot tier storage for cold data',
+            'Cross-region replication for low-priority data'
+          ],
+          answers: [0, 1, 2, 3],
+          explain: 'Hot storage for cold = wasteful. Cross-region replicate adds egress + storage costs; only for compliance / DR.' },
+        { type: 'dragmatch',
+          prompt: 'Match cost lever to discount range.',
+          pairs: [
+            { left: 'On-demand', right: '0% (baseline)' },
+            { left: 'Reserved Instance 1yr no upfront', right: '~30%' },
+            { left: 'Reserved Instance 3yr all-upfront', right: '~70%' },
+            { left: 'Savings Plan 3yr', right: '~65%' },
+            { left: 'Spot / Preemptible', right: 'Up to 90%' }
+          ],
+          explain: 'Spot biggest discount but can be reclaimed any time. RIs need usage pattern certainty.' },
+        { type: 'fillblank',
+          prompt: 'Cross-team accountability discipline for cloud spend:',
+          answer: ['finops'],
+          placeholder: 'one word',
+          explain: 'FinOps = engineering + finance + procurement collaboration on cloud cost.' },
+        { type: 'order',
+          prompt: 'Cost-investigation steps after unexpected bill spike:',
+          items: [
+            '1. Open Cost Explorer / Cost Management — sort by service',
+            '2. Identify top services + accounts driving the change',
+            '3. Tag-based breakdown (env, owner, project)',
+            '4. Compare to previous billing period delta',
+            '5. Talk to owners of newly-spiking workloads',
+            '6. Apply right-sizing / Reservations / cleanup',
+            '7. Set budgets + anomaly alerts to prevent recurrence'
+          ],
+          explain: 'Always investigate before acting. Egress and idle resources are common culprits.' }
       ]
     }
   ],
