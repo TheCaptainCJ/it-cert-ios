@@ -6419,6 +6419,217 @@ chkdsk C: /spotfix                # quick offline fix</code></pre>
             <li>"Repair Windows component store" → DISM /RestoreHealth + sfc /scannow.</li>
             <li>Get to WinRE → Settings → Recovery → Advanced startup, OR Shift+Restart, OR three failed boots.</li>
           </ul>
+
+          <h2>UEFI boot partitions (memorize layout)</h2>
+          <ul>
+            <li><b>ESP</b> (EFI System Partition) — FAT32, ~100–500 MB, mounted as drive S: in WinRE. Path <code>\\EFI\\Microsoft\\Boot\\bootmgfw.efi</code>.</li>
+            <li><b>MSR</b> (Microsoft Reserved Partition) — 16-128 MB, no FS; reserved for future Windows use.</li>
+            <li><b>WinRE partition</b> — ~500 MB, NTFS, holds <code>Winre.wim</code>. Hidden attribute set.</li>
+            <li><b>OS partition (C:)</b> — Windows install.</li>
+            <li><b>Recovery image partition</b> (OEM) — optional factory-reset image.</li>
+            <li>View with <code>diskpart → list partition</code> or PowerShell <code>Get-Partition</code>.</li>
+          </ul>
+
+          <h2>UEFI Secure Boot + chain of trust</h2>
+          <ul>
+            <li><b>Platform Key (PK)</b> — top of trust; OEM-installed.</li>
+            <li><b>KEK</b> (Key Exchange Keys) — authorize updates to db/dbx.</li>
+            <li><b>db</b> — allowed signatures + certs.</li>
+            <li><b>dbx</b> — revoked / forbidden binaries (revoked Linux loaders, vulnerable shim builds).</li>
+            <li><b>Microsoft UEFI CA</b> — signs Windows bootloader + most Linux <code>shim.efi</code>.</li>
+            <li>Disable Secure Boot in UEFI for legacy / unsigned dev work; required for Win11.</li>
+            <li><b>Measured boot</b> + TPM PCR registers — TPM measures each stage; remote attestation can verify integrity.</li>
+          </ul>
+
+          <h2>BCD edit common commands</h2>
+          <pre><code>bcdedit /enum                         # list all entries
+bcdedit /enum all                     # incl. Windows Boot Loader entries
+
+# Friendly description
+bcdedit /set {current} description "Windows 11 Recovery"
+
+# Default OS
+bcdedit /default {GUID}
+
+# Timeout
+bcdedit /timeout 5
+
+# Safe Mode next boot
+bcdedit /set {current} safeboot minimal
+bcdedit /set {current} safeboot network
+bcdedit /deletevalue {current} safeboot      # exit safe mode after fix
+
+# Force boot debug
+bcdedit /debug {current} on
+bcdedit /dbgsettings serial debugport:1 baudrate:115200
+
+# Disable driver signature enforcement (one boot)
+bcdedit /set nointegritychecks on
+bcdedit /set testsigning on
+
+# Restore default BCD
+bootrec /rebuildbcd</code></pre>
+
+          <h2>Common boot errors + fix</h2>
+          <ul>
+            <li><b>"Bootmgr is missing"</b> → <code>bootrec /fixmbr /fixboot /rebuildbcd</code> (legacy BIOS); <code>bcdboot C:\\Windows /s S: /f UEFI</code> (UEFI).</li>
+            <li><b>"Inaccessible boot device"</b> (0x7B) → wrong AHCI/RAID mode in BIOS, missing storage driver, or disk corruption. Boot to WinRE, set correct SATA mode, run <code>chkdsk /f C:</code>.</li>
+            <li><b>"Critical process died"</b> (0xEF) → corrupted system file or registry; SFC + DISM, then System Restore.</li>
+            <li><b>"NTLDR is missing"</b> → very old (XP); rare today.</li>
+            <li><b>BSOD 0x0000007B</b> → boot device unreadable.</li>
+            <li><b>BSOD 0x000000F4</b> → boot process terminated unexpectedly.</li>
+            <li><b>Boot loop with brief BSOD</b> → disable auto-restart in WinRE → Startup Settings to read STOP code.</li>
+            <li><b>"Operating System not found"</b> → boot order wrong, drive failed, BCD corrupted.</li>
+            <li><b>UEFI "Secure Boot Violation"</b> → boot loader was modified or unsigned; disable Secure Boot temporarily or restore signed loader.</li>
+            <li><b>BitLocker recovery prompt</b> at boot → TPM measurements changed (BIOS update, hardware swap, secure boot toggle). Enter 48-digit recovery key; then suspend BitLocker before making the change.</li>
+            <li><b>"Your PC ran into a problem and needs to restart"</b> generic → look at minidump in <code>C:\\Windows\\Minidump\\</code> with WinDbg / BlueScreenView.</li>
+          </ul>
+
+          <h2>Windows Recovery Environment (WinRE) deep-dive</h2>
+          <ul>
+            <li>Lives on its own partition (Recovery, ~500 MB).</li>
+            <li><b>Auto-launches</b> after 2 consecutive failed boots; press F11/F8 at OEM splash; Shift+Restart from logon.</li>
+            <li><b>Troubleshoot → Advanced options:</b>
+              <ul>
+                <li><b>Startup Repair</b> — automated; analyzes boot logs, fixes BCD/MBR.</li>
+                <li><b>Startup Settings</b> — F1-F9 menu; Safe Mode F4/F5/F6.</li>
+                <li><b>Command Prompt</b> — manual repair shell.</li>
+                <li><b>Uninstall Updates</b> — back out recent quality / feature update.</li>
+                <li><b>UEFI Firmware Settings</b> — boot into UEFI from here.</li>
+                <li><b>System Restore</b> — registry + system files rollback.</li>
+                <li><b>System Image Recovery</b> — restore from Backup &amp; Restore image.</li>
+                <li><b>Go back to previous version</b> — within 10 days of upgrade.</li>
+                <li><b>Reset this PC</b> — Keep files / Remove everything.</li>
+              </ul>
+            </li>
+            <li><b>reagentc /info</b> — check WinRE status. <code>/enable</code> + <code>/disable</code>.</li>
+            <li><b>BitLocker</b> users prompted for recovery key before WinRE unlocks.</li>
+          </ul>
+
+          <h2>Safe Mode variants (memorize keys)</h2>
+          <ul>
+            <li><b>F4 / Option 4</b> — Safe Mode (minimal drivers).</li>
+            <li><b>F5 / Option 5</b> — Safe Mode with Networking.</li>
+            <li><b>F6 / Option 6</b> — Safe Mode with Command Prompt.</li>
+            <li><b>F7</b> — Disable driver signature enforcement (next boot only).</li>
+            <li><b>F8</b> — Disable early-launch anti-malware.</li>
+            <li><b>F9</b> — Disable automatic restart on system failure (so you can read BSOD code).</li>
+            <li>Toggle via <code>msconfig → Boot → Safe Boot</code> if running Windows; uncheck before regular reboot.</li>
+          </ul>
+
+          <h2>System Restore vs File History vs Backup &amp; Restore</h2>
+          <ul>
+            <li><b>System Restore</b> — VSS snapshot of system files, registry, drivers. Does NOT include personal files. Disabled by default on Win 11; enable per drive.</li>
+            <li><b>File History</b> — periodic versioned copies of Libraries + Desktop + Contacts; to external drive / network share.</li>
+            <li><b>Backup &amp; Restore (Win7 legacy)</b> — image-based + file-level; still in Win 11 Control Panel.</li>
+            <li><b>Storage Sense</b> — auto-cleanup of temp / Recycle Bin / Downloads.</li>
+            <li><b>OneDrive Folder Backup</b> — modern: Desktop/Docs/Pictures sync to OneDrive automatically.</li>
+            <li><b>Restore Point types:</b> System (manual), App install, Update install, Auto-checkpoint, Manual.</li>
+            <li><b>VSS</b> — Volume Shadow Copy Service; underpins System Restore + Backup; <code>vssadmin list shadows</code>.</li>
+          </ul>
+
+          <h2>Volume Shadow Copy (VSS) admin</h2>
+          <pre><code>vssadmin list shadows                 # list snapshots
+vssadmin list writers                 # check writer health
+vssadmin list providers
+vssadmin resize shadowstorage /for=C: /on=C: /maxsize=10GB
+vssadmin delete shadows /for=C: /oldest     # free space
+
+# Previous Versions — right-click file → Restore previous versions (uses VSS)</code></pre>
+
+          <h2>Driver troubleshooting</h2>
+          <ul>
+            <li><b>Device Manager</b> (<code>devmgmt.msc</code>) — yellow ⚠ = problem code; right-click → Properties → Driver tab.</li>
+            <li><b>Roll back driver</b> if recent driver broke device.</li>
+            <li><b>Update driver</b> — Search automatically / Browse my computer (point at folder w/ .inf).</li>
+            <li><b>Uninstall device</b> + checkbox "Delete the driver software" — full removal; reboot, Windows redetects.</li>
+            <li><b>Driver Verifier</b> (<code>verifier.exe</code>) — stresses drivers to surface bugs; creates BSOD with offending driver name. <b>Run only briefly</b>; can make PC unbootable.</li>
+            <li><b>Plug and Play</b> events in Event Viewer → Microsoft → Windows → Kernel-PnP.</li>
+            <li><b>DRT</b> (Driver Reverse Toolkit) / <b>Display Driver Uninstaller (DDU)</b> — clean GPU driver in Safe Mode.</li>
+            <li><b>WDM / WDF</b> — Windows Driver Model / Framework (kernel + user-mode driver frameworks).</li>
+            <li><b>Signed drivers only</b> on 64-bit Windows (test-signing requires special boot mode).</li>
+          </ul>
+
+          <h2>Power-related troubleshooting</h2>
+          <ul>
+            <li><b>Sleep / Hibernate / Hybrid</b> issues — <code>powercfg /requests</code> shows wake locks; <code>powercfg /lastwake</code>; <code>powercfg /devicequery wake_armed</code>; disable mouse / NIC wake if waking unexpectedly.</li>
+            <li><b>Fast Startup</b> — uses hibernation file; can hide updates needing reboot; disable with <code>powercfg /h off</code> for clean shutdowns.</li>
+            <li><b>"Modern Standby" (S0ix)</b> on laptops — replaces S3; allows background tasks; battery drain if drivers misbehave.</li>
+            <li><b>Battery report</b>: <code>powercfg /batteryreport</code> generates HTML in current dir.</li>
+            <li><b>Sleep study</b>: <code>powercfg /sleepstudy</code>.</li>
+            <li><b>EnergyEstimation</b>: <code>powercfg /energy</code> — 1-minute scan + report.</li>
+          </ul>
+
+          <h2>Memory diagnostics</h2>
+          <ul>
+            <li><b>Windows Memory Diagnostic</b> (<code>mdsched.exe</code>) — boots into mini-environment to test RAM. Basic.</li>
+            <li><b>MemTest86</b> — bootable USB; deeper test. Run 4+ passes overnight.</li>
+            <li><b>HCI MemTest / Karhu / TestMem5</b> — Windows-app stability testing for XMP-tuned RAM.</li>
+            <li><b>WHEA-Logger</b> events in Event Viewer → System log — corrected/uncorrected memory errors.</li>
+            <li><b>WHEA_UNCORRECTABLE_ERROR</b> BSOD → physical hardware fault; usually RAM / CPU / PSU.</li>
+          </ul>
+
+          <h2>Common BSOD STOP codes (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Code</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Meaning</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Common cause</th></tr>
+            <tr><td>0x0000007B</td><td>INACCESSIBLE_BOOT_DEVICE</td><td>SATA mode change, missing driver, disk fail</td></tr>
+            <tr><td>0x000000F4</td><td>CRITICAL_OBJECT_TERMINATION</td><td>Critical user-mode process died</td></tr>
+            <tr><td>0x00000050</td><td>PAGE_FAULT_IN_NONPAGED_AREA</td><td>Bad RAM or buggy driver</td></tr>
+            <tr><td>0x0000003B</td><td>SYSTEM_SERVICE_EXCEPTION</td><td>Driver / service crash</td></tr>
+            <tr><td>0x00000124</td><td>WHEA_UNCORRECTABLE_ERROR</td><td>Hardware fault</td></tr>
+            <tr><td>0x000000D1</td><td>DRIVER_IRQL_NOT_LESS_OR_EQUAL</td><td>Driver bug</td></tr>
+            <tr><td>0x000000EF</td><td>CRITICAL_PROCESS_DIED</td><td>System process terminated</td></tr>
+            <tr><td>0x0000009F</td><td>DRIVER_POWER_STATE_FAILURE</td><td>Driver mishandling power transition</td></tr>
+            <tr><td>0x00000139</td><td>KERNEL_SECURITY_CHECK_FAILURE</td><td>Kernel-mode stack corruption</td></tr>
+            <tr><td>0xC000021A</td><td>FATAL_SYSTEM_ERROR</td><td>winlogon/csrss crash</td></tr>
+          </table>
+
+          <h2>Memory dump types + sizing</h2>
+          <ul>
+            <li><b>Small (Mini) Dump</b> — 256 KB; STOP code + stack; <code>C:\\Windows\\Minidump\\</code>.</li>
+            <li><b>Kernel Dump</b> — kernel + drivers; <code>C:\\Windows\\MEMORY.DMP</code>; ~ size of physical RAM in use.</li>
+            <li><b>Complete Dump</b> — full physical RAM; needs pagefile ≥ RAM + 1 MB.</li>
+            <li><b>Active Memory Dump</b> (Win 10+) — kernel + active user pages; smaller than full.</li>
+            <li>Configure via System Properties → Advanced → Startup &amp; Recovery → Settings.</li>
+            <li><b>Analyze:</b> WinDbg (Microsoft Store), BlueScreenView (NirSoft), Live Kernel Memory Dumps on Windows 11.</li>
+          </ul>
+
+          <h2>Cumulative update + rollback procedure</h2>
+          <ol>
+            <li>WU pushes Patch Tuesday update; restart.</li>
+            <li>If broken, boot to Safe Mode (Shift + Restart) → Troubleshoot → Advanced → <b>Uninstall Updates</b> → Latest quality / feature update.</li>
+            <li>CLI alternative: <code>wusa /uninstall /kb:XXXXXXX</code>.</li>
+            <li>Pause updates 7-35 days while investigating.</li>
+            <li>Pin good driver: Device Manager → Driver tab → Roll Back; or use <b>Show or hide updates</b> tool to block a specific KB.</li>
+            <li>Report bad updates via Feedback Hub; check Windows Health Dashboard for known issues.</li>
+          </ol>
+
+          <h2>Deployment + reinstall paths</h2>
+          <ul>
+            <li><b>Reset this PC → Keep my files</b> — quick reinstall preserving user profiles.</li>
+            <li><b>Reset → Cloud Download</b> — fresh image (no bloat carryover).</li>
+            <li><b>Recovery drive USB</b> — created via <code>RecoveryDrive.exe</code>; bootable; ~16 GB.</li>
+            <li><b>Media Creation Tool</b> — fresh Windows ISO + bootable USB.</li>
+            <li><b>Windows Autopilot</b> — Intune-driven OOBE that joins device to Entra ID + applies policy automatically.</li>
+            <li><b>MDT / SCCM / WSUS</b> — on-prem deployment.</li>
+            <li><b>WIM</b> + <b>DISM /Apply-Image</b> — manual image deployment.</li>
+            <li><b>USMT</b> (User State Migration Tool) — extract/load user profiles + settings during refresh.</li>
+            <li><b>OneDrive Known Folder Move + Enterprise State Roaming</b> + <b>FSLogix</b> — roaming user profiles in cloud/VDI.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Bootmgr missing" → bootrec /fixmbr /fixboot /rebuildbcd (BIOS) or bcdboot (UEFI).</li>
+            <li>"Boot in minimal env with networking for malware cleanup" → Safe Mode with Networking (F5).</li>
+            <li>"After firmware update prompts for BitLocker key" → TPM measurement changed; suspend BitLocker before BIOS updates.</li>
+            <li>"Locked out by UEFI password" → CLR_CMOS jumper / CMOS battery removal (or OEM service if soldered/flash-stored).</li>
+            <li>"Driver caused BSOD" → Safe Mode → Device Manager → Roll Back Driver; or WinRE → Startup Settings → Disable driver signature.</li>
+            <li>"Sysprep an OEM image" → DISM /Capture-Image + sysprep /generalize /oobe /shutdown.</li>
+            <li>"Restore single file from yesterday" → File History or Previous Versions (VSS).</li>
+            <li>"Roll back Tuesday's update" → wusa /uninstall /kb:XXXX or Settings → Update history → Uninstall updates.</li>
+            <li>"Bare-metal recover from system image" → WinRE → System Image Recovery.</li>
+            <li>"Profile follows user across devices" → roaming profile / Enterprise State Roaming / FSLogix.</li>
+          </ul>
         `
       },
       {
