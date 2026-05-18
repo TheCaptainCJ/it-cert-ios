@@ -5425,6 +5425,145 @@ sum=$(( 3 + 5 ))</code></pre>
             <li>Rogue AP with same SSID as corporate → evil twin.</li>
             <li>Strongest defense against credential phishing → phishing-resistant MFA (FIDO2 / hardware key).</li>
           </ul>
+
+          <h2>Cialdini's 6 principles of influence (attacker exploits these)</h2>
+          <ol>
+            <li><b>Reciprocity</b> — "I gave you X, return the favor". Free USB drive in lobby.</li>
+            <li><b>Commitment + Consistency</b> — small foot-in-door ask → larger ask aligns.</li>
+            <li><b>Social Proof</b> — "Everyone in your team already verified".</li>
+            <li><b>Authority</b> — claim to be CEO, IT director, federal agent.</li>
+            <li><b>Liking</b> — flattery, shared interests, friendly small-talk.</li>
+            <li><b>Scarcity / Urgency</b> — "act now or account closes". Bypasses careful evaluation.</li>
+          </ol>
+          <p>Cialdini added <b>Unity</b> (shared identity) in 2016. Robert Cialdini's <i>Influence</i> + <i>Pre-Suasion</i> = required SE reading.</p>
+
+          <h2>Phishing typology (recognize each)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Variant</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Channel</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Target</th></tr>
+            <tr><td>Phishing</td><td>Email, broad</td><td>Mass</td></tr>
+            <tr><td>Spear-phishing</td><td>Email, tailored</td><td>Specific person/team</td></tr>
+            <tr><td>Whaling</td><td>Email</td><td>C-suite / VIP</td></tr>
+            <tr><td>BEC (Business Email Compromise)</td><td>Email impersonation</td><td>Finance/AP, often $$$$ wire fraud</td></tr>
+            <tr><td>Vishing</td><td>Voice call / VoIP</td><td>Often help-desk, executive assistants</td></tr>
+            <tr><td>Smishing</td><td>SMS</td><td>Consumer (USPS, FedEx, banking)</td></tr>
+            <tr><td>Quishing</td><td>QR code</td><td>Hides URL in image; bypasses URL filters</td></tr>
+            <tr><td>Callback phishing</td><td>Email + phone</td><td>Fake invoice → victim calls attacker</td></tr>
+            <tr><td>Angler phishing</td><td>Social media DM</td><td>Fake support accounts on X/Twitter, IG</td></tr>
+            <tr><td>Search engine phishing</td><td>SEO + malvertising</td><td>Spoofed brand sites at top of Google ads</td></tr>
+            <tr><td>Pharming</td><td>DNS poisoning / hosts file</td><td>Redirect to fake site without user awareness</td></tr>
+            <tr><td>Watering hole</td><td>Compromised legit site</td><td>Targets visitors from specific orgs</td></tr>
+          </table>
+
+          <h2>BEC attack patterns (FBI biggest-dollar category)</h2>
+          <ul>
+            <li><b>CEO fraud</b> — spoofed exec emails AP for urgent wire.</li>
+            <li><b>Vendor email compromise</b> — attacker hijacks legit vendor inbox, sends fake updated bank-account email.</li>
+            <li><b>Lawyer / M&amp;A fraud</b> — pretends to be law firm during deal sensitive window.</li>
+            <li><b>Payroll diversion</b> — "Update my direct-deposit account please" email to HR.</li>
+            <li><b>W-2 / data theft</b> — finance asked for employee tax forms.</li>
+            <li><b>Conversation hijacking</b> — attacker injects into existing email thread after mailbox takeover.</li>
+            <li><b>Mitigation:</b> out-of-band callback to known number, dual approval on wires &gt; threshold, mailbox-rule auditing, DMARC reject, mail flow rules flagging external lookalike domains.</li>
+          </ul>
+
+          <h2>Adversary-in-the-middle (AitM) phishing — MFA bypass</h2>
+          <ol>
+            <li>Attacker domain mimics M365 / Okta login.</li>
+            <li>Victim clicks → lands on reverse-proxy server (EvilProxy, Modlishka, Evilginx).</li>
+            <li>Reverse proxy fetches the real M365 page, victim enters creds + completes MFA prompt.</li>
+            <li>Real Microsoft returns session cookie → reverse proxy captures + replays it.</li>
+            <li>Attacker imports cookie into their browser → logged in as victim without re-prompting MFA.</li>
+            <li><b>Defenses:</b> phishing-resistant FIDO2 passkeys, certificate-bound auth tokens, Conditional Access requiring compliant device + token-binding, device-bound session cookies (Edge enterprise).</li>
+          </ol>
+
+          <h2>MFA fatigue / push bombing</h2>
+          <ul>
+            <li>Attacker has password; spams MFA push prompts.</li>
+            <li>Victim accidentally taps Approve (or to make alerts stop).</li>
+            <li><b>Defenses:</b> <b>number matching</b> in Microsoft Authenticator (user types code shown in app); push throttling; geo-location context; replace push w/ FIDO2 keys.</li>
+          </ul>
+
+          <h2>SIM swap / port-out fraud</h2>
+          <ul>
+            <li>Attacker impersonates target to carrier; ports number to new SIM.</li>
+            <li>Receives SMS-based MFA codes → drains crypto exchange, bank.</li>
+            <li><b>Defenses:</b> carrier PIN / port-freeze, eliminate SMS MFA for high-value accounts, use authenticator app or FIDO2 keys, alert on SIM change.</li>
+          </ul>
+
+          <h2>Insider threat taxonomy</h2>
+          <ul>
+            <li><b>Malicious insider</b> — disgruntled employee, espionage; deliberate exfiltration / sabotage.</li>
+            <li><b>Negligent insider</b> — careless practices (clicks phish, misconfigures S3, reuses passwords).</li>
+            <li><b>Compromised insider</b> — legit account taken over by external attacker.</li>
+            <li><b>Third-party insider</b> — vendors, MSPs, contractors with privileged access.</li>
+            <li><b>UEBA</b> (User &amp; Entity Behavior Analytics) detects abnormal patterns; <b>DLP</b> catches data movement; least-privilege + JIT minimizes exposure.</li>
+          </ul>
+
+          <h2>Physical social engineering scenarios</h2>
+          <ul>
+            <li><b>Tailgating / piggybacking</b> — slip through badge door behind authorized user.</li>
+            <li><b>Mantrap / access vestibule</b> — two-door airlock that only opens one at a time → defeats tailgating.</li>
+            <li><b>Pretexting on-site</b> — clipboard + hi-viz vest + confidence; janitor or HVAC tech impersonation.</li>
+            <li><b>Lockpicking / shimming</b> — physical pen-testing.</li>
+            <li><b>Cleaning crew / after-hours access</b> abuse.</li>
+            <li><b>USB drop / cable bait</b> — O.MG cable, Hak5 Rubber Ducky, Bash Bunny.</li>
+            <li><b>Hardware implants</b> — keystroke loggers between keyboard + PC, network taps in IDF.</li>
+            <li><b>Bypass anti-passback</b> — coordinate with insider to give credentials.</li>
+            <li><b>Mitigations:</b> mantrap, badge + PIN, biometric, escort policy, USB port lockdown, port security + 802.1X on wired ports, daily visual inspection of high-value rooms.</li>
+          </ul>
+
+          <h2>Open-source intelligence (OSINT) reconnaissance</h2>
+          <ul>
+            <li><b>What:</b> Attacker gathers info from public sources to craft a believable lure.</li>
+            <li><b>Sources:</b> LinkedIn (org chart, tech stack), GitHub (leaked credentials in commits), Twitter/X, Instagram, public records, court filings, SEC EDGAR (10-K mentions vendors), DNS / WHOIS, certificate transparency logs, Shodan / Censys for exposed services.</li>
+            <li><b>Tools:</b> theHarvester, Maltego, SpiderFoot, Recon-ng, Amass, sherlock (username enumeration), Have I Been Pwned, Hunter.io (email format).</li>
+            <li><b>Defenses:</b> employee social-media hygiene, regularly audit your own exposed assets, redact PII from public bios, DLP on outbound code repos, kill default admin accounts visible on Shodan.</li>
+          </ul>
+
+          <h2>Voice + deepfake threats (modern 2024-2025)</h2>
+          <ul>
+            <li><b>Voice cloning</b> — short ~10-second sample enough for usable clone (ElevenLabs, Microsoft VALL-E).</li>
+            <li><b>Deepfake video</b> — Zoom / Teams call with synthetic face + voice. $25M Arup case Hong Kong (Feb 2024).</li>
+            <li><b>Real-time face filters</b> — DeepFaceLive, others used to bypass video KYC.</li>
+            <li><b>Defenses:</b> verification phrases / shared secret known only to caller; out-of-band callback; multi-channel confirmation (Slack + email + voice); challenge-response questions about non-public info; never approve high-value transactions on first call.</li>
+          </ul>
+
+          <h2>Awareness program design (what works)</h2>
+          <ul>
+            <li><b>Short + frequent</b> (5-10 min monthly) &gt; annual long sessions.</li>
+            <li><b>Scenario-based</b> — recent real attacks against your industry.</li>
+            <li><b>Role-tailored</b> — finance differs from engineering differs from execs.</li>
+            <li><b>Phishing simulations</b> with non-punitive coaching for failures.</li>
+            <li><b>Easy reporting</b> — "Report Phish" button in Outlook / Gmail, no penalty for false alarms.</li>
+            <li><b>Metric:</b> click rate ↓, report rate ↑. Don't just measure clicks; measure who reported.</li>
+            <li><b>Top performers</b> recognized; recidivists get extra training, not termination.</li>
+            <li><b>Just-in-time learning</b> — when user does something risky (forwards external mail with attachment), interstitial warning + micro-lesson.</li>
+            <li><b>Phishing-resistant MFA</b> + reduced reliance on user awareness over time.</li>
+          </ul>
+
+          <h2>Verification protocols for sensitive transactions</h2>
+          <ul>
+            <li>Out-of-band callback to a known number from directory — NEVER the number in the request.</li>
+            <li>Dual authorization on wires &gt; threshold; segregation of duties.</li>
+            <li>Time delay (24h "cool down") on bank-account changes.</li>
+            <li>Verify with shared secret unknown to attacker (e.g., last project worked together).</li>
+            <li>Confirm via separate channel (Slack DM if request came by email).</li>
+            <li>Document + log every verification step; auditable.</li>
+            <li>Escalate suspicious requests to security team; reward employees for slowing down.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"CFO email asks AP for urgent wire to new vendor" → likely BEC / whaling; out-of-band verify.</li>
+            <li>"User got 30 MFA push notifications" → MFA fatigue; deny, change password, alert SOC.</li>
+            <li>"USB labeled 'Payroll Q4' on lobby floor" → baiting; do not plug in; report to IT.</li>
+            <li>"Stranger follows badged employee through door" → tailgating; mantrap + culture of challenge.</li>
+            <li>"Caller claims to be from IT, needs password" → vishing; verify through official channels.</li>
+            <li>"QR code in email leading to login page" → quishing; bypasses URL filters; treat all QR codes as untrusted.</li>
+            <li>"After phishing test, click rate didn't drop" → tweak training delivery + add phishing-resistant MFA.</li>
+            <li>"Carrier ported phone number unexpectedly" → SIM swap; freeze account, disable SMS MFA for high-value.</li>
+            <li>"Email chain looks legitimate but bank account changed mid-thread" → mailbox compromise / thread hijack; verify out-of-band.</li>
+            <li>"Strongest single defense against credential phishing" → phishing-resistant FIDO2 hardware key / passkeys.</li>
+          </ul>
         `
       },
       {
