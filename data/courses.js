@@ -7231,6 +7231,252 @@ vssadmin delete shadows /for=C: /oldest     # free space
             <li>"Code-sharing requirement for derivatives" → copyleft (GPL).</li>
             <li>"Discover prohibited content on a user's PC" → preserve evidence, document, escalate; do NOT investigate yourself.</li>
           </ul>
+
+          <h2>ESD discharge mechanics + thresholds</h2>
+          <ul>
+            <li><b>ESD</b> = Electrostatic Discharge — built-up static suddenly transferred.</li>
+            <li><b>Human-perceived</b> shock ≥ ~3000 V (you can feel it).</li>
+            <li><b>Audible spark</b> ≥ ~5000 V.</li>
+            <li><b>Visible spark</b> ≥ ~10,000 V.</li>
+            <li><b>Damage to electronics</b> can occur at <b>30-100 V</b> — far below what you can feel.</li>
+            <li><b>Carpet shuffle</b> can generate up to 35,000 V on dry days.</li>
+            <li><b>RH (relative humidity) below 30%</b> dramatically increases ESD risk; above 50% reduces it.</li>
+            <li><b>Common protections:</b> wrist strap (1 MΩ resistor inline), heel strap, ESD mat at workbench (grounded), ESD-safe shoes, ionizer fans, ESD-safe tools (insulated handles dissipate slowly), ESD bags (pink anti-static or silver shielded).</li>
+          </ul>
+
+          <h2>Why NOT to wear ESD wrist strap on these</h2>
+          <ul>
+            <li><b>CRT monitors</b> — anode holds 15–30 kV after unplug; wrist strap creates path to YOU.</li>
+            <li><b>PSU internals</b> — capacitors hold lethal voltage for minutes.</li>
+            <li><b>Laser printer fuser</b> — also carries high voltage + 200 °C hot.</li>
+            <li><b>Old transformers / inverters</b>.</li>
+            <li><b>Anything with a yellow "high voltage" warning sticker</b>.</li>
+            <li>For these: leave to qualified techs OR discharge with insulated screwdriver to chassis + wait.</li>
+          </ul>
+
+          <h2>OSHA + workplace safety quick reference</h2>
+          <ul>
+            <li><b>OSHA</b> = Occupational Safety and Health Administration (US federal).</li>
+            <li><b>OSHA 29 CFR 1910</b> — General Industry Standards. Lockout/Tagout 1910.147; Personal Protective Equipment Subpart I.</li>
+            <li><b>Right-to-know</b> — workers entitled to MSDS/SDS for every chemical they handle.</li>
+            <li><b>Ergonomics</b> — proper desk height, chair, monitor distance (~arm's length), keyboard / mouse position; 20-20-20 rule (every 20 min look 20 ft away for 20 s).</li>
+            <li><b>Repetitive strain</b> — wrist rests, ergonomic keyboards, split keyboards, vertical mice.</li>
+            <li><b>RSI</b> + carpal tunnel mitigation.</li>
+            <li><b>Job hazard analysis (JHA)</b> — document risk per task.</li>
+            <li><b>Incident reporting</b> within 8h to OSHA for serious injuries.</li>
+          </ul>
+
+          <h2>Building safety + fire suppression detail</h2>
+          <ul>
+            <li><b>Fire extinguisher classes:</b>
+              <ul>
+                <li><b>A</b> — ordinary combustibles (wood, paper).</li>
+                <li><b>B</b> — flammable liquids (gasoline, oil).</li>
+                <li><b>C</b> — electrical fires (use this near IT gear).</li>
+                <li><b>D</b> — combustible metals (magnesium, lithium battery fires).</li>
+                <li><b>K</b> — kitchen / cooking oils.</li>
+                <li><b>ABC dry-chemical</b> — most common multi-class.</li>
+              </ul>
+            </li>
+            <li><b>PASS</b> — Pull (pin), Aim (at base), Squeeze (handle), Sweep (side-to-side).</li>
+            <li><b>Datacenter clean agents:</b>
+              <ul>
+                <li><b>FM-200</b> (HFC-227ea) — common replacement for Halon.</li>
+                <li><b>Novec 1230</b> (FK-5-1-12) — newer, eco-friendly.</li>
+                <li><b>Inergen / Argonite</b> — inert-gas mix that reduces O2 to 12-14% (still breathable briefly).</li>
+                <li><b>Halon</b> — phased out by Montreal Protocol (ozone-depleting).</li>
+                <li><b>Water mist / pre-action sprinkler</b> — water held back until smoke detector + heat trigger, reducing accidental discharge.</li>
+              </ul>
+            </li>
+            <li><b>Smoke detectors:</b> ionization (faster on flaming fires), photoelectric (faster on smoldering); dual-sensor preferred.</li>
+            <li><b>VESDA</b> (Very Early Smoke Detection Apparatus) — aspirating air-sampling system; finds smoke before visible.</li>
+            <li><b>Emergency power-off (EPO)</b> button — cuts power to entire datacenter; cover with shield to prevent accidental press.</li>
+          </ul>
+
+          <h2>Equipment safety + grounding</h2>
+          <ul>
+            <li><b>Bonding + grounding</b> — every metal chassis tied to common ground; required by NEC.</li>
+            <li><b>UPS + surge protector</b> for sensitive gear.</li>
+            <li><b>SPDs</b> (Surge Protective Devices) — Type 1 (service entrance), Type 2 (panel), Type 3 (outlet).</li>
+            <li><b>Joules rating</b> on power strips — more joules = more protection; 1000+ J recommended for PCs, 2000+ for AV.</li>
+            <li><b>Lightning protection</b> — disconnect during storms; whole-house SPD at service entrance.</li>
+            <li><b>GFCI / RCD outlets</b> in wet locations (kitchen, bath, outdoor).</li>
+            <li><b>Power conditioner</b> + isolation transformer for ground-loop / noise issues.</li>
+            <li><b>Cable management</b> — never daisy-chain power strips (UL violation).</li>
+          </ul>
+
+          <h2>Environmental controls (datacenter)</h2>
+          <ul>
+            <li><b>Temperature:</b> ASHRAE recommended 18-27 °C (64-81 °F); allowable 15-32 °C.</li>
+            <li><b>Humidity:</b> 40-60% RH ideal; below = ESD risk, above = condensation + corrosion.</li>
+            <li><b>HVAC / CRAC</b> (Computer Room AC) — precision cooling. <b>CRAH</b> = Computer Room Air Handler (chilled water).</li>
+            <li><b>Hot aisle / cold aisle</b> + containment to maximize cooling efficiency.</li>
+            <li><b>PUE</b> (Power Usage Effectiveness) — total power / IT load. 1.5 average, &lt; 1.2 hyperscaler.</li>
+            <li><b>Liquid cooling</b> for high-density (AI / HPC) racks.</li>
+            <li><b>Leak detection</b> sensors below raised floor.</li>
+            <li><b>Environmental sensors</b> (NetBotz, AKCP, RTX) feed SNMP traps.</li>
+          </ul>
+
+          <h2>Hazardous materials + disposal</h2>
+          <ul>
+            <li><b>SDS / MSDS</b> (Safety Data Sheet) — 16 sections; chemical hazards, first-aid, handling, disposal. Keep accessible per OSHA.</li>
+            <li><b>Lithium batteries</b> — fire risk; never puncture; store in fireproof container if swollen. Don't ship damaged batteries by air.</li>
+            <li><b>Toner cartridges</b> — particulates harmful; clean with HEPA vacuum; don't use compressed air (aerosolizes).</li>
+            <li><b>CRT</b> — contains lead, mercury; recycle via certified e-waste.</li>
+            <li><b>Solvents (isopropyl alcohol 99%)</b> — flammable; ventilation + no smoking.</li>
+            <li><b>Cleaning compressed-air cans</b> — duster gas (HFC-152a / R-134a) is asphyxiant in confined space.</li>
+            <li><b>EPA / RCRA / WEEE</b> — e-waste regulations.</li>
+            <li><b>Battery + bulb disposal</b> — separate from regular trash; municipal recycling programs.</li>
+          </ul>
+
+          <h2>Documentation artifacts (memorize types)</h2>
+          <ul>
+            <li><b>Asset inventory / CMDB</b> — every device, serial, location, owner, warranty, EOL, license.</li>
+            <li><b>Network diagrams</b> — physical + logical topology, IP scheme.</li>
+            <li><b>Wiring diagram</b> — patch panel to wall jack to switch port.</li>
+            <li><b>Rack elevations</b> — equipment U positions.</li>
+            <li><b>Floor plan</b> + Wi-Fi heatmap.</li>
+            <li><b>Runbooks / SOPs</b> — step-by-step procedures.</li>
+            <li><b>Knowledge base</b> — how-to articles, common fixes.</li>
+            <li><b>Change log</b> — every config push + reason.</li>
+            <li><b>Service catalog</b> — what IT offers; SLAs.</li>
+            <li><b>AUP</b> (Acceptable Use Policy) — what users may + may not do.</li>
+            <li><b>BYOD / Remote work policy</b>.</li>
+            <li><b>Incident response plan</b> — playbook + contact tree.</li>
+            <li><b>DR plan / BCP</b> (Business Continuity Plan).</li>
+            <li><b>BIA</b> (Business Impact Analysis) — feed into RTO/RPO.</li>
+            <li><b>NDA</b> — non-disclosure agreement.</li>
+            <li><b>SLA / OLA / UC</b> — Service Level / Operational Level / Underpinning Contract.</li>
+            <li><b>License inventory</b>.</li>
+            <li><b>Data classification policy</b>.</li>
+            <li><b>Onboarding / offboarding checklist</b>.</li>
+            <li><b>Vendor contact list</b>.</li>
+          </ul>
+
+          <h2>Change management process (memorize order)</h2>
+          <ol>
+            <li><b>RFC</b> (Request for Change) — scope, justification, risk, rollback plan, downtime window, affected users.</li>
+            <li><b>Risk analysis</b> — impact + probability matrix.</li>
+            <li><b>CAB</b> (Change Advisory Board) review + approval. Stakeholders sign off.</li>
+            <li><b>Notify affected users</b> — email, calendar, status page.</li>
+            <li><b>Test in lab</b> when feasible.</li>
+            <li><b>Schedule maintenance window</b> — low business impact (typically nights / weekends).</li>
+            <li><b>Implement</b> following plan.</li>
+            <li><b>Verify</b> success via pre-defined acceptance criteria.</li>
+            <li><b>Execute backout</b> if needed.</li>
+            <li><b>Post-implementation review</b> — lessons learned.</li>
+            <li><b>Update CMDB + KB + runbook</b>.</li>
+            <li><b>Close ticket</b>.</li>
+          </ol>
+          <p><b>Change types:</b> Standard (pre-approved, low-risk, repeatable), Normal (full CAB), Emergency (expedited; retrospective review).</p>
+
+          <h2>Privacy + compliance acronym deep cuts</h2>
+          <ul>
+            <li><b>PII</b> (Personally Identifiable Information) — name, SSN, DoB, address, etc.</li>
+            <li><b>PHI</b> (Protected Health Information) — health data under HIPAA.</li>
+            <li><b>PCI cardholder data</b> — PAN, expiration, CVV, track data (CVV cannot be stored post-auth).</li>
+            <li><b>HIPAA</b> — covered entities (providers, plans, clearinghouses) + business associates; Privacy Rule + Security Rule + Breach Notification Rule.</li>
+            <li><b>HITECH</b> — strengthens HIPAA penalties + breach reporting.</li>
+            <li><b>PCI-DSS</b> v4.0 (2024) — 12 requirements; SAQ levels A-D by merchant size.</li>
+            <li><b>SOX</b> (Sarbanes-Oxley) — financial reporting controls; Section 404 IT controls audit.</li>
+            <li><b>GLBA</b> — Gramm-Leach-Bliley financial privacy.</li>
+            <li><b>FERPA</b> — US student education.</li>
+            <li><b>COPPA</b> — US children under 13 online.</li>
+            <li><b>GDPR</b> — EU; data subject rights (access, rectification, erasure, portability, restriction, objection); 72h breach notice; DPO required for some processors.</li>
+            <li><b>CCPA / CPRA</b> — California consumer.</li>
+            <li><b>PIPEDA</b> — Canada federal.</li>
+            <li><b>LGPD</b> — Brazil's GDPR-equivalent.</li>
+            <li><b>POPIA</b> — South Africa.</li>
+            <li><b>PDPA</b> — Singapore.</li>
+            <li><b>ISO 27001 / 27002 / 27017 / 27018 / 27701</b> — information security + cloud + privacy management.</li>
+            <li><b>SOC 1 / SOC 2 / SOC 3</b> — service organization control reports; Type I (point-in-time) vs Type II (period of time).</li>
+            <li><b>NIST CSF 2.0</b> — Cybersecurity Framework: Govern, Identify, Protect, Detect, Respond, Recover.</li>
+            <li><b>NIST 800-53</b> — federal control catalog. <b>800-171</b> — CUI in non-fed systems (CMMC backbone).</li>
+            <li><b>FedRAMP</b> — federal cloud authorization (Low / Moderate / High).</li>
+            <li><b>CMMC</b> 2.0 (DoD) — Levels 1-3 cybersecurity maturity for defense contractors.</li>
+            <li><b>FIPS 140-2 / 140-3</b> — cryptographic module validation.</li>
+            <li><b>HITRUST CSF</b> — healthcare-oriented certification.</li>
+          </ul>
+
+          <h2>Licensing deep-dive</h2>
+          <ul>
+            <li><b>EULA</b> + click-through agreement establishes contract.</li>
+            <li><b>Per-seat</b> vs <b>per-device</b> vs <b>concurrent</b> vs <b>per-core</b> (server CPU-bound).</li>
+            <li><b>Volume licensing</b>: Microsoft VLSC / M365 admin center; Adobe ETLA; Autodesk Account.</li>
+            <li><b>KMS</b> (Key Management Service) — on-prem activation server for VLSC; clients re-activate every 180 days.</li>
+            <li><b>MAK</b> (Multiple Activation Key) — single key with quota.</li>
+            <li><b>OEM</b> — tied to motherboard / firmware; non-transferable.</li>
+            <li><b>FPP</b> (Full Packaged Product / retail) — transferable.</li>
+            <li><b>Floating / network license</b> — license server hands out N concurrent.</li>
+            <li><b>Site license</b> — covers entire site / school.</li>
+            <li><b>Subscription / SaaS</b> — revocable; ceases on non-payment.</li>
+            <li><b>Open source licenses:</b>
+              <ul>
+                <li><b>Permissive:</b> MIT, Apache 2.0, BSD 2-clause/3-clause — minimal restrictions.</li>
+                <li><b>Weak copyleft:</b> LGPL, MPL — library use OK, modifications must share.</li>
+                <li><b>Strong copyleft:</b> GPL v2/v3, AGPL — derivative works must release under same license.</li>
+                <li><b>Public domain / CC0</b> — no rights reserved.</li>
+              </ul>
+            </li>
+            <li><b>SAM</b> (Software Asset Management) — tooling to track license deployment vs entitlement; surface overuse / underuse.</li>
+            <li><b>Audit clauses</b> — most enterprise licenses allow vendor audit; non-compliance = back-licensing fees + penalties.</li>
+          </ul>
+
+          <h2>Incident response process (NIST 800-61 r2)</h2>
+          <ol>
+            <li><b>Preparation</b> — runbooks, contacts, jump kits, training.</li>
+            <li><b>Detection &amp; Analysis</b> — triage, scope.</li>
+            <li><b>Containment</b> — short-term (isolate) + long-term (block IOCs, patch).</li>
+            <li><b>Eradication</b> — remove threat, rebuild systems.</li>
+            <li><b>Recovery</b> — restore service + monitor.</li>
+            <li><b>Lessons learned / post-mortem</b> within 1-2 weeks; update controls + runbook.</li>
+          </ol>
+          <p><b>Blameless RCA</b> — focus on systemic causes, not individuals. Surface contributing factors honestly.</p>
+
+          <h2>Communication + customer service (heavy A+ test area)</h2>
+          <ul>
+            <li><b>Maintain a positive attitude</b> + professional appearance.</li>
+            <li><b>Active listening</b> — let user finish before responding.</li>
+            <li><b>Use proper language</b> — no jargon with non-tech users; analogies help.</li>
+            <li><b>Avoid distractions</b> — no personal calls, social media at user's desk.</li>
+            <li><b>Don't argue</b> + be defensive.</li>
+            <li><b>Maintain confidentiality</b> — discoveries on user's PC stay there unless required to report.</li>
+            <li><b>Be on time / contact ahead</b> — respect user's schedule.</li>
+            <li><b>Set realistic expectations</b> — under-promise, over-deliver.</li>
+            <li><b>Follow up</b> on satisfaction.</li>
+            <li><b>Cultural + accessibility sensitivity</b> — adapt to user's needs.</li>
+            <li><b>Empathy</b> — frustrated users want to be heard first, fixed second.</li>
+            <li><b>Documentation as you go</b> — accurate ticket notes save the next tech.</li>
+            <li><b>Escalate</b> when scope exceeds your authority or skill.</li>
+            <li><b>Verify resolution with user</b> before closing.</li>
+          </ul>
+
+          <h2>Forensic evidence handling</h2>
+          <ul>
+            <li><b>Chain of custody</b> — log every person who touched the evidence + when.</li>
+            <li><b>Order of volatility</b> — capture most volatile data first: CPU registers / cache → RAM → network state → disk → archives.</li>
+            <li><b>Write blocker</b> — hardware device prevents writes to source drive during imaging.</li>
+            <li><b>Hash verification</b> — SHA-256 of evidence; document at acquisition + every transfer.</li>
+            <li><b>Bit-for-bit image</b> via <code>dd</code>, <code>FTK Imager</code>, <code>EnCase</code>, <code>Magnet AXIOM</code>.</li>
+            <li><b>Original evidence stored</b> in tamper-evident bag/safe; work with COPY only.</li>
+            <li><b>Faraday bag</b> for mobile devices to prevent remote wipe.</li>
+            <li><b>Affidavit / chain document</b> — required for court admissibility.</li>
+            <li><b>NIST 800-86</b> + <b>SWGDE</b> + <b>ISO 27037</b> are reference frameworks.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Tool clipped to chassis for ESD" → anti-static wrist strap (1 MΩ inline resistor).</li>
+            <li>"Class C extinguisher" → electrical fire near IT gear.</li>
+            <li>"Smoke detection in datacenter for early warning" → VESDA.</li>
+            <li>"Required document for chemical you handle" → SDS / MSDS.</li>
+            <li>"Federal medical privacy law" → HIPAA.</li>
+            <li>"EU breach notice within 72h" → GDPR.</li>
+            <li>"Approved by Change Advisory Board" → Normal change.</li>
+            <li>"Repeatable, pre-approved" → Standard change.</li>
+            <li>"Volume license activation server" → KMS.</li>
+            <li>"Discover prohibited content" → preserve evidence, document, escalate, do not investigate yourself.</li>
+          </ul>
         `
       }
     ],
