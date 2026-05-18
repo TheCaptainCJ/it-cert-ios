@@ -6828,6 +6828,174 @@ vssadmin delete shadows /for=C: /oldest     # free space
             <li>"Proof a drive was destroyed" → Certificate of Destruction.</li>
             <li>"E-waste compliance directive" → WEEE (EU) / RCRA (US).</li>
           </ul>
+
+          <h2>Backup type comparison table (memorize)</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Type</th><th align="left" style="padding:4px;border-bottom:1px solid #444">What it copies</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Restore steps</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Backup size</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Backup time</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Archive bit</th></tr>
+            <tr><td>Full</td><td>Everything every time</td><td>1 (full)</td><td>Largest</td><td>Longest</td><td>Cleared</td></tr>
+            <tr><td>Incremental</td><td>Changes since LAST backup</td><td>Full + every incremental in order</td><td>Smallest</td><td>Fastest</td><td>Cleared</td></tr>
+            <tr><td>Differential</td><td>Changes since last FULL</td><td>Full + latest differential only</td><td>Grows over week</td><td>Medium</td><td>NOT cleared</td></tr>
+            <tr><td>Synthetic full</td><td>Server merges full + increments into new full</td><td>1 (synthetic full)</td><td>Same as full</td><td>Done off-client</td><td>n/a</td></tr>
+            <tr><td>Forever Incremental</td><td>Initial full, then only changes; database holds map</td><td>1 (virtual full from any point)</td><td>Smallest</td><td>Fastest</td><td>n/a</td></tr>
+            <tr><td>Snapshot (filesystem/SAN)</td><td>Block pointers at point-in-time</td><td>Mount or revert</td><td>Near-zero initial</td><td>Instant</td><td>n/a</td></tr>
+            <tr><td>Continuous Data Protection (CDP)</td><td>Every write journaled</td><td>Roll back to any second</td><td>Largest journal</td><td>n/a (continuous)</td><td>n/a</td></tr>
+          </table>
+
+          <h2>3-2-1-1-0 modern variant (Veeam, NIST)</h2>
+          <ul>
+            <li><b>3</b> copies of data.</li>
+            <li><b>2</b> different storage types.</li>
+            <li><b>1</b> off-site / off-cloud copy.</li>
+            <li><b>1</b> offline / air-gapped / immutable copy (ransomware-resistant).</li>
+            <li><b>0</b> errors after verification + restore test.</li>
+          </ul>
+          <p>Older 3-2-1 alone is insufficient against ransomware that can encrypt SMB / iSCSI / cloud sync targets.</p>
+
+          <h2>RPO + RTO + MTD relationships</h2>
+          <ul>
+            <li><b>RPO</b> (Recovery Point Objective) — how much data loss is acceptable. Tighter RPO → backups more frequent (e.g., 15-min snapshots, CDP).</li>
+            <li><b>RTO</b> (Recovery Time Objective) — how long to recover. Tighter RTO → hot/warm standby, faster restore tech.</li>
+            <li><b>MTD</b> (Maximum Tolerable Downtime) — absolute ceiling before business impact unacceptable. RTO must be &lt; MTD.</li>
+            <li><b>WRT</b> (Work Recovery Time) — testing + validation time after restore until production-ready. RTO + WRT ≤ MTD.</li>
+            <li><b>MTBF</b> (Mean Time Between Failures), <b>MTTR</b> (Mean Time To Repair / Recovery) — reliability metrics; lower MTTR = better RTO.</li>
+          </ul>
+
+          <h2>Backup storage targets</h2>
+          <ul>
+            <li><b>External USB / eSATA drive</b> — cheap, easy, removable. Good for home / small office.</li>
+            <li><b>NAS</b> — shared file storage on the LAN; vulnerable to ransomware if not isolated.</li>
+            <li><b>Tape (LTO-9 = 18 TB native, 45 TB compressed)</b> — long-term cold archive, air-gapped naturally, slow restore.</li>
+            <li><b>Removable RDX cartridges</b> — rotating offsite SMB backup.</li>
+            <li><b>Cloud object storage (S3, Azure Blob, B2)</b> — durable, off-site by default. Apply Object Lock for immutability.</li>
+            <li><b>Hardened backup appliance</b> (Veeam Hardened Repo, Cohesity DataLock, Rubrik Atlas) — Linux + S3 Object Lock + admin separation.</li>
+            <li><b>Disk-to-Disk-to-Tape (D2D2T)</b> — fast disk staging + cheap tape archive.</li>
+            <li><b>Hot / warm / cold cloud tiers</b> — Hot (instant), Cool (30d retention), Cold (90d), Archive (Glacier 1-12h restore, cheapest).</li>
+          </ul>
+
+          <h2>Cloud backup specifics</h2>
+          <ul>
+            <li><b>Native cloud snapshot</b> — EBS snapshot, Azure Managed Disk snapshot, GCP persistent disk snapshot. Stored cross-AZ; copy to another region for DR.</li>
+            <li><b>Backup-as-a-Service</b>: AWS Backup, Azure Backup, GCP Backup &amp; DR, Veeam Backup for AWS/Azure/GCP.</li>
+            <li><b>SaaS data backup</b> — M365, Google Workspace, Salesforce, Box. Vendors: Veeam Backup for M365, Druva, AvePoint Cloud Backup, OwnBackup.</li>
+            <li><b>Shared-responsibility myth</b> — Microsoft / Google replicate your data for high availability but DO NOT restore deleted items past their short retention window. You own backup.</li>
+            <li><b>Cross-account / cross-tenant copy</b> — defense against rogue admin / ransomware in primary account.</li>
+            <li><b>Immutability</b> — S3 Object Lock (Compliance / Governance mode), Azure Immutable Blob, GCP Bucket Lock.</li>
+            <li><b>Egress cost</b> — biggest hidden line item when restoring from cloud.</li>
+          </ul>
+
+          <h2>Backup integrity verification</h2>
+          <ul>
+            <li><b>Verify after backup</b> — read-back checksums; many products built-in.</li>
+            <li><b>Test restore</b> — actually restore to alt location quarterly. Backups untested = no backup.</li>
+            <li><b>SureBackup (Veeam) / Instant Recovery</b> — boot VM from backup repo to validate.</li>
+            <li><b>Audit logs</b> on backup job success/failure → SIEM.</li>
+            <li><b>Tabletop exercises</b> — walk through DR plan with stakeholders annually.</li>
+            <li><b>Full DR drill</b> — actually fail over to DR site once a year.</li>
+            <li><b>Hash chains</b> — SHA-256 of every backup artifact stored separately; detects tampering.</li>
+          </ul>
+
+          <h2>Encryption + key management for backup</h2>
+          <ul>
+            <li><b>Encrypt in transit</b> — TLS 1.2+ between client + backup target.</li>
+            <li><b>Encrypt at rest</b> — AES-256 backups + AES-256 storage.</li>
+            <li><b>Customer-managed keys (CMK)</b> in KMS (AWS KMS, Azure Key Vault, GCP KMS) so vendor cannot read plaintext.</li>
+            <li><b>BYOK / HYOK</b> — Bring / Hold Your Own Key — strict key custody.</li>
+            <li><b>Key rotation policy</b> — periodic with versioning.</li>
+            <li><b>Recovery key escrow</b> — split-knowledge / M-of-N for disaster recovery.</li>
+            <li><b>Compliance:</b> FIPS 140-2 / 140-3 modules required for government / regulated.</li>
+          </ul>
+
+          <h2>Retention + lifecycle policy</h2>
+          <ul>
+            <li><b>GFS</b> (Grandfather-Father-Son) — Daily → Weekly → Monthly → Yearly retention scheme.</li>
+            <li><b>Examples:</b> 7 daily + 4 weekly + 12 monthly + 7 yearly typical.</li>
+            <li><b>Legal hold</b> — overrides retention during litigation; backups must not auto-delete subject items.</li>
+            <li><b>Retention by regulation:</b> HIPAA 6 yrs, PCI-DSS 1 yr active, SOX 7 yrs, GDPR no maximum but principle of data minimization.</li>
+            <li><b>Lifecycle automation</b> — cloud storage tiering policies move data Hot → Archive automatically; or auto-delete past retention.</li>
+          </ul>
+
+          <h2>NIST SP 800-88 Rev. 1 sanitization deep-dive</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Method</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Clear</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Purge</th><th align="left" style="padding:4px;border-bottom:1px solid #444">Destroy</th></tr>
+            <tr><td>Overwrite</td><td>1 pass</td><td>Multiple passes / vendor cmd</td><td>n/a</td></tr>
+            <tr><td>Block erase (SSD)</td><td>n/a</td><td>NVMe Sanitize Block Erase / ATA Security Erase Unit</td><td>n/a</td></tr>
+            <tr><td>Cryptographic erase</td><td>n/a</td><td>Destroy DEK on SED</td><td>n/a</td></tr>
+            <tr><td>Degauss</td><td>n/a</td><td>HDD/tape, not SSD</td><td>n/a</td></tr>
+            <tr><td>Disintegrate / shred / pulverize / incinerate / melt</td><td>n/a</td><td>n/a</td><td>Final stage</td></tr>
+          </table>
+          <p><b>NIST decision flow:</b> Choose method based on confidentiality level + reusability after sanitization + media type.</p>
+
+          <h2>Drive-erasure tool catalog</h2>
+          <ul>
+            <li><b>DBAN</b> (Darik's Boot and Nuke) — legacy, HDD overwrite only. <b>NOT recommended for SSDs.</b></li>
+            <li><b>ShredOS / nwipe</b> — modern DBAN replacement, GPT-aware.</li>
+            <li><b>Blancco Drive Eraser / WhiteCanyon WipeDrive</b> — commercial, NIST 800-88 compliant; certificate generation.</li>
+            <li><b>PartedMagic Erase Disk</b> — supports ATA Secure Erase + NVMe Sanitize.</li>
+            <li><b>Vendor tools:</b> Samsung Magician, Crucial Storage Executive, Intel Memory &amp; Storage Tool, WD Dashboard, Kingston SSD Manager — all expose Secure Erase.</li>
+            <li><b>hdparm --user-master u --security-erase pass /dev/sdX</b> (Linux) — ATA Secure Erase CLI.</li>
+            <li><b>nvme format --ses=1 /dev/nvme0n1</b> (Linux) — user-data erase. <code>--ses=2</code> for cryptographic erase.</li>
+            <li><b>diskpart → clean all</b> (Windows) — single-pass zero overwrite (HDD-only effective).</li>
+            <li><b>cipher /w:C:\\</b> (Windows) — overwrites free space (HDD).</li>
+            <li><b>Veracrypt full-disk + destroy key</b> — encrypts disk + destroy header = inaccessible.</li>
+          </ul>
+
+          <h2>Physical destruction equipment</h2>
+          <ul>
+            <li><b>Industrial HDD shredder</b> — &lt; 2 mm fragments; for high-security drives. Often mobile (truck on-site).</li>
+            <li><b>SSD shredder</b> — finer particle size (≤ 2 mm) required; chip-level destruction.</li>
+            <li><b>Disintegrator</b> — for paper + optical media.</li>
+            <li><b>Drill press / hammer</b> — DIY for small batches; verify all platters / NAND chips damaged.</li>
+            <li><b>Degausser</b> — NSA-approved Level (Level 1 ≥ 5000 oersted for newer drives) for HDDs.</li>
+            <li><b>Incinerator</b> — final tier for top-secret material.</li>
+            <li><b>Crypto erase</b> followed by shred — defense in depth.</li>
+          </ul>
+
+          <h2>Mobile device disposal</h2>
+          <ul>
+            <li><b>Factory reset</b> on modern iOS / Android destroys the device-bound encryption key → existing data unreadable.</li>
+            <li><b>Sign out iCloud + remove Activation Lock</b> on iOS before resetting; otherwise next owner can't activate.</li>
+            <li><b>Sign out Google account + Disable FRP</b> on Android.</li>
+            <li><b>SIM card</b> — destroy or return to carrier; PIN-protected.</li>
+            <li><b>Trade-in / refurb</b> — wipe + sign-out + Activation Lock OFF.</li>
+            <li><b>High-classification</b> — physical destruction; commercial mobile shredders exist.</li>
+          </ul>
+
+          <h2>Backup retention strategy by data class</h2>
+          <ul>
+            <li><b>Operational</b> (active project files) — short retention (30-90 days), daily backups, fast restore.</li>
+            <li><b>Compliance</b> (audit logs, financial) — long retention (1-7 yrs), immutable, legal-hold ready.</li>
+            <li><b>Archive</b> (historical records) — multi-year tape / Glacier; rarely accessed.</li>
+            <li><b>Personal data (GDPR)</b> — purpose-limited retention; delete when no longer needed.</li>
+            <li><b>Backup of backup</b> — secondary copy on different vendor / media.</li>
+          </ul>
+
+          <h2>Ransomware-resilient backup architecture</h2>
+          <ol>
+            <li><b>Network-isolated backup server</b> (no domain join, separate management VLAN).</li>
+            <li><b>Hardened OS</b> (Linux Hardened Repo, dedicated appliance).</li>
+            <li><b>Immutable repository</b> — S3 Object Lock Compliance mode / Veeam Insider Protection / hardware WORM.</li>
+            <li><b>Separate credentials</b> from production AD; MFA required for backup admin console.</li>
+            <li><b>Air-gapped tape rotation</b> off-site weekly.</li>
+            <li><b>Read-only roles</b> for everyone except scheduled backup process.</li>
+            <li><b>Behavior detection</b> — alerts on unusual deletes / encrypts.</li>
+            <li><b>Restore verification</b> — automated weekly test restore.</li>
+            <li><b>Backup of identity</b> — AD bare-metal recovery + Entra ID backup (Quest On Demand, Cayosoft).</li>
+            <li><b>Disaster recovery runbook</b> — printed + offline copy of rebuild procedures.</li>
+          </ol>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"Smallest daily backup window" → incremental.</li>
+            <li>"Fastest restore from one tape" → full (only one backup needed).</li>
+            <li>"Restore = full + latest only" → differential.</li>
+            <li>"Tape backup written + locked unable to overwrite" → WORM / immutable / Object Lock.</li>
+            <li>"Wipe SSD before disposal" → vendor Secure Erase / NVMe sanitize / crypto-erase (not DBAN).</li>
+            <li>"Destroy magnetic tape" → degauss + incinerate.</li>
+            <li>"Stolen laptop recovery (data)" → restore from cloud backup; remote wipe device.</li>
+            <li>"Ransomware encrypted backups too" → need offline / air-gapped / immutable copy.</li>
+            <li>"15-min RPO required" → snapshot-based + CDP or near-CDP backup.</li>
+            <li>"Certificate of Destruction" → required record of secure disposal (vendor-issued).</li>
+          </ul>
         `
       },
       {
