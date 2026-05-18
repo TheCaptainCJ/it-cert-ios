@@ -1696,6 +1696,111 @@ const LABS = {
           ],
           explain: 'Dashboard → break down → tag → alert → optimize → review. Anomaly detection catches sudden spikes early.' }
       ]
+    },
+    {
+      id: 'az-pbq4',
+      title: 'PBQ: Identity, MFA & Conditional Access',
+      objective: 'Identity (Microsoft Entra ID)',
+      steps: [
+        { type: 'note', text: 'Enable secure sign-in for corp workforce. Pick correct Entra ID components.' },
+        { type: 'dragmatch',
+          prompt: 'Match feature to purpose.',
+          pairs: [
+            { left: 'Microsoft Entra ID (formerly Azure AD)', right: 'Cloud identity directory + SSO' },
+            { left: 'Conditional Access', right: 'Policy engine: allow/block/grant w/ controls based on signals' },
+            { left: 'Identity Protection (P2)', right: 'Risk-based detection (user-risk, sign-in-risk)' },
+            { left: 'PIM (Privileged Identity Management)', right: 'JIT eligible activation for admin roles' },
+            { left: 'B2B Collaboration', right: 'Invite external partners as guest users' },
+            { left: 'Entra External ID for customers (B2C)', right: 'Customer-facing identity w/ social logins' }
+          ],
+          explain: 'Entra = directory. CA = enforcement. Identity Protection = risk scoring. PIM = JIT admin. B2B vs B2C = workforce-guests vs customers.' },
+        { type: 'multiselect',
+          prompt: 'Pick PHISHING-RESISTANT MFA methods:',
+          options: [
+            'SMS one-time code',
+            'Voice call OTP',
+            'Microsoft Authenticator push (no number match)',
+            'Authenticator number matching',
+            'FIDO2 / passkeys / WebAuthn',
+            'Certificate-based authentication (CBA)',
+            'Windows Hello for Business'
+          ],
+          answers: [4, 5, 6],
+          explain: 'Phishing-resistant = origin-bound + replay-proof. FIDO2/passkeys + CBA + WHfB. SMS + voice + simple push are bypassable by AitM phishing (EvilProxy). Number-matching strengthens push but still not phishing-resistant by spec.' },
+        { type: 'order',
+          prompt: 'Conditional Access policy evaluation order:',
+          items: [
+            '1. User / group assignment matches?',
+            '2. Cloud app + action in scope?',
+            '3. Conditions evaluated (user risk, sign-in risk, device platform, location, client app, device state)?',
+            '4. Apply access controls (block, MFA, compliant device, terms of use)',
+            '5. Apply session controls (sign-in frequency, app-enforced restrictions, persistent browser)'
+          ],
+          explain: 'CA = assignments → cloud apps → conditions → access controls → session controls. Multiple policies combine with most-restrictive winning.' },
+        { type: 'fillblank',
+          prompt: 'Entra license tier needed for Identity Protection + PIM:',
+          answer: ['p2', 'entra id p2', 'azure ad p2'],
+          placeholder: 'tier',
+          explain: 'Entra P2 (or Microsoft 365 E5). P1 covers Conditional Access + Group-based access management. Free has basic SSO only.' },
+        { type: 'choice',
+          prompt: 'Block sign-in from impossible geographies (LA to Tokyo in 30 min). Which CA condition?',
+          options: [
+            'Device platform',
+            'Sign-in risk (atypical travel detection)',
+            'User risk (leaked credentials)',
+            'Client apps'
+          ],
+          answer: 1,
+          explain: 'Identity Protection scores sign-in risk based on atypical travel + unfamiliar IP + anonymous IP + malware-linked IP + leaked credentials. Block or require MFA above thresholds.' }
+      ]
+    },
+    {
+      id: 'az-pbq5',
+      title: 'PBQ: Network Architecture',
+      objective: 'Azure networking',
+      steps: [
+        { type: 'note', text: 'Design hub-spoke + secure connectivity. Match each service to the right job.' },
+        { type: 'dragmatch',
+          prompt: 'Match each connectivity choice to scenario.',
+          pairs: [
+            { left: 'Branch office to Azure over Internet, encrypted', right: 'VPN Gateway (site-to-site IPsec)' },
+            { left: 'Datacenter to Azure, private 10 Gbps SLA', right: 'ExpressRoute' },
+            { left: 'Reach PaaS service privately, no public IP', right: 'Private Endpoint' },
+            { left: 'Two VNets in different regions, low-latency private', right: 'Global VNet Peering' },
+            { left: 'RDP/SSH to VM with no public IP', right: 'Azure Bastion' },
+            { left: 'Centralize NGFW + threat-intel for hub-spoke egress', right: 'Azure Firewall (Premium)' }
+          ],
+          explain: 'Memorize each service\'s sweet spot. ExpressRoute = private + SLA. Private Endpoint = PaaS w/o public surface. Bastion = browser-based RDP/SSH.' },
+        { type: 'multiselect',
+          prompt: 'Layer-7 services for HTTP(S) entry in Azure:',
+          options: ['Azure Load Balancer (L4)', 'Application Gateway (regional L7 + WAF)', 'Azure Front Door (global L7 anycast + WAF + CDN)', 'Traffic Manager (DNS only, no L7)', 'NAT Gateway'],
+          answers: [1, 2],
+          explain: 'AppGW = regional L7. Front Door = global L7. ALB is L4. Traffic Manager is DNS routing. NAT Gateway is egress only.' },
+        { type: 'fillblank',
+          prompt: 'Service that gives outbound static SNAT IPs without exposing inbound:',
+          answer: ['nat gateway', 'natgw', 'azure nat gateway'],
+          placeholder: 'service name',
+          explain: 'NAT Gateway provides predictable outbound SNAT IPs + scales port budget; no inbound exposure. Replaces default outbound + load-balancer SNAT.' },
+        { type: 'order',
+          prompt: 'NSG rule evaluation order:',
+          items: [
+            '1. AzureLoadBalancer + intra-VNet defaults (lowest priority)',
+            '2. Match by priority 100-4096, LOWEST number wins',
+            '3. First match (Allow or Deny) is final',
+            '4. Default rule (DenyAllInbound / AllowVnetInBound / AllowAzureLoadBalancerInBound) at priority 65000-65500 if no match'
+          ],
+          explain: 'NSG = stateful. Priority ordering matters. Service tags (VirtualNetwork, AzureLoadBalancer, Internet) simplify rule writing.' },
+        { type: 'choice',
+          prompt: 'Default outbound Internet behavior for a new VM with no Public IP + no NAT Gateway in 2025 Azure?',
+          options: [
+            'Full Internet access via default outbound (going away)',
+            'No Internet — must explicitly add Public IP, NAT Gateway, or Load Balancer w/ outbound rule',
+            'Blocked by Azure Firewall by default',
+            'Goes through ExpressRoute by default'
+          ],
+          answer: 1,
+          explain: 'Microsoft is removing default outbound access (deprecation Sep 2025). Must use explicit egress: NAT Gateway (recommended), Public IP on VM, or LB outbound rule.' }
+      ]
     }
   ],
 
