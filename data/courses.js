@@ -3853,6 +3853,188 @@ const COURSES = [
             <li>"On-prem corporate update server" → WSUS.</li>
             <li>"Apply existing on-prem Windows licenses to Azure VMs" → Azure Hybrid Benefit.</li>
           </ul>
+
+          <h2>Windows 11 minimum hardware requirements (memorize)</h2>
+          <ul>
+            <li><b>CPU</b> — 64-bit 1 GHz+ dual-core on the <a>Microsoft approved list</a> (Intel 8th gen+, AMD Zen 2+, Snapdragon 850+).</li>
+            <li><b>RAM</b> — 4 GB minimum (8 GB practical).</li>
+            <li><b>Storage</b> — 64 GB internal.</li>
+            <li><b>Firmware</b> — UEFI + Secure Boot capable.</li>
+            <li><b>TPM 2.0</b> — discrete OR firmware (Intel PTT / AMD fTPM).</li>
+            <li><b>Display</b> — 9"+ at 720p+, 8-bit color.</li>
+            <li><b>Graphics</b> — DirectX 12 / WDDM 2.x.</li>
+            <li><b>Microsoft account</b> required at OOBE on Home + Pro (24H2+).</li>
+          </ul>
+          <p>Use <b>PC Health Check</b> tool to validate; bypass via registry key <code>HKLM\\SYSTEM\\Setup\\MoSetup\\AllowUpgradesWithUnsupportedTPMOrCPU = 1</code> (unsupported config; no security updates guaranteed).</p>
+
+          <h2>Windows file structure (memorize key paths)</h2>
+          <ul>
+            <li><code>C:\\Windows\\</code> — OS root (<code>%SystemRoot%</code> / <code>%windir%</code>).</li>
+            <li><code>C:\\Windows\\System32\\</code> — 64-bit system DLLs + binaries (yes, "System32" is 64-bit; "SysWOW64" is 32-bit on x64).</li>
+            <li><code>C:\\Windows\\SysWOW64\\</code> — 32-bit binaries on 64-bit OS (WoW64 layer).</li>
+            <li><code>C:\\Windows\\WinSxS\\</code> — Component Store; SxS = Side-by-Side; servicing assemblies.</li>
+            <li><code>C:\\Windows\\Temp\\</code> — system temp.</li>
+            <li><code>C:\\ProgramData\\</code> — all-user app data (hidden by default).</li>
+            <li><code>C:\\Program Files\\</code> — 64-bit installed apps.</li>
+            <li><code>C:\\Program Files (x86)\\</code> — 32-bit apps on x64 OS.</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\</code> — user profile root (<code>%USERPROFILE%</code>).</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\AppData\\Roaming</code> — roams with profile in AD env (<code>%AppData%</code>).</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\AppData\\Local</code> — machine-local app data (<code>%LocalAppData%</code>).</li>
+            <li><code>C:\\Users\\&lt;username&gt;\\AppData\\LocalLow</code> — low-integrity processes (IE protected mode legacy).</li>
+            <li><code>C:\\Users\\Default\\</code> — template used for new profiles.</li>
+            <li><code>C:\\Users\\Public\\</code> — shared between local users.</li>
+            <li><code>C:\\Windows\\System32\\drivers\\</code> — kernel drivers.</li>
+            <li><code>C:\\Windows\\System32\\drivers\\etc\\hosts</code> — hosts file (no extension).</li>
+            <li><code>C:\\Windows\\System32\\config\\</code> — registry hive files (SAM, SYSTEM, SOFTWARE, SECURITY, DEFAULT).</li>
+            <li><code>C:\\$Recycle.Bin\\</code> — per-drive deleted items.</li>
+            <li><code>C:\\pagefile.sys</code>, <code>C:\\hiberfil.sys</code>, <code>C:\\swapfile.sys</code> — virtual memory + hibernation.</li>
+          </ul>
+
+          <h2>Registry hives (top-level keys)</h2>
+          <ul>
+            <li><b>HKEY_CLASSES_ROOT (HKCR)</b> — file associations + COM. Merged view of HKLM\\SOFTWARE\\Classes + HKCU\\SOFTWARE\\Classes.</li>
+            <li><b>HKEY_CURRENT_USER (HKCU)</b> — current logged-in user's settings.</li>
+            <li><b>HKEY_LOCAL_MACHINE (HKLM)</b> — machine-wide settings. Hives: SAM, SECURITY, SOFTWARE, SYSTEM, HARDWARE.</li>
+            <li><b>HKEY_USERS (HKU)</b> — all loaded user hives (HKCU is one of these).</li>
+            <li><b>HKEY_CURRENT_CONFIG (HKCC)</b> — current hardware profile (read-only view of HKLM\\SYSTEM\\CurrentControlSet\\Hardware Profiles\\Current).</li>
+          </ul>
+          <p><b>Value types:</b> REG_SZ (string), REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD (32-bit), REG_QWORD (64-bit), REG_BINARY. Edit with <code>regedit</code> (UI) or <code>reg add / reg query / reg delete</code> (CLI). Back up with <code>reg export</code> before changes.</p>
+
+          <h2>Windows startup boot flow</h2>
+          <ol>
+            <li><b>POST</b> + <b>UEFI</b> firmware initializes hardware.</li>
+            <li>UEFI reads <b>EFI System Partition</b> (FAT32, ~100 MB), launches <code>\\EFI\\Microsoft\\Boot\\bootmgfw.efi</code>.</li>
+            <li><b>Windows Boot Manager</b> reads BCD store, picks an OS, hands off to <code>winload.efi</code>.</li>
+            <li><b>winload.efi</b> loads kernel (<code>ntoskrnl.exe</code>) + HAL + boot drivers + SYSTEM hive.</li>
+            <li>Kernel initializes Session Manager (<code>smss.exe</code>) → starts <b>csrss.exe</b> + <b>wininit.exe</b>.</li>
+            <li><b>wininit</b> starts services (<code>services.exe</code>), LSASS, etc.</li>
+            <li><b>winlogon</b> displays sign-in; user authenticates via Credential Provider.</li>
+            <li><b>userinit</b> runs scripts + launches <b>explorer.exe</b>.</li>
+          </ol>
+          <p><b>BCD</b> (Boot Configuration Data) — modern replacement for boot.ini. Edit via <code>bcdedit</code> CLI. <b>BCDBoot</b> recreates BCD store after recovery.</p>
+
+          <h2>Boot recovery toolkit (WinRE / WinPE)</h2>
+          <ul>
+            <li><b>WinRE</b> (Recovery Environment) — auto-launches after 2 failed boots; press F11/F8 to invoke. Contains:
+              <ul>
+                <li><b>Startup Repair</b> — auto-fix boot files.</li>
+                <li><b>Command Prompt</b> — manual repair (<code>bootrec /fixmbr</code>, <code>/fixboot</code>, <code>/scanos</code>, <code>/rebuildbcd</code>; <code>bcdedit</code>; <code>chkdsk</code>; <code>sfc</code>; <code>DISM</code>).</li>
+                <li><b>System Restore</b> — roll back to restore point.</li>
+                <li><b>System Image Recovery</b>.</li>
+                <li><b>Reset this PC</b> — keep files or fresh install.</li>
+                <li><b>Go back to previous version</b> — undo upgrade within 10 days.</li>
+                <li><b>UEFI Firmware Settings</b> reboot.</li>
+              </ul>
+            </li>
+            <li><b>WinPE</b> (Preinstallation Environment) — minimal kernel + disk + network; used by deployment images (MDT, SCCM, Autopilot, Intune Provisioning).</li>
+            <li><b>Safe Mode</b> — minimal drivers; toggle from msconfig → Boot or hold Shift + Restart → Troubleshoot → Startup Settings → F4 / F5 / F6 (Safe / w/ Networking / w/ cmd).</li>
+          </ul>
+
+          <h2>Services + tasks deep-dive</h2>
+          <ul>
+            <li><b>Service startup types</b>: Automatic, Automatic (Delayed Start), Manual, Disabled, Trigger-Start.</li>
+            <li><b>Logon accounts</b>: LocalSystem, NT AUTHORITY\\NetworkService, LocalService, Managed Service Account (gMSA), or domain user.</li>
+            <li><b>Recovery actions</b> per service: restart, run program, restart computer; first/second/subsequent fail actions configurable.</li>
+            <li><b>Dependencies</b>: shown on Dependencies tab; a service won't start until its prerequisites are running.</li>
+            <li><b>sc.exe</b> — CLI: <code>sc config &lt;svc&gt; start=auto</code>, <code>sc query</code>, <code>sc delete</code>.</li>
+            <li><b>Task Scheduler</b> — Triggers (time / event / startup / logon) + Actions (program, email, message) + Conditions (idle, power, network) + Settings.</li>
+            <li><b>at.exe</b> + <b>schtasks.exe</b> — CLI for legacy + scheduled tasks (PS: <code>Get-ScheduledTask</code>).</li>
+            <li><b>Service hosts (svchost.exe)</b> — hosts multiple services in one process; Windows 10 1703+ splits each service into its own svchost on machines with ≥ 3.5 GB RAM.</li>
+          </ul>
+
+          <h2>Windows networking quick reference (overlap with A+ C1)</h2>
+          <ul>
+            <li><b>ipconfig /all</b> — view IP / MAC / DHCP / DNS / gateway.</li>
+            <li><b>ipconfig /release</b>, <b>/renew</b>, <b>/flushdns</b>, <b>/displaydns</b>, <b>/registerdns</b>.</li>
+            <li><b>route print</b> + <b>route add</b> — view + edit routing table.</li>
+            <li><b>netsh interface ip set address</b> — static IP.</li>
+            <li><b>netsh winsock reset</b>, <b>netsh int ip reset</b> — fix corrupted TCP/IP stack.</li>
+            <li><b>netstat -ano</b> — connections + PID; pair with <code>tasklist</code> to identify owning process.</li>
+            <li><b>Test-NetConnection</b> (PowerShell) — TCP port check.</li>
+            <li><b>Network &amp; Sharing Center</b> + <code>ncpa.cpl</code> for adapter properties.</li>
+          </ul>
+
+          <h2>Permissions: NTFS vs Share</h2>
+          <ul>
+            <li><b>NTFS permissions</b> — apply to file system regardless of access path. Full Control, Modify, Read &amp; Execute, List, Read, Write. Inheritance + explicit + Deny semantics.</li>
+            <li><b>Share permissions</b> — apply only when accessing over the network (SMB). Read, Change, Full Control.</li>
+            <li><b>Effective access</b> = most restrictive of NTFS AND share.</li>
+            <li><b>Inheritance</b> — child inherits from parent by default; break inheritance to set explicit ACEs.</li>
+            <li><b>Take Ownership</b> — Owner can always change permissions; admins can take ownership.</li>
+            <li><b>icacls</b> — CLI for NTFS ACLs (<code>icacls C:\\path /grant user:M</code>).</li>
+          </ul>
+
+          <h2>UAC + admin elevation</h2>
+          <ul>
+            <li><b>UAC</b> (User Account Control) — non-admin token by default; prompts when admin rights needed.</li>
+            <li><b>4 levels</b> in Control Panel: Always Notify / Default / Notify only apps / Never Notify.</li>
+            <li><b>Secure Desktop</b> — dims background during elevation prompt to defeat overlay attacks.</li>
+            <li><b>Admin Approval Mode</b> — admin runs everything non-elevated until elevated; standard pattern.</li>
+            <li><b>runas</b> / <b>Shift+RightClick → Run as different user</b> — launch as another account.</li>
+            <li><b>RunAsInvoker / RunAsHighest / RunAsAdmin</b> — manifest hints in app's manifest XML.</li>
+          </ul>
+
+          <h2>Profile + AppData reality</h2>
+          <ul>
+            <li><b>Local profile</b> — stored on the device only.</li>
+            <li><b>Roaming profile</b> — server-stored, syncs at logon/logoff (legacy AD).</li>
+            <li><b>Mandatory profile</b> — read-only template, discards changes (kiosk).</li>
+            <li><b>Folder redirection</b> + <b>OneDrive Known Folder Move</b> — modern replacement; Documents/Desktop/Pictures sync to OneDrive.</li>
+            <li><b>NTUSER.DAT</b> — user's HKCU hive file inside profile.</li>
+            <li><b>Profile corruption</b> — log on as different admin → rename old profile dir → log user back in to create fresh; copy data manually.</li>
+          </ul>
+
+          <h2>BitLocker deep-dive</h2>
+          <ul>
+            <li><b>Full Volume Encryption</b> via AES-128 or AES-256 (XTS-AES).</li>
+            <li>Requires <b>TPM 2.0</b> + UEFI + GPT system volume.</li>
+            <li>Key protectors: TPM only, TPM + PIN, TPM + USB, password, recovery key.</li>
+            <li><b>48-digit recovery key</b> — escrow to AD / Entra ID / Microsoft account / printed copy.</li>
+            <li><b>Manage-bde</b> CLI: <code>manage-bde -status</code>, <code>-on</code>, <code>-off</code>, <code>-pause</code>.</li>
+            <li><b>BitLocker To Go</b> — removable media; unlock via password or smart card.</li>
+            <li><b>Network Unlock</b> — auto-unlock at boot if on corporate LAN (PXE-based).</li>
+            <li><b>Suspend</b> protection before BIOS update / TPM clear / motherboard swap to avoid recovery prompt.</li>
+          </ul>
+
+          <h2>Group Policy basics</h2>
+          <ul>
+            <li><b>GPO</b> (Group Policy Object) — settings container.</li>
+            <li><b>Local GPO</b> via <code>gpedit.msc</code>; domain GPOs via Group Policy Management Console (GPMC) on a DC.</li>
+            <li><b>Computer Configuration</b> applies at boot; <b>User Configuration</b> applies at logon.</li>
+            <li><b>gpupdate /force</b> — apply policies now. <b>gpresult /h report.html</b> — RSoP (Resultant Set of Policy).</li>
+            <li><b>Order of application</b>: Local → Site → Domain → OU (LSDO). Closest wins.</li>
+            <li><b>Loopback processing</b> — apply user GPO based on the computer's OU (kiosks).</li>
+            <li><b>Block inheritance + Enforced</b> override default ordering.</li>
+            <li><b>Administrative Templates (ADMX)</b> — XML files defining policy settings.</li>
+          </ul>
+
+          <h2>Windows Defender / Security baseline</h2>
+          <ul>
+            <li><b>Microsoft Defender Antivirus</b> — built-in EDR.</li>
+            <li><b>SmartScreen</b> — reputation-based filter for files + URLs.</li>
+            <li><b>Application Guard / Defender Application Control</b> — Edge isolation, AppLocker successor.</li>
+            <li><b>Credential Guard</b> — VBS-isolated LSASS; mitigates pass-the-hash.</li>
+            <li><b>Memory Integrity / HVCI</b> — kernel code integrity in VBS.</li>
+            <li><b>Tamper Protection</b> — prevents disabling Defender from local admin.</li>
+            <li><b>Controlled Folder Access</b> — anti-ransomware folder allowlist.</li>
+            <li><b>Attack Surface Reduction</b> rules — block Office macros, child processes, etc.</li>
+            <li><b>Exploit Protection</b> — DEP, ASLR, CFG, EAF per-process tuning.</li>
+            <li><b>Windows Hello + Hello for Business</b> — biometric / PIN / FIDO2 auth.</li>
+          </ul>
+
+          <h2>10 exam quick patterns</h2>
+          <ul>
+            <li>"User edition can't host RDP" → Home; upgrade to Pro+.</li>
+            <li>"BitLocker recovery key location" → AD / Entra ID / MSA / file.</li>
+            <li>"Boot files broken — recover from WinRE" → <code>bootrec /rebuildbcd</code>, <code>/fixboot</code>, <code>/fixmbr</code>.</li>
+            <li>"Edit registry without GUI" → <code>reg add</code> / <code>reg query</code> from elevated shell.</li>
+            <li>"Effective NTFS+share permissions" → most restrictive of both.</li>
+            <li>"Bypass Win11 hardware checks (lab)" → registry MoSetup flag (unsupported).</li>
+            <li>"Stop service from CLI" → <code>net stop &lt;name&gt;</code> or <code>sc stop &lt;name&gt;</code>.</li>
+            <li>"User profile corrupt" → create new profile, copy data, retire old.</li>
+            <li>"Mass deploy Windows" → MDT / SCCM / Autopilot + Intune + Provisioning Packages.</li>
+            <li>"32-bit app on 64-bit Windows" → runs through WoW64; lives in Program Files (x86).</li>
+          </ul>
         `
       },
       {
