@@ -4241,6 +4241,216 @@ bcdboot C:\\Windows /s S: /f UEFI         # repair UEFI bootloader</code></pre>
             <li>"Mirror folder contents incl. deletions" → <code>robocopy src dst /MIR</code>.</li>
             <li>"Rebuild BCD after boot failure" → <code>bootrec /rebuildbcd</code>.</li>
           </ul>
+
+          <h2>SFC + DISM repair order (memorize for exam)</h2>
+          <p><b>Standard order when system files corrupt:</b></p>
+          <ol>
+            <li><code>DISM /Online /Cleanup-Image /CheckHealth</code> — fast status check, returns if corruption detected.</li>
+            <li><code>DISM /Online /Cleanup-Image /ScanHealth</code> — slower deep scan.</li>
+            <li><code>DISM /Online /Cleanup-Image /RestoreHealth</code> — repairs Component Store from Windows Update.</li>
+            <li><code>DISM /Online /Cleanup-Image /RestoreHealth /Source:WIM:D:\\sources\\install.wim:1 /LimitAccess</code> — repair from offline media if WU unreachable.</li>
+            <li><code>sfc /scannow</code> — uses repaired Component Store to fix system files.</li>
+          </ol>
+          <p>Reverse fails — SFC needs healthy Component Store first. DISM repairs the store; SFC then fixes system files using it.</p>
+
+          <h2>Powerful CLI tools you may see</h2>
+          <ul>
+            <li><b>reagentc /info</b> — Windows Recovery Environment status.</li>
+            <li><b>reagentc /enable</b> + <b>/disable</b> — control WinRE partition.</li>
+            <li><b>slmgr /xpr</b> — show activation expiry. <b>slmgr /dlv</b> — detailed license info. <b>slmgr /rearm</b> — extend trial.</li>
+            <li><b>cipher /w:C:\\</b> — overwrite free space (security wipe).</li>
+            <li><b>cipher /e /a file</b> — encrypt with EFS.</li>
+            <li><b>compact /c /s file</b> — NTFS compression on file/dir.</li>
+            <li><b>fsutil fsinfo drives</b> — list drives. <b>fsutil dirty query C:</b> — was the drive dirty at boot?</li>
+            <li><b>fsutil reparsepoint query C:\\path</b> — inspect symbolic links / junction points.</li>
+            <li><b>mklink /D linkname target</b> — symbolic-link directory. <b>/J</b> = junction. <b>/H</b> = hard link.</li>
+            <li><b>vssadmin list shadows</b> — Volume Shadow Copy snapshots.</li>
+            <li><b>wevtutil qe System /c:50 /rd:true /f:text</b> — query event log from CLI.</li>
+            <li><b>auditpol /get /category:*</b> — local audit policy.</li>
+            <li><b>wevtutil cl <log></b> — clear event log.</li>
+            <li><b>tzutil /s "Eastern Standard Time"</b> — set time zone from CLI.</li>
+            <li><b>w32tm /resync</b> — force NTP resync.</li>
+            <li><b>w32tm /query /status</b> — current time service status.</li>
+            <li><b>klist</b> — Kerberos ticket cache. <b>klist purge</b> — clear tickets.</li>
+            <li><b>nslookup -type=any domain</b> — DNS info.</li>
+            <li><b>pathping host</b> — ping + traceroute combined with loss%.</li>
+            <li><b>arp -a</b> — local ARP cache. <b>arp -d *</b> — clear.</li>
+            <li><b>getmac /v</b> — MAC addresses per adapter.</li>
+            <li><b>net config workstation</b> — local computer info.</li>
+            <li><b>net session</b> — current SMB sessions to local server.</li>
+            <li><b>net file</b> — open files via shares.</li>
+            <li><b>net use Z: \\\\server\\share /persistent:yes</b> — map drive.</li>
+            <li><b>net statistics workstation</b> — uptime + byte counts.</li>
+          </ul>
+
+          <h2>Networking CLI deep-cut</h2>
+          <pre><code># IPv4 + IPv6 status
+ipconfig /all
+ipconfig /allcompartments     # multi-NAT scenarios
+
+# DNS
+ipconfig /flushdns           # clear resolver cache
+ipconfig /displaydns         # show cache entries
+ipconfig /registerdns        # re-register dynamic A record
+
+# DHCP renew on specific NIC
+ipconfig /release "Ethernet"
+ipconfig /renew "Ethernet"
+
+# Static IP (admin)
+netsh interface ip set address "Ethernet" static 10.0.0.50 255.255.255.0 10.0.0.1
+netsh interface ip set dns "Ethernet" static 1.1.1.1 primary
+netsh interface ip set dnsservers "Ethernet" source=dhcp
+netsh interface ip set address "Ethernet" source=dhcp
+
+# Wi-Fi profiles
+netsh wlan show profiles
+netsh wlan show profile name="MyAP" key=clear   # reveal stored PSK
+netsh wlan delete profile name="MyAP"
+netsh wlan connect name="MyAP"
+
+# Firewall
+netsh advfirewall show allprofiles
+netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=TCP localport=80
+netsh advfirewall reset
+
+# Reset broken stack
+netsh winsock reset
+netsh int ip reset
+netsh int tcp reset</code></pre>
+
+          <h2>Process introspection</h2>
+          <pre><code>tasklist /v                  # verbose: user, mem, status, window title
+tasklist /m kernel32.dll     # find processes using a DLL
+tasklist /svc                # show services per PID
+tasklist /fi "PID eq 1234"   # filter
+tasklist /fi "imagename eq chrome.exe"
+
+taskkill /F /PID 1234
+taskkill /F /IM chrome.exe /T  # kill chrome + child processes
+
+wmic process get name,processid,parentprocessid     # legacy, deprecated
+Get-CimInstance Win32_Process | Select Name,ProcessId,ParentProcessId  # modern</code></pre>
+
+          <h2>Network + listening sockets</h2>
+          <pre><code>netstat -a                   # all conns + listeners
+netstat -an                  # no name resolution (faster)
+netstat -ano                 # adds PID column
+netstat -anob                # adds owning executable (admin)
+netstat -r                   # routing table (= route print)
+netstat -e -s                # ethernet + per-protocol stats
+netstat -nat 5               # refresh every 5 sec</code></pre>
+
+          <h2>Disk tools</h2>
+          <pre><code># Health
+chkdsk C: /F                 # fix file system errors
+chkdsk C: /R                 # locate bad sectors + recover (HDD)
+chkdsk C: /B                 # re-evaluate bad clusters (HDD)
+chkdsk C: /scan              # online scan, no offline phase
+
+# Optimize / TRIM
+defrag C: /A                 # analyze only
+defrag C: /O                 # optimal (defrag HDD, TRIM SSD)
+defrag C: /U /V              # verbose with progress
+Optimize-Volume -DriveLetter C -ReTrim     # PowerShell
+
+# Format
+format D: /fs:NTFS /Q /V:Data
+format X: /fs:exFAT /Q       # cross-platform USB
+
+# diskpart batch via script file
+diskpart /s create-vol.txt
+
+# Disk usage
+fsutil volume diskfree C:
+Get-Volume                   # PowerShell, cleaner output
+
+# Page file inspection
+wmic pagefile list /format:list</code></pre>
+
+          <h2>Symbolic links + junctions</h2>
+          <ul>
+            <li><b>Hard link</b> (<code>mklink /H</code>) — multiple file entries pointing to same data; same volume only.</li>
+            <li><b>Symbolic link</b> (<code>mklink</code> default, or <code>/D</code> for directory) — pointer; can span volumes + UNC.</li>
+            <li><b>Junction</b> (<code>mklink /J</code>) — directory link; legacy; local volume only.</li>
+            <li>Use case: redirect <code>C:\\Users\\Public\\Downloads</code> to a faster SSD; relocate <code>node_modules</code>.</li>
+          </ul>
+
+          <h2>Environment variables (memorize)</h2>
+          <ul>
+            <li><b>%USERPROFILE%</b> — <code>C:\\Users\\&lt;you&gt;</code>.</li>
+            <li><b>%APPDATA%</b> — Roaming AppData.</li>
+            <li><b>%LOCALAPPDATA%</b> — Local AppData.</li>
+            <li><b>%PROGRAMFILES%</b> + <b>%PROGRAMFILES(X86)%</b>.</li>
+            <li><b>%TEMP%</b> + <b>%TMP%</b>.</li>
+            <li><b>%SYSTEMROOT%</b> / <b>%WINDIR%</b> — <code>C:\\Windows</code>.</li>
+            <li><b>%PATH%</b> — search path for executables.</li>
+            <li><b>%USERNAME%</b>, <b>%COMPUTERNAME%</b>, <b>%USERDOMAIN%</b>.</li>
+            <li><b>%PROCESSOR_ARCHITECTURE%</b> — AMD64 / x86 / ARM64.</li>
+            <li><b>set</b> shows current; <b>setx</b> persists to registry (User scope without /M, Machine with /M).</li>
+            <li>PowerShell: <code>$env:NAME</code> read/write process scope; <code>[Environment]::SetEnvironmentVariable</code> persistent.</li>
+          </ul>
+
+          <h2>Script + batch primer</h2>
+          <pre><code>@echo off                    # don't echo each line
+rem comment                  # comment
+:: also a comment
+
+set name=alice               # variable
+set /p name=Enter name:     # prompt
+set /a sum=10+5             # arithmetic
+
+if "%name%"=="alice" (
+  echo Hello %name%
+) else (
+  echo Hi stranger
+)
+
+for %%f in (*.log) do echo %%f       # in a .bat file (double %% required)
+for /f "tokens=2" %%a in ('ipconfig ^| findstr "IPv4"') do set ip=%%a
+
+call other.bat               # invoke another batch
+goto :end
+:end
+exit /b %errorlevel%</code></pre>
+          <p><b>Batch quirks</b>: <code>%</code> doubled inside .bat (<code>%%f</code>); errorlevel comparison <code>if %errorlevel%==0</code>; capture with <code>for /f</code>; escape pipes with <code>^|</code> inside <code>for</code>.</p>
+
+          <h2>Cmd vs PowerShell — pick the right shell</h2>
+          <table style="width:100%;font-size:13px;border-collapse:collapse">
+            <tr><th align="left" style="padding:4px;border-bottom:1px solid #444">Task</th><th align="left" style="padding:4px;border-bottom:1px solid #444">cmd.exe</th><th align="left" style="padding:4px;border-bottom:1px solid #444">PowerShell</th></tr>
+            <tr><td>Quick reboot</td><td><code>shutdown /r /t 0</code></td><td><code>Restart-Computer</code></td></tr>
+            <tr><td>Process info</td><td><code>tasklist</code></td><td><code>Get-Process</code></td></tr>
+            <tr><td>Service start</td><td><code>net start svc</code></td><td><code>Start-Service svc</code></td></tr>
+            <tr><td>Find process by name</td><td><code>tasklist /fi "imagename eq x"</code></td><td><code>Get-Process x</code></td></tr>
+            <tr><td>Delete files older than 30 days</td><td>complex <code>forfiles</code></td><td><code>Get-ChildItem | Where LastWriteTime -lt (Get-Date).AddDays(-30) | Remove-Item</code></td></tr>
+            <tr><td>JSON parsing</td><td>painful</td><td><code>ConvertFrom-Json</code></td></tr>
+            <tr><td>Registry edit</td><td><code>reg add</code></td><td><code>New-ItemProperty</code></td></tr>
+            <tr><td>WMI / CIM</td><td><code>wmic</code> (deprecated)</td><td><code>Get-CimInstance</code></td></tr>
+          </table>
+          <p>New scripts: PowerShell. Legacy + boot-time: cmd.exe still relevant (recovery environments + AutoUnattend.xml).</p>
+
+          <h2>PSReadLine + Windows Terminal niceties</h2>
+          <ul>
+            <li>Ctrl+R history search; up-arrow shows last command.</li>
+            <li>Tab completion + parameter hints in PowerShell.</li>
+            <li>Windows Terminal panes: <b>Alt+Shift+D</b> (split duplicate), <b>Ctrl+Shift+W</b> (close), <b>Ctrl+Tab</b> (switch tabs).</li>
+            <li>Settings.json — custom profiles, color schemes, key bindings.</li>
+            <li><b>Sudo</b> (Windows 11 24H2+) — built-in elevation: <code>sudo netstat -ano</code>.</li>
+          </ul>
+
+          <h2>10 exam command lookups (memorize)</h2>
+          <ul>
+            <li>"Show IP + MAC + DHCP server" → <code>ipconfig /all</code>.</li>
+            <li>"Connection test on TCP 443" → <code>Test-NetConnection host -Port 443</code> (or <code>nc -vz</code> on POSIX).</li>
+            <li>"DNS info" → <code>nslookup host [dns_server]</code>.</li>
+            <li>"Show services" → <code>services.msc</code> / <code>Get-Service</code>.</li>
+            <li>"Restore registry hive" → boot recovery → <code>reg load</code> / restore from <code>C:\\Windows\\System32\\config\\RegBack</code> (older Windows) or System Restore.</li>
+            <li>"Check Windows build" → <code>winver</code> / <code>systeminfo</code> / <code>ver</code>.</li>
+            <li>"List installed updates" → <code>wmic qfe</code> / <code>Get-HotFix</code>.</li>
+            <li>"View startup apps" → Task Manager → Startup or <code>msconfig</code>.</li>
+            <li>"Show local users + groups" → <code>net user</code> / <code>net localgroup</code> / <code>compmgmt.msc</code>.</li>
+            <li>"Check Windows activation" → <code>slmgr /xpr</code> or <code>slmgr /dlv</code>.</li>
+          </ul>
         `
       },
       {
